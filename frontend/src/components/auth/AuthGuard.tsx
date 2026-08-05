@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import * as authService from "@/services/auth.service";
+import { getAuthenticatedUserAction } from "@/app/actions/auth";
 import type { User } from "@/lib/features/auth/auth.types";
 
 interface AuthGuardProps {
@@ -22,11 +22,9 @@ export default function AuthGuard({
 
   const checkAuth = useCallback(async () => {
     try {
-      // Use client-side auth service which sends Bearer token from localStorage
-      // This works because the token is stored in localStorage on login/register
-      const response = await authService.getAuthenticatedUser();
-      setUser(response.user);
-      setStatus("authenticated");
+      const response = await getAuthenticatedUserAction();
+      setUser(response.user ?? null);
+      setStatus(response.success ? "authenticated" : "guest");
       if (requireGuest) router.push("/");
     } catch {
       setUser(null);

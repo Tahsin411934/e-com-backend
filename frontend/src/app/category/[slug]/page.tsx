@@ -44,17 +44,17 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 export default async function CategoryPage({ params }: Props) {
   const { slug } = await params;
 
-  // Fetch category info for breadcrumb fallback
+  // Fetch category info via dedicated API
   let categoryName = slug.replace(/-/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
   let categoryDescription: string | null = null;
   let categoryImage: string | null = null;
 
   try {
-    const catRes = await categoryService.getAll();
-    const cat = catRes.data.find((c) => c.slug === slug);
+    const catRes = await categoryService.getBySlug(slug);
+    const cat = catRes.data;
     if (cat) {
       categoryName = cat.name;
-      categoryDescription = null;
+      categoryDescription = cat.description;
       categoryImage = cat.image || null;
     }
   } catch {

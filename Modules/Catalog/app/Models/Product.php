@@ -13,10 +13,11 @@ class Product extends Model
 
     protected $table = 'products';
 
-    protected $fillable = ['brand_id', 'category_id', 'unit_id', 'size_id', 'tax_rate_id', 'navbar_item_id', 'subnavbar_item_id', 'name', 'slug', 'short_description', 'description', 'product_type', 'status', 'visibility', 'seo_title', 'seo_description', 'published_at'];
+    protected $fillable = ['brand_id', 'category_id', 'unit_id', 'size_id', 'tax_rate_id', 'navbar_item_id', 'subnavbar_item_id', 'name', 'slug', 'short_description', 'description', 'product_type', 'status', 'visibility', 'seo_title', 'seo_description', 'published_at', 'is_homepage'];
 
     protected $casts = [
         'published_at' => 'datetime',
+        'is_homepage' => 'boolean',
     ];
 
     public function brand()

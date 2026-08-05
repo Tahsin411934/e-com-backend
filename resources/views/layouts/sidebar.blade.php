@@ -4,14 +4,14 @@
 <aside id="sidebar" class="w-52 bg-white border-r border-gray-200 flex flex-col flex-shrink-0 z-30 overflow-hidden">
 
     <!-- Logo -->
-    <div class="h-[60px] flex items-center justify-between px-3.5 border-b border-blue-300 flex-shrink-0">
+    <div class="h-[60px] bg-blue-950 text-white flex items-center justify-between px-3.5 border-b border-blue-300 flex-shrink-0">
         <div class="flex items-center gap-2 overflow-hidden">
             <!-- A icon circle matching Ecommerce -->
             <div
                 class="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-600 to-blue-800 flex items-center justify-center flex-shrink-0 shadow-sm">
                 <span class="text-white font-bold text-sm leading-none">A</span>
             </div>
-            <span class="logo-text font-semibold text-gray-800 text-[20px] whitespace-nowrap">Ecommerce</span>
+            <span class="logo-text font-semibold text-white text-[20px] whitespace-nowrap">Ecommerce</span>
         </div>
 
 
@@ -109,6 +109,10 @@
                     <a href="{{ route('tax-rates.index') }}"
                         class="flex items-center gap-2.5 pl-9 pr-3 py-1.5 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-50 text-[13px] transition-colors {{ request()->routeIs('tax-rates.*') ? 'text-blue-600 bg-blue-50 font-medium' : '' }}">
                         <i class="fas fa-percent w-3.5 text-center"></i><span>Tax Rates</span>
+                    </a>
+                    <a href="{{ route('product-requests.index') }}"
+                        class="flex items-center gap-2.5 pl-9 pr-3 py-1.5 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-50 text-[13px] transition-colors {{ request()->routeIs('product-requests.*') ? 'text-blue-600 bg-blue-50 font-medium' : '' }}">
+                        <i class="fas fa-clipboard-list w-3.5 text-center"></i><span>Product Requests</span>
                     </a>
                 </div>
         </div>

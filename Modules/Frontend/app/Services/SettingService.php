@@ -3,15 +3,11 @@
 namespace Modules\Frontend\Services;
 
 use Illuminate\Http\UploadedFile;
-use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Storage;
 use Modules\Frontend\Models\Setting;
 
 class SettingService
 {
-    const CACHE_KEY = 'site_settings';
-    const CACHE_TTL = 3600;
-
     const TYPES = [
         'text'     => ['label' => 'Text', 'validation' => 'nullable|string|max:500'],
         'textarea' => ['label' => 'Textarea', 'validation' => 'nullable|string|max:5000'],
@@ -44,20 +40,18 @@ class SettingService
 
     public function getAll(): array
     {
-        return Cache::remember(self::CACHE_KEY, self::CACHE_TTL, function () {
-            return Setting::orderBy('group')->orderBy('sort_order')->get()
-                ->keyBy('key')
-                ->map(fn (Setting $s) => [
-                    'id'      => $s->id,
-                    'group'   => $s->group,
-                    'key'     => $s->key,
-                    'value'   => $s->value,
-                    'type'    => $s->type,
-                    'label'   => $s->label,
-                    'sort_order' => $s->sort_order,
-                ])
-                ->all();
-        });
+        return Setting::orderBy('group')->orderBy('sort_order')->get()
+            ->keyBy('key')
+            ->map(fn (Setting $s) => [
+                'id'      => $s->id,
+                'group'   => $s->group,
+                'key'     => $s->key,
+                'value'   => $s->value,
+                'type'    => $s->type,
+                'label'   => $s->label,
+                'sort_order' => $s->sort_order,
+            ])
+            ->all();
     }
 
     public function getGrouped(): array
@@ -81,18 +75,12 @@ class SettingService
         foreach ($settings as $key => $value) {
             Setting::where('key', $key)->update(['value' => $value]);
         }
-        $this->clearCache();
     }
 
     public function uploadImage(UploadedFile $file): string
     {
         $path = $file->store('settings', 'public');
         return Storage::url($path);
-    }
-
-    public function clearCache(): void
-    {
-        Cache::forget(self::CACHE_KEY);
     }
 
     public function seedDefaults(): void
@@ -103,6 +91,5 @@ class SettingService
                 $setting
             );
         }
-        $this->clearCache();
     }
 }

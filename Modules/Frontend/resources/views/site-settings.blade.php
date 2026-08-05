@@ -115,10 +115,18 @@
                                                         @endif
                                                     </div>
                                                     <div class="flex-1">
-                                                        <label class="btn-secondary cursor-pointer">
-                                                            <i class="fas fa-upload"></i> Choose Image
-                                                            <input type="file" name="{{ $item['key'] }}" accept="image/*" class="hidden" onchange="previewLogo(this, 'logo_preview')">
-                                                        </label>
+                                                        <div class="flex flex-wrap items-center gap-3">
+                                                            <label class="btn-secondary cursor-pointer">
+                                                                <i class="fas fa-upload"></i> Choose Image
+                                                                <input type="file" name="{{ $item['key'] }}" accept="image/*" class="hidden" onchange="previewLogo(this, 'logo_preview')">
+                                                            </label>
+                                                            @if($item['value'])
+                                                                <label class="btn-remove cursor-pointer" style="padding: 12px 24px; background: #fee2e2; color: #b91c1c; border: 1px solid #fecaca; border-radius: 12px; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.2s; display: inline-flex; align-items: center; gap: 6px;">
+                                                                    <i class="fas fa-trash"></i> Remove
+                                                                    <input type="checkbox" name="remove_{{ $item['key'] }}" value="1" class="hidden" onchange="removeLogo(this, 'logo_preview')">
+                                                                </label>
+                                                            @endif
+                                                        </div>
                                                         <p class="hint">Recommended: 200x60px. PNG, JPG, WebP. Max 2MB.</p>
                                                     </div>
                                                 </div>
@@ -176,6 +184,22 @@
                 const reader = new FileReader();
                 reader.onload = function(e) { preview.src = e.target.result; preview.classList.remove('flex', 'items-center', 'justify-center'); }
                 reader.readAsDataURL(file);
+            }
+        }
+        function removeLogo(checkbox, previewId) {
+            const preview = document.getElementById(previewId);
+            if (checkbox.checked) {
+                // Show placeholder icon
+                preview.src = '';
+                preview.classList.add('flex', 'items-center', 'justify-center');
+                preview.innerHTML = '<i class="fas fa-image text-3xl"></i>';
+                // Disable the file input so a new file can't be selected while removing
+                const fileInput = checkbox.closest('.logo-upload-area').querySelector('input[type="file"]');
+                if (fileInput) fileInput.disabled = true;
+            } else {
+                // Re-enable file input
+                const fileInput = checkbox.closest('.logo-upload-area').querySelector('input[type="file"]');
+                if (fileInput) fileInput.disabled = false;
             }
         }
     </script>

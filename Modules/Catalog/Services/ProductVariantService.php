@@ -9,6 +9,7 @@ use Yajra\DataTables\DataTables;
 
 class ProductVariantService
 {
+
     public function getVariantDataTable(Request $request)
     {
         $query = ProductVariant::with('product')->orderByDesc('created_at');

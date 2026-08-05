@@ -1,14 +1,15 @@
 // ============================================================
 // Middleware - Route protection for authenticated/guest pages
-// Uses the auth_token cookie to determine authentication status.
-// Client-side Bearer token from localStorage supplements auth.
+// Uses the httpOnly token cookie to determine auth status.
 // ============================================================
 
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
-// Routes that require authentication
+const TOKEN_COOKIE_NAME = "token";
+
 const protectedRoutes = [
+  "/dashboard",
   "/profile",
   "/change-password",
   "/orders",
@@ -16,45 +17,34 @@ const protectedRoutes = [
   "/wishlist",
 ];
 
-// Routes only for guests (redirect to home if authenticated)
 const guestRoutes = ["/login", "/register", "/forgot-password", "/reset-password"];
+
+function isRouteMatch(pathname: string, routes: string[]) {
+  return routes.some((route) => pathname === route || pathname.startsWith(`${route}/`));
+}
 
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
-  const authToken = request.cookies.get("auth_token")?.value;
+  const authToken = request.cookies.get(TOKEN_COOKIE_NAME)?.value;
 
-  const isProtectedRoute = protectedRoutes.some((route) =>
-    pathname.startsWith(route)
-  );
-  const isGuestRoute = guestRoutes.some((route) =>
-    pathname.startsWith(route)
-  );
+  const isProtectedRoute = isRouteMatch(pathname, protectedRoutes);
+  const isGuestRoute = isRouteMatch(pathname, guestRoutes);
 
-  // Redirect to login if accessing protected route without auth
   if (isProtectedRoute && !authToken) {
     const loginUrl = new URL("/login", request.url);
     loginUrl.searchParams.set("redirect", pathname);
     return NextResponse.redirect(loginUrl);
   }
 
-  // Redirect to home if accessing guest route with auth
-  if (isGuestRoute && authToken) {
-    return NextResponse.redirect(new URL("/", request.url));
-  }
+  // Do not automatically redirect authenticated users away from guest pages here.
+  // Client-side components (AuthGuard) will perform proper validation and redirects
+  // so middleware should avoid making assumptions based solely on cookie presence.
 
   return NextResponse.next();
 }
 
 export const config = {
   matcher: [
-    /*
-     * Match all request paths except:
-     * - _next/static (static files)
-     * - _next/image (image optimization files)
-     * - favicon.ico (favicon file)
-     * - public files (public folder)
-     * - api routes
-     */
     "/((?!_next/static|_next/image|favicon.ico|public|api).*)",
   ],
 };

@@ -9,12 +9,11 @@ interface HomePageProps {
 }
 
 export default function HomePage({ sections }: HomePageProps) {
-  
-  if (sections.length === 0) {
+  if (!sections || sections.length === 0) {
     return (
-      <div className="py-16 text-center text-gray-400">
-        <p className="text-lg">No content available at the moment.</p>
-        <p className="text-sm mt-2">Please check back later.</p>
+      <div className="py-16 text-center text-gray-600">
+        <p className="text-lg font-medium">The homepage is loading or has no sections yet.</p>
+        <p className="mt-2 text-sm">Try refreshing the page or come back shortly.</p>
       </div>
     );
   }

@@ -2,12 +2,15 @@ import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import NavbarServer from "@/components/layout/NavbarServer";
+import MobileBottomNav from "@/components/layout/MobileBottomNav";
 import { settingsService } from "@/services/settings.service";
 import Footer from "@/components/layout/Footer";
 import StoreProvider from "@/lib/StoreProvider";
 import ScrollToTop from "@/components/ui/ScrollToTop";
+import ToastProvider from "@/components/ui/ToastProvider";
 import CartDrawer from "@/components/cart/CartDrawer";
 import FloatingCartButton from "@/components/cart/FloatingCartButton";
+export const dynamic = "force-dynamic";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -73,7 +76,7 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
         <link rel="preconnect" href="https://fonts.googleapis.com" crossOrigin="anonymous" />
         <link rel="dns-prefetch" href="https://fonts.googleapis.com" />
       </head>
-      <body className="min-h-full flex flex-col bg-white font-sans m-0 p-0"
+      <body suppressHydrationWarning className="min-h-full flex flex-col bg-white font-sans m-0 p-0"
         style={{ "--color-primary": primaryColor } as React.CSSProperties}>
         <StoreProvider>
           <a href="#main-content"
@@ -81,12 +84,14 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
             Skip to main content
           </a>
           <NavbarServer />
-          <main id="main-content" className="flex-1">
+          <main id="main-content" className="flex-1 pb-16 md:pb-0">
             {children}
           </main>
           <Footer />
+          <MobileBottomNav />
           <CartDrawer />
           <FloatingCartButton />
+          <ToastProvider />
           <ScrollToTop />
         </StoreProvider>
       </body>

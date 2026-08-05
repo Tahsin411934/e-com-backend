@@ -42,6 +42,7 @@ class UpdateProductRequest extends FormRequest
             'seo_title' => 'nullable|string|max:255',
             'seo_description' => 'nullable|string|max:500',
             'published_at' => 'nullable|date',
+            'is_homepage' => 'nullable|boolean',
             
             // Variant validation
             'variants' => 'nullable|array',

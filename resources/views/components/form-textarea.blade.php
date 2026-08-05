@@ -3,7 +3,8 @@
     'name', 
     'id' => null, 
     'placeholder' => '', 
-    'rows' => 3
+    'rows' => 3,
+    'value' => ''
 ])
 
 <div>
@@ -14,5 +15,5 @@
               placeholder="{{ $placeholder }}"
               {{ $attributes->merge([
                   'class' => 'w-full border border-slate-300 rounded-md p-2 bg-white text-slate-800 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all placeholder:text-slate-400'
-              ]) }}></textarea>
+              ]) }}>{{ old($name, $value) }}</textarea>
 </div>

@@ -1,10 +1,10 @@
 "use client";
 
-import { useActionState, useEffect, useRef } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useActionState, useEffect } from "react";
+import { useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
+import { toast } from "react-toastify";
 import { loginUser } from "@/app/actions/auth";
-import { setClientToken } from "@/services/auth.service";
 import type { AuthFormState } from "@/lib/features/auth/auth.types";
 
 const initialState: AuthFormState = {
@@ -13,21 +13,21 @@ const initialState: AuthFormState = {
 };
 
 export default function LoginPage() {
-  const router = useRouter();
   const searchParams = useSearchParams();
-  const redirectTo = searchParams.get("redirect") || "/";
+  const router = useRouter();
+  const redirectTo = searchParams.get("redirect") || "/dashboard";
 
   const [state, formAction, pending] = useActionState(loginUser, initialState);
 
+  // Show toast on success/error, then redirect on success
   useEffect(() => {
-    if (state.success && state.user) {
-      // Store in localStorage for client-side API calls
-      if (state.token) {
-        setClientToken(state.token);
-      }
-      router.push(redirectTo);
+    if (state.success) {
+      toast.success(state.message || "Login successful!");
+      setTimeout(() => router.push(redirectTo), 1000);
+    } else if (state.message) {
+      toast.error(state.message, { toastId: "login-error" });
     }
-  }, [state.success, state.user, state.token, router, redirectTo]);
+  }, [state.success, state.message, router, redirectTo]);
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
@@ -41,16 +41,7 @@ export default function LoginPage() {
         </div>
 
         <form action={formAction} className="mt-8 space-y-6 bg-white p-8 rounded-xl shadow-sm border border-gray-100" noValidate>
-          {state.message && !state.success && (
-            <div className="rounded-lg bg-red-50 border border-red-200 p-4">
-              <p className="text-sm text-red-700">{state.message}</p>
-            </div>
-          )}
-          {state.success && (
-            <div className="rounded-lg bg-green-50 border border-green-200 p-4">
-              <p className="text-sm text-green-700">{state.message} Redirecting...</p>
-            </div>
-          )}
+          <input type="hidden" name="redirect" value={redirectTo} />
 
           <div>
             <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">Email</label>

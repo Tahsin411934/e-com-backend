@@ -3,8 +3,9 @@ import CategoryScrollServer from "@/components/home/CategoryScrollServer";
 import HomePageServer from "@/components/home/HomePageServer";
 import type { Metadata } from "next";
 
-// Fetch at request time so API data is fresh on every visit
+// Always fetch fresh data from the backend so homepage updates are reflected immediately.
 export const dynamic = "force-dynamic";
+export const revalidate = 0;
 
 export const metadata: Metadata = {
   title: "Shopio - Premium E-Commerce | Your Premium Online Shopping Destination",

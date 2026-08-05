@@ -23,24 +23,47 @@ class SiteSettingController extends Controller
 
     public function update(Request $request): RedirectResponse
     {
-        // Clear cache first so we get fresh DB data
-        $this->settingService->clearCache();
-
-        // Fetch settings directly from DB (bypass cache)
+        // Fetch settings directly from DB
         $settings = \Modules\Frontend\Models\Setting::all()->keyBy('key');
         $data = $request->except('_token', '_method');
         $updateData = [];
 
+        // Handle "remove_<key>" checkboxes first (e.g. remove_site_logo).
+        // These are sent as separate form fields when the user clicks "Remove".
         foreach ($data as $key => $value) {
+            if (str_starts_with($key, 'remove_')) {
+                $settingKey = substr($key, strlen('remove_'));
+                if (isset($settings[$settingKey])) {
+                    $updateData[$settingKey] = null;
+                }
+            }
+        }
+
+        foreach ($data as $key => $value) {
+            if (str_starts_with($key, 'remove_')) {
+                continue;
+            }
+
             if (isset($settings[$key])) {
                 $type = $settings[$key]->type;
-
-                if ($type === 'image' && $request->hasFile($key)) {
-                    $value = $this->settingService->uploadImage($request->file($key));
-                }
-
                 $typeRules = SettingService::TYPES;
                 $rules = [$key => $typeRules[$type]['validation'] ?? 'nullable|string'];
+
+                // For image type: handle replace or keep existing.
+                // (Removal is handled above via remove_<key> checkbox.)
+                if ($type === 'image') {
+                    if (!$request->hasFile($key)) {
+                        continue; // No new file selected, keep the existing image
+                    }
+
+                    $validator = Validator::make($request->only($key), $rules);
+                    if ($validator->fails()) {
+                        return back()->withErrors($validator)->withInput();
+                    }
+
+                    $updateData[$key] = $this->settingService->uploadImage($request->file($key));
+                    continue;
+                }
 
                 $validator = Validator::make([$key => $value], $rules);
                 if ($validator->fails()) {

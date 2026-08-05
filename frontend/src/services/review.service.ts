@@ -1,22 +1,5 @@
 import { api } from "@/lib/api";
-
-export interface Review {
-  id: number;
-  user_name: string;
-  rating: number;
-  title: string;
-  body: string;
-  is_verified_purchase: boolean;
-  created_at: string;
-}
-
-export interface ReviewResponse {
-  success: boolean;
-  data: Review[];
-  average_rating: number;
-  total_reviews: number;
-  message?: string;
-}
+import type { ReviewResponse } from "@/types/review";
 
 export const reviewService = {
   /**
@@ -24,7 +7,7 @@ export const reviewService = {
    */
   async getProductReviews(productId: number): Promise<ReviewResponse> {
     return api<ReviewResponse>(`/products/${productId}/reviews`, {
-      revalidate: 60, // Cache for 1 minute
+      revalidate: 60,
     });
   },
 

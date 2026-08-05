@@ -7,7 +7,6 @@ import { ShoppingCart, CheckCircle, Loader2, ArrowLeft } from "lucide-react";
 import { useAppDispatch, useAppSelector } from "@/lib/hooks";
 import { selectCartItems, selectCartTotal, clearCart } from "@/lib/features/cart/cartSlice";
 import { checkoutApi } from "@/services/cart.service";
-import { requireAuth } from "@/lib/require-auth";
 
 export default function CheckoutPage() {
   const dispatch = useAppDispatch();
@@ -24,11 +23,6 @@ export default function CheckoutPage() {
   const [deliveryNotes, setDeliveryNotes] = useState("");
 
   const handleCheckout = async () => {
-    if (!requireAuth()) {
-      router.push("/login");
-      return;
-    }
-
     if (!deliveryAddress || !deliveryCity || !deliveryPhone) {
       setError("Please fill in all required delivery details.");
       return;
@@ -189,7 +183,7 @@ export default function CheckoutPage() {
           {/* Delivery & Payment Section */}
           <div className="lg:col-span-1 space-y-6">
             {/* Delivery Details */}
-            <div className="bg-white rounded-xl border border-gray-100 p-6 sticky top-24">
+            <div className="bg-white rounded-xl border border-gray-100 p-6  top-24">
               <h2 className="text-lg font-bold text-gray-900 mb-4">Delivery Details</h2>
               
               <div className="space-y-4">

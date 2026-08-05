@@ -1,21 +1,6 @@
+import type { ProductRequestPayload, ProductRequestResponse } from "@/types/product-request";
+
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api/v1";
-
-export interface ProductRequestPayload {
-  customer_name: string;
-  customer_email: string;
-  customer_phone?: string;
-  product_name: string;
-  product_description?: string;
-  product_image?: File;
-  quantity?: number;
-  expected_price?: number;
-  notes?: string;
-}
-
-export interface ProductRequestResponse {
-  status: string;
-  message: string;
-}
 
 export async function submitProductRequest(
   data: ProductRequestPayload

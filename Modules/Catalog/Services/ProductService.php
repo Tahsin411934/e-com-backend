@@ -18,6 +18,7 @@ use Yajra\DataTables\DataTables;
 
 class ProductService
 {
+
     public function getProductDataTable(Request $request)
     {
         $query = Product::with(['brand'])
@@ -116,9 +117,11 @@ class ProductService
         try {
             return DB::transaction(function () use ($data) {
                 $productId = $data['product_id'] ?? null;
+                $oldSlug = null;
 
                 if ($productId) {
                     $product = Product::findOrFail($productId);
+                    $oldSlug = $product->slug;
                     $product->update($data);
                     $message = 'Product updated successfully.';
                 } else {
@@ -140,9 +143,32 @@ class ProductService
 
                 // Set main/featured image
                 if (isset($data['main_image_id'])) {
-                    $mainImageId = (int) $data['main_image_id'];
-                    ProductImage::where('product_id', $product->id)->update(['is_main' => false]);
-                    ProductImage::where('id', $mainImageId)->where('product_id', $product->id)->update(['is_main' => true]);
+                    $mainImageId = $data['main_image_id'];
+                    // Handle "new_0", "new_1" etc. - refers to index in uploaded images array
+                    if (is_string($mainImageId) && str_starts_with($mainImageId, 'new_')) {
+                        $imageIndex = (int) substr($mainImageId, 4);
+                        $uploadedImages = $data['images'] ?? [];
+                        if (isset($uploadedImages[$imageIndex]) && $uploadedImages[$imageIndex] instanceof \Illuminate\Http\UploadedFile) {
+                            // The first uploaded image will be auto-set as main by saveProductImages
+                            // But if user selected a different one, we need to adjust after saving
+                            // We'll handle this by marking the correct one after all images are saved
+                            $allImages = ProductImage::where('product_id', $product->id)
+                                ->orderBy('id')
+                                ->get();
+                            // The newly uploaded images are appended at the end
+                            // Count existing images before this batch
+                            $existingCount = $allImages->count() - count($uploadedImages);
+                            $targetImage = $allImages->skip($existingCount + $imageIndex)->first();
+                            if ($targetImage) {
+                                ProductImage::where('product_id', $product->id)->update(['is_main' => false]);
+                                $targetImage->update(['is_main' => true]);
+                            }
+                        }
+                    } elseif (is_numeric($mainImageId) && $mainImageId > 0) {
+                        $mainImageId = (int) $mainImageId;
+                        ProductImage::where('product_id', $product->id)->update(['is_main' => false]);
+                        ProductImage::where('id', $mainImageId)->where('product_id', $product->id)->update(['is_main' => true]);
+                    }
                 }
 
                 // Handle explicitly deleted variants from edit form

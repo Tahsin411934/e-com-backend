@@ -4,8 +4,6 @@ namespace Modules\Identity\Http\Controllers;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Cookie;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Password;
 use Illuminate\Support\Str;
@@ -18,30 +16,6 @@ use Modules\Identity\Http\Requests\ResetPasswordRequest;
 
 class AuthController extends Controller
 {
-    private const AUTH_COOKIE = 'auth_token';
-
-    private function cookieDomain()
-    {
-        $domain = env('SESSION_DOMAIN');
-
-        return $domain === 'null' || $domain === '' ? null : $domain;
-    }
-
-    private function createAuthTokenCookie(string $token)
-    {
-        return cookie(
-            'auth_token',
-            $token,
-            60 * 24 * 365, // 1 year
-            '/',
-            $this->cookieDomain(),
-            env('SESSION_SECURE_COOKIE', false),
-            true, // httpOnly
-            false,
-            env('SESSION_SAME_SITE', 'lax')
-        );
-    }
-
     /**
      * Register a new user
      */
@@ -64,16 +38,15 @@ class AuthController extends Controller
             $user->roles()->attach($data['role_id']);
         }
 
-        // Create token and store in httpOnly cookie
+        // Create token
         $token = $user->createToken('auth_token')->plainTextToken;
-        $cookie = $this->createAuthTokenCookie($token);
 
         return response()->json([
             'status' => 'success',
             'message' => 'Registration successful.',
             'user' => $user->load('roles'),
             'token' => $token,
-        ], 201)->withCookie($cookie);
+        ], 201);
     }
 
     /**
@@ -86,34 +59,32 @@ class AuthController extends Controller
         $user = User::where('email', $credentials['email'])->first();
 
         if (!$user || !Hash::check($credentials['password'], $user->password_hash)) {
-            throw ValidationException::withMessages([
-                'email' => ['The provided credentials are incorrect.'],
-            ]);
+            return response()->json([
+                'status' => 'error',
+                'message' => 'The provided credentials are incorrect.',
+                'errors' => ['email' => ['The provided credentials are incorrect.']],
+            ], 401);
         }
 
         if ($user->status !== 'active') {
-            throw ValidationException::withMessages([
-                'email' => ['Your account is inactive. Please contact support.'],
-            ]);
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Your account is inactive. Please contact support.',
+                'errors' => ['email' => ['Your account is inactive. Please contact support.']],
+            ], 403);
         }
 
-        // Revoke old tokens
         $user->tokens()->delete();
 
-        // Create token and store in httpOnly cookie
         $token = $user->createToken('auth_token')->plainTextToken;
-
-        // Update last login
         $user->update(['last_login_at' => now()]);
-
-        $cookie = $this->createAuthTokenCookie($token);
 
         return response()->json([
             'status' => 'success',
             'message' => 'Login successful.',
             'user' => $user->load('roles'),
             'token' => $token,
-        ])->withCookie($cookie);
+        ], 200);
     }
 
     /**
@@ -123,13 +94,10 @@ class AuthController extends Controller
     {
         $request->user()->currentAccessToken()->delete();
 
-        // Clear the cookie
-        $cookie = Cookie::forget('auth_token', '/', $this->cookieDomain());
-
         return response()->json([
             'status' => 'success',
             'message' => 'Logged out successfully.',
-        ])->withCookie($cookie);
+        ]);
     }
 
     /**
@@ -139,13 +107,10 @@ class AuthController extends Controller
     {
         $request->user()->tokens()->delete();
 
-        // Clear the cookie
-        $cookie = Cookie::forget('auth_token', '/', $this->cookieDomain());
-
         return response()->json([
             'status' => 'success',
             'message' => 'Logged out from all devices.',
-        ])->withCookie($cookie);
+        ]);
     }
 
     /**
@@ -157,6 +122,15 @@ class AuthController extends Controller
             'status' => 'success',
             'user' => $request->user()->load('roles'),
         ]);
+    }
+
+    /**
+     * Alias for /me route
+     */
+    public function me(Request $request)
+    {
+        
+        return $this->user($request);
     }
 
     /**
@@ -240,13 +214,10 @@ class AuthController extends Controller
         // Revoke old token
         $request->user()->currentAccessToken()->delete();
 
-        // Store new token in cookie
-        $cookie = $this->createAuthTokenCookie($token);
-
         return response()->json([
             'status' => 'success',
             'message' => 'Token refreshed.',
             'token' => $token,
-        ])->withCookie($cookie);
+        ]);
     }
 }

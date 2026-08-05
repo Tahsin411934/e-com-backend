@@ -1,23 +1,18 @@
 import { api } from "@/lib/api";
-
-export interface Category {
-  id: number;
-  name: string;
-  slug: string;
-  image?: string;
-  status: string;
-}
-
-export interface CategoryResponse {
-  success: boolean;
-  message: string;
-  data: Category[];
-}
+import type { CategoryResponse, SingleCategoryResponse } from "@/types/category";
 
 export const categoryService = {
   async getAll(): Promise<CategoryResponse> {
     return api<CategoryResponse>("/categories", {
-      // revalidate: 60,
+      revalidate: 60,
+      tags: ["categories"],
+    });
+  },
+
+  async getBySlug(slug: string): Promise<SingleCategoryResponse> {
+    return api<SingleCategoryResponse>(`/categories/${slug}`, {
+      revalidate: 60,
+      tags: [`category-${slug}`],
     });
   },
 };

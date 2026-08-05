@@ -1,7 +1,8 @@
 "use client";
 
+import { useState, useRef, useEffect, useCallback } from "react";
 import Link from "next/link";
-import { Menu, ChevronDown, Package, Search, Grid3X3 } from "lucide-react";
+import { ChevronDown, Package, Grid3X3 } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -15,6 +16,56 @@ import { type Category } from "@/services/category.service";
 interface NavigationBarProps {
   serverItems: NavbarItem[];
   serverCategories: Category[];
+}
+
+// HoverDropdown - opens on hover, closes on mouse leave with delay
+function HoverDropdown({
+  label,
+  children,
+}: {
+  label: React.ReactNode;
+  children: React.ReactNode;
+}) {
+  const [open, setOpen] = useState(false);
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const handleMouseEnter = useCallback(() => {
+    if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    setOpen(true);
+  }, []);
+
+  const handleMouseLeave = useCallback(() => {
+    timeoutRef.current = setTimeout(() => {
+      setOpen(false);
+    }, 150);
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    };
+  }, []);
+
+  return (
+    <div
+      className="relative"
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
+    >
+      {label}
+      {open && (
+        <div
+          onMouseEnter={handleMouseEnter}
+          onMouseLeave={handleMouseLeave}
+          className="absolute left-1/2 top-full -translate-x-1/2 pt-2"
+        >
+          <div className="min-w-[200px] rounded-lg border border-gray-100 bg-white p-2 shadow-xl">
+            {children}
+          </div>
+        </div>
+      )}
+    </div>
+  );
 }
 
 export default function NavigationBar({
@@ -86,14 +137,14 @@ export default function NavigationBar({
                 className="flex cursor-pointer items-center gap-3 rounded-md px-3 py-2.5 text-sm font-semibold text-[var(--color-primary)] transition-colors hover:bg-[#F0FDF4]"
                 role="menuitem"
               >
-                <Search className="h-4 w-4" aria-hidden="true" />
+                <Grid3X3 className="h-4 w-4" aria-hidden="true" />
                 <span>Browse All Categories</span>
               </Link>
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
 
-        {/* Center: Nav Links */}
+        {/* Center: Nav Links - Hover dropdown */}
         <ul className="flex items-center gap-10">
           {navItems.map((item) => {
             const hasChildren = item.children && item.children.length > 0;
@@ -113,51 +164,43 @@ export default function NavigationBar({
 
             return (
               <li key={item.id}>
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
+                <HoverDropdown
+                  label={
                     <button
-                      className="group flex items-center gap-1 text-[15px] font-medium text-[#111827] transition-colors hover:text-[var(--color-primary)] focus:outline-none"
+                      className="group flex cursor-pointer items-center gap-1 text-[15px] font-medium text-[#111827] transition-colors hover:text-[var(--color-primary)] focus:outline-none"
                       aria-expanded="false"
                       aria-haspopup="menu"
                     >
                       {item.name}
                       <ChevronDown className="h-3.5 w-3.5 transition-transform group-hover:rotate-180 group-hover:text-[var(--color-primary)]" aria-hidden="true" />
                     </button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent
-                    align="center"
-                    className="min-w-[200px] border border-gray-100 p-2 shadow-xl"
-                    role="menu"
-                    aria-label={`${item.name} submenu`}
-                  >
-                    {item.children.map((child) => (
-                      <DropdownMenuItem key={child.id} asChild>
-                        <Link
-                          href={`/subnavbar/${child.slug}`}
-                          className="flex cursor-pointer items-center gap-3 rounded-md px-3 py-2.5 text-sm font-medium text-[#374151] transition-colors hover:bg-[#F0FDF4] hover:text-[var(--color-primary)]"
-                          role="menuitem"
-                        >
-                          {child.icon && (
-                            <span className="flex h-7 w-7 items-center justify-center rounded-md bg-gray-100 text-xs text-gray-500" aria-hidden="true">
-                              <i className={child.icon} aria-hidden="true" />
-                            </span>
-                          )}
-                          <span>{child.name}</span>
-                        </Link>
-                      </DropdownMenuItem>
-                    ))}
-                  </DropdownMenuContent>
-                </DropdownMenu>
+                  }
+                >
+                  {item.children.map((child) => (
+                    <Link
+                      key={child.id}
+                      href={`/subnavbar/${child.slug}`}
+                      className="flex cursor-pointer items-center gap-3 rounded-md px-3 py-2.5 text-sm font-medium text-[#374151] transition-colors hover:bg-[#F0FDF4] hover:text-[var(--color-primary)]"
+                    >
+                      {child.icon && (
+                        <span className="flex h-7 w-7 items-center justify-center rounded-md bg-gray-100 text-xs text-gray-500" aria-hidden="true">
+                          <i className={child.icon} aria-hidden="true" />
+                        </span>
+                      )}
+                      <span>{child.name}</span>
+                    </Link>
+                  ))}
+                </HoverDropdown>
               </li>
             );
           })}
         </ul>
 
-        {/* Right: Track Order */}
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
+        {/* Right: Track Order - Hover dropdown */}
+        <HoverDropdown
+          label={
             <button
-              className="flex items-center gap-2 font-medium text-[#111827] transition-colors hover:text-[var(--color-primary)]"
+              className="flex cursor-pointer items-center gap-2 font-medium text-[#111827] transition-colors hover:text-[var(--color-primary)]"
               aria-label="Track order options"
               aria-expanded="false"
               aria-haspopup="menu"
@@ -166,42 +209,27 @@ export default function NavigationBar({
               <span>Track Order</span>
               <ChevronDown className="h-3.5 w-3.5" aria-hidden="true" />
             </button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent
-            align="end"
-            className="min-w-[180px] border border-gray-100 p-2 shadow-xl"
-            role="menu"
-            aria-label="Track order menu"
+          }
+        >
+          <Link
+            href="/order-status"
+            className="flex cursor-pointer items-center rounded-md px-3 py-2 text-sm font-medium text-[#374151] transition-colors hover:bg-[#F0FDF4] hover:text-[var(--color-primary)]"
           >
-            <DropdownMenuItem asChild>
-              <Link
-                href="/order-status"
-                className="cursor-pointer rounded-md px-3 py-2 text-sm font-medium text-[#374151] transition-colors hover:bg-[#F0FDF4] hover:text-[var(--color-primary)]"
-                role="menuitem"
-              >
-                Order Status
-              </Link>
-            </DropdownMenuItem>
-            <DropdownMenuItem asChild>
-              <Link
-                href="/shipping-info"
-                className="cursor-pointer rounded-md px-3 py-2 text-sm font-medium text-[#374151] transition-colors hover:bg-[#F0FDF4] hover:text-[var(--color-primary)]"
-                role="menuitem"
-              >
-                Shipping Info
-              </Link>
-            </DropdownMenuItem>
-            <DropdownMenuItem asChild>
-              <Link
-                href="/returns"
-                className="cursor-pointer rounded-md px-3 py-2 text-sm font-medium text-[#374151] transition-colors hover:bg-[#F0FDF4] hover:text-[var(--color-primary)]"
-                role="menuitem"
-              >
-                Returns
-              </Link>
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+            Order Status
+          </Link>
+          <Link
+            href="/shipping-info"
+            className="flex cursor-pointer items-center rounded-md px-3 py-2 text-sm font-medium text-[#374151] transition-colors hover:bg-[#F0FDF4] hover:text-[var(--color-primary)]"
+          >
+            Shipping Info
+          </Link>
+          <Link
+            href="/returns"
+            className="flex cursor-pointer items-center rounded-md px-3 py-2 text-sm font-medium text-[#374151] transition-colors hover:bg-[#F0FDF4] hover:text-[var(--color-primary)]"
+          >
+            Returns
+          </Link>
+        </HoverDropdown>
       </div>
     </nav>
   );

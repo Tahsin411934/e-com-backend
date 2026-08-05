@@ -3,7 +3,6 @@
 namespace Modules\Frontend\Services;
 
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Modules\Frontend\Models\AnnouncementBar;
 use Yajra\DataTables\DataTables;
@@ -61,9 +60,6 @@ class AnnouncementBarService
                     $message = 'Announcement bar created successfully.';
                 }
 
-                // Clear cache
-                Cache::forget('announcement_bars:active:all');
-
                 return [
                     'status' => 'success',
                     'message' => $message,
@@ -101,9 +97,6 @@ class AnnouncementBarService
             return DB::transaction(function () use ($id) {
                 $bar = AnnouncementBar::findOrFail($id);
                 $bar->delete();
-
-                // Clear cache
-                Cache::forget('announcement_bars:active:all');
 
                 return [
                     'status' => 'success',

@@ -1,4 +1,4 @@
-<header class="h-[60px] bg-white border-b border-blue-300 flex items-center justify-between px-6 flex-shrink-0 z-20">
+<header class="h-[60px] bg-blue-950 border-b border-blue-300 flex items-center justify-between px-6 flex-shrink-0 z-20">
     <button id="collapseBtn"
         class="w-8 h-8 rounded-full border  bg-blue-900 flex items-center justify-center text-gray-100 hover:bg-blue-700 flex-shrink-0 shadow-sm">
         <i class="fas fa-chevron-left text-[15px]" id="collapseIcon"></i>

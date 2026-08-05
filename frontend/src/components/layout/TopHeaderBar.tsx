@@ -7,36 +7,40 @@ interface TopHeaderBarProps {
   serverAnnouncementBars?: AnnouncementBar[];
 }
 
+// Default fallback
+const DEFAULT_BARS: AnnouncementBar[] = [
+  {
+    id: 0,
+    left_text: "🚚 Free Shipping on Orders Over ৳99",
+    center_text: "Summer Sale is Live! Up to 50% OFF 🔥",
+    right_text: "📞 Support: (800) 123-4567",
+    background_color: "#0F1115",
+    text_color: "#ffffff",
+    sort_order: 0,
+    status: "active",
+  },
+];
+
 export default function TopHeaderBar({ serverAnnouncementBars }: TopHeaderBarProps) {
-  const [announcementBars] = useState<AnnouncementBar[]>(serverAnnouncementBars || []);
+
+  const bars =
+    serverAnnouncementBars && serverAnnouncementBars.length > 0
+      ? serverAnnouncementBars
+      : DEFAULT_BARS;
+
   const [currentIndex, setCurrentIndex] = useState(0);
 
-  // Auto-rotate through multiple announcement bars
+  // ২. Auto-rotate effect
   useEffect(() => {
-    if (announcementBars.length <= 1) return;
+    if (bars.length <= 1) return;
 
     const interval = setInterval(() => {
-      setCurrentIndex((prev) => (prev + 1) % announcementBars.length);
+      setCurrentIndex((prev) => (prev + 1) % bars.length);
     }, 5000);
 
     return () => clearInterval(interval);
-  }, [announcementBars.length]);
+  }, [bars.length]);
 
-  // If no data from API, show defaults
-  const defaultBars: AnnouncementBar[] = [
-    {
-      id: 0,
-      left_text: "🚚 Free Shipping on Orders Over ৳99",
-      center_text: "Summer Sale is Live! Up to 50% OFF 🔥",
-      right_text: "📞 Support: (800) 123-4567",
-      background_color: "#0F1115",
-      text_color: "#ffffff",
-      sort_order: 0,
-      status: "active",
-    },
-  ];
-
-  const bars = announcementBars.length > 0 ? announcementBars : defaultBars;
   const currentBar = bars[currentIndex] || bars[0];
 
   return (
@@ -44,7 +48,10 @@ export default function TopHeaderBar({ serverAnnouncementBars }: TopHeaderBarPro
       className="h-8 text-xs transition-colors duration-300"
       role="banner"
       aria-label="Announcement bar"
-      style={{ backgroundColor: currentBar.background_color, color: currentBar.text_color }}
+      style={{
+        backgroundColor: currentBar.background_color,
+        color: currentBar.text_color,
+      }}
     >
       <div className="mx-auto flex h-full max-w-[1200px] items-center justify-between px-4">
         <span className="hidden sm:inline" aria-label="Left announcement">

@@ -1,13 +1,13 @@
 /**
- * Check if user is authenticated (has a token in localStorage).
+ * Check if user is authenticated.
  * If not, redirect to login page preserving the current URL.
  * Returns true if authenticated, false otherwise.
  */
-export function requireAuth(): boolean {
+export function requireAuth(isAuthenticated?: boolean): boolean {
   if (typeof window === "undefined") return false;
 
-  const token = localStorage.getItem("auth_token");
-  if (token) return true;
+  // If auth state is provided and user is authenticated, allow
+  if (isAuthenticated === true) return true;
 
   // Not logged in — redirect to login
   const currentPath = window.location.pathname + window.location.search;

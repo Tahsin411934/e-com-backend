@@ -1,8 +1,11 @@
 import { categoryService, type Category } from "@/services/category.service";
 import { announcementBarService, type AnnouncementBar } from "@/services/announcement-bar.service";
 import { settingsService } from "@/services/settings.service";
-import Navbar from "./Navbar";
+import TopHeaderBar from "./TopHeaderBar";
+import MainHeader from "./MainHeader";
 import NavigationBarServer from "./NavigationBarServer";
+import { cookies } from "next/headers";
+import { buildApiUrl } from "@/lib/api-url";
 
 export interface Settings {
   site_name?: string;
@@ -21,41 +24,39 @@ export interface Settings {
   meta_description?: string;
 }
 
+async function fetchServerUser(): Promise<any> {
+  try {
+    const cookieStore = await cookies();
+    const token = cookieStore.get("token")?.value;
+    if (!token) return null;
+
+    const res = await fetch(buildApiUrl("/api/v1/me"), {
+      method: "GET",
+      headers: { Accept: "application/json", Authorization: `Bearer ${token}` },
+      cache: "no-store",
+    });
+
+    if (!res.ok) return null;
+    const data = await res.json();
+    return data?.user ?? null;
+  } catch {
+    return null;
+  }
+}
+
 export default async function NavbarServer() {
-  let categories: Category[] = [];
-  let announcementBars: AnnouncementBar[] = [];
-  let settings: Settings = {};
-
-  try {
-    const categoryRes = await categoryService.getAll();
-    if (categoryRes.success && categoryRes.data.length > 0) {
-      categories = categoryRes.data.filter((c) => c.status === "active");
-    }
-  } catch {
-    // API unavailable – render empty/default state
-  }
-
-  try {
-    const announcementRes = await announcementBarService.getAll();
-    if (announcementRes.success && announcementRes.data.length > 0) {
-      announcementBars = announcementRes.data;
-    }
-  } catch {
-    // API unavailable – render empty/default state
-  }
-
-  try {
-    const settingsRes = await settingsService.getAll();
-    if (settingsRes.success && settingsRes.data) {
-      settings = settingsRes.data as unknown as Settings;
-    }
-  } catch {
-    // API unavailable – render empty/default state
-  }
+  const [categories, announcementBars, settings, serverUser] = await Promise.all([
+    categoryService.getAll().then((r) => (r.success ? r.data.filter((c: Category) => c.status === "active") : [])).catch(() => [] as Category[]),
+    announcementBarService.getAll().then((r) => (r.success ? r.data : [])).catch(() => [] as AnnouncementBar[]),
+    settingsService.getAll().then((r) => (r.success ? (r.data as unknown as Settings) : {})).catch(() => ({}) as Settings),
+    fetchServerUser(),
+  ]);
 
   return (
-    <Navbar serverCategories={categories} serverAnnouncementBars={announcementBars} serverSettings={settings}>
+    <>
+      <TopHeaderBar serverAnnouncementBars={announcementBars} />
+      <MainHeader serverCategories={categories} serverSettings={settings} serverUser={serverUser} />
       <NavigationBarServer serverCategories={categories} />
-    </Navbar>
+    </>
   );
 }

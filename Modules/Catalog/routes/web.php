@@ -38,6 +38,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // Product Requests
     Route::get('/product-requests', [ProductRequestController::class, 'index'])->name('product-requests.index');
     Route::get('/dataTable/product-requests', [ProductRequestController::class, 'dataTable'])->name('product-requests.dataTable');
+    Route::post('/product-requests', [ProductRequestController::class, 'store'])->name('product-requests.store');
     Route::get('/product-requests/{id}', [ProductRequestController::class, 'show'])->name('product-requests.show');
+    Route::post('/product-requests/{id}', [ProductRequestController::class, 'update'])->name('product-requests.update');
+    Route::delete('/product-requests/{id}', [ProductRequestController::class, 'destroy'])->name('product-requests.destroy');
     Route::post('/product-requests/{id}/status', [ProductRequestController::class, 'updateStatus'])->name('product-requests.status');
 });

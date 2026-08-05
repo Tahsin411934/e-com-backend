@@ -1,168 +1,80 @@
-// ============================================================
-// Auth Server Actions
-// Dual approach:
-// 1. Returns token to client for localStorage
-// 2. Forwards httpOnly Set-Cookie to browser
-// 3. Forwards browser cookies to backend for auth
-// ============================================================
-
-"use server";
+﻿"use server";
 
 import { cookies } from "next/headers";
+import { redirect } from "next/navigation";
 import type {
   AuthFormState,
   PasswordFormState,
   ForgotPasswordFormState,
 } from "@/lib/features/auth/auth.types";
+import { buildApiUrl } from "@/lib/api-url";
 
-const API_BASE_URL = process.env.BACKEND_API_URL || "http://localhost:8000/api/v1";
+const TOKEN_COOKIE_NAME = "token";
 
-/**
- * Make server-to-server API call forwarding browser cookies.
- */
-async function serverFetch<T>(
-  endpoint: string,
-  options: RequestInit = {}
-): Promise<{ data: T; setCookieHeader: string | null }> {
-  const cookieStore = await cookies();
-  const allCookies = cookieStore.toString();
+interface ApiError {
+  status?: string;
+  message?: string;
+  errors?: Record<string, string[]>;
+}
 
-  const response = await fetch(`${API_BASE_URL}${endpoint}`, {
-    ...options,
+async function apiRequest<T>(path: string, init: RequestInit): Promise<T> {
+  const response = await fetch(buildApiUrl(path), {
+    ...init,
     headers: {
       Accept: "application/json",
       "Content-Type": "application/json",
-      ...(allCookies ? { Cookie: allCookies } : {}),
-      ...(options.headers as Record<string, string>),
+      ...(init.headers as Record<string, string>),
     },
+    cache: "no-store",
   });
 
-  const setCookieHeader = response.headers.get("set-cookie");
-  const text = await response.text();
-
-  let data: any;
-  try {
-    data = JSON.parse(text);
-  } catch {
-    data = { message: "Invalid response from server" };
-  }
+  const data = await response.json().catch(() => ({ message: "Invalid response from server" }));
 
   if (!response.ok) {
-    const error = new Error(data.message || "Something went wrong") as Error & {
-      status: number;
+    const error = new Error((data as ApiError).message || "Authentication request failed") as Error & {
+      status?: number;
       errors?: Record<string, string[]>;
     };
     error.status = response.status;
-    error.errors = data.errors;
+    error.errors = (data as ApiError).errors;
     throw error;
   }
 
-  return { data: data as T, setCookieHeader };
+  return data as T;
 }
 
-/**
- * Forward Set-Cookie from backend to browser.
- */
-async function forwardCookies(setCookieHeader: string | null) {
-  if (!setCookieHeader) return;
+async function setTokenCookie(token: string): Promise<void> {
   const cookieStore = await cookies();
-
-  const cookieHeaders = splitCookies(setCookieHeader);
-  for (const cookie of cookieHeaders) {
-    const parsed = parseSetCookie(cookie);
-    if (parsed) {
-      const { name, value, maxAge, path, domain, secure, httpOnly, sameSite } = parsed;
-
-      if (maxAge === 0) {
-        cookieStore.delete(name);
-      } else {
-        cookieStore.set(name, value, {
-          maxAge,
-          path: path || "/",
-          domain,
-          secure,
-          httpOnly,
-          sameSite: sameSite as "strict" | "lax" | "none" | undefined,
-        });
-      }
-    }
-  }
+  cookieStore.set(TOKEN_COOKIE_NAME, token, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "lax",
+    path: "/",
+    maxAge: 60 * 60 * 24 * 7,
+  });
 }
 
-function splitCookies(header: string): string[] {
-  const results: string[] = [];
-  let current = "";
-  let inQuotedPair = false;
-  let i = 0;
-
-  while (i < header.length) {
-    const char = header[i];
-    if (char === '"' && (i === 0 || header[i - 1] !== '\\')) {
-      inQuotedPair = !inQuotedPair;
-      current += char;
-      i++;
-      continue;
-    }
-    if (!inQuotedPair && char === ',') {
-      const afterComma = header.slice(i + 1).trim();
-      if (afterComma.includes('=') && !afterComma.startsWith(' ')) {
-        results.push(current.trim());
-        current = "";
-        i++;
-        continue;
-      }
-    }
-    current += char;
-    i++;
-  }
-  if (current.trim()) results.push(current.trim());
-  return results.length > 0 ? results : [header];
+async function deleteTokenCookie(): Promise<void> {
+  const cookieStore = await cookies();
+  cookieStore.delete(TOKEN_COOKIE_NAME);
 }
 
-function parseSetCookie(cookieString: string): {
-  name: string;
-  value: string;
-  maxAge?: number;
-  path?: string;
-  domain?: string;
-  secure?: boolean;
-  httpOnly?: boolean;
-  sameSite?: string;
-} | null {
-  const parts = cookieString.split(";").map((p) => p.trim());
-  const [nameValue, ...attrs] = parts;
-  if (!nameValue) return null;
-  const eqIndex = nameValue.indexOf("=");
-  if (eqIndex === -1) return null;
-  const name = nameValue.slice(0, eqIndex).trim();
-  const value = nameValue.slice(eqIndex + 1).trim();
-  const result: any = { name, value, secure: false, httpOnly: false };
-
-  for (const attr of attrs) {
-    const [key, ...valParts] = attr.split("=");
-    const val = valParts.join("=").trim();
-    switch (key.toLowerCase()) {
-      case "max-age": const p = parseInt(val, 10); if (!isNaN(p)) result.maxAge = p; break;
-      case "path": result.path = val; break;
-      case "domain": result.domain = val; break;
-      case "secure": result.secure = true; break;
-      case "httponly": result.httpOnly = true; break;
-      case "samesite": result.sameSite = val.toLowerCase(); break;
-    }
-  }
-  return result;
+function isRedirectError(error: unknown): boolean {
+  if (typeof error !== "object" || error === null) return false;
+  const e = error as any;
+  if (e?.digest === "NEXT_REDIRECT") return true;
+  if (e?.code === "NEXT_REDIRECT") return true;
+  if (e?.name === "Redirect" || e?.name === "RedirectError") return true;
+  if (typeof e?.message === "string" && e.message.includes("NEXT_REDIRECT")) return true;
+  return false;
 }
-
-// ============================================================
-// Public Server Actions
-// ============================================================
 
 export async function registerUser(
   prevState: AuthFormState,
   formData: FormData
 ): Promise<AuthFormState> {
   try {
-    const { data, setCookieHeader } = await serverFetch<any>("/register", {
+    const data = await apiRequest<{ status: string; message: string; user?: any; token?: string; access_token?: string }>("/api/register", {
       method: "POST",
       body: JSON.stringify({
         first_name: formData.get("first_name"),
@@ -174,74 +86,88 @@ export async function registerUser(
       }),
     });
 
-    await forwardCookies(setCookieHeader);
+    const token = data.token ?? data.access_token ?? null;
+    if (token) {
+      await setTokenCookie(token);
+    }
 
+    redirect("/dashboard");
     return {
       success: true,
       message: data.message || "Registration successful.",
       user: data.user,
-      token: data.token ?? data.access_token ?? null,
+      token,
     };
   } catch (error: any) {
+    if (isRedirectError(error)) {
+      throw error;
+    }
+
     return {
       success: false,
       message: error.message || "Registration failed.",
       errors: error.errors,
       fieldValues: {
-        first_name: formData.get("first_name") as string,
-        last_name: formData.get("last_name") as string,
-        email: formData.get("email") as string,
-        phone: formData.get("phone") as string,
+        first_name: (formData.get("first_name") as string) || "",
+        last_name: (formData.get("last_name") as string) || "",
+        email: (formData.get("email") as string) || "",
+        phone: (formData.get("phone") as string) || "",
       },
     };
   }
 }
 
-export async function loginUser(
+export async function loginAction(
   prevState: AuthFormState,
   formData: FormData
 ): Promise<AuthFormState> {
   try {
-    const { data, setCookieHeader } = await serverFetch<any>("/login", {
-      method: "POST",
+    const data = await apiRequest<{ status: string; message: string; user?: any; token?: string }>('/login', {
+      method: 'POST',
       body: JSON.stringify({
-        email: formData.get("email"),
-        password: formData.get("password"),
+        email: formData.get('email'),
+        password: formData.get('password'),
       }),
     });
 
-    await forwardCookies(setCookieHeader);
+    if (!data.token) {
+      throw new Error('Authentication token was not returned by the server.');
+    }
+
+    await setTokenCookie(data.token);
 
     return {
       success: true,
-      message: data.message || "Login successful.",
+      message: data.message || 'Login successful.',
       user: data.user,
-      token: data.token ?? data.access_token ?? null,
+      token: data.token,
     };
   } catch (error: any) {
     return {
       success: false,
-      message: error.message || "Login failed.",
+      message: error.message || 'Login failed.',
       errors: error.errors,
       fieldValues: {
-        email: formData.get("email") as string,
+        email: (formData.get('email') as string) || '',
       },
     };
   }
 }
+
+export const loginUser = loginAction;
 
 export async function forgotPasswordAction(
   prevState: ForgotPasswordFormState,
   formData: FormData
 ): Promise<ForgotPasswordFormState> {
   try {
-    const { data } = await serverFetch<any>("/forgot-password", {
-      method: "POST",
-      body: JSON.stringify({ email: formData.get("email") }),
+    const data = await apiRequest<{ status: string; message: string }>('/api/forgot-password', {
+      method: 'POST',
+      body: JSON.stringify({ email: formData.get('email') }),
     });
-    return { success: true, message: data.message || "Reset link sent." };
+    return { success: true, message: data.message || 'Reset link sent.' };
   } catch (error: any) {
-    return { success: false, message: error.message || "Failed.", errors: error.errors };
+    return { success: false, message: error.message || 'Failed.', errors: error.errors };
   }
 }
 
@@ -250,44 +176,77 @@ export async function resetPasswordAction(
   formData: FormData
 ): Promise<PasswordFormState> {
   try {
-    const { data } = await serverFetch<any>("/reset-password", {
-      method: "POST",
+    const data = await apiRequest<{ status: string; message: string }>('/api/reset-password', {
+      method: 'POST',
       body: JSON.stringify({
-        email: formData.get("email"),
-        token: formData.get("token"),
-        password: formData.get("password"),
-        password_confirmation: formData.get("password_confirmation"),
+        email: formData.get('email'),
+        token: formData.get('token'),
+        password: formData.get('password'),
+        password_confirmation: formData.get('password_confirmation'),
       }),
     });
-    return { success: true, message: data.message || "Password reset successful." };
+    return { success: true, message: data.message || 'Password reset successful.' };
   } catch (error: any) {
-    return { success: false, message: error.message || "Failed.", errors: error.errors };
+    return { success: false, message: error.message || 'Failed.', errors: error.errors };
   }
 }
 
-// ============================================================
-// Protected Server Actions
-// ============================================================
-
 export async function logoutUserAction(): Promise<{ success: boolean; message: string }> {
   try {
-    const { setCookieHeader } = await serverFetch<any>("/logout", { method: "POST" });
-    await forwardCookies(setCookieHeader);
-    return { success: true, message: "Logged out." };
-  } catch (error: any) {
-    try { const c = await cookies(); c.delete("auth_token"); } catch (_) {}
-    return { success: true, message: "Logged out." };
+    const token = (await cookies()).get(TOKEN_COOKIE_NAME)?.value;
+    if (token) {
+      await apiRequest<{ status: string; message: string }>('/api/logout', {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+    }
+  } catch {
+    // ignore logout errors
+  } finally {
+    await deleteTokenCookie();
   }
+
+  return { success: true, message: 'Logged out.' };
 }
 
 export async function logoutAllDevicesAction(): Promise<{ success: boolean; message: string }> {
   try {
-    const { setCookieHeader } = await serverFetch<any>("/logout-all", { method: "POST" });
-    await forwardCookies(setCookieHeader);
-    return { success: true, message: "Logged out from all devices." };
-  } catch (error: any) {
-    try { const c = await cookies(); c.delete("auth_token"); } catch (_) {}
-    return { success: true, message: "Logged out." };
+    const token = (await cookies()).get(TOKEN_COOKIE_NAME)?.value;
+    if (token) {
+      await apiRequest<{ status: string; message: string }>('/api/logout-all', {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+    }
+  } catch {
+    // ignore logout errors
+  } finally {
+    await deleteTokenCookie();
+  }
+
+  return { success: true, message: 'Logged out from all devices.' };
+}
+
+export async function logoutAction() {
+  try {
+    const token = (await cookies()).get(TOKEN_COOKIE_NAME)?.value;
+    if (token) {
+      await apiRequest<{ status: string; message: string }>('/api/logout', {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+    }
+  } catch {
+    // ignore logout errors
+  } finally {
+    await deleteTokenCookie();
+    redirect('/login');
   }
 }
 
@@ -296,17 +255,17 @@ export async function changePasswordAction(
   formData: FormData
 ): Promise<PasswordFormState> {
   try {
-    const { data } = await serverFetch<any>("/change-password", {
-      method: "POST",
+    const data = await apiRequest<{ status: string; message: string }>('/api/change-password', {
+      method: 'POST',
       body: JSON.stringify({
-        current_password: formData.get("current_password"),
-        password: formData.get("password"),
-        password_confirmation: formData.get("password_confirmation"),
+        current_password: formData.get('current_password'),
+        password: formData.get('password'),
+        password_confirmation: formData.get('password_confirmation'),
       }),
     });
-    return { success: true, message: data.message || "Password changed." };
+    return { success: true, message: data.message || 'Password changed.' };
   } catch (error: any) {
-    return { success: false, message: error.message || "Failed.", errors: error.errors };
+    return { success: false, message: error.message || 'Failed.', errors: error.errors };
   }
 }
 
@@ -316,9 +275,16 @@ export async function getAuthenticatedUserAction(): Promise<{
   message?: string;
 }> {
   try {
-    const { data } = await serverFetch<any>("/user", { method: "GET" });
+    const token = (await cookies()).get(TOKEN_COOKIE_NAME)?.value;
+    console.log('Fetching authenticated user with token:', token);
+    const data = await apiRequest<{ status: string; user?: any }>('/me', {
+      method: 'GET',
+      headers: {
+        Authorization: `Bearer ${token || ''}`,
+      },
+    });
     return { success: true, user: data.user };
-  } catch (error: any) {
-    return { success: false, message: "Not authenticated." };
+  } catch {
+    return { success: false, message: 'Not authenticated.' };
   }
 }

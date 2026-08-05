@@ -18,7 +18,15 @@ class SettingsApiController extends Controller
         $flat = [];
         foreach ($settings as $group => $items) {
             foreach ($items as $item) {
-                $flat[$item['key']] = $item['value'];
+                $value = $item['value'];
+
+                // Convert relative storage paths (e.g. /storage/settings/xxx.png)
+                // to full absolute URLs so the frontend can display the image.
+                if ($item['type'] === 'image' && $value && !str_starts_with($value, 'http')) {
+                    $value = asset(ltrim($value, '/'));
+                }
+
+                $flat[$item['key']] = $value;
             }
         }
 

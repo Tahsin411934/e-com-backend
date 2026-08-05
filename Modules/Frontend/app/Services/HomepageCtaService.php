@@ -4,7 +4,6 @@ namespace Modules\Frontend\Services;
 
 use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
-use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Modules\Frontend\Models\HomepageCta;
@@ -61,6 +60,19 @@ class HomepageCtaService
                     unset($data['image']);
                 }
 
+                // Handle banner_image upload
+                if (isset($data['banner_image']) && $data['banner_image'] instanceof UploadedFile) {
+                    if ($ctaId) {
+                        $oldCta = HomepageCta::find($ctaId);
+                        if ($oldCta && $oldCta->banner_image) {
+                            Storage::disk('public')->delete($oldCta->banner_image);
+                        }
+                    }
+                    $data['banner_image'] = $data['banner_image']->store('homepage-ctas/banners', 'public');
+                } else {
+                    unset($data['banner_image']);
+                }
+
                 if ($ctaId) {
                     $cta = HomepageCta::findOrFail($ctaId);
                     $cta->update($data);
@@ -92,6 +104,9 @@ class HomepageCtaService
             if ($cta->image) {
                 $ctaArray['image_url'] = asset('storage/' . $cta->image);
             }
+            if ($cta->banner_image) {
+                $ctaArray['banner_image_url'] = asset('storage/' . $cta->banner_image);
+            }
 
             return [
                 'status' => 'success',
@@ -113,6 +128,9 @@ class HomepageCtaService
 
                 if ($cta->image) {
                     Storage::disk('public')->delete($cta->image);
+                }
+                if ($cta->banner_image) {
+                    Storage::disk('public')->delete($cta->banner_image);
                 }
 
                 $cta->delete();

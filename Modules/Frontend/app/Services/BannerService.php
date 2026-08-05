@@ -3,7 +3,6 @@
 namespace Modules\Frontend\Services;
 
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Modules\Frontend\Models\Banner;
@@ -71,9 +70,6 @@ class BannerService
                     $message = 'Banner created successfully.';
                 }
 
-                // Flush API cache
-                $this->flushBannerCache($bannerId);
-
                 return [
                     'status' => 'success',
                     'message' => $message,
@@ -124,9 +120,6 @@ class BannerService
 
                 $banner->delete();
 
-                // Flush API cache
-                $this->flushBannerCache();
-
                 return [
                     'status' => 'success',
                     'message' => 'Banner deleted successfully.',
@@ -140,24 +133,4 @@ class BannerService
         }
     }
 
-    /**
-     * Clear banner-related cache entries.
-     *
-     * @param int|null $bannerId Optional ID to also clear per-item cache keys.
-     */
-    private function flushBannerCache(?int $bannerId = null): void
-    {
-        $statuses = ['active', 'inactive', 'all'];
-        $perPages = ['all', '10', '25', '50', '100'];
-
-        foreach ($statuses as $status) {
-            foreach ($perPages as $perPage) {
-                Cache::forget("banners:{$status}:{$perPage}");
-            }
-        }
-
-        if ($bannerId) {
-            Cache::forget("banner:{$bannerId}");
-        }
-    }
 }

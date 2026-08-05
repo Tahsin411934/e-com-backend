@@ -194,6 +194,19 @@
                                 <option value="private" {{ $product?->visibility === 'private' ? 'selected' : '' }}>Private</option>
                             </x-form-select>
                             <x-form-input label="Published At" name="published_at" id="published_at" type="datetime-local" value="{{ $product?->published_at?->format('Y-m-d\TH:i') ?? '' }}" />
+                            <div class="pt-2">
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Show on Homepage</label>
+                                <div class="flex items-center gap-6">
+                                    <label class="inline-flex items-center gap-2 cursor-pointer">
+                                        <input type="radio" name="is_homepage" value="1" {{ $product?->is_homepage ? 'checked' : '' }} class="w-4 h-4 text-blue-600 border-gray-300 focus:ring-blue-500">
+                                        <span class="text-sm text-gray-700">Yes</span>
+                                    </label>
+                                    <label class="inline-flex items-center gap-2 cursor-pointer">
+                                        <input type="radio" name="is_homepage" value="0" {{ !$product?->is_homepage ? 'checked' : '' }} class="w-4 h-4 text-blue-600 border-gray-300 focus:ring-blue-500">
+                                        <span class="text-sm text-gray-700">No</span>
+                                    </label>
+                                </div>
+                            </div>
                         </div>
                     </div>
 
@@ -494,9 +507,38 @@
             $item.fadeOut(200, function() { $(this).remove(); });
         });
 
-        // Image handling
+        // Image handling - preview on selection
         $('#images').on('change', function() {
-            // ... (keep existing image handling)
+            const files = this.files;
+            if (!files || files.length === 0) return;
+            
+            const $container = $('#imagePreviewContainer');
+            
+            // Remove "no images" placeholder if exists
+            $container.find('.no-images-msg').remove();
+            
+            Array.from(files).forEach((file, index) => {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const isFirst = $container.find('.preview-card').length === 0;
+                    const card = `
+                        <div class="relative group preview-card bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden ${isFirst ? 'ring-2 ring-indigo-500' : ''}">
+                            <img src="${e.target.result}" class="h-40 w-full object-cover" />
+                            ${isFirst ? '<div class="absolute top-1 left-1 bg-indigo-600 text-white text-[10px] font-bold px-2 py-0.5 rounded-full shadow">Main</div>' : ''}
+                            <button type="button" class="remove-preview absolute top-1 right-1 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs opacity-0 group-hover:opacity-100 transition-opacity shadow-lg">
+                                <i class="fas fa-times"></i>
+                            </button>
+                            <div class="p-2 bg-gray-50 border-t border-gray-100 flex items-center justify-center gap-2">
+                                <input type="radio" name="main_image_id" value="new_${index}" ${isFirst ? 'checked' : ''} class="w-3.5 h-3.5 text-indigo-600 focus:ring-indigo-500 cursor-pointer">
+                                <span class="text-[10px] font-medium text-gray-500">Main</span>
+                            </div>
+                        </div>`;
+                    $container.append(card);
+                };
+                reader.readAsDataURL(file);
+            });
+            
+            // Don't reset input - files must remain in FormData for submission
         });
 
         $(document).on('change', 'input[name="main_image_id"]', function() {

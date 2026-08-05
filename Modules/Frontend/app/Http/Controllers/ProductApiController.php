@@ -5,17 +5,11 @@ namespace Modules\Frontend\Http\Controllers;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Cache;
 use Modules\Catalog\Models\Product;
 use Modules\Frontend\Http\Resources\ProductDetailResource;
 
 class ProductApiController extends Controller
 {
-    /**
-     * Cache TTL in seconds (default: 1 hour).
-     */
-    protected int $cacheTtl = 3600;
-
     /**
      * Get a single product by slug for the product detail page.
      *
@@ -33,82 +27,66 @@ class ProductApiController extends Controller
      * @return JsonResponse
      *
      * @urlParam slug string required The product slug (e.g. "iphone-15-pro-max")
-     * @queryParam refresh bool Force refresh cache by passing 1. Default: 0
      */
     public function show(string $slug, Request $request): JsonResponse
     {
-        $refresh = $request->query('refresh', 0) == 1;
-        $cacheKey = 'product_detail:' . $slug;
+        $product = Product::where('slug', $slug)
+            ->where('status', 'active')
+            ->where('visibility', 'public')
+            ->with([
+                'brand',
+                'categories',
+                'images' => function ($q) {
+                    $q->orderBy('sort_order');
+                },
+                'variants' => function ($q) {
+                    $q->where('status', 'active')->with(['inventoryStocks', 'options']);
+                },
+                'variants.images',
+                'reviews' => function ($q) {
+                    $q->where('status', 'approved')->with('user');
+                },
+            ])
+            ->first();
 
-        if ($refresh) {
-            Cache::forget($cacheKey);
-        }
-
-        $data = Cache::remember($cacheKey, now()->addSeconds($this->cacheTtl), function () use ($slug) {
-            $product = Product::where('slug', $slug)
-                ->where('status', 'active')
-                ->where('visibility', 'public')
-                ->with([
-                    'brand',
-                    'categories',
-                    'images' => function ($q) {
-                        $q->orderBy('sort_order');
-                    },
-                    'variants' => function ($q) {
-                        $q->where('status', 'active')->with(['inventoryStocks', 'options']);
-                    },
-                    'variants.images',
-                    'reviews' => function ($q) {
-                        $q->where('status', 'approved')->with('user');
-                    },
-                ])
-                ->first();
-
-            if (!$product) {
-                return null;
-            }
-
-            // Fetch related products separately (same categories, excluding current)
-            $categoryIds = $product->categories->pluck('id')->toArray();
-            $relatedIds = [];
-
-            if (!empty($categoryIds)) {
-                $relatedIds = \Illuminate\Support\Facades\DB::table('product_categories')
-                    ->whereIn('category_id', $categoryIds)
-                    ->where('product_id', '!=', $product->id)
-                    ->pluck('product_id')
-                    ->unique()
-                    ->shuffle()
-                    ->take(8)
-                    ->toArray();
-            }
-
-            $relatedProducts = collect();
-            if (!empty($relatedIds)) {
-                $relatedProducts = Product::whereIn('id', $relatedIds)
-                    ->where('status', 'active')
-                    ->where('visibility', 'public')
-                    ->with(['images', 'variants' => fn($q) => $q->where('status', 'active')])
-                    ->get();
-            }
-
-            // Manually set relatedProducts for the resource
-            $product->setRelation('relatedProducts', $relatedProducts);
-
-            return new ProductDetailResource($product);
-        });
-
-        if (!$data) {
+        if (!$product) {
             return response()->json([
                 'success' => false,
                 'message' => 'Product not found.',
             ], 404);
         }
 
+        // Fetch related products separately (same categories, excluding current)
+        $categoryIds = $product->categories->pluck('id')->toArray();
+        $relatedIds = [];
+
+        if (!empty($categoryIds)) {
+            $relatedIds = \Illuminate\Support\Facades\DB::table('product_categories')
+                ->whereIn('category_id', $categoryIds)
+                ->where('product_id', '!=', $product->id)
+                ->pluck('product_id')
+                ->unique()
+                ->shuffle()
+                ->take(8)
+                ->toArray();
+        }
+
+        $relatedProducts = collect();
+        if (!empty($relatedIds)) {
+            $relatedProducts = Product::whereIn('id', $relatedIds)
+                ->where('status', 'active')
+                ->where('visibility', 'public')
+                ->with(['images', 'variants' => fn($q) => $q->where('status', 'active')])
+                ->get();
+        }
+
+        // Manually set relatedProducts for the resource
+        $product->setRelation('relatedProducts', $relatedProducts);
+
         return response()->json([
             'success' => true,
             'message' => 'Product retrieved successfully.',
-            'data'    => $data,
+            'data'    => new ProductDetailResource($product),
         ]);
     }
 }

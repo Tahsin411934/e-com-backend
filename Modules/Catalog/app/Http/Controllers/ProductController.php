@@ -105,6 +105,7 @@ class ProductController extends Controller
         $subnavbarItems = $product->navbar_item_id
             ? SubnavbarItem::where('navbar_item_id', $product->navbar_item_id)->where('status', 'active')->orderBy('sort_order')->orderBy('name')->get()
             : collect();
+       
         return view('catalog::products.edit', compact('product', 'brands', 'categories', 'units', 'sizes', 'taxRates', 'navbarItems', 'subnavbarItems'));
     }
 

@@ -1,8 +1,3 @@
-// ============================================================
-// Auth Service - API calls for authentication
-// Dual auth: httpOnly cookie (server actions) + Bearer token (client-side)
-// ============================================================
-
 import type {
   AuthSuccessResponse,
   UserResponse,
@@ -14,73 +9,25 @@ import type {
   ResetPasswordRequest,
   ChangePasswordRequest,
 } from "@/lib/features/auth/auth.types";
+import { buildApiUrl } from "@/lib/api-url";
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api/v1";
-
-/**
- * Get auth token from localStorage (client-side only).
- */
-export function getClientToken(): string | null {
-  if (typeof window === "undefined") return null;
-  try {
-    return localStorage.getItem("auth_token");
-  } catch {
-    return null;
-  }
-}
-
-/**
- * Store auth token in localStorage.
- */
-export function setClientToken(token: string): void {
-  if (typeof window === "undefined") return;
-  try {
-    localStorage.setItem("auth_token", token);
-  } catch {
-    // ignore
-  }
-}
-
-/**
- * Remove auth token from localStorage.
- */
-export function removeClientToken(): void {
-  if (typeof window === "undefined") return;
-  try {
-    localStorage.removeItem("auth_token");
-  } catch {
-    // ignore
-  }
-}
-
-/**
- * Base fetch wrapper with Bearer token auth.
- * Sends httpOnly cookie AND Bearer token for dual auth.
- */
 async function authFetch<T>(
   endpoint: string,
   options: RequestInit = {}
 ): Promise<T> {
-  const token = getClientToken();
-
   const headers: Record<string, string> = {
     Accept: "application/json",
     "Content-Type": "application/json",
     ...(options.headers as Record<string, string>),
   };
 
-  // Add Bearer token if available (primary auth for client-side calls)
-  if (token) {
-    headers["Authorization"] = `Bearer ${token}`;
-  }
-
-  const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+  const response = await fetch(buildApiUrl(endpoint), {
     ...options,
     credentials: "include",
     headers,
   });
 
-  const data = await response.json();
+  const data = await response.json().catch(() => ({ message: "Invalid response from server" }));
 
   if (!response.ok) {
     const error = new Error(data.message || "Something went wrong") as Error & {
@@ -96,39 +43,48 @@ async function authFetch<T>(
 }
 
 export async function registerUser(data: RegisterRequest): Promise<AuthSuccessResponse> {
-  return authFetch<AuthSuccessResponse>("/register", {
+  return authFetch<AuthSuccessResponse>("/api/register", {
     method: "POST",
     body: JSON.stringify(data),
   });
 }
 
 export async function loginUser(data: LoginRequest): Promise<AuthSuccessResponse> {
-  return authFetch<AuthSuccessResponse>("/login", {
+  return authFetch<AuthSuccessResponse>("/api/login", {
     method: "POST",
     body: JSON.stringify(data),
   });
 }
 
 export async function forgotPassword(data: ForgotPasswordRequest): Promise<MessageResponse> {
-  return authFetch<MessageResponse>("/forgot-password", {
+  return authFetch<MessageResponse>("/api/forgot-password", {
     method: "POST",
     body: JSON.stringify(data),
   });
 }
 
 export async function resetPassword(data: ResetPasswordRequest): Promise<MessageResponse> {
-  return authFetch<MessageResponse>("/reset-password", {
+  return authFetch<MessageResponse>("/api/reset-password", {
     method: "POST",
     body: JSON.stringify(data),
   });
 }
 
 export async function getAuthenticatedUser(): Promise<UserResponse> {
-  return authFetch<UserResponse>("/user", { method: "GET" });
+  // Call internal Next.js API route which proxies to backend using server-side cookie
+  const res = await fetch("/api/me", { method: "GET", credentials: "include" });
+  const data = await res.json().catch(() => ({ message: "Invalid response" }));
+  if (!res.ok) {
+    const err = new Error(data.message || "Not authenticated") as Error & { status?: number };
+    err.status = res.status;
+    throw err;
+  }
+
+  return data as UserResponse;
 }
 
 export async function logoutUser(): Promise<LogoutResponse> {
-  return authFetch<LogoutResponse>("/logout", { method: "POST" });
+  return authFetch<LogoutResponse>("/api/logout", { method: "POST" });
 }
 
 export async function logoutAllDevices(): Promise<LogoutResponse> {

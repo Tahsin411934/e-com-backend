@@ -4,6 +4,7 @@ use Illuminate\Support\Facades\Route;
 use Modules\Frontend\Http\Controllers\FrontendController;
 use Modules\Frontend\Http\Controllers\NavbarApiController;
 use Modules\Frontend\Http\Controllers\BannerApiController;
+use Modules\Frontend\Http\Controllers\BrandApiController;
 use Modules\Frontend\Http\Controllers\CategoryApiController;
 use Modules\Frontend\Http\Controllers\ProductSearchApiController;
 use Modules\Frontend\Http\Controllers\HomeApiController;
@@ -32,10 +33,16 @@ Route::prefix('v1')->group(function () {
     Route::get('/banners', [BannerApiController::class, 'index'])->name('api.banners.index');
     Route::get('/banners/{id}', [BannerApiController::class, 'show'])->name('api.banners.show');
 
+    // Brands API - publicly accessible (for store frontend filter dropdowns)
+    Route::get('/brands', [BrandApiController::class, 'index'])->name('api.brands.index');
+
     // Category API - publicly accessible (for store frontend)
     // Returns all categories (parent + child) in one flat list.
     // Frontend can build hierarchy using the parent_id field.
     Route::get('/categories', [CategoryApiController::class, 'index'])->name('api.categories.index');
+
+    // Single Category by Slug API - returns category info without products
+    Route::get('/categories/{slug}', [CategoryApiController::class, 'show'])->name('api.categories.show');
 
     // Category Products API - single category with paginated products
     Route::get('/categories/{slug}/products', [CategoryApiController::class, 'products'])->name('api.categories.products');

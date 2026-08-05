@@ -1,10 +1,9 @@
 "use client";
 
-import { useActionState, useEffect, useRef } from "react";
-import { useRouter } from "next/navigation";
+import { useActionState, useEffect } from "react";
 import Link from "next/link";
+import { toast } from "react-toastify";
 import { registerUser } from "@/app/actions/auth";
-import { setClientToken } from "@/services/auth.service";
 import type { AuthFormState } from "@/lib/features/auth/auth.types";
 
 const initialState: AuthFormState = {
@@ -13,19 +12,15 @@ const initialState: AuthFormState = {
 };
 
 export default function RegisterPage() {
-  const router = useRouter();
-  const formRef = useRef<HTMLFormElement>(null);
-
   const [state, formAction, pending] = useActionState(registerUser, initialState);
 
   useEffect(() => {
-    if (state.success && state.user) {
-      if (state.token) {
-        setClientToken(state.token);
-      }
-      router.push("/");
+    if (state.message && !state.success) {
+      toast.error(state.message, { toastId: "register-error" });
+    } else if (state.success) {
+      toast.success(state.message, { toastId: "register-success" });
     }
-  }, [state.success, state.user, state.token, router]);
+  }, [state.message, state.success]);
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
@@ -38,18 +33,7 @@ export default function RegisterPage() {
           <p className="mt-2 text-sm text-gray-600">Join Shopio and start shopping</p>
         </div>
 
-        <form ref={formRef} action={formAction} className="mt-8 space-y-5 bg-white p-8 rounded-xl shadow-sm border border-gray-100" noValidate>
-          {state.message && !state.success && (
-            <div className="rounded-lg bg-red-50 border border-red-200 p-4">
-              <p className="text-sm text-red-700">{state.message}</p>
-            </div>
-          )}
-          {state.success && (
-            <div className="rounded-lg bg-green-50 border border-green-200 p-4">
-              <p className="text-sm text-green-700">{state.message} Redirecting...</p>
-            </div>
-          )}
-
+        <form action={formAction} className="mt-8 space-y-5 bg-white p-8 rounded-xl shadow-sm border border-gray-100" noValidate>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label htmlFor="first_name" className="block text-sm font-medium text-gray-700 mb-1">First name</label>

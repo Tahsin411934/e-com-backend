@@ -68,7 +68,7 @@ export default function CategorySection({ category, products }: CategorySectionP
               {products.map((product) => (
                 <CarouselItem
                   key={product.id}
-                  className="basis-1/2 md:basis-1/3 lg:basis-1/4 pl-3"
+                  className="shrink-0 basis-1/2 md:basis-1/3 lg:basis-[20%] pl-3"
                 >
                   <ProductCard product={product} />
                 </CarouselItem>

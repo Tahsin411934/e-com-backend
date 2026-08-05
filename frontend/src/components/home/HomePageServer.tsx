@@ -6,7 +6,7 @@ export default async function HomePageServer() {
 
   try {
     sections = await homeService.getHomePageData({
-      limit_categories: 6,
+      limit_categories: 15,
       limit_products: 8,
     });
   } catch (err) {

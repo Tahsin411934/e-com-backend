@@ -21,7 +21,9 @@ class HomeProductResource extends JsonResource
         if (str_starts_with($clean, 'storage/')) {
             $clean = substr($clean, 8);
         }
-        return $clean ? asset('storage/' . $clean) : null;
+        $url = $clean ? asset('storage/' . $clean) : null;
+        // Add cache-busting parameter so browser always fetches latest image
+        return $url ? $url . '?v=' . filemtime(storage_path('app/public/' . $clean)) : null;
     }
 
     public function toArray(Request $request): array

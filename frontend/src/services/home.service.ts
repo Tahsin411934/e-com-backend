@@ -1,57 +1,5 @@
 import { api } from "@/lib/api";
-
-// ===== Response Types =====
-
-export interface HomeApiResponse {
-  success: boolean;
-  message: string;
-  data: HomeSection[];
-}
-
-export type HomeSection = CategorySection | CtaSection;
-
-// ===== Category Section (type: "category_section") =====
-
-export interface CategorySection {
-  type: "category_section";
-  category: {
-    id: number;
-    name: string;
-    slug: string;
-    description: string | null;
-    image: string | null;
-  };
-  products: HomeProduct[];
-}
-
-export interface HomeProduct {
-  id: number;
-  name: string;
-  slug: string;
-  short_description: string | null;
-  main_image: string | null;
-  price: number | null;
-  product_type: string;
-}
-
-// ===== CTA Section (type: "cta_section") =====
-
-export interface CtaSection {
-  type: "cta_section";
-  id: number;
-  title: string;
-  subtitle: string | null;
-  description: string | null;
-  image: string | null;
-  button_text: string;
-  button_link: string;
-  background_color: string;
-  text_color: string;
-  button_color: string;
-  button_text_color: string;
-}
-
-// ===== Service =====
+import type { HomeApiResponse, HomeSection } from "@/types/home";
 
 export const homeService = {
   async getHomePageData(params?: {
@@ -67,12 +15,12 @@ export const homeService = {
     const res = await api<HomeApiResponse>(
       endpoint,
       {
-        revalidate: 3600, // ISR: revalidate every hour
+        revalidate: 0,
+        cache: "no-store",
         tags: ["home-page"],
       }
     );
 
-    // Log a small sample of the response to help debug missing images
     try {
       console.log("homeService.getHomePageData: response sample", JSON.stringify(res.data?.slice?.(0,1), null, 2));
     } catch (e) {

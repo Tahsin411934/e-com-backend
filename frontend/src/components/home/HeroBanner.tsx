@@ -43,7 +43,7 @@ export default function HeroBanner({ banners }: HeroBannerProps) {
           <CarouselContent>
             {banners.map((banner, index) => (
               <CarouselItem key={banner.id}>
-                <div className="relative flex min-h-[420px] items-center overflow-hidden rounded-2xl md:min-h-[500px]">
+                <div className="relative flex min-h-[320px] items-center overflow-hidden rounded-2xl md:min-h-[500px]">
                   {/* Full Background Image */}
                   {banner.banner_image && (
                     <Image
@@ -121,7 +121,7 @@ export default function HeroBanner({ banners }: HeroBannerProps) {
                       {banner.secondary_btn && (
                         <Link
                           href={banner.secondary_btn_url || '/shop'}
-                          className="inline-flex h-12 items-center rounded-full border px-7 text-sm font-semibold shadow-lg backdrop-blur-sm transition-all hover:opacity-90"
+                          className="hidden md:inline-flex h-12 items-center rounded-full border px-7 text-sm font-semibold shadow-lg backdrop-blur-sm transition-all hover:opacity-90"
                           style={{
                             backgroundColor: banner.secondary_btn_color || '#ffffff',
                             borderColor: banner.secondary_btn_color || 'rgba(255,255,255,0.4)',

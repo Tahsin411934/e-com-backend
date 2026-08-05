@@ -3,7 +3,6 @@
 namespace Modules\Frontend\Services;
 
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Modules\Frontend\Models\NavbarItem;
 use Modules\Frontend\Models\SubnavbarItem;
@@ -83,10 +82,6 @@ class NavbarService
                     $message = 'Navbar item created successfully.';
                 }
 
-                // Flush API cache so frontend gets fresh data
-                // Pass item ID for update so per-item cache is cleared too
-                $this->flushNavbarCache($itemId);
-
                 return [
                     'status' => 'success',
                     'message' => $message,
@@ -110,22 +105,14 @@ class NavbarService
                 $data['status'] = $data['status'] ?? 'active';
                 unset($data['subnavbar_item_id']);
 
-                // Keep track of parent navbar for cache flushing
-                $parentNavbarId = null;
-
                 if ($itemId) {
                     $item = SubnavbarItem::findOrFail($itemId);
-                    $parentNavbarId = $item->navbar_item_id;
                     $item->update($data);
                     $message = 'Subnavbar item updated successfully.';
                 } else {
                     $item = SubnavbarItem::create($data);
-                    $parentNavbarId = $item->navbar_item_id;
                     $message = 'Subnavbar item created successfully.';
                 }
-
-                // Flush API cache — pass parent navbar ID so per-item cache is cleared
-                $this->flushNavbarCache($parentNavbarId);
 
                 return [
                     'status' => 'success',
@@ -182,9 +169,6 @@ class NavbarService
                 $item = NavbarItem::findOrFail($id);
                 $item->delete();
 
-                // Flush API cache
-                $this->flushNavbarCache();
-
                 return [
                     'status' => 'success',
                     'message' => 'Navbar item deleted successfully.',
@@ -203,11 +187,7 @@ class NavbarService
         try {
             return DB::transaction(function () use ($id) {
                 $item = SubnavbarItem::findOrFail($id);
-                $parentNavbarId = $item->navbar_item_id;
                 $item->delete();
-
-                // Flush API cache — pass parent navbar ID so per-item cache is cleared
-                $this->flushNavbarCache($parentNavbarId);
 
                 return [
                     'status' => 'success',
@@ -231,30 +211,4 @@ class NavbarService
             ->toArray();
     }
 
-    /**
-     * Clear only navbar-related cache entries.
-     * Call this after any create/update/delete operation.
-     * This is more targeted than Cache::flush() which clears everything.
-     *
-     * @param int|null $navbarItemId Optional ID to also clear per-item cache keys.
-     */
-    private function flushNavbarCache(?int $navbarItemId = null): void
-    {
-        // Clear paginated list cache keys (all status/per_page combinations)
-        $statuses = ['active', 'inactive', 'all'];
-        $perPages = ['all', '10', '25', '50', '100'];
-
-        foreach ($statuses as $status) {
-            foreach ($perPages as $perPage) {
-                Cache::forget("navbar_items:{$status}:{$perPage}");
-            }
-        }
-
-        // Clear per-item cache keys if an ID is provided
-        if ($navbarItemId) {
-            Cache::forget("navbar_item:{$navbarItemId}");
-            Cache::forget("navbar_item_children:{$navbarItemId}");
-            Cache::forget("subnavbar_items:{$navbarItemId}");
-        }
-    }
 }

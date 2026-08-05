@@ -1,14 +1,8 @@
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api/v1";
+import { buildApiUrl } from "@/lib/api-url";
 
 interface ApiOptions extends RequestInit {
   revalidate?: number;
   tags?: string[];
-}
-
-function getToken(): string | null {
-  if (typeof window === "undefined") return null;
-  try { return localStorage.getItem("auth_token"); }
-  catch { return null; }
 }
 
 export async function api<T>(
@@ -16,7 +10,6 @@ export async function api<T>(
   options: ApiOptions = {}
 ): Promise<T> {
   const { revalidate, tags, ...fetchOptions } = options;
-  const token = getToken();
 
   const headers: Record<string, string> = {
     Accept: "application/json",
@@ -24,17 +17,17 @@ export async function api<T>(
     ...(fetchOptions.headers as Record<string, string>),
   };
 
-  // Send Bearer token from localStorage for auth
-  if (token) {
-    headers["Authorization"] = `Bearer ${token}`;
-  }
-
-  const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+  const shouldBypassCache = revalidate === 0 || fetchOptions.cache === "no-store";
+// console.log("api called with endpoint:", buildApiUrl(endpoint));
+  const response = await fetch(buildApiUrl(endpoint), {
     ...fetchOptions,
     credentials: "include",
     headers,
-    next: revalidate ? { revalidate, tags } : undefined,
-    cache: revalidate ? undefined : "no-store",
+    ...(shouldBypassCache
+      ? { cache: "no-store" }
+      : revalidate !== undefined
+        ? { next: { revalidate, ...(tags ? { tags } : {}) } }
+        : { cache: "no-store" }),
   });
 
   if (!response.ok) {

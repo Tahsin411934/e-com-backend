@@ -1,30 +1,11 @@
 import { api } from "@/lib/api";
-
-export interface Banner {
-  id: number;
-  smtag?: string;
-  title?: string;
-  subtitle?: string;
-  primary_btn?: string;
-  primary_btn_url?: string;
-  primary_btn_color?: string;
-  primary_btn_text_color?: string;
-  secondary_btn?: string;
-  secondary_btn_url?: string;
-  secondary_btn_color?: string;
-  secondary_btn_text_color?: string;
-  banner_image?: string;
-}
-
-export interface BannerResponse {
-  success: boolean;
-  data: Banner[];
-}
+import type { BannerResponse } from "@/types/banner";
 
 export const bannerService = {
   async getAll(): Promise<BannerResponse> {
     return api<BannerResponse>("/banners", {
       revalidate: 60,
+      tags: ["banners"],
     });
   },
 };

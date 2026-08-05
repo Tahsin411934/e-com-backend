@@ -1,21 +1,5 @@
 import { api } from "@/lib/api";
-
-export interface Product {
-  id: number;
-  name: string;
-  slug: string;
-  price: number;
-  sale_price?: number;
-  thumbnail?: string;
-  category?: string;
-  stock_status?: string;
-}
-
-export interface ProductSearchResponse {
-  success: boolean;
-  message: string;
-  data: Product[];
-}
+import type { ProductSearchResponse } from "@/types/product";
 
 export const productService = {
   async search(
@@ -29,7 +13,7 @@ export const productService = {
     }
 
     return api<ProductSearchResponse>(`/products/search?${params.toString()}`, {
-      revalidate: 0, // never cache search results
+      revalidate: 0,
     });
   },
 };

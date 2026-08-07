@@ -47,7 +47,7 @@
 
                 <!-- Name -->
                 <div class="leading-tight text-left">
-                    <p class="text-[11px] text-gray-400 dark:text-gray-500 font-medium">Admin</p>
+
                     <p class="text-[13px] text-gray-800 dark:text-gray-200 font-semibold">
                         {{ Auth::user()->name }}
                     </p>

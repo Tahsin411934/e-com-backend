@@ -1,0 +1,12 @@
+{
+    "Cart": true,
+    "Catalog": true,
+    "Frontend": true,
+    "Identity": true,
+    "Inventory": true,
+    "Order": true,
+    "Pos": true,
+    "Reviews": true,
+    "Shipping": true,
+    "Store": true
+}

@@ -17,7 +17,7 @@ echo -e "${GREEN}  E-Commerce Deployment Script${NC}"
 echo -e "${GREEN}========================================${NC}"
 
 # Project directory
-PROJECT_DIR="/var/www/html/ecommerce"
+PROJECT_DIR="/var/www/e-com-backend"
 cd "$PROJECT_DIR"
 
 # 1. Set proper permissions

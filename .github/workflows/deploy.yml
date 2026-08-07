@@ -51,9 +51,9 @@ jobs:
           username: ${{ secrets.EC2_USERNAME }}
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
-            sudo mkdir -p /var/www/html/ecommerce
-            sudo chown -R $USER:www-data /var/www/html/ecommerce
-            sudo chmod -R 775 /var/www/html/ecommerce
+            sudo mkdir -p /var/www/e-com-backend
+            sudo chown -R $USER:www-data /var/www/e-com-backend
+            sudo chmod -R 775 /var/www/e-com-backend
 
       - name: Deploy to EC2
         uses: appleboy/scp-action@v0.1.7
@@ -62,7 +62,7 @@ jobs:
           username: ${{ secrets.EC2_USERNAME }}
           key: ${{ secrets.EC2_SSH_KEY }}
           source: "."
-          target: "/var/www/html/ecommerce"
+          target: "/var/www/e-com-backend"
           strip_components: 0
           exclude: |
             .git
@@ -84,6 +84,6 @@ jobs:
           username: ${{ secrets.EC2_USERNAME }}
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
-            cd /var/www/html/ecommerce
+            cd /var/www/e-com-backend
             chmod +x deploy.sh
             ./deploy.sh

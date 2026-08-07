@@ -44,6 +44,17 @@ jobs:
       - name: Build frontend assets
         run: npm run build
 
+      - name: Create target directory on EC2
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USERNAME }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script: |
+            sudo mkdir -p /var/www/html/ecommerce
+            sudo chown -R $USER:www-data /var/www/html/ecommerce
+            sudo chmod -R 775 /var/www/html/ecommerce
+
       - name: Deploy to EC2
         uses: appleboy/scp-action@v0.1.7
         with:

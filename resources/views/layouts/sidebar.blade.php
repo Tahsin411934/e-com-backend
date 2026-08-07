@@ -40,7 +40,7 @@
     {{ request()->routeIs('dashboard') ? 'bg-[#1e3a8a] text-white active' : 'text-gray-500 hover:bg-gray-50 hover:text-gray-800' }}"
             data-label="Dashboard">
             <i class="fas fa-th-large w-4 text-center flex-shrink-0 text-base"></i>
-            <span class="nav-label font-bold">Dashboard</span>
+            <span class="nav-label font-bold">Dashboard U</span>
         </a>
 
         <!-- Identity & Access - Only for Super Admin and Admin -->

@@ -119,6 +119,14 @@
 
     /* Dark mode overrides */
     .dark .dashboard-card { background: #1f2937 !important; border-color: #374151 !important; }
+    .dark .bg-white.shadow-md.rounded-xl { background: #1f2937 !important; border-color: #374151 !important; }
+    .dark .bg-gray-50\/50 { background-color: #1f2937 !important; }
+    .dark table { color: #e5e7eb !important; }
+    .dark table thead th { color: #9ca3af !important; }
+    .dark table tbody td { color: #e5e7eb !important; }
+    .dark table tbody tr { border-color: #374151 !important; }
+    .dark table tbody tr:hover { background-color: #374151 !important; }
+    .dark .divide-y.divide-gray-100 > * { border-color: #374151 !important; }
     .dark .bg-white { background-color: #1f2937 !important; }
     .dark .bg-gray-50 { background-color: #111827 !important; }
     .dark .bg-gray-100 { background-color: #1f2937 !important; }

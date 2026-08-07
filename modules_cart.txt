@@ -1,7 +1,0 @@
-app
-config
-database
-resources
-routes
-Services
-tests

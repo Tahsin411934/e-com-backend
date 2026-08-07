@@ -1,12 +1,12 @@
 <x-app-layout>
     <x-slot name="header">
         <h2 class="font-semibold text-xl text-gray-800 leading-tight">
-            {{ __('Subnavbar Items') }} @if(request('navbar_item_id')) - <span id="parentNavName" class="text-blue-600"></span> @endif
+            {{ __('Subnavbar Items') }} @if(request('navbar_item_id')) - <span id="parentNavName" class="text-primary"></span> @endif
         </h2>
     </x-slot>
 
     <div class="mb-4">
-        <a href="{{ route('frontend.nav-items.index') }}" class="text-sm text-blue-600 hover:text-blue-800">
+        <a href="{{ route('frontend.nav-items.index') }}" class="text-sm text-primary hover:text-primary-hover">
             <i class="fas fa-arrow-left mr-1"></i> Back to Navbar Items
         </a>
     </div>

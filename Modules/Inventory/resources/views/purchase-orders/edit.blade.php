@@ -3,7 +3,7 @@
         <div class="flex items-center justify-between mb-5">
             <div>
                 <nav class="flex items-center gap-2 text-sm text-gray-500 mb-1">
-                    <a href="{{ route('purchase-orders.index') }}" class="hover:text-blue-600 transition-colors">Purchase Orders</a>
+                    <a href="{{ route('purchase-orders.index') }}" class="hover:text-primary transition-colors">Purchase Orders</a>
                     <i class="fas fa-chevron-right text-[10px]"></i>
                     <span class="text-gray-800 font-medium">Edit: {{ $purchase_order->po_number }}</span>
                 </nav>
@@ -23,7 +23,7 @@
             <div class="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
                 <div class="px-6 py-4 border-b border-gray-100 bg-gray-50/50">
                     <h2 class="text-lg font-semibold text-gray-800 flex items-center gap-2">
-                        <i class="fas fa-info-circle text-blue-600"></i> Order Information
+                        <i class="fas fa-info-circle text-primary"></i> Order Information
                     </h2>
                 </div>
                 <div class="p-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -56,7 +56,7 @@
                         <label class="block text-sm font-medium text-gray-700 mb-1">Status</label>
                         <span class="px-3 py-1.5 inline-block rounded-full text-xs font-medium
                             {{ $purchase_order->status == 'draft' ? 'bg-gray-100 text-gray-700' : '' }}
-                            {{ $purchase_order->status == 'ordered' ? 'bg-blue-100 text-blue-700' : '' }}
+                            {{ $purchase_order->status == 'ordered' ? 'bg-primary-light text-primary' : '' }}
                             {{ $purchase_order->status == 'partially_received' ? 'bg-yellow-100 text-yellow-700' : '' }}
                             {{ $purchase_order->status == 'received' ? 'bg-green-100 text-green-700' : '' }}
                             {{ $purchase_order->status == 'cancelled' ? 'bg-red-100 text-red-700' : '' }}">
@@ -146,9 +146,9 @@
                                 <span class="text-gray-600">Discount:</span>
                                 <span class="font-semibold text-gray-800" id="discountDisplay">$0.00</span>
                             </div>
-                            <div class="flex justify-between items-center py-3 bg-blue-50 px-3 rounded-lg mt-2">
-                                <span class="text-lg font-bold text-blue-900">Grand Total:</span>
-                                <span class="text-2xl font-bold text-blue-600" id="grandTotal">$0.00</span>
+                            <div class="flex justify-between items-center py-3 bg-primary-light px-3 rounded-lg mt-2">
+                                <span class="text-lg font-bold text-primary">Grand Total:</span>
+                                <span class="text-2xl font-bold text-primary" id="grandTotal">$0.00</span>
                             </div>
                         </div>
                     </div>
@@ -163,14 +163,14 @@
                     </h2>
                 </div>
                 <div class="p-6">
-                    <textarea name="notes" id="notes" rows="3" class="w-full rounded-lg border border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm" placeholder="Internal notes...">{{ $purchase_order->notes }}</textarea>
+                    <textarea name="notes" id="notes" rows="3" class="w-full rounded-lg border border-gray-300 shadow-sm focus:border-primary focus:ring-primary text-sm" placeholder="Internal notes...">{{ $purchase_order->notes }}</textarea>
                 </div>
             </div>
 
             <!-- Submit -->
             <div class="flex items-center justify-end gap-3 bg-white rounded-xl border border-gray-200 shadow-sm px-6 py-4">
                 <a href="{{ route('purchase-orders.index') }}" class="px-5 py-2.5 text-sm font-medium text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-lg transition">Cancel</a>
-                <button type="submit" id="saveBtn" class="px-6 py-2.5 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition flex items-center gap-2 shadow-sm">
+                <button type="submit" id="saveBtn" class="px-6 py-2.5 text-sm font-medium text-white bg-primary hover:bg-primary rounded-lg transition flex items-center gap-2 shadow-sm">
                     <i class="fas fa-save"></i> <span id="submitText">Update Purchase Order</span>
                 </button>
             </div>

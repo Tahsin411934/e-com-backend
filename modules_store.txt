@@ -1,4 +1,0 @@
-app
-Database
-Resources
-Routes

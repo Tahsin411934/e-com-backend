@@ -3,7 +3,7 @@
         <div class="flex items-center justify-between mb-5">
             <div>
                 <nav class="flex items-center gap-2 text-sm text-gray-500 mb-1">
-                    <a href="{{ route('purchase-orders.index') }}" class="hover:text-blue-600 transition-colors">Purchase Orders</a>
+                    <a href="{{ route('purchase-orders.index') }}" class="hover:text-primary transition-colors">Purchase Orders</a>
                     <i class="fas fa-chevron-right text-[10px]"></i>
                     <span class="text-gray-800 font-medium">Create New</span>
                 </nav>
@@ -19,7 +19,7 @@
             <div class="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
                 <div class="px-6 py-4 border-b border-gray-100 bg-gray-50/50">
                     <h2 class="text-lg font-semibold text-gray-800 flex items-center gap-2">
-                        <i class="fas fa-info-circle text-blue-600"></i> Order Information
+                        <i class="fas fa-info-circle text-primary"></i> Order Information
                     </h2>
                 </div>
                 <div class="p-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -121,13 +121,13 @@
                     </h2>
                 </div>
                 <div class="p-6">
-                    <textarea name="notes" id="notes" rows="3" class="w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm" placeholder="Internal notes..."></textarea>
+                    <textarea name="notes" id="notes" rows="3" class="w-full rounded-lg border-gray-300 shadow-sm focus:border-primary focus:ring-primary text-sm" placeholder="Internal notes..."></textarea>
                 </div>
             </div>
 
             <div class="flex items-center justify-end gap-3 bg-white rounded-xl border border-gray-200 shadow-sm px-6 py-4 sticky bottom-4">
                 <a href="{{ route('purchase-orders.index') }}" class="px-5 py-2.5 text-sm font-medium text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-lg transition">Cancel</a>
-                <button type="submit" id="saveBtn" class="px-6 py-2.5 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition flex items-center gap-2 shadow-sm">
+                <button type="submit" id="saveBtn" class="px-6 py-2.5 text-sm font-medium text-white bg-primary hover:bg-primary rounded-lg transition flex items-center gap-2 shadow-sm">
                     <i class="fas fa-save"></i> <span id="submitText">Save Purchase Order</span>
                 </button>
             </div>
@@ -288,10 +288,10 @@
                         '<span class="text-xs text-gray-500 font-mono">' + escapeHtml(item.sk) + '</span>' +
                     '</td>' +
                     '<td class="py-2 px-2">' +
-                        '<input type="number" class="iqty w-20 text-right rounded border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm" value="' + (item.qt || 1) + '" min="1" data-index="' + i + '">' +
+                        '<input type="number" class="iqty w-20 text-right rounded border-gray-300 shadow-sm focus:border-primary focus:ring-primary text-sm" value="' + (item.qt || 1) + '" min="1" data-index="' + i + '">' +
                     '</td>' +
                     '<td class="py-2 px-2">' +
-                        '<input type="number" class="icst w-24 text-right rounded border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm" value="' + c.toFixed(2) + '" step="0.01" min="0" data-index="' + i + '">' +
+                        '<input type="number" class="icst w-24 text-right rounded border-gray-300 shadow-sm focus:border-primary focus:ring-primary text-sm" value="' + c.toFixed(2) + '" step="0.01" min="0" data-index="' + i + '">' +
                     '</td>' +
                     '<td class="py-2 px-2 text-right font-medium item-subtotal">$' + (c * (item.qt || 1)).toFixed(2) + '</td>' +
                     '<td class="py-2 px-2 text-center">' +
@@ -601,9 +601,9 @@
         
         // Add focus/blur effects for better UX
         $('.iqty, .icst').on('focus', function() {
-            $(this).addClass('border-blue-500 ring-2 ring-blue-200');
+            $(this).addClass('border-primary ring-2 ring-primary-light');
         }).on('blur', function() {
-            $(this).removeClass('border-blue-500 ring-2 ring-blue-200');
+            $(this).removeClass('border-primary ring-2 ring-primary-light');
         });
     });
     </script>

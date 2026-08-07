@@ -30,7 +30,7 @@
             <div class="mb-4">
                 <label for="size_sizes" class="block text-sm font-medium text-gray-700 mb-2">Sizes <span class="text-xs text-gray-400">(comma separated)</span></label>
                 <input type="text" name="sizes" id="size_sizes" placeholder="e.g. S, M, L, XL, XXL"
-                    class="w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm" required />
+                    class="w-full rounded-lg border-gray-300 shadow-sm focus:border-primary focus:ring-primary text-sm" required />
                 <p class="text-xs text-gray-400 mt-1">Enter sizes separated by commas</p>
             </div>
             <div class="mb-4">

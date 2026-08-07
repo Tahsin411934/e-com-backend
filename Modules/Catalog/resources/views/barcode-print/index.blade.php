@@ -6,7 +6,7 @@
             <p class="text-sm text-gray-500 mt-0.5">Search a product, its variants load below. All pre-selected. Deselect any you don't want.</p>
         </div>
         <button id="printBarcodes" disabled
-            class="inline-flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-blue-600 to-blue-700 text-white text-sm font-semibold rounded-lg shadow-sm hover:from-blue-700 hover:to-blue-800 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-150">
+            class="inline-flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-primary to-primary-hover text-white text-sm font-semibold rounded-lg shadow-sm hover:from-primary-hover hover:to-primary-hover disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-150">
             <i class="fas fa-print text-xs"></i> Print Selected
         </button>
     </div>
@@ -23,7 +23,7 @@
                         <div class="relative">
                             <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-xs"></i>
                             <input type="text" id="searchInput" placeholder="Type to search..."
-                                class="w-full pl-9 pr-3 py-2.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500" autocomplete="off">
+                                class="w-full pl-9 pr-3 py-2.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary" autocomplete="off">
                             <div id="autocompleteDropdown" class="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-50 hidden max-h-64 overflow-y-auto"></div>
                         </div>
                     </div>
@@ -56,7 +56,7 @@
                     <h3 class="text-xs font-semibold text-gray-700 uppercase tracking-wider">Selected</h3>
                 </div>
                 <div class="p-4 text-center">
-                    <div id="selectedCount" class="text-3xl font-bold text-blue-600">0</div>
+                    <div id="selectedCount" class="text-3xl font-bold text-primary">0</div>
                     <p class="text-xs text-gray-500 mt-1">variants</p>
                     <button id="clearSelection" class="mt-2 text-xs text-red-500 hover:text-red-700 font-medium hidden">
                         <i class="fas fa-times mr-1"></i> Clear All
@@ -97,18 +97,18 @@
         <div class="xl:col-span-9">
             <div id="productsContainer" class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
                 <div id="emptyState" class="flex flex-col items-center justify-center py-16 px-6">
-                    <div class="w-20 h-20 bg-blue-50 rounded-full flex items-center justify-center mb-4">
-                        <i class="fas fa-qrcode text-3xl text-blue-300"></i>
+                    <div class="w-20 h-20 bg-primary-light rounded-full flex items-center justify-center mb-4">
+                        <i class="fas fa-qrcode text-3xl text-primary-light"></i>
                     </div>
                     <h3 class="text-lg font-semibold text-gray-700 mb-1">Search for a Product</h3>
                     <p class="text-sm text-gray-400">Search and click a product to see its variants</p>
                 </div>
 
                 <div id="productsList" class="hidden">
-                    <div id="selectedProductInfo" class="px-5 py-3 bg-blue-50 border-b border-blue-100 flex items-center gap-3"></div>
+                    <div id="selectedProductInfo" class="px-5 py-3 bg-primary-light border-b border-primary-light flex items-center gap-3"></div>
                     <div class="flex items-center justify-between px-5 py-3 bg-gray-50 border-b border-gray-200">
                         <div class="flex items-center gap-3">
-                            <input type="checkbox" id="selectAll" class="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 cursor-pointer">
+                            <input type="checkbox" id="selectAll" class="w-4 h-4 rounded border-gray-300 text-primary focus:ring-primary cursor-pointer">
                             <label for="selectAll" class="text-sm font-medium text-gray-700 cursor-pointer select-none">Select All</label>
                         </div>
                         <span id="resultCount" class="text-xs text-gray-500 bg-white px-2.5 py-1 rounded-full border border-gray-200"></span>
@@ -123,11 +123,11 @@
 <div id="selectionBar" class="fixed bottom-0 left-52 right-0 bg-white border-t border-gray-200 shadow-lg px-6 py-3 hidden z-40">
     <div class="max-w-7xl mx-auto flex items-center justify-between">
         <div>
-            <span class="text-sm font-semibold text-blue-700"><span id="selectedCountBar">0</span> variants selected</span>
+            <span class="text-sm font-semibold text-primary"><span id="selectedCountBar">0</span> variants selected</span>
         </div>
         <div class="flex items-center gap-3">
             <button id="clearSelectionBottom" class="text-sm text-gray-500 hover:text-red-600 font-medium">Clear</button>
-            <button id="printBarcodesBottom" class="inline-flex items-center gap-2 px-5 py-2 bg-gradient-to-r from-blue-600 to-blue-700 text-white text-sm font-semibold rounded-lg shadow-sm hover:from-blue-700 hover:to-blue-800">
+            <button id="printBarcodesBottom" class="inline-flex items-center gap-2 px-5 py-2 bg-gradient-to-r from-primary to-primary-hover text-white text-sm font-semibold rounded-lg shadow-sm hover:from-primary-hover hover:to-primary-hover">
                 <i class="fas fa-print text-xs"></i> Print
             </button>
         </div>
@@ -152,7 +152,7 @@ $(document).ready(function() {
                 const dd = $('#autocompleteDropdown'); dd.empty();
                 if (!data.length) { dd.addClass('hidden'); return; }
                 data.forEach(p => {
-                    dd.append(`<div class="px-4 py-2.5 hover:bg-blue-50 cursor-pointer border-b border-gray-50 flex items-center gap-3 autocomplete-item" data-id="${p.id}">
+                    dd.append(`<div class="px-4 py-2.5 hover:bg-primary-light cursor-pointer border-b border-gray-50 flex items-center gap-3 autocomplete-item" data-id="${p.id}">
                         <i class="fas fa-box text-gray-300 text-xs"></i>
                         <div><div class="text-sm font-medium text-gray-800">${p.name}</div>${p.brand ? `<div class="text-xs text-gray-400">${p.brand}</div>` : ''}</div>
                     </div>`);
@@ -182,12 +182,12 @@ $(document).ready(function() {
             success: function(products) {
                 if (products.length) {
                     $('#emptyState').addClass('hidden'); $('#productsList').removeClass('hidden');
-                    $('#selectedProductInfo').html(`<i class="fas fa-list text-blue-500"></i><span class="text-sm text-blue-700">Click a product below to see its variants</span>`);
+                    $('#selectedProductInfo').html(`<i class="fas fa-list text-primary"></i><span class="text-sm text-primary">Click a product below to see its variants</span>`);
                     $('#resultCount').text(`${products.length} product(s)`);
                     $('#productItems').empty();
                     products.forEach(p => {
                         $('#productItems').append(`
-                            <div class="flex items-center gap-4 px-5 py-4 hover:bg-blue-50 cursor-pointer select-product" data-id="${p.id}">
+                            <div class="flex items-center gap-4 px-5 py-4 hover:bg-primary-light cursor-pointer select-product" data-id="${p.id}">
                                 <i class="fas fa-box text-gray-300"></i>
                                 <div class="flex-1"><span class="text-sm font-semibold text-gray-800">${p.name}</span>${p.brand ? `<span class="text-xs bg-gray-100 text-gray-500 px-2 py-0.5 rounded-full ml-2">${p.brand.name}</span>` : ''}</div>
                                 <i class="fas fa-chevron-right text-gray-300 text-xs"></i>
@@ -209,7 +209,7 @@ $(document).ready(function() {
         selectedVariants.clear();
         $.get(`/barcode-print/variants/${productId}`, function(data) {
             $('#emptyState').addClass('hidden'); $('#productsList').removeClass('hidden');
-            $('#selectedProductInfo').html(`<i class="fas fa-box text-blue-500"></i><span class="text-sm font-semibold text-blue-800">${data.name}</span>${data.brand ? `<span class="text-xs bg-blue-100 text-blue-500 px-2 py-0.5 rounded-full ml-2">${data.brand.name}</span>` : ''}<span class="text-xs bg-blue-100 text-blue-600 px-2 py-0.5 rounded-full ml-auto">${data.variants.length} variant(s)</span>`);
+            $('#selectedProductInfo').html(`<i class="fas fa-box text-primary"></i><span class="text-sm font-semibold text-primary-hover">${data.name}</span>${data.brand ? `<span class="text-xs bg-primary-light text-primary px-2 py-0.5 rounded-full ml-2">${data.brand.name}</span>` : ''}<span class="text-xs bg-primary-light text-primary px-2 py-0.5 rounded-full ml-auto">${data.variants.length} variant(s)</span>`);
             renderVariants(data.variants);
         });
     }
@@ -224,8 +224,8 @@ $(document).ready(function() {
             selectedVariants.set(id, { variant_id: id, copies });
             
             $('#productItems').append(`
-                <div class="flex items-center gap-4 px-5 py-3.5 hover:bg-gray-50 bg-blue-50/50">
-                    <input type="checkbox" class="variant-checkbox w-4 h-4 rounded border-gray-300 text-blue-600" checked data-id="${id}">
+                <div class="flex items-center gap-4 px-5 py-3.5 hover:bg-gray-50 bg-primary-light/50">
+                    <input type="checkbox" class="variant-checkbox w-4 h-4 rounded border-gray-300 text-primary" checked data-id="${id}">
                     <div class="flex-1 min-w-0">
                         <div class="flex items-center gap-2">
                             <span class="text-sm font-semibold text-gray-800">${v.name}</span>
@@ -258,10 +258,10 @@ $(document).ready(function() {
         const id = parseInt($(this).data('id'));
         if ($(this).is(':checked')) {
             selectedVariants.set(id, { variant_id: id, copies: parseInt($(this).closest('.flex').find('.copies-input').val()) || 1 });
-            $(this).closest('.flex').addClass('bg-blue-50/50');
+            $(this).closest('.flex').addClass('bg-primary-light/50');
         } else {
             selectedVariants.delete(id);
-            $(this).closest('.flex').removeClass('bg-blue-50/50');
+            $(this).closest('.flex').removeClass('bg-primary-light/50');
         }
         updateSelection();
     });
@@ -278,7 +278,7 @@ $(document).ready(function() {
 
     $('#clearSelection, #clearSelectionBottom').click(function() {
         selectedVariants.clear();
-        $('.variant-checkbox').prop('checked', false).closest('.flex').removeClass('bg-blue-50/50');
+        $('.variant-checkbox').prop('checked', false).closest('.flex').removeClass('bg-primary-light/50');
         $('#selectAll').prop('checked', false);
         updateSelection();
     });

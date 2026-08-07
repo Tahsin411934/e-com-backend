@@ -5,7 +5,7 @@
     'maxWidth' => 'max-w-lg',
     'submitBtnId' => 'saveBtn',
     'submitBtnText' => 'Save Changes',
-    'submitBtnColor' => 'bg-blue-900 hover:bg-blue-700',
+    'submitBtnColor' => 'bg-primary hover:bg-primary',
     'submitOnClick' => 'saveForm()'
 ])
 
@@ -17,7 +17,7 @@
 <div id="{{ e($id) }}" data-mode="add"
     class="fixed right-0 top-0 h-screen w-full {{ e($maxWidth) }} bg-white dark:bg-gray-800 shadow-2xl z-50 flex flex-col transform translate-x-full transition-transform duration-300 ease-in-out">
 
-    <div class="px-6 py-5 border-b dark:border-gray-700 bg-gradient-to-r from-blue-50 to-blue-100 dark:from-gray-700 dark:to-gray-800 flex justify-between items-center">
+    <div class="px-6 py-5 border-b dark:border-gray-700 bg-gradient-to-r from-primary-light to-primary-light dark:from-gray-700 dark:to-gray-800 flex justify-between items-center">
         <h2 class="text-2xl font-bold text-gray-800 dark:text-gray-100" id="drawerTitle">{{ e($title) }}</h2>
 
         <button type="button" onclick="closeGlobalDrawer('{{ $id }}', '{{ $overlayId }}')"

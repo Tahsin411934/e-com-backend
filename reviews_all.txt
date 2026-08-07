@@ -1,2 +1,0 @@
-E:\ecommerce-backend\main-project (2)\main-project\Modules\Reviews\app\Http
-E:\ecommerce-backend\main-project (2)\main-project\Modules\Reviews\app\Http\Controllers

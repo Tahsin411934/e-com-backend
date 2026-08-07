@@ -18,7 +18,7 @@
     <div
         class="flex flex-col sm:flex-row sm:items-center justify-between px-6 py-4 border-b border-gray-200 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-800 gap-4">
         <div class="flex items-center space-x-2.5">
-            <i class="{{ $icon }} text-blue-600 dark:text-blue-400 text-lg"></i>
+            <i class="{{ $icon }} text-primary text-lg"></i>
             <span class="font-bold text-gray-800 dark:text-gray-200 tracking-tight text-base">{{ $title }}</span>
         </div>
 
@@ -26,12 +26,12 @@
 
             @if ($buttonLink)
                 <a href="{{ $buttonLink }}"
-                    class="bg-blue-900 hover:bg-blue-700 text-white px-4 py-2 rounded-lg shadow-sm flex items-center gap-2 transition-all duration-200 text-sm font-medium whitespace-nowrap active:scale-95">
+                    class="bg-primary hover:bg-primary text-white px-4 py-2 rounded-lg shadow-sm flex items-center gap-2 transition-all duration-200 text-sm font-medium whitespace-nowrap active:scale-95">
                     <i class="fa fa-plus-circle"></i> {{ $buttonText }}
                 </a>
             @elseif ($buttonId)
                 <button id="{{ $buttonId }}"
-                    class="bg-blue-900 hover:bg-blue-700 text-white px-4 py-2 rounded-lg shadow-sm flex items-center gap-2 transition-all duration-200 text-sm font-medium whitespace-nowrap active:scale-95">
+                    class="bg-primary hover:bg-primary text-white px-4 py-2 rounded-lg shadow-sm flex items-center gap-2 transition-all duration-200 text-sm font-medium whitespace-nowrap active:scale-95">
                     <i class="fa fa-plus-circle"></i> {{ $buttonText }}
                 </button>
             @endif
@@ -102,7 +102,7 @@
                     },
                     {
                         extend: 'colvis',
-                        text: '<i class="fa-solid fa-table-columns mr-1.5 text-blue-500"></i> Columns',
+                        text: '<i class="fa-solid fa-table-columns mr-1.5 text-primary"></i> Columns',
                         className: 'inline-flex items-center px-3 py-1.5 bg-white border border-gray-200 text-gray-700 text-xs font-semibold rounded-lg hover:bg-gray-50 hover:border-gray-300 transition duration-150 shadow-sm'
                     },
                 ];
@@ -178,7 +178,7 @@
         border: 1px solid #ced5df !important;
     }
 
-    /* Dark mode overrides for DataTable */
+    /* Dark mode overrides - same specificity as light mode */
     .dark #{{ $id }} tbody tr:nth-child(even) {
         background-color: #1f2937 !important;
     }
@@ -192,7 +192,7 @@
     }
 
     .dark #{{ $id }} tbody tr:hover {
-        background-color: #374151 !important;
+        background-color: #4b5563 !important;
     }
 
     .dark #{{ $id }} thead th {
@@ -204,73 +204,6 @@
     .dark #{{ $id }} tbody td {
         color: #e5e7eb !important;
         border: 1px solid #374151 !important;
-    }
-
-    .dark .dataTables_filter input {
-        border: 1px solid #4b5563;
-        background-color: #1f2937;
-        color: #e5e7eb;
-    }
-
-    .dark .dataTables_filter input:focus {
-        border-color: #3b82f6;
-        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
-    }
-
-    .dark .dataTables_length select {
-        border: 1px solid #4b5563;
-        background-color: #1f2937;
-        color: #e5e7eb;
-    }
-
-    .dark .dataTables_length select option {
-        background-color: #1f2937;
-        color: #e5e7eb;
-    }
-
-    .dark .dataTables_info {
-        color: #9ca3af !important;
-    }
-
-    .dark .dataTables_paginate .paginate_button {
-        color: #9ca3af !important;
-        border-color: #4b5563 !important;
-        background: #1f2937 !important;
-    }
-
-    .dark .dataTables_paginate .paginate_button:hover {
-        color: #e5e7eb !important;
-        background: #374151 !important;
-    }
-
-    .dark .dataTables_paginate .paginate_button.current {
-        color: #fff !important;
-        background: var(--primary-color) !important;
-        border-color: var(--primary-color) !important;
-    }
-
-    .dark .dataTables_wrapper .dataTables_length,
-    .dark .dataTables_wrapper .dataTables_filter,
-    .dark .dataTables_wrapper .dataTables_info,
-    .dark .dataTables_wrapper .dataTables_paginate {
-        color: #9ca3af !important;
-    }
-
-    .dark .dt-buttons .btn,
-    .dark .dt-buttons button {
-        background-color: #1f2937 !important;
-        border-color: #4b5563 !important;
-        color: #e5e7eb !important;
-    }
-
-    .dark .dt-buttons .btn:hover,
-    .dark .dt-buttons button:hover {
-        background-color: #374151 !important;
-    }
-
-    .dark .dataTables_processing {
-        background-color: #1f2937 !important;
-        color: #e5e7eb !important;
     }
 
     .dataTables_filter input {

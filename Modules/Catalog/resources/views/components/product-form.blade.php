@@ -18,7 +18,7 @@
         <div class="flex items-center justify-between mb-5">
             <div>
                 <nav class="flex items-center gap-2 text-sm text-gray-500 mb-1">
-                    <a href="{{ route('products.index') }}" class="hover:text-blue-600 transition-colors">Products</a>
+                    <a href="{{ route('products.index') }}" class="hover:text-primary transition-colors">Products</a>
                     <i class="fas fa-chevron-right text-[10px]"></i>
                     <span class="text-gray-800 font-medium">{{ $isEdit ? 'Edit' : 'Create New' }}</span>
                 </nav>
@@ -39,7 +39,7 @@
                     <div class="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
                         <div class="px-6 py-4 border-b border-gray-100 bg-gray-50/50">
                             <h2 class="text-lg font-semibold text-gray-800 flex items-center gap-2">
-                                <i class="fas fa-info-circle text-blue-600"></i> Basic Information
+                                <i class="fas fa-info-circle text-primary"></i> Basic Information
                             </h2>
                         </div>
                         <div class="p-6 space-y-5">
@@ -56,7 +56,7 @@
                             </div>
                             <div>
                                 <label for="description" class="block text-sm font-medium text-gray-700 mb-2">Full Description</label>
-                                <textarea name="description" id="description" rows="8" class="w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm" placeholder="Detailed product description...">{{ $product?->description ?? '' }}</textarea>
+                                <textarea name="description" id="description" rows="8" class="w-full rounded-lg border-gray-300 shadow-sm focus:border-primary focus:ring-primary text-sm" placeholder="Detailed product description...">{{ $product?->description ?? '' }}</textarea>
                             </div>
                         </div>
                     </div>
@@ -70,7 +70,7 @@
                         </div>
                         <div class="p-6">
                             <div class="flex items-center gap-4 mb-4">
-                                <label for="images" class="inline-flex items-center gap-2 px-5 py-2.5 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg cursor-pointer transition active:scale-95 shadow-sm">
+                                <label for="images" class="inline-flex items-center gap-2 px-5 py-2.5 text-sm font-medium text-white bg-primary hover:bg-primary rounded-lg cursor-pointer transition active:scale-95 shadow-sm">
                                     <i class="fas fa-upload"></i> Upload Images
                                 </label>
                                 <span class="text-xs text-gray-400">JPG, PNG, WebP up to 5MB each</span>
@@ -150,7 +150,7 @@
                             </x-form-select>
                             <div>
                                 <label for="category_ids" class="block text-sm font-medium text-gray-700 mb-2">Categories</label>
-                                <select name="category_ids[]" id="category_ids" multiple class="w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm" size="5">
+                                <select name="category_ids[]" id="category_ids" multiple class="w-full rounded-lg border-gray-300 shadow-sm focus:border-primary focus:ring-primary text-sm" size="5">
                                     @foreach ($categories as $category)
                                         <option value="{{ $category->id }}" {{ $isEdit && $product?->categories->contains($category->id) ? 'selected' : '' }}>{{ $category->name }}</option>
                                     @endforeach
@@ -198,11 +198,11 @@
                                 <label class="block text-sm font-medium text-gray-700 mb-2">Show on Homepage</label>
                                 <div class="flex items-center gap-6">
                                     <label class="inline-flex items-center gap-2 cursor-pointer">
-                                        <input type="radio" name="is_homepage" value="1" {{ $product?->is_homepage ? 'checked' : '' }} class="w-4 h-4 text-blue-600 border-gray-300 focus:ring-blue-500">
+                                        <input type="radio" name="is_homepage" value="1" {{ $product?->is_homepage ? 'checked' : '' }} class="w-4 h-4 text-primary border-gray-300 focus:ring-primary">
                                         <span class="text-sm text-gray-700">Yes</span>
                                     </label>
                                     <label class="inline-flex items-center gap-2 cursor-pointer">
-                                        <input type="radio" name="is_homepage" value="0" {{ !$product?->is_homepage ? 'checked' : '' }} class="w-4 h-4 text-blue-600 border-gray-300 focus:ring-blue-500">
+                                        <input type="radio" name="is_homepage" value="0" {{ !$product?->is_homepage ? 'checked' : '' }} class="w-4 h-4 text-primary border-gray-300 focus:ring-primary">
                                         <span class="text-sm text-gray-700">No</span>
                                     </label>
                                 </div>
@@ -216,7 +216,7 @@
                             <h2 class="text-lg font-semibold text-gray-800 flex items-center gap-2">
                                 <i class="fas fa-code-branch text-cyan-600"></i> Variants
                             </h2>
-                            <button type="button" id="btnAddVariant" class="text-sm text-blue-600 hover:text-blue-800 font-medium flex items-center gap-1">
+                            <button type="button" id="btnAddVariant" class="text-sm text-primary hover:text-primary-hover font-medium flex items-center gap-1">
                                 <i class="fas fa-plus-circle"></i> Add Variant
                             </button>
                         </div>
@@ -233,11 +233,11 @@
                                         <div class="grid grid-cols-2 gap-3 mb-3">
                                             <div>
                                                 <label class="block text-xs font-medium text-gray-600 mb-1">SKU *</label>
-                                                <input type="text" name="variants[{{ $vIdx }}][sku]" value="{{ $v->sku }}" class="variant-sku w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm" required>
+                                                <input type="text" name="variants[{{ $vIdx }}][sku]" value="{{ $v->sku }}" class="variant-sku w-full rounded-lg border-gray-300 shadow-sm focus:border-primary focus:ring-primary text-sm" required>
                                             </div>
                                             <div>
                                                 <label class="block text-xs font-medium text-gray-600 mb-1">Name *</label>
-                                                <input type="text" name="variants[{{ $vIdx }}][name]" value="{{ $v->name }}" class="variant-name w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm" required>
+                                                <input type="text" name="variants[{{ $vIdx }}][name]" value="{{ $v->name }}" class="variant-name w-full rounded-lg border-gray-300 shadow-sm focus:border-primary focus:ring-primary text-sm" required>
                                             </div>
                                         </div>
                                         <div class="grid grid-cols-3 gap-3 mb-3">
@@ -273,7 +273,7 @@
                                         <div class="mb-3 border-t border-gray-200 pt-3">
                                             <div class="flex items-center justify-between mb-2">
                                                 <label class="text-xs font-semibold text-gray-700">Color Options (for this size)</label>
-                                                <button type="button" class="add-option-btn text-xs text-blue-600 hover:text-blue-800 font-medium" data-variant-id="{{ $v->id }}" data-edit-index="{{ $vIdx }}">
+                                                <button type="button" class="add-option-btn text-xs text-primary hover:text-primary-hover font-medium" data-variant-id="{{ $v->id }}" data-edit-index="{{ $vIdx }}">
                                                     <i class="fas fa-plus-circle"></i> Add Color
                                                 </button>
                                             </div>
@@ -317,10 +317,10 @@
                                         </div>
                                         <div class="flex items-center gap-4 mt-3">
                                             <label class="flex items-center gap-2 text-sm text-gray-600">
-                                                <input type="checkbox" name="variants[{{ $vIdx }}][track_inventory]" value="1" {{ $v->track_inventory ? 'checked' : '' }} class="rounded border-gray-300 text-blue-600"> Track Inventory
+                                                <input type="checkbox" name="variants[{{ $vIdx }}][track_inventory]" value="1" {{ $v->track_inventory ? 'checked' : '' }} class="rounded border-gray-300 text-primary"> Track Inventory
                                             </label>
                                             <label class="flex items-center gap-2 text-sm text-gray-600">
-                                                <input type="checkbox" name="variants[{{ $vIdx }}][allow_backorder]" value="1" {{ $v->allow_backorder ? 'checked' : '' }} class="rounded border-gray-300 text-blue-600"> Allow Backorder
+                                                <input type="checkbox" name="variants[{{ $vIdx }}][allow_backorder]" value="1" {{ $v->allow_backorder ? 'checked' : '' }} class="rounded border-gray-300 text-primary"> Allow Backorder
                                             </label>
                                         </div>
                                     </div>
@@ -335,7 +335,7 @@
             <!-- Submit -->
             <div class="flex items-center justify-end gap-3 bg-white rounded-xl border border-gray-200 shadow-sm px-6 py-4">
                 <a href="{{ route('products.index') }}" class="px-5 py-2.5 text-sm font-medium text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-lg transition active:scale-95">Cancel</a>
-                <button type="submit" id="saveBtn" class="px-6 py-2.5 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition active:scale-95 flex items-center gap-2 shadow-sm">
+                <button type="submit" id="saveBtn" class="px-6 py-2.5 text-sm font-medium text-white bg-primary hover:bg-primary rounded-lg transition active:scale-95 flex items-center gap-2 shadow-sm">
                     <i class="fas fa-save"></i> <span id="submitBtnText">{{ $submitButton }}</span>
                 </button>
             </div>
@@ -437,7 +437,7 @@
                 <div class="mb-3 border-t border-gray-200 pt-3">
                     <div class="flex items-center justify-between mb-2">
                         <label class="text-xs font-semibold text-gray-700">Color Options (for this size)</label>
-                        <button type="button" class="add-option-btn text-xs text-blue-600 hover:text-blue-800 font-medium" data-new-index="${index}">
+                        <button type="button" class="add-option-btn text-xs text-primary hover:text-primary-hover font-medium" data-new-index="${index}">
                             <i class="fas fa-plus-circle"></i> Add Color
                         </button>
                     </div>
@@ -455,10 +455,10 @@
                 </div>
                 <div class="flex items-center gap-4 mt-3">
                     <label class="flex items-center gap-2 text-sm text-gray-600">
-                        <input type="checkbox" name="variants[${index}][track_inventory]" value="1" checked class="rounded border-gray-300 text-blue-600"> Track Inventory
+                        <input type="checkbox" name="variants[${index}][track_inventory]" value="1" checked class="rounded border-gray-300 text-primary"> Track Inventory
                     </label>
                     <label class="flex items-center gap-2 text-sm text-gray-600">
-                        <input type="checkbox" name="variants[${index}][allow_backorder]" value="1" class="rounded border-gray-300 text-blue-600"> Allow Backorder
+                        <input type="checkbox" name="variants[${index}][allow_backorder]" value="1" class="rounded border-gray-300 text-primary"> Allow Backorder
                     </label>
                 </div>
             </div>`;

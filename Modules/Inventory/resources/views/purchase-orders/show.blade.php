@@ -2,10 +2,10 @@
     <div class="max-w-5xl mx-auto py-6 px-4">
         <div class="flex items-center justify-between mb-6">
             <h1 class="text-2xl font-bold text-gray-800">
-                <i class="fas fa-file-invoice mr-2 text-blue-600"></i>
+                <i class="fas fa-file-invoice mr-2 text-primary"></i>
                 Purchase Order: {{ $purchase_order->po_number }}
             </h1>
-            <a href="{{ route('purchase-orders.index') }}" class="text-sm text-blue-600 hover:text-blue-800">
+            <a href="{{ route('purchase-orders.index') }}" class="text-sm text-primary hover:text-primary-hover">
                 <i class="fas fa-arrow-left mr-1"></i>Back to List
             </a>
         </div>
@@ -28,7 +28,7 @@
                 <div class="space-y-2 text-sm">
                     <div class="flex justify-between"><span class="text-gray-500">Status:</span>
                         @php
-                            $statusColors = ['draft'=>'bg-gray-100 text-gray-700','ordered'=>'bg-blue-100 text-blue-700','partially_received'=>'bg-yellow-100 text-yellow-700','received'=>'bg-green-100 text-green-700','cancelled'=>'bg-red-100 text-red-700'];
+                            $statusColors = ['draft'=>'bg-gray-100 text-gray-700','ordered'=>'bg-primary-light text-primary','partially_received'=>'bg-yellow-100 text-yellow-700','received'=>'bg-green-100 text-green-700','cancelled'=>'bg-red-100 text-red-700'];
                         @endphp
                         <span class="px-2 py-1 rounded-full text-xs font-medium {{ $statusColors[$purchase_order->status] ?? '' }}">{{ ucfirst(str_replace('_', ' ', $purchase_order->status)) }}</span>
                     </div>
@@ -90,7 +90,7 @@
                     <form action="{{ route('purchase-orders.update-status', $purchase_order->id) }}" method="POST" class="inline">
                         @csrf
                         <input type="hidden" name="status" value="ordered">
-                        <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm hover:bg-blue-700">Mark as Ordered</button>
+                        <button type="submit" class="px-4 py-2 bg-primary text-white rounded-lg text-sm hover:bg-primary">Mark as Ordered</button>
                     </form>
                 @endif
                 @if(in_array($purchase_order->status, ['ordered', 'partially_received']))

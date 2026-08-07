@@ -1,7 +1,0 @@
-.gitkeep
-2024_01_01_000001_create_users_table.php
-2024_01_01_000002_create_roles_table.php
-2024_01_01_000003_create_permissions_table.php
-2024_01_01_000004_create_role_permissions_table.php
-2024_01_01_000005_create_user_roles_table.php
-2024_01_01_000006_create_user_sessions_table.php

@@ -58,14 +58,14 @@
             </div>
             <div class="mb-4">
                 <label class="flex items-center gap-2 text-sm text-gray-700">
-                    <input type="checkbox" name="is_default" id="taxRate_is_default" value="1" class="rounded border-gray-300 text-blue-600 focus:ring-blue-500">
+                    <input type="checkbox" name="is_default" id="taxRate_is_default" value="1" class="rounded border-gray-300 text-primary focus:ring-primary">
                     Set as default tax rate
                 </label>
             </div>
             <div class="mb-4">
                 <label for="taxRate_description" class="block text-sm font-medium text-gray-700 mb-2">Description (optional)</label>
                 <textarea name="description" id="taxRate_description" rows="2" placeholder="Brief description of this tax rate..."
-                    class="w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm"></textarea>
+                    class="w-full rounded-lg border-gray-300 shadow-sm focus:border-primary focus:ring-primary text-sm"></textarea>
             </div>
         </x-entity-crud>
     </div>

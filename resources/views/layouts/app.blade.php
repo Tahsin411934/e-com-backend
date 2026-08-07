@@ -13,22 +13,33 @@
     <script>
         (function() {
             try {
-                var color = localStorage.getItem('theme-primary') || '#1e3a8a';
-                var dark = localStorage.getItem('theme-dark') === '1';
+                var DEFAULT_PRIMARY = '#1e3a8a';
+                var color = localStorage.getItem('theme-primary') || DEFAULT_PRIMARY;
+                var savedDark = localStorage.getItem('theme-dark');
+                var dark = savedDark === null
+                    ? (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches)
+                    : savedDark === '1';
                 var root = document.documentElement;
                 if (dark) root.classList.add('dark');
                 function shade(hex, percent) {
                     var num = parseInt(hex.replace('#', ''), 16);
+                    if (isNaN(num)) return hex;
                     var amt = Math.round(2.55 * percent);
                     var r = Math.min(255, Math.max(0, (num >> 16) + amt));
                     var g = Math.min(255, Math.max(0, ((num >> 8) & 0x00FF) + amt));
                     var b = Math.min(255, Math.max(0, (num & 0x0000FF) + amt));
                     return '#' + (0x1000000 + (r << 16) + (g << 8) + b).toString(16).slice(1);
                 }
+                function hexToRgb(hex) {
+                    var num = parseInt(hex.replace('#', ''), 16);
+                    if (isNaN(num)) return '30, 58, 138';
+                    return ((num >> 16) & 255) + ', ' + ((num >> 8) & 255) + ', ' + (num & 255);
+                }
                 root.style.setProperty('--primary-color', color);
                 root.style.setProperty('--primary-hover', shade(color, -10));
                 root.style.setProperty('--primary-light', shade(color, 80));
                 root.style.setProperty('--primary-soft', shade(color, 90));
+                root.style.setProperty('--primary-rgb', hexToRgb(color));
             } catch(e) {}
         })();
     </script>
@@ -99,6 +110,8 @@
     <script src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
     <!-- Sidebar JS -->
     <script src="{{ asset('js/sidebar.js') }}"></script>
+    <!-- Theme JS -->
+    <script src="{{ asset('js/theme.js') }}"></script>
 
     <!-- CSRF Setup -->
     <script>
@@ -126,7 +139,7 @@
                 }
             });
 
-            // ২. AJAX শেষ হলে (টাইম কমিয়ে ১০০ms করা হয়েছে দ্রুত রেসপন্সের জন্য)
+            // ২. AJAX শেষ হলে (টাইম কমিয়ে ১০০ms করা হয়েছে দ্রুত রেসপন্সের জন্য)
             $(document).on('ajaxStop', function() {
                 setTimeout(function() {
                     if (!window.isDataTableProcessing()) {
@@ -136,7 +149,7 @@
                 }, 100);
             });
 
-            // ৩. স্ট্যাটিক পেজের জন্য (টাইম কমিয়ে ১০০ms করা হয়েছে)
+            // ৩. স্ট্যাটিক পেজের জন্য (টাইম কমিয়ে ১০০ms করা হয়েছে)
             function handleStaticPageLoader() {
                 setTimeout(function() {
                     if (!window.isDataTableProcessing()) {
@@ -153,6 +166,16 @@
                 $(window).on('load', function() {
                     handleStaticPageLoader();
                 });
+            }
+        });
+    </script>
+
+    <!-- Theme Manager Init -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            if (window.ThemeManager) {
+                window.ThemeManager.loadTheme();
+                window.ThemeManager.initCustomizer();
             }
         });
     </script>

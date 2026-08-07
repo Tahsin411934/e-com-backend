@@ -116,7 +116,7 @@
                                 <input type="hidden" id="status_request_id">
                                 <div>
                                     <label class="block text-sm font-medium text-gray-700 mb-2">New Status</label>
-                                    <select id="new_status" class="w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm">
+                                    <select id="new_status" class="w-full rounded-lg border-gray-300 shadow-sm focus:border-primary focus:ring-primary text-sm">
                                         <option value="pending">Pending</option>
                                         <option value="approved">Approved</option>
                                         <option value="rejected">Rejected</option>
@@ -125,7 +125,7 @@
                                 </div>
                                 <div class="flex justify-end gap-3 pt-2">
                                     <button type="button" onclick="closeStatusModal()" class="px-4 py-2 text-sm font-medium text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-lg">Cancel</button>
-                                    <button type="submit" class="px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg">Update Status</button>
+                                    <button type="submit" class="px-4 py-2 text-sm font-medium text-white bg-primary hover:bg-primary rounded-lg">Update Status</button>
                                 </div>
                             </form>
                         </div>
@@ -147,7 +147,7 @@
                 {{-- Customer Info --}}
                 <div class="bg-gray-50 p-4 rounded-lg border border-gray-200">
                     <h4 class="font-semibold text-gray-800 text-sm mb-3 flex items-center gap-2">
-                        <i class="fa fa-user text-blue-600"></i> Customer Information
+                        <i class="fa fa-user text-primary"></i> Customer Information
                     </h4>
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div>
@@ -191,7 +191,7 @@
                                     <img id="pr_image_preview_img" class="h-24 w-24 object-cover rounded-lg border-2 border-gray-200 shadow-sm" src="" alt="Preview" />
                                 </div>
                                 <div class="flex items-center gap-3">
-                                    <button type="button" onclick="document.getElementById('pr_product_image').click()" class="px-4 py-2.5 bg-white border-2 border-dashed border-gray-300 rounded-lg text-sm text-gray-500 hover:border-blue-400 hover:text-blue-600 transition-colors flex items-center gap-2">
+                                    <button type="button" onclick="document.getElementById('pr_product_image').click()" class="px-4 py-2.5 bg-white border-2 border-dashed border-gray-300 rounded-lg text-sm text-gray-500 hover:border-primary hover:text-primary transition-colors flex items-center gap-2">
                                         <i class="fa fa-upload"></i>
                                         <span>Choose Image</span>
                                     </button>

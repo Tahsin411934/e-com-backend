@@ -2,7 +2,7 @@
     <div class="min-h-screen flex flex-col lg:flex-row bg-gradient-to-br from-slate-50 via-white to-slate-100 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900">
 
         <!-- Left Side - Branding Section (Hidden on mobile, visible on large screens) -->
-        <div class="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 p-12 flex-col justify-between relative overflow-hidden">
+        <div class="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-slate-900 via-primary to-slate-900 p-12 flex-col justify-between relative overflow-hidden">
             <!-- Animated Background Pattern -->
             <div class="absolute inset-0 opacity-5">
                 <div class="absolute inset-0"
@@ -12,7 +12,7 @@
 
             <!-- Floating Gradient Orbs -->
             <div
-                class="absolute top-20 -right-20 w-72 h-72 bg-blue-500 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-pulse">
+                class="absolute top-20 -right-20 w-72 h-72 bg-primary rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-pulse">
             </div>
             <div
                 class="absolute bottom-20 -left-20 w-72 h-72 bg-indigo-500 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-pulse delay-1000">
@@ -30,7 +30,7 @@
                     </div>
                     <div>
                         <h2 class="text-xl font-semibold text-white tracking-tight">Shopio</h2>
-                        <p class="text-blue-200/70 text-xs">E-Commerce Platform</p>
+                        <p class="text-primary-light/70 text-xs">E-Commerce Platform</p>
                     </div>
                 </div>
 
@@ -40,27 +40,27 @@
                         <div class="absolute -top-4 -left-2 text-6xl text-white/10 font-serif">"</div>
                         <h1 class="text-4xl lg:text-5xl font-bold text-white leading-tight relative z-10">
                             Shop smarter,<br>
-                            <span class="bg-gradient-to-r from-blue-200 to-white bg-clip-text text-transparent">live
+                            <span class="bg-gradient-to-r from-primary-light to-white bg-clip-text text-transparent">live
                                 better</span>
                         </h1>
                     </div>
-                    <p class="text-blue-100/80 text-base leading-relaxed max-w-sm">
+                    <p class="text-primary-light/80 text-base leading-relaxed max-w-sm">
                         Discover amazing products, exclusive deals, and seamless shopping experience all in one place.
                     </p>
                 </div>
 
                 <!-- Features List -->
                 <div class="mt-12 space-y-3">
-                    <div class="flex items-center gap-3 text-blue-100/70 text-sm">
-                        <div class="w-1.5 h-1.5 bg-blue-400 rounded-full"></div>
+                    <div class="flex items-center gap-3 text-primary-light/70 text-sm">
+                        <div class="w-1.5 h-1.5 bg-primary rounded-full"></div>
                         <span>Curated collections & trending products</span>
                     </div>
-                    <div class="flex items-center gap-3 text-blue-100/70 text-sm">
-                        <div class="w-1.5 h-1.5 bg-blue-400 rounded-full"></div>
+                    <div class="flex items-center gap-3 text-primary-light/70 text-sm">
+                        <div class="w-1.5 h-1.5 bg-primary rounded-full"></div>
                         <span>Secure checkout & fast delivery</span>
                     </div>
-                    <div class="flex items-center gap-3 text-blue-100/70 text-sm">
-                        <div class="w-1.5 h-1.5 bg-blue-400 rounded-full"></div>
+                    <div class="flex items-center gap-3 text-primary-light/70 text-sm">
+                        <div class="w-1.5 h-1.5 bg-primary rounded-full"></div>
                         <span>Exclusive member discounts & rewards</span>
                     </div>
                 </div>
@@ -71,11 +71,11 @@
                 <div class="grid grid-cols-2 gap-4">
                     <div>
                         <p class="text-2xl font-bold text-white">50K+</p>
-                        <p class="text-blue-200/60 text-xs">Happy Customers</p>
+                        <p class="text-primary-light/60 text-xs">Happy Customers</p>
                     </div>
                     <div>
                         <p class="text-2xl font-bold text-white">10K+</p>
-                        <p class="text-blue-200/60 text-xs">Products Available</p>
+                        <p class="text-primary-light/60 text-xs">Products Available</p>
                     </div>
                 </div>
             </div>
@@ -87,7 +87,7 @@
             <div class="lg:hidden text-center mb-8">
                 <div class="flex justify-center mb-3">
                     <div
-                        class="w-14 h-14 bg-gradient-to-br from-blue-900 to-blue-800 rounded-2xl flex items-center justify-center shadow-lg">
+                        class="w-14 h-14 bg-gradient-to-br from-primary to-primary-hover rounded-2xl flex items-center justify-center shadow-lg">
                         <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
                                 d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"></path>
@@ -126,7 +126,7 @@
                                 </svg>
                             </div>
                             <x-text-input id="email"
-                                class="block w-full pl-10 pr-3 py-3 border-slate-300 dark:border-slate-600 dark:bg-slate-800/50 dark:text-white rounded-xl focus:border-blue-900 focus:ring-blue-900 focus:ring-1 transition-all duration-200"
+                                class="block w-full pl-10 pr-3 py-3 border-slate-300 dark:border-slate-600 dark:bg-slate-800/50 dark:text-white rounded-xl focus:border-primary focus:ring-primary focus:ring-1 transition-all duration-200"
                                 type="email" name="email" :value="old('email')" required autofocus
                                 autocomplete="username" placeholder="john@company.com" />
                         </div>
@@ -146,7 +146,7 @@
                                 </svg>
                             </div>
                             <x-text-input id="password"
-                                class="block w-full pl-10 pr-3 py-3 border-slate-300 dark:border-slate-600 dark:bg-slate-800/50 dark:text-white rounded-xl focus:border-blue-900 focus:ring-blue-900 focus:ring-1 transition-all duration-200"
+                                class="block w-full pl-10 pr-3 py-3 border-slate-300 dark:border-slate-600 dark:bg-slate-800/50 dark:text-white rounded-xl focus:border-primary focus:ring-primary focus:ring-1 transition-all duration-200"
                                 type="password" name="password" required autocomplete="current-password"
                                 placeholder="Enter your password" />
                         </div>
@@ -157,14 +157,14 @@
                     <div class="flex items-center justify-between mb-6">
                         <label for="remember_me" class="inline-flex items-center">
                             <input id="remember_me" type="checkbox"
-                                class="rounded border-slate-300 dark:border-slate-600 text-blue-900 shadow-sm focus:ring-blue-900 focus:ring-1"
+                                class="rounded border-slate-300 dark:border-slate-600 text-primary shadow-sm focus:ring-primary focus:ring-1"
                                 name="remember">
                             <span
                                 class="ms-2 text-sm text-slate-600 dark:text-slate-400">{{ __('Remember me') }}</span>
                         </label>
 
                         @if (Route::has('password.request'))
-                            <a class="text-sm text-blue-900 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 font-medium transition-colors duration-200"
+                            <a class="text-sm text-primary dark:text-primary-light hover:text-primary-hover dark:hover:text-primary-light font-medium transition-colors duration-200"
                                 href="{{ route('password.request') }}">
                                 {{ __('Forgot password?') }}
                             </a>
@@ -173,7 +173,7 @@
 
                     <!-- Sign In Button -->
                     <button type="submit"
-                        class="w-full inline-flex items-center justify-center px-6 py-3.5 bg-blue-900 hover:bg-blue-800 active:bg-blue-950 border border-transparent rounded-xl font-semibold text-sm text-white uppercase tracking-wide transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-900 focus:ring-offset-2 dark:focus:ring-offset-slate-800 shadow-md hover:shadow-lg mb-5">
+                        class="w-full inline-flex items-center justify-center px-6 py-3.5 bg-primary hover:bg-primary-hover active:bg-primary border border-transparent rounded-xl font-semibold text-sm text-white uppercase tracking-wide transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 dark:focus:ring-offset-slate-800 shadow-md hover:shadow-lg mb-5">
                         <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                 d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" />
@@ -197,7 +197,7 @@
                         <p class="text-sm text-slate-600 dark:text-slate-400">
                             Don't have an account?
                             <a href="{{ route('register') }}"
-                                class="text-blue-900 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 font-semibold ml-1">
+                                class="text-primary dark:text-primary-light hover:text-primary-hover dark:hover:text-primary-light font-semibold ml-1">
                                 Create one
                             </a>
                         </p>

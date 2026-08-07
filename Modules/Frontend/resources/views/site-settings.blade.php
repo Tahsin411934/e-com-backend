@@ -5,33 +5,7 @@
         </h2>
     </x-slot>
 
-    @push('head')
-    <style>
-        .settings-card { border-radius: 16px; border: 1px solid #e5e7eb; background: #fff; box-shadow: 0 1px 3px rgba(0,0,0,0.04); }
-        .settings-section-title { font-size: 14px; font-weight: 700; color: #374151; padding-bottom: 12px; border-bottom: 2px solid #f3f4f6; display: flex; align-items: center; gap: 8px; }
-        .settings-section-title .icon { width: 32px; height: 32px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 14px; }
-        .tab-btn { padding: 10px 20px; border-radius: 10px; font-size: 14px; font-weight: 600; transition: all 0.2s; border: none; cursor: pointer; }
-        .tab-btn.active { background: #1e3a8a; color: white; box-shadow: 0 2px 8px rgba(30, 58, 138, 0.25); }
-        .tab-btn:not(.active) { background: #f3f4f6; color: #6b7280; }
-        .tab-btn:not(.active):hover { background: #e5e7eb; color: #374151; }
-        .tab-content { display: none; }
-        .tab-content.active { display: block; }
-        .logo-preview { width: 120px; height: 120px; border-radius: 16px; border: 2px dashed #d1d5db; object-fit: contain; background: #f9fafb; padding: 8px; }
-        .logo-upload-area { display: flex; align-items: center; gap: 20px; padding: 16px; background: #f9fafb; border-radius: 12px; }
-        .form-group { margin-bottom: 20px; }
-        .form-group label { display: block; font-size: 13px; font-weight: 600; color: #374151; margin-bottom: 6px; }
-        .form-group .hint { font-size: 11px; color: #9ca3af; margin-top: 4px; }
-        .form-group input, .form-group textarea, .form-group select { width: 100%; padding: 10px 14px; border: 1px solid #d1d5db; border-radius: 10px; font-size: 14px; transition: border-color 0.2s; }
-        .form-group input:focus, .form-group textarea:focus { border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59,130,246,0.1); outline: none; }
-        .form-group textarea { min-height: 80px; resize: vertical; }
-        .btn-primary { padding: 12px 32px; background: linear-gradient(135deg, #1e3a8a, #2563eb); color: white; border: none; border-radius: 12px; font-size: 15px; font-weight: 700; cursor: pointer; transition: all 0.2s; display: inline-flex; align-items: center; gap: 8px; }
-        .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(30, 58, 138, 0.3); }
-        .btn-secondary { padding: 12px 24px; background: #f3f4f6; color: #374151; border: 1px solid #d1d5db; border-radius: 12px; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.2s; text-decoration: none; display: inline-flex; align-items: center; gap: 6px; }
-        .btn-secondary:hover { background: #e5e7eb; }
-        .save-bar { position: sticky; bottom: 0; background: rgba(255,255,255,0.95); backdrop-filter: blur(8px); border-top: 1px solid #e5e7eb; padding: 16px 24px; display: flex; justify-content: flex-end; gap: 12px; border-radius: 0 0 16px 16px; margin-top: 24px; }
-        .empty-state { text-align: center; padding: 40px 20px; color: #9ca3af; }
-    </style>
-    @endpush
+    <!-- Styles are in resources/css/theme.css (section 10) -->
 
     <div class="p-4 lg:p-6 max-w-[900px] mx-auto">
         <div class="flex items-center gap-2 text-sm text-gray-500 mb-2">

@@ -1,5 +1,0 @@
-Delivery.php
-Order.php
-OrderItem.php
-Payment.php
-Refund.php

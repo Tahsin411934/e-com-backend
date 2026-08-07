@@ -1,10 +1,10 @@
 <div class="nav-tooltip" id="navTooltip"></div>
 
 <!-- ========== SIDEBAR ========== -->
-<aside id="sidebar" class="w-52 bg-white border-r border-gray-200 flex flex-col flex-shrink-0 z-30 overflow-hidden">
+<aside id="sidebar" class="w-52 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 flex flex-col flex-shrink-0 z-30 overflow-hidden">
 
     <!-- Logo -->
-    <div class="h-[60px] bg-blue-950 text-white flex items-center justify-between px-3.5 border-b border-blue-300 flex-shrink-0">
+    <div class="h-[60px] theme-navbar text-white flex items-center justify-between px-3.5 border-b border-blue-300 flex-shrink-0">
         <div class="flex items-center gap-2 overflow-hidden">
             <!-- A icon circle matching Ecommerce -->
             <div
@@ -34,13 +34,13 @@
     <!-- Navigation -->
     <nav id="sideNav" class="flex-1 overflow-y-auto overflow-x-hidden py-2.5 px-2">
 
-        <!-- Dashboard -->
-        <a href="{{ route('dashboard') }}"
+    <!-- Dashboard -->
+    <a href="{{ route('dashboard') }}"
             class="nav-item flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-medium transition-colors duration-150 mb-0.5 
-    {{ request()->routeIs('dashboard') ? 'bg-[#1e3a8a] text-white active' : 'text-gray-500 hover:bg-gray-50 hover:text-gray-800' }}"
+    {{ request()->routeIs('dashboard') ? 'text-white active' : 'text-gray-500 hover:bg-gray-50 hover:text-gray-800' }}"
             data-label="Dashboard">
             <i class="fas fa-th-large w-4 text-center flex-shrink-0 text-base"></i>
-            <span class="nav-label font-bold">Dashboard U</span>
+            <span class="nav-label font-bold">Dashboard</span>
         </a>
 
         <!-- Identity & Access - Only for Super Admin and Admin -->

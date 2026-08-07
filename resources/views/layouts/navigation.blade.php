@@ -1,6 +1,6 @@
-<header class="h-[60px] bg-blue-950 border-b border-blue-300 flex items-center justify-between px-6 flex-shrink-0 z-20">
+<header class="h-[60px] theme-navbar border-b border-blue-300 flex items-center justify-between px-6 flex-shrink-0 z-20">
     <button id="collapseBtn"
-        class="w-8 h-8 rounded-full border  bg-blue-900 flex items-center justify-center text-gray-100 hover:bg-blue-700 flex-shrink-0 shadow-sm">
+        class="w-8 h-8 rounded-full border  theme-navbar-btn flex items-center justify-center text-gray-100 flex-shrink-0 shadow-sm">
         <i class="fas fa-chevron-left text-[15px]" id="collapseIcon"></i>
     </button>
     <!-- Search -->
@@ -15,19 +15,19 @@
 
         <!-- Notification bell -->
         <button
-            class="relative w-9 h-9 border border-gray-200 rounded-lg flex items-center justify-center text-gray-500 hover:bg-gray-50 transition-colors">
+            class="relative w-9 h-9 border border-gray-200 dark:border-gray-600 rounded-lg flex items-center justify-center text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
             <i class="fas fa-bell text-[15px]"></i>
             <span class="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full border-2 border-white"></span>
         </button>
 
         <!-- Settings gear -->
         <button
-            class="w-9 h-9 border border-gray-200 rounded-lg flex items-center justify-center text-gray-500 hover:bg-gray-50 transition-colors">
+            class="w-9 h-9 border border-gray-200 dark:border-gray-600 rounded-lg flex items-center justify-center text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
             <i class="fas fa-cog text-[15px]"></i>
         </button>
 
         <!-- Divider -->
-        <div class="w-px h-6 bg-gray-200"></div>
+        <div class="w-px h-6 bg-gray-200 dark:bg-gray-600"></div>
 
 
 
@@ -47,8 +47,8 @@
 
                 <!-- Name -->
                 <div class="leading-tight text-left">
-                    <p class="text-[11px] text-gray-400 font-medium">Admin</p>
-                    <p class="text-[13px] text-gray-800 font-semibold">
+                    <p class="text-[11px] text-gray-400 dark:text-gray-500 font-medium">Admin</p>
+                    <p class="text-[13px] text-gray-800 dark:text-gray-200 font-semibold">
                         {{ Auth::user()->name }}
                     </p>
                 </div>
@@ -60,15 +60,15 @@
 
             <!-- Dropdown -->
             <div
-                class="absolute right-0 top-12 w-48 bg-white border border-gray-200 rounded-lg shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
+                class="absolute right-0 top-12 w-48 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
 
-                <a href="{{ route('profile.edit') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">
+                <a href="{{ route('profile.edit') }}" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700">
                     Profile
                 </a>
 
                 <form method="POST" action="{{ route('logout') }}">
                     @csrf
-                    <button type="submit" class="w-full text-left px-4 py-2 text-sm text-red-500 hover:bg-gray-50">
+                    <button type="submit" class="w-full text-left px-4 py-2 text-sm text-red-500 hover:bg-gray-50 dark:hover:bg-gray-700">
                         Log Out
                     </button>
                 </form>

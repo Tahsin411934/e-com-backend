@@ -9,6 +9,30 @@
 
     <title>E-Commerce Dashboard</title>
 
+    <!-- Apply saved theme early (prevent flash) -->
+    <script>
+        (function() {
+            try {
+                var color = localStorage.getItem('theme-primary') || '#1e3a8a';
+                var dark = localStorage.getItem('theme-dark') === '1';
+                var root = document.documentElement;
+                if (dark) root.classList.add('dark');
+                function shade(hex, percent) {
+                    var num = parseInt(hex.replace('#', ''), 16);
+                    var amt = Math.round(2.55 * percent);
+                    var r = Math.min(255, Math.max(0, (num >> 16) + amt));
+                    var g = Math.min(255, Math.max(0, ((num >> 8) & 0x00FF) + amt));
+                    var b = Math.min(255, Math.max(0, (num & 0x0000FF) + amt));
+                    return '#' + (0x1000000 + (r << 16) + (g << 8) + b).toString(16).slice(1);
+                }
+                root.style.setProperty('--primary-color', color);
+                root.style.setProperty('--primary-hover', shade(color, -10));
+                root.style.setProperty('--primary-light', shade(color, 80));
+                root.style.setProperty('--primary-soft', shade(color, 90));
+            } catch(e) {}
+        })();
+    </script>
+
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -32,17 +56,20 @@
     @stack('head')
 </head>
 
-<body class="bg-[#e4ebf1] font-sans antialiased flex h-screen overflow-hidden">
+<body class="bg-[#e4ebf1] dark:bg-gray-900 font-sans antialiased flex h-screen overflow-hidden">
 
     <!-- Sidebar -->
     @include('layouts.sidebar')
+
+    <!-- Theme Customizer: Floating color picker + dark/light mode -->
+    <x-theme-customizer />
 
     <div class="flex-1 flex flex-col overflow-hidden">
 
         <!-- Navigation -->
         @include('layouts.navigation')
 
-        <main class="flex-1 overflow-x-hidden overflow-y-auto bg-gray-50 relative flex flex-col">
+        <main class="flex-1 overflow-x-hidden overflow-y-auto bg-gray-50 dark:bg-gray-900 relative flex flex-col">
             @include('components.global-loader')
             <div class="flex-1 w-full">
                 {{ $slot }}

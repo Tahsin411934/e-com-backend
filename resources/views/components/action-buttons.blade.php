@@ -21,7 +21,7 @@
     {{-- Edit Button (JavaScript function) --}}
     @if($edit)
         <button onclick="{{ $edit }}({{ $id }})"
-            class="bg-blue-900 text-white px-2 py-1 rounded text-sm hover:bg-blue-600 transition"
+            class="btn-primary px-2 py-1 rounded text-sm transition"
             title="Edit">
             <i class="fa fa-pencil"></i>
         </button>
@@ -30,7 +30,7 @@
     {{-- Edit Button (URL-based link) --}}
     @if($editUrl)
         <a href="{{ str_replace(':id', $id, $editUrl) }}"
-            class="bg-blue-900 text-white px-2 py-1 rounded text-sm hover:bg-blue-600 transition inline-flex items-center"
+            class="btn-primary px-2 py-1 rounded text-sm transition inline-flex items-center"
             title="Edit">
             <i class="fa fa-pencil"></i>
         </a>

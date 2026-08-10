@@ -4,6 +4,8 @@ namespace Modules\Store\Services;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Schema;
 use Modules\Store\Models\AppSetting;
 use Yajra\DataTables\DataTables;
 

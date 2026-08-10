@@ -1,4 +1,10 @@
 <x-app-layout>
+    @php
+        $storeFilterOptions = '<option value="">All Stores</option>' . implode('', array_map(function ($s) {
+            return '<option value="' . e($s['id']) . '">' . e($s['name']) . '</option>';
+        }, $stores));
+    @endphp
+
     <x-entity-crud
         id="store-staff"
         title="Store Staff"
@@ -22,7 +28,7 @@
         dataKey="staff"
         idField="staff_id"
         :filters="[
-            'Store' => '<option value=\"\">All Stores</option>' . implode('', array_map(fn($s) => '<option value=\"' . $s['id'] . '\">' . e($s['name']) . '</option>', $stores))
+            'Store' => $storeFilterOptions
         ]"
         :order="[[5, 'desc']]"
     >

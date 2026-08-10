@@ -21,6 +21,10 @@ class StoreStaff extends Model
         'hired_at',
     ];
 
+    protected $casts = [
+        'hired_at' => 'date',
+    ];
+
     public function store()
     {
         return $this->belongsTo(Store::class);

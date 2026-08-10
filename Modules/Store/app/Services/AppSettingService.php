@@ -30,7 +30,7 @@ class AppSettingService
                 return $setting->is_public ? '<span class="text-green-600 font-medium">Yes</span>' : 'No';
             })
             ->editColumn('created_at', function (AppSetting $setting) {
-                return $setting->created_at->format('d M Y H:i');
+                return $setting->created_at ? $setting->created_at->format('d M Y H:i') : '';
             })
             ->addColumn('action', function (AppSetting $setting) {
                 return view('components.action-buttons', [

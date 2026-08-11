@@ -114,11 +114,22 @@ class WishlistService
                     ];
                 }
 
-                $existing = Wishlist::where('user_id', $userId)
+                $existing = Wishlist::withTrashed()
+                    ->where('user_id', $userId)
                     ->where('product_id', $productId)
                     ->first();
 
                 if ($existing) {
+                    if ($existing->trashed()) {
+                        $existing->restore();
+
+                        return [
+                            'status' => 'success',
+                            'message' => 'Added to wishlist.',
+                            'action' => 'added',
+                        ];
+                    }
+
                     $existing->delete();
                     return [
                         'status' => 'success',

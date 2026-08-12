@@ -4,6 +4,8 @@ namespace Modules\Inventory\Services;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
+use Modules\Account\Services\AccountTransactionService;
 use Modules\Inventory\Models\PurchaseOrder;
 use Modules\Inventory\Models\PurchaseOrderItem;
 use Modules\Inventory\Models\InventoryStock;
@@ -215,6 +217,10 @@ class PurchaseOrderService
                     }
 
                     $po->update(['payment_status' => $paymentStatus]);
+
+                    if ($paymentStatus === 'paid' && Schema::hasTable('account_transactions')) {
+                        app(AccountTransactionService::class)->postPurchaseOrder($po->fresh());
+                    }
                 }
 
                 $message = [];

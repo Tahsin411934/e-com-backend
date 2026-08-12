@@ -250,6 +250,68 @@
             </div>
         </div>
 
+        <!-- Account -->
+        <div class="mb-0.5">
+            <button
+                class="nav-item has-sub w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-gray-500 hover:bg-gray-50 hover:text-gray-800 text-sm font-medium transition-colors duration-150"
+                data-label="Account" data-sub="sub-account">
+                <i class="fas fa-wallet w-4 text-center flex-shrink-0 text-base"></i>
+                <span class="nav-label flex-1 text-left">Account</span>
+                <i class="nav-chevron fas fa-chevron-down text-[10px] flex-shrink-0"></i>
+            </button>
+            <div class="submenu sub-indent" id="sub-account">
+                <a href="{{ route('account.dashboard') }}"
+                    class="flex items-center gap-2.5 pl-9 pr-3 py-1.5 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-50 text-[13px] transition-colors {{ request()->routeIs('account.dashboard') ? 'text-primary bg-primary-light font-medium' : '' }}">
+                    <i class="fas fa-chart-pie w-3.5 text-center"></i><span>Dashboard</span>
+                </a>
+                <a href="{{ route('account-accounts.index') }}"
+                    class="flex items-center gap-2.5 pl-9 pr-3 py-1.5 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-50 text-[13px] transition-colors {{ request()->routeIs('account-accounts.*') ? 'text-primary bg-primary-light font-medium' : '' }}">
+                    <i class="fas fa-building-columns w-3.5 text-center"></i><span>Cash & Bank</span>
+                </a>
+                <a href="{{ route('account-expenses.index') }}"
+                    class="flex items-center gap-2.5 pl-9 pr-3 py-1.5 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-50 text-[13px] transition-colors {{ request()->routeIs('account-expenses.*') ? 'text-primary bg-primary-light font-medium' : '' }}">
+                    <i class="fas fa-money-bill-wave w-3.5 text-center"></i><span>Expenses</span>
+                </a>
+                <a href="{{ route('account-transfers.index') }}"
+                    class="flex items-center gap-2.5 pl-9 pr-3 py-1.5 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-50 text-[13px] transition-colors {{ request()->routeIs('account-transfers.*') ? 'text-primary bg-primary-light font-medium' : '' }}">
+                    <i class="fas fa-right-left w-3.5 text-center"></i><span>Transfers</span>
+                </a>
+                <a href="{{ route('account-categories.index') }}"
+                    class="flex items-center gap-2.5 pl-9 pr-3 py-1.5 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-50 text-[13px] transition-colors {{ request()->routeIs('account-categories.*') ? 'text-primary bg-primary-light font-medium' : '' }}">
+                    <i class="fas fa-tags w-3.5 text-center"></i><span>Categories</span>
+                </a>
+                <a href="{{ route('account-transactions.index') }}"
+                    class="flex items-center gap-2.5 pl-9 pr-3 py-1.5 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-50 text-[13px] transition-colors {{ request()->routeIs('account-transactions.*') ? 'text-primary bg-primary-light font-medium' : '' }}">
+                    <i class="fas fa-book w-3.5 text-center"></i><span>Ledger</span>
+                </a>
+                <a href="{{ route('account-product-profits.index') }}"
+                    class="flex items-center gap-2.5 pl-9 pr-3 py-1.5 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-50 text-[13px] transition-colors {{ request()->routeIs('account-product-profits.*') ? 'text-primary bg-primary-light font-medium' : '' }}">
+                    <i class="fas fa-chart-simple w-3.5 text-center"></i><span>Product Profit</span>
+                </a>
+            </div>
+        </div>
+
+         <div class="mb-0.5">
+            <button
+                class="nav-item has-sub w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-gray-500 hover:bg-gray-50 hover:text-gray-800 text-sm font-medium transition-colors duration-150"
+                data-label="Investments" data-sub="sub-investments">
+                <i class="fas fa-chart-line w-4 text-center flex-shrink-0 text-base"></i>
+                <span class="nav-label flex-1 text-left">Investments</span>
+                <i class="nav-chevron fas fa-chevron-down text-[10px] flex-shrink-0"></i>
+            </button>
+            <div class="submenu sub-indent" id="sub-investments">
+                <a href="{{ route('account-investments.index') }}"
+                    class="flex items-center gap-2.5 pl-9 pr-3 py-1.5 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-50 text-[13px] transition-colors {{ request()->routeIs('account-investments.*') ? 'text-primary bg-primary-light font-medium' : '' }}">
+                    <i class="fas fa-chart-bar w-3.5 text-center"></i><span>Investments</span>
+                </a>
+                <a href="{{ route('account-transactions.index') }}"
+                    class="flex items-center gap-2.5 pl-9 pr-3 py-1.5 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-50 text-[13px] transition-colors {{ request()->routeIs('account-transactions.*') ? 'text-primary bg-primary-light font-medium' : '' }}">
+                    <i class="fas fa-book w-3.5 text-center"></i><span>Ledger</span>
+                </a>
+            </div>
+        </div>
+
+
         <!-- Delivery -->
         <div class="mb-0.5">
             <button
@@ -398,6 +460,23 @@
             </div>
         </div>
 
+        <!-- Marketing -->
+        <div class="mb-0.5">
+            <button
+                class="nav-item has-sub w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-gray-500 hover:bg-gray-50 hover:text-gray-800 text-sm font-medium transition-colors duration-150"
+                data-label="Marketing" data-sub="sub-marketing">
+                <i class="fas fa-bullhorn w-4 text-center flex-shrink-0 text-base"></i>
+                <span class="nav-label flex-1 text-left">Marketing</span>
+                <i class="nav-chevron fas fa-chevron-down text-[10px] flex-shrink-0"></i>
+            </button>
+            <div class="submenu sub-indent" id="sub-marketing">
+                <a href="{{ route('frontend.marketing.gtm.index') }}"
+                    class="flex items-center gap-2.5 pl-9 pr-3 py-1.5 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-50 text-[13px] transition-colors {{ request()->routeIs('frontend.marketing.gtm.*') ? 'text-primary bg-primary-light font-medium' : '' }}">
+                    <i class="fas fa-tags w-3.5 text-center"></i><span>Google Tag Manager</span>
+                </a>
+            </div>
+        </div>
+
         <!-- Reports -->
         <a href="#"
             class="nav-item flex items-center gap-2.5 px-3 py-2 rounded-lg text-gray-500 hover:bg-gray-50 hover:text-gray-800 text-sm font-medium transition-colors duration-150 mb-0.5"
@@ -416,4 +495,3 @@
 
     </nav>
 </aside>
-

@@ -60,6 +60,11 @@ class PosSale extends Model
         return $this->belongsTo(Order::class);
     }
 
+    public function items()
+    {
+        return $this->hasMany(PosSaleItem::class, 'pos_sale_id');
+    }
+
     public function user()
     {
         return $this->belongsTo(User::class);

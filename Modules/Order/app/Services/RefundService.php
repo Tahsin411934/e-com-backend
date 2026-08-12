@@ -4,6 +4,8 @@ namespace Modules\Order\Services;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
+use Modules\Account\Services\AccountTransactionService;
 use Modules\Order\Models\Refund;
 use Yajra\DataTables\DataTables;
 
@@ -54,6 +56,10 @@ class RefundService
                 } else {
                     $refund = Refund::create($data);
                     $message = 'Refund created successfully.';
+                }
+
+                if (Schema::hasTable('account_transactions')) {
+                    app(AccountTransactionService::class)->postRefund($refund->fresh(['payment', 'order']));
                 }
 
                 return [

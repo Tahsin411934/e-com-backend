@@ -4,6 +4,8 @@ namespace Modules\Pos\Services;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
+use Modules\Account\Services\AccountTransactionService;
 use Modules\Pos\Models\PosSale;
 use Yajra\DataTables\DataTables;
 
@@ -67,6 +69,10 @@ class PosSaleService
                 } else {
                     $sale = PosSale::create($data);
                     $message = 'Sale created successfully.';
+                }
+
+                if (Schema::hasTable('account_transactions')) {
+                    app(AccountTransactionService::class)->postPosSale($sale->fresh(['items.product.variants', 'register.store']));
                 }
 
                 return [

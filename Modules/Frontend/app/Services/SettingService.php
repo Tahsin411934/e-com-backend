@@ -35,6 +35,13 @@ class SettingService
             ['group' => 'contact', 'key' => 'address', 'label' => 'Address',      'type' => 'textarea', 'value' => '123 Commerce Ave, Dhaka, Bangladesh', 'sort_order' => 3],
             ['group' => 'seo',     'key' => 'meta_title',       'label' => 'Default Meta Title',       'type' => 'text',     'value' => 'Shopio - Premium E-Commerce', 'sort_order' => 1],
             ['group' => 'seo',     'key' => 'meta_description', 'label' => 'Default Meta Description', 'type' => 'textarea', 'value' => 'Shopio is your premium online shopping destination.', 'sort_order' => 2],
+
+            // Marketing - Google Tag Manager (GTM)
+            ['group' => 'marketing', 'key' => 'gtm_enabled',       'label' => 'Enable GTM',                'type' => 'text',     'value' => '0', 'sort_order' => 1],
+            ['group' => 'marketing', 'key' => 'gtm_id',            'label' => 'GTM Container ID',         'type' => 'text',     'value' => '', 'sort_order' => 2],
+            ['group' => 'marketing', 'key' => 'gtm_container_url', 'label' => 'GTM Container URL (optional)', 'type' => 'url', 'value' => '', 'sort_order' => 3],
+            ['group' => 'marketing', 'key' => 'gtm_header_code',   'label' => 'GTM Head Code',            'type' => 'textarea', 'value' => '', 'sort_order' => 4],
+            ['group' => 'marketing', 'key' => 'gtm_body_code',     'label' => 'GTM Body (noscript) Code', 'type' => 'textarea', 'value' => '', 'sort_order' => 5],
         ];
     }
 

@@ -15,7 +15,8 @@ class OrderItem extends Model
     protected $fillable = [
         'order_id', 'product_id', 'variant_id', 'sku', 'product_name',
         'variant_name', 'quantity', 'unit_price', 'discount_total',
-        'tax_total', 'line_total',
+        'tax_total', 'line_total', 'unit_cost', 'cost_total',
+        'gross_profit', 'profit_margin',
     ];
 
     protected $casts = [
@@ -23,6 +24,10 @@ class OrderItem extends Model
         'discount_total' => 'decimal:4',
         'tax_total' => 'decimal:4',
         'line_total' => 'decimal:4',
+        'unit_cost' => 'decimal:4',
+        'cost_total' => 'decimal:4',
+        'gross_profit' => 'decimal:4',
+        'profit_margin' => 'decimal:4',
     ];
 
     public function order()

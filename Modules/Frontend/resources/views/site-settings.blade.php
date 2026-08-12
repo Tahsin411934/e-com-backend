@@ -42,6 +42,7 @@
                                 @case('social')  <i class="fas fa-share-nodes"></i> @break
                                 @case('contact') <i class="fas fa-address-card"></i> @break
                                 @case('seo')     <i class="fas fa-search"></i> @break
+                                @case('marketing') <i class="fas fa-bullhorn"></i> @break
                             @endswitch
                             {{ ucfirst($group) }}
                         </button>
@@ -62,8 +63,8 @@
                             </div>
                         @else
                             <div class="settings-section-title mb-6">
-                                <span class="icon" style="background: {{ match($group) { 'general' => '#dbeafe', 'social' => '#fce7f3', 'contact' => '#d1fae5', 'seo' => '#ede9fe', default => '#f3f4f6' } }};">
-                                    @switch($group) @case('general') 🌐 @break @case('social') 📱 @break @case('contact') 📞 @break @case('seo') 🔍 @break @endswitch
+                                <span class="icon" style="background: {{ match($group) { 'general' => '#dbeafe', 'social' => '#fce7f3', 'contact' => '#d1fae5', 'seo' => '#ede9fe', 'marketing' => '#fef3c7', default => '#f3f4f6' } }};">
+                                    @switch($group) @case('general') 🌐 @break @case('social') 📱 @break @case('contact') 📞 @break @case('seo') 🔍 @break @case('marketing') 📣 @break @endswitch
                                 </span>
                                 {{ ucfirst($group) }} Settings
                             </div>

@@ -8,5 +8,6 @@
     "Pos": true,
     "Reviews": true,
     "Shipping": true,
-    "Store": true
+    "Store": true,
+    "Account": true
 }

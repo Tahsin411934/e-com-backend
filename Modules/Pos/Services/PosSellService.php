@@ -4,6 +4,8 @@ namespace Modules\Pos\Services;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
+use Modules\Account\Services\AccountTransactionService;
 use Modules\Catalog\Models\Product;
 use Modules\Identity\Models\User;
 use Modules\Pos\Models\PosSale;
@@ -176,6 +178,10 @@ class PosSellService
                         'discount_amount' => 0,
                         'total' => $item['total'],
                     ]);
+                }
+
+                if (Schema::hasTable('account_transactions')) {
+                    app(AccountTransactionService::class)->postPosSale($sale->fresh(['items.product.variants', 'register.store']));
                 }
 
                 return [

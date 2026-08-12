@@ -58,4 +58,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/site-settings', [SiteSettingController::class, 'index'])->name('frontend.site-settings.index');
     Route::put('/site-settings', [SiteSettingController::class, 'update'])->name('frontend.site-settings.update');
     Route::get('/site-settings/seed', [SiteSettingController::class, 'seed'])->name('frontend.site-settings.seed');
+
+    // Marketing - Google Tag Manager (GTM) settings
+    Route::get('/marketing/gtm', [SiteSettingController::class, 'marketingGtm'])->name('frontend.marketing.gtm.index');
+    Route::put('/marketing/gtm', [SiteSettingController::class, 'update'])->name('frontend.marketing.gtm.update');
 });

@@ -4,6 +4,8 @@ namespace Modules\Order\Services;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
+use Modules\Account\Services\AccountTransactionService;
 use Modules\Order\Models\Payment;
 use Yajra\DataTables\DataTables;
 
@@ -57,6 +59,10 @@ class PaymentService
                 } else {
                     $payment = Payment::create($data);
                     $message = 'Payment created successfully.';
+                }
+
+                if (Schema::hasTable('account_transactions')) {
+                    app(AccountTransactionService::class)->postPayment($payment->fresh('order.items.variant'));
                 }
 
                 return [

@@ -17,7 +17,7 @@ class SiteSettingController extends Controller
     public function index()
     {
         $grouped = $this->settingService->getGrouped();
-        $groups = ['general', 'social', 'contact', 'seo'];
+        $groups = ['general', 'social', 'contact', 'seo', 'marketing'];
         return view('frontend::site-settings', compact('grouped', 'groups'));
     }
 
@@ -78,8 +78,22 @@ class SiteSettingController extends Controller
             $this->settingService->updateBulk($updateData);
         }
 
+        // Redirect back to the originating settings page (marketing or general)
+        $referer = $request->headers->get('referer', '');
+        if (str_contains($referer, 'marketing/gtm')) {
+            return redirect()->route('frontend.marketing.gtm.index')
+                ->with('success', 'GTM settings updated successfully!');
+        }
+
         return redirect()->route('frontend.site-settings.index')
             ->with('success', 'Site settings updated successfully!');
+    }
+
+    public function marketingGtm()
+    {
+        $grouped = $this->settingService->getGrouped();
+        $items = $grouped['marketing'] ?? [];
+        return view('frontend::marketing.gtm', compact('items'));
     }
 
     public function seed(): RedirectResponse

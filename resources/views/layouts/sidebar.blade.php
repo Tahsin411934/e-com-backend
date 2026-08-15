@@ -486,12 +486,65 @@
         </div>
 
         <!-- Reports -->
-        <a href="#"
-            class="nav-item flex items-center gap-2.5 px-3 py-2 rounded-lg text-gray-500 hover:bg-gray-50 hover:text-gray-800 text-sm font-medium transition-colors duration-150 mb-0.5"
-            data-label="Reports">
-            <i class="fas fa-chart-line w-4 text-center flex-shrink-0 text-base"></i>
-            <span class="nav-label">Reports</span>
-        </a>
+        <div class="mb-0.5">
+            <button
+                class="nav-item has-sub w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-gray-500 hover:bg-gray-50 hover:text-gray-800 text-sm font-medium transition-colors duration-150"
+                data-label="Reports" data-sub="sub-reports">
+                <i class="fas fa-chart-line w-4 text-center flex-shrink-0 text-base"></i>
+                <span class="nav-label flex-1 text-left">Reports</span>
+                <i class="nav-chevron fas fa-chevron-down text-[10px] flex-shrink-0"></i>
+            </button>
+            <div class="submenu sub-indent" id="sub-reports">
+                <a href="{{ route('reports.dashboard') }}"
+                    class="flex items-center gap-2.5 pl-9 pr-3 py-1.5 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-50 text-[13px] transition-colors {{ request()->routeIs('reports.dashboard') ? 'text-primary bg-primary-light font-medium' : '' }}">
+                    <i class="fas fa-gauge-high w-3.5 text-center"></i><span>Executive Dashboard</span>
+                </a>
+                <a href="{{ route('reports.sales') }}"
+                    class="flex items-center gap-2.5 pl-9 pr-3 py-1.5 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-50 text-[13px] transition-colors {{ request()->routeIs('reports.sales') ? 'text-primary bg-primary-light font-medium' : '' }}">
+                    <i class="fas fa-coins w-3.5 text-center"></i><span>Sales Reports</span>
+                </a>
+                <a href="{{ route('reports.products') }}"
+                    class="flex items-center gap-2.5 pl-9 pr-3 py-1.5 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-50 text-[13px] transition-colors {{ request()->routeIs('reports.products') ? 'text-primary bg-primary-light font-medium' : '' }}">
+                    <i class="fas fa-box w-3.5 text-center"></i><span>Product Reports</span>
+                </a>
+                <a href="{{ route('reports.inventory') }}"
+                    class="flex items-center gap-2.5 pl-9 pr-3 py-1.5 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-50 text-[13px] transition-colors {{ request()->routeIs('reports.inventory') ? 'text-primary bg-primary-light font-medium' : '' }}">
+                    <i class="fas fa-warehouse w-3.5 text-center"></i><span>Inventory Reports</span>
+                </a>
+                <a href="{{ route('reports.orders') }}"
+                    class="flex items-center gap-2.5 pl-9 pr-3 py-1.5 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-50 text-[13px] transition-colors {{ request()->routeIs('reports.orders') ? 'text-primary bg-primary-light font-medium' : '' }}">
+                    <i class="fas fa-truck-fast w-3.5 text-center"></i><span>Order & Fulfilment Reports</span>
+                </a>
+                <a href="{{ route('reports.shipping') }}"
+                    class="flex items-center gap-2.5 pl-9 pr-3 py-1.5 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-50 text-[13px] transition-colors {{ request()->routeIs('reports.shipping') ? 'text-primary bg-primary-light font-medium' : '' }}">
+                    <i class="fas fa-ship w-3.5 text-center"></i><span>Shipping & Delivery Reports</span>
+                </a>
+                <a href="{{ route('reports.customers') }}"
+                    class="flex items-center gap-2.5 pl-9 pr-3 py-1.5 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-50 text-[13px] transition-colors {{ request()->routeIs('reports.customers') ? 'text-primary bg-primary-light font-medium' : '' }}">
+                    <i class="fas fa-users w-3.5 text-center"></i><span>Customer Reports</span>
+                </a>
+                <a href="{{ route('reports.campaigns') }}"
+                    class="flex items-center gap-2.5 pl-9 pr-3 py-1.5 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-50 text-[13px] transition-colors {{ request()->routeIs('reports.campaigns') ? 'text-primary bg-primary-light font-medium' : '' }}">
+                    <i class="fas fa-bullhorn w-3.5 text-center"></i><span>Campaign & Coupon Reports</span>
+                </a>
+                <a href="{{ route('reports.finance') }}"
+                    class="flex items-center gap-2.5 pl-9 pr-3 py-1.5 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-50 text-[13px] transition-colors {{ request()->routeIs('reports.finance') ? 'text-primary bg-primary-light font-medium' : '' }}">
+                    <i class="fas fa-file-invoice-dollar w-3.5 text-center"></i><span>Finance Reports</span>
+                </a>
+                <a href="{{ route('reports.refunds') }}"
+                    class="flex items-center gap-2.5 pl-9 pr-3 py-1.5 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-50 text-[13px] transition-colors {{ request()->routeIs('reports.refunds') ? 'text-primary bg-primary-light font-medium' : '' }}">
+                    <i class="fas fa-rotate-left w-3.5 text-center"></i><span>Refund & Return Reports</span>
+                </a>
+                <a href="{{ route('reports.purchases') }}"
+                    class="flex items-center gap-2.5 pl-9 pr-3 py-1.5 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-50 text-[13px] transition-colors {{ request()->routeIs('reports.purchases') ? 'text-primary bg-primary-light font-medium' : '' }}">
+                    <i class="fas fa-cart-plus w-3.5 text-center"></i><span>Purchase & Supplier Reports</span>
+                </a>
+                <a href="{{ route('reports.staff') }}"
+                    class="flex items-center gap-2.5 pl-9 pr-3 py-1.5 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-50 text-[13px] transition-colors {{ request()->routeIs('reports.staff') ? 'text-primary bg-primary-light font-medium' : '' }}">
+                    <i class="fas fa-user-tie w-3.5 text-center"></i><span>Staff & Access Reports</span>
+                </a>
+            </div>
+        </div>
 
         <!-- Settings -->
         <a href="#"

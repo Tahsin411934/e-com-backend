@@ -40,6 +40,7 @@
                 <option value="asset">Asset</option>
                 <option value="liability">Liability</option>
                 <option value="equity">Equity</option>
+                <option value="investment">Investment</option>
             </x-form-select>
         </div>
         <div class="mb-4">

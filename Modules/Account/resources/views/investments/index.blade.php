@@ -35,11 +35,16 @@
         <div class="mb-4">
             <x-form-select label="Investment Type" name="investment_type" id="accountinvestment_investment_type" required>
                 @foreach($investmentTypes as $type)
-                    <option value="{{ $type->system_key }}" {{ old('investment_type') == $type->system_key ? 'selected' : '' }}>
-                        {{ ucfirst(str_replace('_', ' ', $type->name)) }}
+                    <option value="{{ $type->slug }}" {{ old('investment_type') == $type->slug ? 'selected' : '' }}>
+                        {{ $type->name }}
                     </option>
                 @endforeach
             </x-form-select>
+            <p class="mt-1 text-xs text-gray-400">
+                Types are managed dynamically under
+                <a href="{{ route('account-categories.index') }}" class="text-primary underline hover:text-primary-dark">Account &rsaquo; Categories</a>
+                (choose Type = Investment).
+            </p>
         </div>
         <div class="mb-4"><x-form-input label="Amount" name="amount" id="accountinvestment_amount" type="number" step="0.01" required /></div>
         <div class="mb-4"><x-form-input label="Currency" name="currency_code" id="accountinvestment_currency_code" value="BDT" /></div>

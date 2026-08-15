@@ -21,7 +21,7 @@ class AccountCategoryRequest extends FormRequest
             'parent_id' => ['nullable', 'integer', 'exists:account_categories,id'],
             'name' => ['required', 'string', 'max:150'],
             'slug' => ['nullable', 'string', 'max:180', Rule::unique('account_categories', 'slug')->ignore($categoryId)],
-            'type' => ['required', Rule::in(['income', 'expense', 'asset', 'liability', 'equity', 'cost_of_goods_sold'])],
+            'type' => ['required', Rule::in(['income', 'expense', 'asset', 'liability', 'equity', 'cost_of_goods_sold', 'investment'])],
             'is_active' => ['nullable', 'boolean'],
         ];
     }

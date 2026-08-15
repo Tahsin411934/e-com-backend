@@ -304,6 +304,10 @@
                     class="flex items-center gap-2.5 pl-9 pr-3 py-1.5 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-50 text-[13px] transition-colors {{ request()->routeIs('account-investments.*') ? 'text-primary bg-primary-light font-medium' : '' }}">
                     <i class="fas fa-chart-bar w-3.5 text-center"></i><span>Investments</span>
                 </a>
+                <a href="{{ route('account-categories.index') }}"
+                    class="flex items-center gap-2.5 pl-9 pr-3 py-1.5 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-50 text-[13px] transition-colors {{ request()->routeIs('account-categories.*') ? 'text-primary bg-primary-light font-medium' : '' }}">
+                    <i class="fas fa-tags w-3.5 text-center"></i><span>Investment Types</span>
+                </a>
                 <a href="{{ route('account-transactions.index') }}"
                     class="flex items-center gap-2.5 pl-9 pr-3 py-1.5 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-50 text-[13px] transition-colors {{ request()->routeIs('account-transactions.*') ? 'text-primary bg-primary-light font-medium' : '' }}">
                     <i class="fas fa-book w-3.5 text-center"></i><span>Ledger</span>

@@ -55,6 +55,24 @@ class AccountDatabaseSeeder extends Seeder
             );
         }
 
+        // Seed default investment types so investments can be tagged dynamically.
+        // Users can add more from Account > Categories with Type = "Investment".
+        foreach ([
+            ['system_key' => 'it-equipment', 'name' => 'Equipment', 'slug' => 'equipment', 'type' => 'investment'],
+            ['system_key' => 'it-property', 'name' => 'Property', 'slug' => 'property', 'type' => 'investment'],
+            ['system_key' => 'it-stocks', 'name' => 'Stocks / Shares', 'slug' => 'stocks', 'type' => 'investment'],
+            ['system_key' => 'it-fixed-deposit', 'name' => 'Fixed Deposit', 'slug' => 'fixed-deposit', 'type' => 'investment'],
+            ['system_key' => 'it-business', 'name' => 'Business Expansion', 'slug' => 'business', 'type' => 'investment'],
+            ['system_key' => 'it-real-estate', 'name' => 'Real Estate', 'slug' => 'real-estate', 'type' => 'investment'],
+            ['system_key' => 'it-crypto', 'name' => 'Crypto Currency', 'slug' => 'crypto-currency', 'type' => 'investment'],
+            ['system_key' => 'it-other', 'name' => 'Other', 'slug' => 'other', 'type' => 'investment'],
+        ] as $investmentType) {
+            AccountCategory::updateOrCreate(
+                ['system_key' => $investmentType['system_key']],
+                $investmentType + ['is_system' => true, 'is_active' => true]
+            );
+        }
+
         $bankAccount = AccountAccount::where('code', 'BANK-DEFAULT')->first();
         $cashAccount = AccountAccount::where('code', 'CASH-DEFAULT')->first();
         $mobileAccount = AccountAccount::where('code', 'MOBILE-BANKING-DEFAULT')->first();

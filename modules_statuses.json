@@ -9,5 +9,6 @@
     "Reviews": true,
     "Shipping": true,
     "Store": true,
-    "Account": true
+    "Account": true,
+    "Reports": true
 }

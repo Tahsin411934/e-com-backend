@@ -1,0 +1,25 @@
+{
+    "name": "nwidart/reports",
+    "description": "",
+    "authors": [
+        {
+            "name": ":author_name",
+            "email": "author@email.com"
+        }
+    ],
+    "extra": {
+        "laravel": {
+            "providers": [],
+            "aliases": {
+            }
+        }
+    },
+    "autoload": {
+        "psr-4": {
+            "Modules\\Reports\\": "app/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {}
+    }
+}

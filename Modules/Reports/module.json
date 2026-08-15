@@ -1,0 +1,11 @@
+{
+    "name": "Reports",
+    "alias": "reports",
+    "description": "Reporting module - executive, sales, product, inventory, purchase, customer, campaign, order, shipping, finance, refund and staff reports with filters, comparisons and CSV export",
+    "keywords": [],
+    "priority": 2,
+    "providers": [
+        "Modules\\Reports\\Providers\\ReportsServiceProvider"
+    ],
+    "files": []
+}

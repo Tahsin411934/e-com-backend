@@ -45,6 +45,16 @@ class Order extends Model
         return $this->hasMany(OrderItem::class);
     }
 
+    public function deliveries()
+    {
+        return $this->hasMany(Delivery::class);
+    }
+
+    public function shipments()
+    {
+        return $this->hasMany(\Modules\Shipping\Models\Shipment::class);
+    }
+
     public function payments()
     {
         return $this->hasMany(Payment::class);

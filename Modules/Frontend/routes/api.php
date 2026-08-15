@@ -13,6 +13,7 @@ use Modules\Frontend\Http\Controllers\SubnavbarApiController;
 use Modules\Frontend\Http\Controllers\ProductRequestApiController;
 use Modules\Frontend\Http\Controllers\AnnouncementBarApiController;
 use Modules\Frontend\Http\Controllers\SettingsApiController;
+use Modules\Frontend\Http\Controllers\CustomerOrderApiController;
 
 /*
 |--------------------------------------------------------------------------
@@ -82,4 +83,6 @@ Route::prefix('v1')->group(function () {
 
 Route::middleware(['convert.auth.cookie', 'auth:sanctum'])->prefix('v1')->group(function () {
     Route::apiResource('frontends', FrontendController::class)->names('frontend');
+    Route::get('/orders', [CustomerOrderApiController::class, 'index'])->name('api.orders.index');
+    Route::get('/orders/{order}', [CustomerOrderApiController::class, 'show'])->name('api.orders.show');
 });

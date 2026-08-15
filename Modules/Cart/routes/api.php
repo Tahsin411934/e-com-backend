@@ -3,6 +3,12 @@
 use Illuminate\Support\Facades\Route;
 use Modules\Cart\Http\Controllers\CartController;
 use Modules\Cart\Http\Controllers\WishlistController;
+use Modules\Cart\Http\Controllers\CampaignApiController;
+
+Route::prefix('v1')->group(function () {
+    Route::get('campaigns', [CampaignApiController::class, 'index']);
+    Route::get('campaigns/{slug}', [CampaignApiController::class, 'show']);
+});
 
 Route::middleware(['convert.auth.cookie', 'auth:sanctum'])->prefix('v1')->group(function () {
     Route::apiResource('carts', CartController::class)->names('cart');

@@ -193,6 +193,10 @@
                     class="flex items-center gap-2.5 pl-9 pr-3 py-1.5 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-50 text-[13px] transition-colors {{ request()->routeIs('coupons.*') ? 'text-primary bg-primary-light font-medium' : '' }}">
                     <i class="fas fa-ticket-alt w-3.5 text-center"></i><span>Coupons</span>
                 </a>
+                <a href="{{ route('campaigns.index') }}"
+                    class="flex items-center gap-2.5 pl-9 pr-3 py-1.5 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-50 text-[13px] transition-colors {{ request()->routeIs('campaigns.*') ? 'text-primary bg-primary-light font-medium' : '' }}">
+                    <i class="fas fa-bullhorn w-3.5 text-center"></i><span>Campaigns</span>
+                </a>
                 <a href="{{ route('wishlists.index') }}"
                     class="flex items-center gap-2.5 pl-9 pr-3 py-1.5 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-50 text-[13px] transition-colors {{ request()->routeIs('wishlists.*') ? 'text-primary bg-primary-light font-medium' : '' }}">
                     <i class="fas fa-heart w-3.5 text-center"></i><span>Wishlists</span>

@@ -11,9 +11,14 @@ use Modules\Order\Models\Order;
 use Modules\Order\Models\OrderItem;
 use Modules\Catalog\Models\ProductVariant;
 use Modules\Catalog\Models\VariantOption;
+use Modules\Cart\Services\CampaignPricingService;
 
 class CheckoutController extends Controller
 {
+    public function __construct(private CampaignPricingService $campaignPricing)
+    {
+    }
+
     public function checkout(Request $request)
     {
         try {
@@ -32,6 +37,17 @@ class CheckoutController extends Controller
                         'message' => 'Cart is empty.',
                     ];
                 }
+
+                // Recalculate campaign prices on the server so an expired or changed
+                // frontend/cart price can never be used for an order.
+                foreach ($cart->items as $cartItem) {
+                    $optionAdjustment = (float) ($cartItem->variantOption?->price_adjustment ?? 0);
+                    $currentPrice = $this->campaignPricing->priceFor($cartItem->variant, $optionAdjustment)['price'];
+                    if ((float) $cartItem->unit_price !== $currentPrice) {
+                        $cartItem->update(['unit_price' => $currentPrice]);
+                    }
+                }
+                $cart->load('items.variant', 'items.variantOption');
 
                 // Calculate totals
                 $subtotal = $cart->items->sum(fn($item) => $item->unit_price * $item->quantity);

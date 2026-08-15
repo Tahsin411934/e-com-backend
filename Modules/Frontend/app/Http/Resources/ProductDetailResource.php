@@ -45,16 +45,21 @@ class ProductDetailResource extends JsonResource
 
         // ── Variants ──
         $activeVariants = $this->variants->where('status', 'active');
-        $minPrice = $activeVariants->min('sale_price');
-        $maxPrice = $activeVariants->max('sale_price');
+        $pricing = app(\Modules\Cart\Services\CampaignPricingService::class);
+        $pricedVariants = $activeVariants->map(fn ($variant) => $pricing->priceFor($variant));
+        $minPrice = $pricedVariants->min('price');
+        $maxPrice = $pricedVariants->max('price');
 
-        $variants = $activeVariants->map(fn($v) => [
+        $variants = $activeVariants->map(function ($v) use ($pricing) {
+            $campaignPrice = $pricing->priceFor($v);
+            return [
             'id'              => $v->id,
             'name'            => $v->name,
             'sku'             => $v->sku,
             'barcode'         => $v->barcode,
-            'sale_price'      => (float) $v->sale_price,
-            'compare_at_price'=> $v->compare_at_price ? (float) $v->compare_at_price : null,
+            'sale_price'      => $campaignPrice['price'],
+            'compare_at_price'=> $campaignPrice['campaign'] ? $campaignPrice['original_price'] : ($v->compare_at_price ? (float) $v->compare_at_price : null),
+            'campaign_name'   => $campaignPrice['campaign']?->name,
             'cost_price'      => (float) $v->cost_price,
             'stock'           => $v->track_inventory ? ($v->stock ?? 0) : null,
             'track_inventory' => (bool) $v->track_inventory,
@@ -69,7 +74,8 @@ class ProductDetailResource extends JsonResource
                 'price_adjustment' => (float) $o->price_adjustment,
                 'stock'            => (int) $o->stock,
             ]),
-        ]);
+            ];
+        });
 
         // ── Attribute options (colors / sizes) ──
         $colors = $activeVariants->pluck('attributes')->map(fn($a) => $a['color'] ?? null)->filter()->unique()->values();

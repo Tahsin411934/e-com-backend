@@ -11,6 +11,9 @@ use Yajra\DataTables\DataTables;
 
 class CartService
 {
+    public function __construct(protected CampaignPricingService $campaignPricing)
+    {
+    }
     public function getCartDataTable(Request $request)
     {
         $query = Cart::query()
@@ -142,7 +145,7 @@ class CartService
                 $variant = \Modules\Catalog\Models\ProductVariant::findOrFail($data['variant_id']);
 
                 // Calculate price with variant option adjustment if provided
-                $unitPrice = $variant->sale_price;
+                $unitPrice = (float) $variant->sale_price;
                 $variantOptionId = $data['variant_option_id'] ?? null;
                 
                 if ($variantOptionId) {
@@ -151,6 +154,7 @@ class CartService
                         $unitPrice += $variantOption->price_adjustment;
                     }
                 }
+                $unitPrice = $this->campaignPricing->priceFor($variant, $unitPrice - (float) $variant->sale_price)['price'];
 
                 // Check for existing item with same variant AND variant_option
                 $existingItem = CartItem::where('cart_id', $cart->id)
@@ -315,7 +319,7 @@ class CartService
                     $variant = \Modules\Catalog\Models\ProductVariant::findOrFail($itemData['variant_id']);
                     
                     // Calculate price with variant option adjustment
-                    $unitPrice = $variant->sale_price;
+                    $unitPrice = (float) $variant->sale_price;
                     $variantOptionId = $itemData['variant_option_id'] ?? null;
                     
                     if ($variantOptionId) {
@@ -324,6 +328,7 @@ class CartService
                             $unitPrice += $variantOption->price_adjustment;
                         }
                     }
+                    $unitPrice = $this->campaignPricing->priceFor($variant, $unitPrice - (float) $variant->sale_price)['price'];
                     
                     $itemsToUpsert[] = [
                         'cart_id' => $cart->id,

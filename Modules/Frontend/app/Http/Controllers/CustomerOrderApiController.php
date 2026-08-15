@@ -117,7 +117,7 @@ class CustomerOrderApiController extends Controller
                 'state' => $currentRank > $index ? 'completed' : ($currentRank === $index ? 'current' : 'upcoming'),
                 'occurred_at' => $occurredAt?->toIso8601String(),
             ];
-        })->values();
+        })->values()->all();
     }
 
     private function currentShippingStatus(Order $order, ?Shipment $shipment): string

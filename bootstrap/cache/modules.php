@@ -12,6 +12,7 @@
     8 => 'Modules\\Shipping\\Providers\\ShippingServiceProvider',
     9 => 'Modules\\Store\\Providers\\StoreServiceProvider',
     10 => 'Modules\\Identity\\Providers\\IdentityServiceProvider',
+    11 => 'Modules\\Reports\\Providers\\ReportsServiceProvider',
   ),
   'eager' => 
   array (
@@ -26,6 +27,7 @@
     8 => 'Modules\\Shipping\\Providers\\ShippingServiceProvider',
     9 => 'Modules\\Store\\Providers\\StoreServiceProvider',
     10 => 'Modules\\Identity\\Providers\\IdentityServiceProvider',
+    11 => 'Modules\\Reports\\Providers\\ReportsServiceProvider',
   ),
   'deferred' => 
   array (

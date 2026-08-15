@@ -27,7 +27,8 @@ use Modules\Reports\Services\OrderFulfillmentTimingService;
 class ReportApiController extends Controller
 {
     /**
-     * Map report category → [service instance, default method prefix].
+     * Map report category → [service instance, default method prefix, whitelisted methods].
+     * SECURITY: Methods must be explicitly whitelisted to prevent unauthorized method invocation.
      */
     protected array $dispatchMap;
 
@@ -35,27 +36,28 @@ class ReportApiController extends Controller
         private CsvExporter $csv,
     ) {
         $this->dispatchMap = [
-            'executive' => [app(ExecutiveReportService::class), ''],
-            'sales' => [app(SalesReportService::class), ''],
-            'performance' => [app(SalesPerformanceService::class), ''],
-            'products' => [app(ProductReportService::class), ''],
-            'product-perf' => [app(ProductPerformanceService::class), ''],
-            'inventory' => [app(InventoryReportService::class), ''],
-            'inventory-stock' => [app(InventoryStockReportService::class), ''],
-            'orders' => [app(OrderFulfillmentReportService::class), ''],
-            'order-timing' => [app(OrderFulfillmentTimingService::class), ''],
-            'shipping' => [app(ShippingReportService::class), ''],
-            'customers' => [app(CustomerReportService::class), ''],
-            'campaigns' => [app(CampaignReportService::class), ''],
-            'finance' => [app(FinanceReportService::class), ''],
-            'refunds' => [app(RefundReportService::class), ''],
-            'purchases' => [app(PurchaseSupplierReportService::class), ''],
-            'staff' => [app(StaffReportService::class), ''],
+            'executive' => [app(ExecutiveReportService::class), '', ['overview', 'topMetrics', 'alerts']],
+            'sales' => [app(SalesReportService::class), '', ['totalSales', 'byProduct', 'byCategory', 'byDay', 'bySalesChannel']],
+            'performance' => [app(SalesPerformanceService::class), '', ['performance', 'trend']],
+            'products' => [app(ProductReportService::class), '', ['topProducts', 'lowStock', 'sales', 'ratings']],
+            'product-perf' => [app(ProductPerformanceService::class), '', ['performance', 'byCategory', 'byBrand']],
+            'inventory' => [app(InventoryReportService::class), '', ['movement', 'valuation', 'adjustments']],
+            'inventory-stock' => [app(InventoryStockReportService::class), '', ['summary', 'byLocation', 'lowStock', 'stockAging']],
+            'orders' => [app(OrderFulfillmentReportService::class), '', ['fulfillmentStatus', 'fulfillmentTime', 'returnRate']],
+            'order-timing' => [app(OrderFulfillmentTimingService::class), '', ['avgFulfillmentTime', 'fulfillmentByDay', 'delays']],
+            'shipping' => [app(ShippingReportService::class), '', ['costs', 'methods', 'carriers', 'timing']],
+            'customers' => [app(CustomerReportService::class), '', ['kpis', 'topCustomers', 'citySales', 'orderFrequency']],
+            'campaigns' => [app(CampaignReportService::class), '', ['overview', 'byChannel', 'roi', 'engagement']],
+            'finance' => [app(FinanceReportService::class), '', ['revenue', 'expenses', 'profitMargin', 'cashFlow']],
+            'refunds' => [app(RefundReportService::class), '', ['summary', 'byReason', 'byCategory', 'trends']],
+            'purchases' => [app(PurchaseSupplierReportService::class), '', ['bySupplier', 'byProduct', 'costs', 'leadTime']],
+            'staff' => [app(StaffReportService::class), '', ['sales', 'performance', 'targets']],
         ];
     }
 
     /**
      * GET /api/v1/reports/{category}/{method}
+     * SECURITY: Validates that the requested method is in the whitelist before invocation.
      */
     public function report(string $category, string $method, Request $request): JsonResponse
     {
@@ -66,8 +68,13 @@ class ReportApiController extends Controller
             return response()->json(['error' => 'Unknown report category.', 'code' => 404], 404);
         }
 
-        [$service, $prefix] = $map;
+        [$service, $prefix, $whitelist] = $map;
         $methodName = $prefix ? $prefix . ucfirst($method) : $method;
+
+        // Security check: validate method is in whitelist
+        if (! in_array($methodName, $whitelist, true)) {
+            return response()->json(['error' => "Report method '{$category}.{$methodName}' is not allowed.", 'code' => 403], 403);
+        }
 
         if (! method_exists($service, $methodName)) {
             return response()->json(['error' => "Report method '{$category}.{$methodName}' not found.", 'code' => 404], 404);
@@ -84,6 +91,7 @@ class ReportApiController extends Controller
 
     /**
      * GET /api/v1/reports/{category}/{method}/export
+     * SECURITY: Validates that the requested method is in the whitelist before invocation.
      */
     public function export(string $category, string $method, Request $request)
     {
@@ -94,8 +102,13 @@ class ReportApiController extends Controller
             abort(404, 'Unknown category.');
         }
 
-        [$service, $prefix] = $map;
+        [$service, $prefix, $whitelist] = $map;
         $methodName = $prefix ? $prefix . ucfirst($method) : $method;
+
+        // Security check: validate method is in whitelist
+        if (! in_array($methodName, $whitelist, true)) {
+            abort(403, "Report method '{$category}.{$methodName}' is not allowed.");
+        }
 
         if (! method_exists($service, $methodName)) {
             abort(404, 'Method not found.');

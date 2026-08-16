@@ -38,6 +38,13 @@ class CampaignController extends Controller
 
     public function destroy(Campaign $campaign) { $campaign->delete(); return response()->json(['status' => 'success']); }
 
+    public function toggleStatus(Campaign $campaign)
+    {
+        $campaign->status = $campaign->status === 'active' ? 'paused' : 'active';
+        $campaign->save();
+        return response()->json(['status' => 'success', 'campaign' => $campaign->fresh()]);
+    }
+
     public function searchProducts(Request $request)
     {
         $q = $request->string('q')->trim();

@@ -21,6 +21,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/campaigns/{campaign}', [CampaignController::class, 'show'])->name('campaigns.show');
     Route::put('/campaigns/{campaign}', [CampaignController::class, 'update'])->name('campaigns.update');
     Route::delete('/campaigns/{campaign}', [CampaignController::class, 'destroy'])->name('campaigns.destroy');
+    Route::post('/campaigns/{campaign}/toggle-status', [CampaignController::class, 'toggleStatus'])->name('campaigns.toggleStatus');
     Route::get('/campaign-products/search', [CampaignController::class, 'searchProducts'])->name('campaigns.products.search');
     Route::post('/campaigns/{campaign}/products', [CampaignController::class, 'addProduct'])->name('campaigns.products.add');
     Route::delete('/campaigns/{campaign}/products/{campaignProduct}', [CampaignController::class, 'removeProduct'])->name('campaigns.products.remove');

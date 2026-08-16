@@ -17,7 +17,7 @@ class CampaignController extends Controller
 
     public function store(Request $request)
     {
-        $data = $request->validate(['name' => 'required|string|max:160', 'description' => 'nullable|string', 'banner_image' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:5120', 'button_text' => 'nullable|string|max:60', 'priority' => 'nullable|integer|min:0', 'is_featured' => 'nullable|boolean', 'status' => 'required|in:draft,active,paused', 'starts_at' => 'nullable|date', 'ends_at' => 'nullable|date|after:starts_at']);
+        $data = $request->validate(['name' => 'required|string|max:160', 'description' => 'nullable|string', 'banner_image' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:5120', 'button_text' => 'nullable|string|max:60', 'priority' => 'nullable|integer|min:0', 'is_featured' => 'nullable|boolean', 'is_active' => 'nullable|boolean', 'status' => 'required|in:draft,active,paused', 'starts_at' => 'nullable|date', 'ends_at' => 'nullable|date|after:starts_at']);
         if ($request->hasFile('banner_image')) $data['banner_image'] = $request->file('banner_image')->store('campaigns/banners', 'public');
         $data['slug'] = Str::slug($data['name']) . '-' . Str::lower(Str::random(5));
         return response()->json(['status' => 'success', 'campaign' => Campaign::create($data)], 201);
@@ -27,7 +27,7 @@ class CampaignController extends Controller
 
     public function update(Request $request, Campaign $campaign)
     {
-        $data = $request->validate(['name' => 'sometimes|required|string|max:160', 'description' => 'nullable|string', 'banner_image' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:5120', 'button_text' => 'nullable|string|max:60', 'priority' => 'nullable|integer|min:0', 'is_featured' => 'nullable|boolean', 'status' => 'sometimes|required|in:draft,active,paused', 'starts_at' => 'nullable|date', 'ends_at' => 'nullable|date|after:starts_at']);
+        $data = $request->validate(['name' => 'sometimes|required|string|max:160', 'description' => 'nullable|string', 'banner_image' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:5120', 'button_text' => 'nullable|string|max:60', 'priority' => 'nullable|integer|min:0', 'is_featured' => 'nullable|boolean', 'is_active' => 'sometimes|nullable|boolean', 'status' => 'sometimes|required|in:draft,active,paused', 'starts_at' => 'nullable|date', 'ends_at' => 'nullable|date|after:starts_at']);
         if ($request->hasFile('banner_image')) {
             if ($campaign->banner_image) Storage::disk('public')->delete($campaign->banner_image);
             $data['banner_image'] = $request->file('banner_image')->store('campaigns/banners', 'public');
@@ -38,9 +38,9 @@ class CampaignController extends Controller
 
     public function destroy(Campaign $campaign) { $campaign->delete(); return response()->json(['status' => 'success']); }
 
-    public function toggleStatus(Campaign $campaign)
+    public function toggleActive(Campaign $campaign)
     {
-        $campaign->status = $campaign->status === 'active' ? 'paused' : 'active';
+        $campaign->is_active = !$campaign->is_active;
         $campaign->save();
         return response()->json(['status' => 'success', 'campaign' => $campaign->fresh()]);
     }

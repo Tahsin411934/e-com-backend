@@ -71,7 +71,7 @@ class HomeApiController extends Controller
         $productsByCategory = [];
 
         foreach ($categories as $category) {
-            $productsByCategory[$category->id] = $category->products()
+            $query = $category->products()
                 ->where('products.status', 'active')
                 ->where('products.visibility', 'public')
                 ->with([
@@ -79,7 +79,17 @@ class HomeApiController extends Controller
                     'variants' => function ($q) {
                         $q->where('status', 'active');
                     },
-                ])
+                ]);
+
+            $hasHomepageProducts = (clone $query)
+                ->where('products.is_homepage', true)
+                ->exists();
+
+            if ($hasHomepageProducts) {
+                $query->where('products.is_homepage', true);
+            }
+
+            $productsByCategory[$category->id] = $query
                 ->orderBy('products.order_column')
                 ->orderBy('products.published_at', 'desc')
                 ->limit($limitProducts)

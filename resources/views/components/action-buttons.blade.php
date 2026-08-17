@@ -2,6 +2,7 @@
     'id' => null,
     'edit' => null,        // JavaScript function name (e.g., 'categoryEdit')
     'delete' => null,      // JavaScript function name (e.g., 'categoryDelete')
+    'duplicate' => null,   // JavaScript function name (e.g., 'productDuplicate')
     'showUrl' => null,     // URL for "View" button (e.g., route('purchase-orders.show', ':id'))
     'editUrl' => null,     // URL for "Edit" button (e.g., route('purchase-orders.edit', ':id'))
     'deleteUrl' => null,   // URL for AJAX delete (e.g., route('purchase-orders.destroy', ':id'))
@@ -34,6 +35,15 @@
             title="Edit">
             <i class="fa fa-pencil"></i>
         </a>
+    @endif
+
+    {{-- Duplicate Button (JavaScript function) --}}
+    @if($duplicate)
+        <button onclick="{{ $duplicate }}({{ $id }})"
+            class="bg-amber-500 text-white px-2 py-1 rounded text-sm hover:bg-amber-400 transition"
+            title="Duplicate">
+            <i class="fa fa-copy"></i>
+        </button>
     @endif
 
     {{-- Delete Button --}}

@@ -43,6 +43,10 @@
 
     @push('scripts')
         <script>
+            function htmlEscape(str) {
+                return $('<span>').text(str || '').html();
+            }
+
             function productEdit(id) {
                 let editUrl = "{{ route('products.edit', ':id') }}".replace(':id', id);
                 window.location.href = editUrl;
@@ -52,6 +56,72 @@
                 let deleteUrl = "{{ route('products.destroy', ':id') }}".replace(':id', id);
                 let tableId = '#productTable';
                 confirmAndDelete(deleteUrl, tableId);
+            }
+
+            function productDuplicate(id) {
+                let showUrl = "{{ route('products.show', ':id') }}".replace(':id', id);
+                let duplicateUrl = "{{ route('products.duplicate', ':id') }}".replace(':id', id);
+
+                $.get(showUrl, function(res) {
+                    if (res.status !== 'success' || !res.product) {
+                        Swal.fire('Error', res.message || 'Product not found.', 'error');
+                        return;
+                    }
+
+                    let p = res.product;
+                    let defaultPrice = (p.variants && p.variants.length > 0)
+                        ? (parseFloat(p.variants[0].sale_price) || '')
+                        : '';
+
+                    Swal.fire({
+                        title: 'Duplicate Product',
+                        html:
+                            '<input id="dupName" class="swal2-input" placeholder="Product Name" value="' + htmlEscape('Copy of ' + p.name) + '" autofocus>' +
+                            '<input id="dupPrice" class="swal2-input" type="number" step="0.01" min="0" placeholder="New Price (optional)" value="' + htmlEscape(defaultPrice) + '">',
+                        showCancelButton: true,
+                        confirmButtonText: '<i class="fa fa-copy mr-1"></i> Duplicate',
+                        cancelButtonText: 'Cancel',
+                        focusConfirm: false,
+                        preConfirm: function() {
+                            let name = document.getElementById('dupName').value.trim();
+                            if (!name) {
+                                Swal.showValidationMessage('Product name is required.');
+                                return false;
+                            }
+                            return {
+                                name: name,
+                                price: document.getElementById('dupPrice').value.trim()
+                            };
+                        }
+                    }).then(function(result) {
+                        if (!result.isConfirmed) return;
+
+                        $.post(duplicateUrl, result.value, function(res) {
+                            if (res.status === 'success') {
+                                Toastify({
+                                    text: res.message || 'Product duplicated successfully!',
+                                    duration: 3000,
+                                    gravity: 'bottom',
+                                    position: 'right',
+                                    style: { background: 'linear-gradient(135deg, #d97706, #f59e0b)' }
+                                }).showToast();
+                                $('#productTable').DataTable().ajax.reload(null, false);
+                            } else {
+                                Swal.fire('Error', res.message || 'Failed to duplicate product.', 'error');
+                            }
+                        }).fail(function(xhr) {
+                            let msg = 'Server communication error.';
+                            if (xhr.responseJSON && xhr.responseJSON.errors) {
+                                msg = Object.values(xhr.responseJSON.errors).flat().join('<br>');
+                            } else if (xhr.responseJSON && xhr.responseJSON.message) {
+                                msg = xhr.responseJSON.message;
+                            }
+                            Swal.fire('Error', msg, 'error');
+                        });
+                    });
+                }).fail(function() {
+                    Swal.fire('Error', 'Server communication error.', 'error');
+                });
             }
 
             $(document).ready(function() {

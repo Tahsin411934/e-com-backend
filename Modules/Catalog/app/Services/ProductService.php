@@ -59,6 +59,7 @@ class ProductService
                     'id' => $product->id,
                     'edit' => 'productEdit',
                     'delete' => 'productDelete',
+                    'duplicate' => 'productDuplicate',
                 ])->render();
             })
             ->rawColumns(['status', 'action'])
@@ -271,6 +272,198 @@ class ProductService
                 'message' => 'Error deleting product: ' . $e->getMessage(),
             ];
         }
+    }
+
+    /**
+     * Duplicate a product including categories, variants, variant options and images.
+     * New unique slug/SKU/barcode are generated and image files are physically copied,
+     * so the duplicate is fully independent from the source product.
+     */
+    public function duplicateProduct(int $id, array $data): array
+    {
+        try {
+            return DB::transaction(function () use ($id, $data) {
+                $source = Product::with(['categories', 'variants.options', 'images'])->findOrFail($id);
+
+                $name = trim((string) ($data['name'] ?? ''));
+                if ($name === '') {
+                    return [
+                        'status' => 'error',
+                        'message' => 'Product name is required.',
+                        'product' => null,
+                    ];
+                }
+
+                // Optional price override (applied to every variant's sale price)
+                $price = isset($data['price']) && $data['price'] !== '' && $data['price'] !== null
+                    ? (float) $data['price']
+                    : null;
+
+                $duplicate = Product::create([
+                    'brand_id'          => $source->brand_id ?? $data['brand_id'] ?? null,
+                    'category_id'       => $source->category_id ?? $data['category_id'] ?? null,
+                    'navbar_item_id'    => $source->navbar_item_id,
+                    'subnavbar_item_id' => $source->subnavbar_item_id,
+                    'unit_id'           => $source->unit_id,
+                    'size_id'           => $source->size_id,
+                    'tax_rate_id'       => $source->tax_rate_id,
+                    'name'              => $name,
+                    'slug'              => $this->generateUniqueProductSlug($name),
+                    'short_description' => $source->short_description,
+                    'description'       => $source->description,
+                    'product_type'      => $source->product_type,
+                    'status'            => $source->status,
+                    'visibility'        => $source->visibility,
+                    'seo_title'         => $source->seo_title,
+                    'seo_description'   => $source->seo_description,
+                    'published_at'      => $source->published_at,
+                    'is_homepage'       => false,
+                ]);
+
+// Categories (pivot table)
+                $duplicate->categories()->sync($source->categories->pluck('id'));
+
+                // Variants (+ their color/size options)
+                $variantMap = [];
+                foreach ($source->variants as $variant) {
+                    $newVariant = $duplicate->variants()->create([
+                        'sku'              => $this->generateUniqueVariantSku($variant->sku),
+                        'barcode'          => (string) Str::uuid(),
+                        'name'             => $variant->name,
+                        'attributes'       => $variant->attributes,
+                        'cost_price'       => $variant->cost_price,
+                        'sale_price'       => $price !== null ? $price : $variant->sale_price,
+                        'compare_at_price' => $variant->compare_at_price,
+                        'weight_grams'     => $variant->weight_grams,
+                        'length_mm'        => $variant->length_mm,
+                        'width_mm'         => $variant->width_mm,
+                        'height_mm'        => $variant->height_mm,
+                        'track_inventory'  => $variant->track_inventory,
+                        'allow_backorder'  => $variant->allow_backorder,
+                        'status'           => $variant->status,
+                    ]);
+                    $variantMap[$variant->id] = $newVariant->id;
+
+                    foreach ($variant->options as $option) {
+                        VariantOption::create([
+                            'product_variant_id' => $newVariant->id,
+                            'color_name'         => $option->color_name,
+                            'color_code'         => $option->color_code,
+                            'image_url'          => $option->image_url ? $this->copyImageFile($option->image_url) : null,
+                            'price_adjustment'   => $option->price_adjustment,
+                            'stock'              => 0,
+                            'sort_order'         => $option->sort_order,
+                            'status'             => $option->status,
+                        ]);
+                    }
+                }
+
+                // Images (copy physical files so both products stay independent)
+                foreach ($source->images as $image) {
+                    ProductImage::create([
+                        'product_id' => $duplicate->id,
+                        'variant_id' => $image->variant_id ? ($variantMap[$image->variant_id] ?? null) : null,
+                        'image_url'  => $this->copyImageFile($image->image_url),
+                        'alt_text'   => $image->alt_text ?? $name,
+                        'sort_order' => $image->sort_order,
+                        'is_main'    => $image->is_main,
+                    ]);
+                }
+
+                return [
+                    'status' => 'success',
+                    'message' => 'Product duplicated successfully.',
+                    'product' => $duplicate->fresh()->load(['brand', 'categories', 'variants.options', 'images']),
+                ];
+            });
+        } catch (\Exception $e) {
+            return [
+                'status' => 'error',
+                'message' => 'Error duplicating product: ' . $e->getMessage(),
+                'product' => null,
+            ];
+        }
+    }
+
+    /**
+     * Generate a unique product slug based on the given name.
+     */
+    private function generateUniqueProductSlug(string $name): string
+    {
+        $base = Str::slug($name);
+        if ($base === '') {
+            $base = 'product-' . Str::lower(Str::random(6));
+        }
+
+        $slug = $base;
+        $counter = 2;
+        while (Product::withTrashed()->where('slug', $slug)->exists()) {
+            $slug = $base . '-' . $counter++;
+        }
+
+        return $slug;
+    }
+
+    /**
+     * Generate a unique variant SKU derived from the original one.
+     */
+    private function generateUniqueVariantSku(?string $sku): string
+    {
+        $base = $sku && trim($sku) !== '' ? trim($sku) : ('PROD-' . Str::upper(Str::random(8)));
+
+        $candidate = $base . '-COPY';
+        $counter = 2;
+        while (ProductVariant::withTrashed()->where('sku', $candidate)->exists()) {
+            $candidate = $base . '-COPY-' . $counter++;
+        }
+
+        return Str::upper($candidate);
+    }
+
+    /**
+     * Copy an image file so the duplicated product owns its own copy.
+     * Returns the new relative storage path (or keeps the original reference
+     * for external URLs / missing files).
+     */
+    private function copyImageFile(?string $imageUrl): ?string
+    {
+        if (!$imageUrl) {
+            return null;
+        }
+
+        $path = $imageUrl;
+
+        // External URLs that are not on local /storage are kept as-is
+        if (str_starts_with($path, 'http://') || str_starts_with($path, 'https://')) {
+            if (!str_contains($path, '/storage/')) {
+                return $path;
+            }
+            $parsed = parse_url($path, PHP_URL_PATH) ?? '';
+            $path = ltrim($parsed, '/');
+            if (str_starts_with($path, 'storage/')) {
+                $path = substr($path, strlen('storage/'));
+            }
+        } else {
+            $path = ltrim($path, '/');
+            if (str_starts_with($path, 'storage/')) {
+                $path = substr($path, strlen('storage/'));
+            }
+        }
+
+        // Only uploaded files under products/ or categories/ are copied
+        if (!str_starts_with($path, 'products/') && !str_starts_with($path, 'categories/')) {
+            return $path;
+        }
+
+        $disk = Storage::disk('public');
+        if (!$disk->exists($path)) {
+            return $path;
+        }
+
+        $newPath = 'products/' . Str::random(24) . '-' . basename($path);
+        $disk->copy($path, $newPath);
+
+        return $newPath;
     }
 
     public function getBrands(): Collection

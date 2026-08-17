@@ -133,6 +133,21 @@ class ProductController extends Controller
         return response()->json($result);
     }
 
+    /**
+     * Duplicate a product with an optional new name and price.
+     */
+    public function duplicate(Request $request, $id)
+    {
+        $validated = $request->validate([
+            'name' => ['required', 'string', 'max:220'],
+            'price' => ['nullable', 'numeric', 'min:0'],
+        ]);
+
+        $result = $this->productService->duplicateProduct($id, $validated);
+
+        return response()->json($result, $result['status'] === 'success' ? 200 : 500);
+    }
+
     public function search(Request $request)
     {
         $query = $request->input('q', '');

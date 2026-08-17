@@ -1,0 +1,11 @@
+﻿
+Name                
+----                
+brands.blade.php    
+categories.blade.php
+index.blade.php     
+sizes.blade.php     
+tax-rates.blade.php 
+units.blade.php     
+
+

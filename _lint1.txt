@@ -1,0 +1,3 @@
+﻿No syntax errors detected in Modules\Catalog\app\Services\ProductService.php
+No syntax errors detected in Modules\Catalog\app\Http\Controllers\ProductController.php
+No syntax errors detected in Modules\Catalog\routes\web.php

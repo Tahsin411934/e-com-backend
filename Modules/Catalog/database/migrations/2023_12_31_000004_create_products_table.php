@@ -32,7 +32,10 @@ return new class extends Migration
                 $table->index(['status', 'deleted_at', 'visibility', 'published_at']);
             });
 
-            DB::statement('ALTER TABLE products ADD FULLTEXT ft_products_search (name, short_description, description)');
+            $driver = DB::connection()->getDriverName();
+            if ($driver !== 'sqlite') {
+                DB::statement('ALTER TABLE products ADD FULLTEXT ft_products_search (name, short_description, description)');
+            }
         }
     }
 

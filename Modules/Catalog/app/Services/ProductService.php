@@ -351,7 +351,7 @@ class ProductService
                             'color_code'         => $option->color_code,
                             'image_url'          => $option->image_url ? $this->copyImageFile($option->image_url) : null,
                             'price_adjustment'   => $option->price_adjustment,
-                            'stock'              => 0,
+                            'stock'              => (int) ($option->stock ?? 0),
                             'sort_order'         => $option->sort_order,
                             'status'             => $option->status,
                         ]);

@@ -24,8 +24,8 @@ class NavbarService
             ->addColumn('action', function (NavbarItem $item) {
                 $subnavbarUrl = route('frontend.nav-items.subnavbar.index', ['navbar_item_id' => $item->id]);
                 $subBtn = '<a href="' . $subnavbarUrl . '" class="bg-green-600 text-white px-2 py-1 rounded text-sm hover:bg-green-500 mr-2" title="Manage Subnavbars"><i class="fa fa-list"></i></a>';
-                $editBtn = '<button onclick="navbarItemEdit(' . $item->id . ')" class="bg-blue-900 text-white px-2 py-1 rounded text-sm hover:bg-blue-600 mr-2"><i class="fa fa-pencil"></i></button>';
-                $deleteBtn = '<button onclick="navbarItemDelete(' . $item->id . ')" class="bg-red-500 text-white px-2 py-1 rounded text-sm hover:bg-red-600"><i class="fa fa-trash"></i></button>';
+                $editBtn = '<button onclick="navbar_itemEdit(' . $item->id . ')" class="bg-blue-900 text-white px-2 py-1 rounded text-sm hover:bg-blue-600 mr-2"><i class="fa fa-pencil"></i></button>';
+                $deleteBtn = '<button onclick="navbar_itemDelete(' . $item->id . ')" class="bg-red-500 text-white px-2 py-1 rounded text-sm hover:bg-red-600"><i class="fa fa-trash"></i></button>';
                 return '<div class="flex space-x-2 justify-center">' . $subBtn . $editBtn . $deleteBtn . '</div>';
             })
             ->rawColumns(['action'])
@@ -56,8 +56,8 @@ class NavbarService
             ->addColumn('action', function (SubnavbarItem $item) {
                 return view('components.action-buttons', [
                     'id' => $item->id,
-                    'edit' => 'subnavbarItemEdit',
-                    'delete' => 'subnavbarItemDelete',
+                    'edit' => 'subnavbar_itemEdit',
+                    'delete' => 'subnavbar_itemDelete',
                 ])->render();
             })
             ->rawColumns(['action'])

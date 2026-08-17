@@ -202,8 +202,8 @@
             function sendProductReorder(productIds) {
                 // Show loading state
                 Toastify({
-                    text: '<i class="fa fa-spinner fa-spin mr-2"></i> Saving product order...',
-                    duration: 0,
+                    text: 'Saving product order...',
+                    duration: 2000,
                     gravity: 'bottom',
                     position: 'right',
                     style: { background: 'linear-gradient(135deg, #3b82f6, #1d4ed8)' }

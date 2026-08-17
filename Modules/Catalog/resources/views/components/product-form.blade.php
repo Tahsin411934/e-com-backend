@@ -592,6 +592,30 @@
             $('#submitBtnText').text(text);
         }
 
+        function escapeHtml(str) {
+            if (!str) return '';
+            return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+        }
+
+        // Client-side image check (type + 5 MB limit) so the user sees the exact file & reason BEFORE upload
+        function validateImageFiles() {
+            const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+            const allowedExt = /\.(jpe?g|png|gif|webp)$/i;
+            const maxBytes = 5120 * 1024; // 5 MB
+            const files = document.getElementById('images').files;
+            const problems = [];
+            for (let i = 0; i < files.length; i++) {
+                const f = files[i];
+                const okType = f.type ? allowedTypes.indexOf(f.type) !== -1 : allowedExt.test(f.name);
+                if (!okType) {
+                    problems.push('⚠️ Image #' + (i + 1) + ' — <b>' + escapeHtml(f.name) + '</b>: unsupported file type. Allowed — JPG, PNG, GIF, WEBP.');
+                } else if (f.size > maxBytes) {
+                    problems.push('⚠️ Image #' + (i + 1) + ' — <b>' + escapeHtml(f.name) + '</b>: ' + (f.size / (1024 * 1024)).toFixed(1) + ' MB exceeds the 5 MB limit.');
+                }
+            }
+            return problems;
+        }
+
         // Submit
         $('#productForm').on('submit', function(e) {
             e.preventDefault();
@@ -601,6 +625,19 @@
 
             let id = $('#product_id').val();
             let url = id ? "{{ route('products.update', ':id') }}".replace(':id', id) : "{{ route('products.store') }}";
+
+            const imageProblems = validateImageFiles();
+            if (imageProblems.length > 0) {
+                isSaving = false;
+                setButtonState(false, id ? 'Update Product' : 'Save Product');
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Image upload failed — please fix:',
+                    html: '<div class="text-left space-y-1 text-sm">' + imageProblems.map(function (p) { return '<div>' + p + '</div>'; }).join('') + '</div>'
+                });
+                return;
+            }
+
             let formData = new FormData(this);
             if (id) formData.append('_method', 'PUT');
             if (deletedImageIds.length > 0) formData.append('deleted_image_ids', JSON.stringify(deletedImageIds));
@@ -621,9 +658,17 @@
                     isSaving = false;
                     setButtonState(false, id ? 'Update Product' : 'Save Product');
                     let errorMsg = 'Server error';
-                    if (xhr.responseJSON?.errors) errorMsg = Object.values(xhr.responseJSON.errors).flat().join('<br>');
+                    if (xhr.responseJSON?.errors) {
+                        const errItems = Object.keys(xhr.responseJSON.errors).map(function (k) {
+                            let label = k.replace(/_/g, ' ');
+                            const m = k.match(/^images\.(\d+)$/);
+                            if (m) label = 'Image #' + (parseInt(m[1], 10) + 1);
+                            return '<div class="mb-1">⚠️ <b>' + escapeHtml(label) + '</b> — ' + escapeHtml(xhr.responseJSON.errors[k].join(' ')) + '</div>';
+                        });
+                        errorMsg = '<div class="text-left text-sm space-y-1">' + errItems.join('') + '</div>';
+                    }
                     else if (xhr.responseJSON?.message) errorMsg = xhr.responseJSON.message;
-                    Swal.fire({ icon: 'error', title: 'Error', html: errorMsg });
+                    Swal.fire({ icon: 'error', title: 'Unable to save product', html: errorMsg });
                 }
             });
         });

@@ -1,3 +1,20 @@
+# Increase upload limits so product images (JPG/PNG/GIF/WEBP up to 5 MB each) upload reliably.
+# NOTE: Only effective under Apache mod_php. With PHP-FPM, edit the pool's php.ini or use .user.ini.
+<IfModule mod_php7.c>
+    php_value upload_max_filesize 20M
+    php_value post_max_size 100M
+    php_value max_execution_time 300
+    php_value request_terminate_timeout 300
+    php_value memory_limit 512M
+</IfModule>
+<IfModule mod_php8.c>
+    php_value upload_max_filesize 20M
+    php_value post_max_size 100M
+    php_value max_execution_time 300
+    php_value request_terminate_timeout 300
+    php_value memory_limit 512M
+</IfModule>
+
 <IfModule mod_rewrite.c>
     <IfModule mod_negotiation.c>
         Options -MultiViews -Indexes

@@ -17,9 +17,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/barcode-print/variants/{product}', [BarcodePrintController::class, 'variants'])->name('barcode-print.variants');
     Route::post('/barcode-print/print', [BarcodePrintController::class, 'print'])->name('barcode-print.print');
     
+    Route::post('/products/reorder', [ProductController::class, 'reorder'])->name('products.reorder');
+    Route::post('/products/{id}/duplicate', [ProductController::class, 'duplicate'])->name('products.duplicate');
     Route::resource('products', ProductController::class)->names('products');
     Route::get('/dataTable/products', [ProductController::class, 'dataTable'])->name('products.dataTable');
-    Route::post('/products/{id}/duplicate', [ProductController::class, 'duplicate'])->name('products.duplicate');
     
     Route::resource('brands', BrandController::class)->except(['create', 'edit'])->names('brands');
     Route::get('/dataTable/brands', [BrandController::class, 'dataTable'])->name('brands.dataTable');

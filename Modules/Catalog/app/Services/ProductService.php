@@ -31,8 +31,9 @@ class ProductService
                 'products.status',
                 'products.visibility',
                 'products.created_at',
+                'products.order_column',
             ])
-            ->orderByDesc('products.created_at');
+            ->orderBy('products.order_column');
 
         if ($request->brand_id) {
             $query->where('brand_id', $request->brand_id);
@@ -592,4 +593,30 @@ class ProductService
 
         Storage::disk('public')->delete($path);
     }
+
+    /**
+     * Reorder products based on the provided array of product IDs.
+     * Each product's order_column is updated sequentially.
+     */
+    public function reorderProducts(array $productIds): array
+    {
+        try {
+            return DB::transaction(function () use ($productIds) {
+                foreach ($productIds as $index => $productId) {
+                    Product::where('id', $productId)->update(['order_column' => $index + 1]);
+                }
+
+                return [
+                    'status' => 'success',
+                    'message' => 'Products reordered successfully.',
+                ];
+            });
+        } catch (\Exception $e) {
+            return [
+                'status' => 'error',
+                'message' => 'Error reordering products: ' . $e->getMessage(),
+            ];
+        }
+    }
 }
+

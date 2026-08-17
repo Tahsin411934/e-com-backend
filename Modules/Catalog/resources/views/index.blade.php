@@ -42,6 +42,9 @@
     <x-confirm-delete />
 
     @push('scripts')
+        <!-- Sortable.js for drag-and-drop -->
+        <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
+        
         <script>
             function htmlEscape(str) {
                 return $('<span>').text(str || '').html();
@@ -130,7 +133,143 @@
                     $('#filter_category').val('');
                     $('#productTable').DataTable().ajax.reload();
                 });
+
+                // Initialize DataTable and set up drag-and-drop
+                let table = $('#productTable').DataTable();
+                initProductDragDrop(table);
+
+                // Reinitialize drag-and-drop after each table reload
+                $('#productTable').on('draw.dt', function() {
+                    initProductDragDrop(table);
+                });
             });
+
+            function initProductDragDrop(table) {
+                let tbody = document.querySelector('#productTable tbody');
+                if (!tbody) return;
+
+                // Destroy existing Sortable instance if it exists
+                if (tbody.__sortableInstance) {
+                    tbody.__sortableInstance.destroy();
+                }
+
+                // Create new Sortable instance
+                let sortable = Sortable.create(tbody, {
+                    handle: 'tr',
+                    animation: 150,
+                    ghostClass: 'sortable-ghost',
+                    dragClass: 'sortable-drag',
+                    onEnd: function(evt) {
+                        // Collect the new order of product IDs from the table
+                        let rows = document.querySelectorAll('#productTable tbody tr');
+                        let productIds = [];
+                        
+                        rows.forEach(function(row) {
+                            // Extract product ID from the first cell or hidden data attribute
+                            let cells = row.querySelectorAll('td');
+                            if (cells.length > 0) {
+                                // Assuming the first column is the brand, we need to get the product ID
+                                // Since product ID isn't visible, we need to get it from the DataTables API
+                                let data = table.row(row).data();
+                                if (data && data.id) {
+                                    productIds.push(data.id);
+                                }
+                            }
+                        });
+
+                        // Send the new order to the backend
+                        if (productIds.length > 0) {
+                            sendProductReorder(productIds);
+                        }
+                    }
+                });
+
+                // Store the instance for later cleanup
+                tbody.__sortableInstance = sortable;
+
+                // Add visual feedback for draggable rows
+                document.querySelectorAll('#productTable tbody tr').forEach(function(row) {
+                    row.style.cursor = 'grab';
+                    row.addEventListener('dragstart', function() {
+                        row.style.cursor = 'grabbing';
+                    });
+                    row.addEventListener('dragend', function() {
+                        row.style.cursor = 'grab';
+                    });
+                });
+            }
+
+            function sendProductReorder(productIds) {
+                // Show loading state
+                Toastify({
+                    text: '<i class="fa fa-spinner fa-spin mr-2"></i> Saving product order...',
+                    duration: 0,
+                    gravity: 'bottom',
+                    position: 'right',
+                    style: { background: 'linear-gradient(135deg, #3b82f6, #1d4ed8)' }
+                }).showToast();
+
+                $.ajax({
+                    url: "{{ route('products.reorder') }}",
+                    type: 'POST',
+                    dataType: 'json',
+                    data: {
+                        product_ids: productIds,
+                        _token: $('meta[name="csrf-token"]').attr('content')
+                    },
+                    success: function(res) {
+                        if (res.status === 'success') {
+                            Toastify({
+                                text: '<i class="fa fa-check mr-2"></i> ' + (res.message || 'Products reordered successfully!'),
+                                duration: 3000,
+                                gravity: 'bottom',
+                                position: 'right',
+                                style: { background: 'linear-gradient(135deg, #10b981, #059669)' }
+                            }).showToast();
+                        } else {
+                            Toastify({
+                                text: '<i class="fa fa-exclamation-triangle mr-2"></i> ' + (res.message || 'Failed to reorder products.'),
+                                duration: 3000,
+                                gravity: 'bottom',
+                                position: 'right',
+                                style: { background: 'linear-gradient(135deg, #ef4444, #dc2626)' }
+                            }).showToast();
+                        }
+                    },
+                    error: function(xhr) {
+                        let msg = 'Server error while saving order.';
+                        if (xhr.responseJSON && xhr.responseJSON.message) {
+                            msg = xhr.responseJSON.message;
+                        }
+                        Toastify({
+                            text: '<i class="fa fa-exclamation-triangle mr-2"></i> ' + msg,
+                            duration: 3000,
+                            gravity: 'bottom',
+                            position: 'right',
+                            style: { background: 'linear-gradient(135deg, #ef4444, #dc2626)' }
+                        }).showToast();
+                    }
+                });
+            }
         </script>
+
+        <style>
+            /* Drag-and-drop visual styles */
+            #productTable tbody tr {
+                user-select: none;
+            }
+
+            #productTable tbody tr.sortable-ghost {
+                opacity: 0.4;
+                background-color: #f3f4f6 !important;
+            }
+
+            #productTable tbody tr.sortable-drag {
+                opacity: 1;
+                background-color: #dbeafe !important;
+                box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+                border: 2px solid #3b82f6 !important;
+            }
+        </style>
     @endpush
 </x-app-layout>

@@ -147,4 +147,50 @@ class ProductDuplicateTest extends TestCase
         $this->assertSame(1, (int) $product->fresh()->images()->whereKey($secondImage->id)->first()->is_main);
         $this->assertSame(0, (int) $product->fresh()->images()->whereKey($firstImage->id)->first()->is_main);
     }
+
+    public function test_products_can_be_reordered_in_back_end(): void
+    {
+        $brand = Brand::create([
+            'name' => 'Sort Brand',
+            'slug' => 'sort-brand',
+            'status' => 'active',
+        ]);
+
+        $first = Product::create([
+            'brand_id' => $brand->id,
+            'name' => 'First Product',
+            'slug' => 'first-product',
+            'product_type' => 'physical',
+            'status' => 'active',
+            'visibility' => 'public',
+            'order_column' => 1,
+        ]);
+
+        $second = Product::create([
+            'brand_id' => $brand->id,
+            'name' => 'Second Product',
+            'slug' => 'second-product',
+            'product_type' => 'physical',
+            'status' => 'active',
+            'visibility' => 'public',
+            'order_column' => 2,
+        ]);
+
+        $third = Product::create([
+            'brand_id' => $brand->id,
+            'name' => 'Third Product',
+            'slug' => 'third-product',
+            'product_type' => 'physical',
+            'status' => 'active',
+            'visibility' => 'public',
+            'order_column' => 3,
+        ]);
+
+        $sorted = Product::ordered()->pluck('id')->all();
+        $this->assertSame([$first->id, $second->id, $third->id], $sorted);
+
+        app(ProductService::class)->reorderProducts([$third->id, $first->id, $second->id]);
+
+        $this->assertSame([$third->id, $first->id, $second->id], Product::ordered()->pluck('id')->all());
+    }
 }

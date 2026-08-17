@@ -169,5 +169,20 @@ class ProductController extends Controller
             'data' => $result['data'],
         ]);
     }
+
+    /**
+     * Reorder products based on the provided array of product IDs.
+     */
+    public function reorder(Request $request)
+    {
+        $validated = $request->validate([
+            'product_ids' => 'required|array|min:1',
+            'product_ids.*' => 'required|integer|exists:products,id',
+        ]);
+
+        $result = $this->productService->reorderProducts($validated['product_ids']);
+
+        return response()->json($result, $result['status'] === 'success' ? 200 : 500);
+    }
 }
 

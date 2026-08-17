@@ -145,19 +145,14 @@ class ProductService
                 // Set main/featured image
                 if (isset($data['main_image_id'])) {
                     $mainImageId = $data['main_image_id'];
-                    // Handle "new_0", "new_1" etc. - refers to index in uploaded images array
+
                     if (is_string($mainImageId) && str_starts_with($mainImageId, 'new_')) {
                         $imageIndex = (int) substr($mainImageId, 4);
                         $uploadedImages = $data['images'] ?? [];
                         if (isset($uploadedImages[$imageIndex]) && $uploadedImages[$imageIndex] instanceof \Illuminate\Http\UploadedFile) {
-                            // The first uploaded image will be auto-set as main by saveProductImages
-                            // But if user selected a different one, we need to adjust after saving
-                            // We'll handle this by marking the correct one after all images are saved
                             $allImages = ProductImage::where('product_id', $product->id)
                                 ->orderBy('id')
                                 ->get();
-                            // The newly uploaded images are appended at the end
-                            // Count existing images before this batch
                             $existingCount = $allImages->count() - count($uploadedImages);
                             $targetImage = $allImages->skip($existingCount + $imageIndex)->first();
                             if ($targetImage) {
@@ -169,6 +164,13 @@ class ProductService
                         $mainImageId = (int) $mainImageId;
                         ProductImage::where('product_id', $product->id)->update(['is_main' => false]);
                         ProductImage::where('id', $mainImageId)->where('product_id', $product->id)->update(['is_main' => true]);
+                    }
+                }
+
+                if (!ProductImage::where('product_id', $product->id)->where('is_main', true)->exists()) {
+                    $firstImage = ProductImage::where('product_id', $product->id)->orderBy('sort_order')->first();
+                    if ($firstImage) {
+                        $firstImage->update(['is_main' => true]);
                     }
                 }
 

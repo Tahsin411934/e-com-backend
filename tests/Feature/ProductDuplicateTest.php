@@ -7,6 +7,7 @@ use Illuminate\Support\Facades\Storage;
 use Modules\Catalog\Models\Brand;
 use Modules\Catalog\Models\Category;
 use Modules\Catalog\Models\Product;
+use Modules\Catalog\Models\ProductImage;
 use Modules\Catalog\Services\ProductService;
 use Tests\TestCase;
 
@@ -90,5 +91,60 @@ class ProductDuplicateTest extends TestCase
         $this->assertNotSame($variant->sku, $duplicatedVariant->sku);
         $this->assertSame(150.0, (float) $duplicatedVariant->sale_price);
         $this->assertSame(42, (int) $duplicatedVariant->options()->first()->stock);
+    }
+
+    public function test_editing_a_product_can_set_a_later_image_as_main(): void
+    {
+        $brand = Brand::create([
+            'name' => 'Main Brand',
+            'slug' => 'main-brand',
+            'status' => 'active',
+        ]);
+
+        $category = Category::create([
+            'name' => 'Main Category',
+            'slug' => 'main-category',
+            'status' => 'active',
+        ]);
+
+        $product = Product::create([
+            'brand_id' => $brand->id,
+            'category_id' => $category->id,
+            'name' => 'Main Image Product',
+            'slug' => 'main-image-product',
+            'product_type' => 'physical',
+            'status' => 'active',
+            'visibility' => 'public',
+        ]);
+
+        $firstImage = ProductImage::create([
+            'product_id' => $product->id,
+            'image_url' => 'products/one.png',
+            'sort_order' => 1,
+            'is_main' => true,
+        ]);
+
+        $secondImage = ProductImage::create([
+            'product_id' => $product->id,
+            'image_url' => 'products/two.png',
+            'sort_order' => 2,
+            'is_main' => false,
+        ]);
+
+        app(ProductService::class)->saveProduct([
+            'product_id' => $product->id,
+            'name' => $product->name,
+            'slug' => $product->slug,
+            'brand_id' => $brand->id,
+            'category_id' => $category->id,
+            'product_type' => 'physical',
+            'status' => 'active',
+            'visibility' => 'public',
+            'main_image_id' => $secondImage->id,
+        ]);
+
+        $this->assertSame(1, $product->fresh()->images()->where('is_main', true)->count());
+        $this->assertSame(1, (int) $product->fresh()->images()->whereKey($secondImage->id)->first()->is_main);
+        $this->assertSame(0, (int) $product->fresh()->images()->whereKey($firstImage->id)->first()->is_main);
     }
 }

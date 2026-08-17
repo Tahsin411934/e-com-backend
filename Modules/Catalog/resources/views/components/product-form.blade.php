@@ -541,11 +541,32 @@
             // Don't reset input - files must remain in FormData for submission
         });
 
-        $(document).on('change', 'input[name="main_image_id"]', function() {
-            $('#imagePreviewContainer .preview-card').removeClass('ring-2 ring-indigo-500');
+        function syncMainImageSelection($selectedRadio) {
+            const $allRadios = $('#imagePreviewContainer input[name="main_image_id"]');
+            const $allCards = $('#imagePreviewContainer .preview-card');
+
+            $allCards.removeClass('ring-2 ring-indigo-500');
             $('#imagePreviewContainer .main-badge').remove();
-            $(this).closest('.preview-card').addClass('ring-2 ring-indigo-500');
-            $(this).closest('.preview-card').prepend('<div class="main-badge absolute top-1 left-1 bg-indigo-600 text-white text-[10px] font-bold px-2 py-0.5 rounded-full shadow">Main</div>');
+
+            if ($selectedRadio && $selectedRadio.length) {
+                $selectedRadio.prop('checked', true);
+            }
+
+            $allRadios.each(function() {
+                const $radio = $(this);
+                const $card = $radio.closest('.preview-card');
+                if ($radio.is(':checked')) {
+                    $card.addClass('ring-2 ring-indigo-500');
+                    if (!$card.find('.main-badge').length) {
+                        $card.prepend('<div class="main-badge absolute top-1 left-1 bg-indigo-600 text-white text-[10px] font-bold px-2 py-0.5 rounded-full shadow">Main</div>');
+                    }
+                }
+            });
+        }
+
+        $(document).on('change', 'input[name="main_image_id"]', function() {
+            $('input[name="main_image_id"]').not(this).prop('checked', false);
+            syncMainImageSelection($(this));
         });
 
         $(document).on('click', '.remove-preview', function(e) {
@@ -553,7 +574,16 @@
             const $card = $(this).closest('.preview-card');
             const imageId = $(this).data('image-id');
             if (imageId) { deletedImageIds.push(imageId); }
-            $card.fadeOut(300, function() { $(this).remove(); });
+            $card.fadeOut(300, function() {
+                $(this).remove();
+
+                const $remaining = $('#imagePreviewContainer input[name="main_image_id"]');
+                if (!$remaining.filter(':checked').length && $remaining.length) {
+                    const $first = $remaining.first();
+                    $first.prop('checked', true);
+                    syncMainImageSelection($first);
+                }
+            });
         });
 
         // Navbar -> Subnavbar

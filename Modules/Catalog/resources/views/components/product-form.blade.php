@@ -74,7 +74,7 @@
                                     <i class="fas fa-upload"></i> Upload Images
                                 </label>
                                 <span class="text-xs text-gray-400">JPG, PNG, WebP up to 5MB each</span>
-                                <input type="file" name="images[]" id="images" accept="image/*" multiple class="hidden">
+                                <input type="file" name="images[]" id="images" accept="image/jpeg,image/png,image/webp,image/gif" multiple class="hidden">
                             </div>
                             <div id="imagePreviewContainer" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mt-4">
                                 @if($isEdit && $product?->images)
@@ -193,7 +193,7 @@
                                 <option value="hidden" {{ $product?->visibility === 'hidden' ? 'selected' : '' }}>Hidden</option>
                                 <option value="private" {{ $product?->visibility === 'private' ? 'selected' : '' }}>Private</option>
                             </x-form-select>
-                            <x-form-input label="Published At" name="published_at" id="published_at" type="datetime-local" value="{{ $product?->published_at?->format('Y-m-d\TH:i') ?? '' }}" />
+                            <x-form-input label="Published At" name="published_at" id="published_at" type="datetime-local" value="{{ $isEdit ? ($product?->published_at?->format('Y-m-d\TH:i') ?? '') : now()->format('Y-m-d\TH:i') }}" />
                             <div class="pt-2">
                                 <label class="block text-sm font-medium text-gray-700 mb-2">Show on Homepage</label>
                                 <div class="flex items-center gap-6">

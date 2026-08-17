@@ -28,7 +28,7 @@ class StoreProductRequest extends FormRequest
             'description' => 'nullable|string',
             'product_type' => 'required|in:physical,digital,service,bundle',
             'images' => 'nullable|array',
-            'images.*' => 'nullable|file|image|max:5120',
+            'images.*' => 'nullable|file|image|mimes:jpeg,png,jpg,gif,webp|max:5120',
             'status' => 'required|in:draft,active,archived',
             'visibility' => 'required|in:public,hidden,private',
             'seo_title' => 'nullable|string|max:255',

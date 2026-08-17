@@ -44,6 +44,7 @@ class HomeProductResource extends JsonResource
             'main_image'       => $this->imageUrl($mainImage?->image_url),
             'price'            => $minPrice ? (float) $minPrice : null,
             'product_type'     => $this->product_type,
+            'order_column'     => $this->order_column ?? 0,
         ];
     }
 }

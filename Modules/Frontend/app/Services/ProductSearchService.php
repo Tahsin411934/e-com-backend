@@ -88,6 +88,7 @@ class ProductSearchService
                     ->whereIn('id', $topIds)
                     ->where('status', 'active')
                     ->where('visibility', 'public')
+                    ->orderBy('order_column')
                     ->get()
                     ->sortBy(fn($p) => $idOrder[$p->id] ?? PHP_INT_MAX);
 

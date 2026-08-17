@@ -67,49 +67,23 @@ class HomeApiController extends Controller
             ->orderBy('id')
             ->get();
 
-        // 3. Eager load products for each category
-        $categoryIds = $categories->pluck('id')->toArray();
+        // 3. Load products for each category individually so each section shows only that category's products
         $productsByCategory = [];
 
-        if (!empty($categoryIds)) {
-            // Get all product IDs grouped by category from pivot table
-            $pivotRecords = \Illuminate\Support\Facades\DB::table('product_categories')
-                ->whereIn('category_id', $categoryIds)
+        foreach ($categories as $category) {
+            $productsByCategory[$category->id] = $category->products()
+                ->where('products.status', 'active')
+                ->where('products.visibility', 'public')
+                ->with([
+                    'images',
+                    'variants' => function ($q) {
+                        $q->where('status', 'active');
+                    },
+                ])
+                ->orderBy('products.order_column')
+                ->orderBy('products.published_at', 'desc')
+                ->limit($limitProducts)
                 ->get();
-
-            $productIdsByCategory = [];
-            foreach ($pivotRecords as $record) {
-                $productIdsByCategory[$record->category_id][] = $record->product_id;
-            }
-
-            // Get all unique product IDs
-            $allProductIds = array_unique(array_merge(...array_values($productIdsByCategory)));
-
-            if (!empty($allProductIds)) {
-                $allProducts = \Modules\Catalog\Models\Product::whereIn('id', $allProductIds)
-                    ->where('status', 'active')
-                    ->where('visibility', 'public')
-                    ->where('is_homepage', true)
-                    ->with([
-                        'images',
-                        'variants' => function ($q) {
-                            $q->where('status', 'active');
-                        },
-                    ])
-                    ->orderBy('published_at', 'desc')
-                    ->get()
-                    ->keyBy('id');
-
-                // Group products by category
-                foreach ($productIdsByCategory as $catId => $pIds) {
-                    $productsByCategory[$catId] = collect();
-                    foreach ($pIds as $pId) {
-                        if (isset($allProducts[$pId])) {
-                            $productsByCategory[$catId]->push($allProducts[$pId]);
-                        }
-                    }
-                }
-            }
         }
 
         // 4. Build the interleaved data array

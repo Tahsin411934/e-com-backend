@@ -497,7 +497,7 @@ class ProductService
                 });
             }
 
-            $products = $queryBuilder->limit(20)->get();
+            $products = $queryBuilder->orderBy('order_column')->limit(20)->get();
 
             $formattedProducts = $products->map(function ($product) {
                 $mainImage = $product->images->where('is_main', true)->first();

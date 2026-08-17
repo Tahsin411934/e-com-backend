@@ -139,25 +139,25 @@ class CategoryApiController extends Controller
             $query->where('brand_id', (int) $brandId);
         }
 
-        // Apply sorting
+        // Apply sorting (order_column first, then secondary sort)
         switch ($sort) {
             case 'price_asc':
-                $query->orderBy(
+                $query->orderBy('order_column')->orderBy(
                     \DB::raw('(SELECT MIN(sale_price) FROM product_variants WHERE product_variants.product_id = products.id AND product_variants.status = "active")'),
                     'asc'
                 );
                 break;
             case 'price_desc':
-                $query->orderBy(
+                $query->orderBy('order_column')->orderBy(
                     \DB::raw('(SELECT MIN(sale_price) FROM product_variants WHERE product_variants.product_id = products.id AND product_variants.status = "active")'),
                     'desc'
                 );
                 break;
             case 'name':
-                $query->orderBy('name');
+                $query->orderBy('order_column')->orderBy('name');
                 break;
             default: // latest
-                $query->orderBy('published_at', 'desc');
+                $query->orderBy('order_column')->orderBy('published_at', 'desc');
         }
 
         $products = $query->paginate($perPage);

@@ -38,6 +38,7 @@ class ProductSearchResource extends JsonResource
             'id'               => $this->id,
             'name'             => $this->name,
             'slug'             => $this->slug,
+            'order_column'     => $this->order_column ?? 0,
             'short_description'=> $this->short_description,
             'main_image'       => $this->imageUrl($mainImage?->image_url),
             'price'            => $minPrice ? (float) $minPrice : null,

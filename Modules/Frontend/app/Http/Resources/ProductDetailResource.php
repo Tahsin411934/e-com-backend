@@ -139,6 +139,7 @@ class ProductDetailResource extends JsonResource
                 'id'               => $p->id,
                 'name'             => $p->name,
                 'slug'             => $p->slug,
+                'order_column'     => $p->order_column ?? 0,
                 'short_description'=> $p->short_description,
                 'main_image'       => $this->imageUrl($p->images->firstWhere('is_main', true)?->image_url
                     ?? $p->images->first()?->image_url),
@@ -151,6 +152,7 @@ class ProductDetailResource extends JsonResource
             'id'                => $this->id,
             'name'              => $this->name,
             'slug'              => $this->slug,
+            'order_column'      => $this->order_column ?? 0,
             'short_description' => $this->short_description,
             'description'       => $this->description,
             'product_type'      => $this->product_type,

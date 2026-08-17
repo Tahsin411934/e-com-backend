@@ -77,6 +77,7 @@ class ProductApiController extends Controller
                 ->where('status', 'active')
                 ->where('visibility', 'public')
                 ->with(['images', 'variants' => fn($q) => $q->where('status', 'active')])
+                ->orderBy('order_column')
                 ->get();
         }
 

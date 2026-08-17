@@ -220,7 +220,7 @@
                     success: function(res) {
                         if (res.status === 'success') {
                             Toastify({
-                                text: '<i class="fa fa-check mr-2"></i> ' + (res.message || 'Products reordered successfully!'),
+                                text: res.message || 'Products reordered successfully!',
                                 duration: 3000,
                                 gravity: 'bottom',
                                 position: 'right',
@@ -228,7 +228,7 @@
                             }).showToast();
                         } else {
                             Toastify({
-                                text: '<i class="fa fa-exclamation-triangle mr-2"></i> ' + (res.message || 'Failed to reorder products.'),
+                                text: res.message || 'Failed to reorder products.',
                                 duration: 3000,
                                 gravity: 'bottom',
                                 position: 'right',
@@ -242,7 +242,7 @@
                             msg = xhr.responseJSON.message;
                         }
                         Toastify({
-                            text: '<i class="fa fa-exclamation-triangle mr-2"></i> ' + msg,
+                            text: msg,
                             duration: 3000,
                             gravity: 'bottom',
                             position: 'right',

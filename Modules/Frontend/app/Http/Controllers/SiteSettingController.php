@@ -45,6 +45,10 @@ class SiteSettingController extends Controller
             }
 
             if (isset($settings[$key])) {
+                // Treat the legacy '#' placeholder as an empty / nullable value
+                if ($value === '#') {
+                    $value = '';
+                }
                 $type = $settings[$key]->type;
                 $typeRules = SettingService::TYPES;
                 $rules = [$key => $typeRules[$type]['validation'] ?? 'nullable|string'];

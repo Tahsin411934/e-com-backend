@@ -254,19 +254,9 @@
                                                 <input type="number" step="0.0001" min="0" name="variants[{{ $vIdx }}][compare_at_price]" value="{{ $v->compare_at_price }}" class="variant-compare w-full rounded-lg border-gray-300 shadow-sm text-sm">
                                             </div>
                                         </div>
-                                        <div class="grid grid-cols-3 gap-3 mb-3">
-                                            <div>
-                                                <label class="block text-xs font-medium text-gray-600 mb-1">Color</label>
-                                                <input type="text" name="variants[{{ $vIdx }}][attributes][color]" value="{{ $v->attributes['color'] ?? '' }}" class="w-full rounded-lg border-gray-300 shadow-sm text-sm">
-                                            </div>
-                                            <div>
-                                                <label class="block text-xs font-medium text-gray-600 mb-1">Size</label>
-                                                <input type="text" name="variants[{{ $vIdx }}][attributes][size]" value="{{ $v->attributes['size'] ?? '' }}" class="w-full rounded-lg border-gray-300 shadow-sm text-sm">
-                                            </div>
-                                            <div>
-                                                <label class="block text-xs font-medium text-gray-600 mb-1">Color Hex</label>
-                                                <input type="color" name="variants[{{ $vIdx }}][attributes][color_hex]" value="{{ isset($v->attributes['color_hex']) ? '#' . ltrim($v->attributes['color_hex'], '#') : '#000000' }}" class="w-full h-11 rounded-lg border-gray-300 shadow-sm text-sm">
-                                            </div>
+                                        <div class="mb-3">
+                                            <label class="block text-xs font-medium text-gray-600 mb-1">Size / Variant Attribute</label>
+                                            <input type="text" name="variants[{{ $vIdx }}][attributes][size]" value="{{ $v->attributes['size'] ?? $v->name }}" class="w-full rounded-lg border-gray-300 shadow-sm text-sm">
                                         </div>
 
                                         <!-- Variant Options (Color options per size) -->
@@ -295,12 +285,20 @@
                                                             <input type="text" required name="variants[{{ $vIdx }}][options][{{ $optIdx }}][sku]" value="{{ $option->sku }}" class="w-full rounded border-gray-200 text-sm">
                                                         </div>
                                                         <div class="w-28">
-                                                            <label class="block text-[10px] font-medium text-gray-500">Barcode</label>
-                                                            <input type="text" name="variants[{{ $vIdx }}][options][{{ $optIdx }}][barcode]" value="{{ $option->barcode }}" class="w-full rounded border-gray-200 text-sm">
+                                                            <label class="block text-[10px] font-medium text-gray-500">Barcode (Auto)</label>
+                                                            <input type="text" readonly name="variants[{{ $vIdx }}][options][{{ $optIdx }}][barcode]" value="{{ $option->barcode }}" placeholder="Generated on save" class="w-full rounded border-gray-200 text-sm bg-gray-100">
+                                                        </div>
+                                                        <div class="w-24">
+                                                            <label class="block text-[10px] font-medium text-gray-500">Cost Price</label>
+                                                            <input type="number" step="0.0001" min="0" name="variants[{{ $vIdx }}][options][{{ $optIdx }}][cost_price]" value="{{ $option->cost_price }}" class="w-full rounded border-gray-200 text-sm">
                                                         </div>
                                                         <div class="w-24">
                                                             <label class="block text-[10px] font-medium text-gray-500">Sale Price *</label>
                                                             <input type="number" step="0.0001" min="0" required name="variants[{{ $vIdx }}][options][{{ $optIdx }}][sale_price]" value="{{ $option->sale_price }}" class="w-full rounded border-gray-200 text-sm">
+                                                        </div>
+                                                        <div class="w-20">
+                                                            <label class="block text-[10px] font-medium text-gray-500">Discount %</label>
+                                                            <input type="number" step="0.01" min="0" max="100" name="variants[{{ $vIdx }}][options][{{ $optIdx }}][discount_percent]" value="{{ $option->discount_percent ?? 0 }}" class="w-full rounded border-gray-200 text-sm">
                                                         </div>
                                                         <button type="button" class="remove-option text-red-500 hover:text-red-700 text-lg pb-1" title="Remove">&times;</button>
                                                     </div>
@@ -386,12 +384,20 @@
                     <input type="text" required name="variants[${vIdx}][options][${optIdx}][sku]" class="w-full rounded border-gray-200 text-sm" placeholder="e.g. SHIRT-S-RED">
                 </div>
                 <div class="w-28">
-                    <label class="block text-[10px] font-medium text-gray-500">Barcode</label>
-                    <input type="text" name="variants[${vIdx}][options][${optIdx}][barcode]" class="w-full rounded border-gray-200 text-sm">
+                    <label class="block text-[10px] font-medium text-gray-500">Barcode (Auto)</label>
+                    <input type="text" readonly name="variants[${vIdx}][options][${optIdx}][barcode]" placeholder="Generated on save" class="w-full rounded border-gray-200 text-sm bg-gray-100">
+                </div>
+                <div class="w-24">
+                    <label class="block text-[10px] font-medium text-gray-500">Cost Price</label>
+                    <input type="number" step="0.0001" min="0" name="variants[${vIdx}][options][${optIdx}][cost_price]" class="w-full rounded border-gray-200 text-sm">
                 </div>
                 <div class="w-24">
                     <label class="block text-[10px] font-medium text-gray-500">Sale Price *</label>
                     <input type="number" step="0.0001" min="0" required name="variants[${vIdx}][options][${optIdx}][sale_price]" value="0" class="w-full rounded border-gray-200 text-sm">
+                </div>
+                <div class="w-20">
+                    <label class="block text-[10px] font-medium text-gray-500">Discount %</label>
+                    <input type="number" step="0.01" min="0" max="100" name="variants[${vIdx}][options][${optIdx}][discount_percent]" value="0" class="w-full rounded border-gray-200 text-sm">
                 </div>
                 <button type="button" class="remove-option text-red-500 hover:text-red-700 text-lg pb-1" title="Remove">&times;</button>
             </div>`;
@@ -428,19 +434,9 @@
                         <input type="number" step="0.0001" min="0" name="variants[${index}][compare_at_price]" class="variant-compare w-full rounded-lg border-gray-300 shadow-sm text-sm">
                     </div>
                 </div>
-                <div class="grid grid-cols-3 gap-3 mb-3">
-                    <div>
-                        <label class="block text-xs font-medium text-gray-600 mb-1">Color</label>
-                        <input type="text" name="variants[${index}][attributes][color]" class="w-full rounded-lg border-gray-300 shadow-sm text-sm">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-medium text-gray-600 mb-1">Size</label>
-                        <input type="text" name="variants[${index}][attributes][size]" class="w-full rounded-lg border-gray-300 shadow-sm text-sm">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-medium text-gray-600 mb-1">Color Hex</label>
-                        <input type="color" name="variants[${index}][attributes][color_hex]" value="#000000" class="w-full h-11 rounded-lg border-gray-300 shadow-sm">
-                    </div>
+                <div class="mb-3">
+                    <label class="block text-xs font-medium text-gray-600 mb-1">Size / Variant Attribute</label>
+                    <input type="text" name="variants[${index}][attributes][size]" class="w-full rounded-lg border-gray-300 shadow-sm text-sm">
                 </div>
                 <div class="mb-3 border-t border-gray-200 pt-3">
                     <div class="flex items-center justify-between mb-2">

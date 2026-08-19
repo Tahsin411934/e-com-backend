@@ -154,6 +154,7 @@ class CartService
                         $unitPrice = $variantOption->sale_price !== null
                             ? (float) $variantOption->sale_price
                             : $unitPrice + (float) $variantOption->price_adjustment;
+                        $unitPrice *= 1 - ((float) ($variantOption->discount_percent ?? 0) / 100);
                     }
                 }
                 $unitPrice = $this->campaignPricing->priceFor($variant, $unitPrice - (float) $variant->sale_price)['price'];
@@ -330,6 +331,7 @@ class CartService
                             $unitPrice = $variantOption->sale_price !== null
                                 ? (float) $variantOption->sale_price
                                 : $unitPrice + (float) $variantOption->price_adjustment;
+                            $unitPrice *= 1 - ((float) ($variantOption->discount_percent ?? 0) / 100);
                         }
                     }
                     $unitPrice = $this->campaignPricing->priceFor($variant, $unitPrice - (float) $variant->sale_price)['price'];

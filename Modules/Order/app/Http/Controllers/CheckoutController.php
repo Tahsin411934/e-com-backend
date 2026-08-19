@@ -46,6 +46,7 @@ class CheckoutController extends Controller
                     $basePrice = $option?->sale_price !== null
                         ? (float) $option->sale_price
                         : (float) $variant->sale_price + (float) ($option?->price_adjustment ?? 0);
+                    $basePrice *= 1 - ((float) ($option?->discount_percent ?? 0) / 100);
                     $currentPrice = $this->campaignPricing->priceFor($variant, $basePrice - (float) $variant->sale_price)['price'];
                     if ((float) $cartItem->unit_price !== $currentPrice) {
                         $cartItem->update(['unit_price' => $currentPrice]);

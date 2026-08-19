@@ -65,8 +65,10 @@ class UpdateProductRequest extends FormRequest
             'variants.*.options.*.sku' => 'required_with:variants.*.options|string|max:100',
             'variants.*.options.*.barcode' => 'nullable|string|max:100',
             'variants.*.options.*.price_adjustment' => 'nullable|numeric',
+            'variants.*.options.*.cost_price' => 'nullable|numeric|min:0',
             'variants.*.options.*.sale_price' => 'nullable|numeric|min:0',
             'variants.*.options.*.compare_at_price' => 'nullable|numeric|min:0',
+            'variants.*.options.*.discount_percent' => 'nullable|numeric|min:0|max:100',
             'variants.*.options.*.sort_order' => 'nullable|integer|min:0',
         ];
     }

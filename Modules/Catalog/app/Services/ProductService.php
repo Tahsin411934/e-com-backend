@@ -206,6 +206,8 @@ class ProductService
                                 $optData['status'] = $optData['status'] ?? 'active';
                                 $optData['sort_order'] = $optData['sort_order'] ?? 0;
                                 $optData['price_adjustment'] = $optData['price_adjustment'] ?? 0;
+                                $optData['sku'] = $optData['sku'] ?: $variant->sku . '-' . Str::upper(Str::slug($optData['color_name'] ?? 'OPTION'));
+                                $optData['barcode'] = $optData['barcode'] ?: (string) Str::uuid();
                                 
                                 $option = VariantOption::updateOrCreate(
                                     ['id' => $optData['id'] ?? null],
@@ -357,6 +359,8 @@ class ProductService
                             'price_adjustment'   => $option->price_adjustment,
                             'sale_price'        => $price !== null ? $price : $option->sale_price,
                             'compare_at_price'  => $option->compare_at_price,
+                            'cost_price'        => $option->cost_price,
+                            'discount_percent'  => $option->discount_percent,
                             'sort_order'         => $option->sort_order,
                             'status'             => $option->status,
                         ]);

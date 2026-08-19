@@ -47,8 +47,12 @@ class ProductDetailResource extends JsonResource
         $activeVariants = $this->variants->where('status', 'active');
         $pricing = app(\Modules\Cart\Services\CampaignPricingService::class);
         $pricedVariants = $activeVariants->map(fn ($variant) => $pricing->priceFor($variant));
-        $minPrice = $pricedVariants->min('price');
-        $maxPrice = $pricedVariants->max('price');
+        $optionPrices = $activeVariants->flatMap(fn ($variant) => $variant->options
+            ->where('status', 'active')
+            ->map(fn ($option) => $this->optionPrice($variant, $option, $pricing)));
+        $allPrices = $pricedVariants->pluck('price')->merge($optionPrices);
+        $minPrice = $allPrices->min();
+        $maxPrice = $allPrices->max();
 
         $variants = $activeVariants->map(function ($v) use ($pricing) {
             $campaignPrice = $pricing->priceFor($v);
@@ -64,7 +68,7 @@ class ProductDetailResource extends JsonResource
             'stock'           => $v->track_inventory ? ($v->stock ?? 0) : null,
             'track_inventory' => (bool) $v->track_inventory,
             'allow_backorder' => (bool) $v->allow_backorder,
-            'attributes'      => $v->attributes,
+            'attributes'      => collect($v->attributes ?? [])->except(['color', 'color_hex'])->all(),
             'image'           => $this->imageUrl($v->images->first()?->image_url),
             'options'         => $v->options->where('status', 'active')->values()->map(fn($o) => [
                 'id'               => $o->id,
@@ -73,8 +77,10 @@ class ProductDetailResource extends JsonResource
                 'sku'              => $o->sku,
                 'barcode'          => $o->barcode,
                 'image_url'        => $this->imageUrl($o->image_url),
+                'cost_price'       => $o->cost_price !== null ? (float) $o->cost_price : (float) $v->cost_price,
                 'sale_price'       => $this->optionPrice($v, $o, $pricing),
-                'compare_at_price' => $o->compare_at_price !== null ? (float) $o->compare_at_price : null,
+                'compare_at_price' => $this->optionComparePrice($o),
+                'discount_percent' => (float) ($o->discount_percent ?? 0),
                 'price_adjustment' => (float) $o->price_adjustment,
                 'stock'            => $v->track_inventory ? (int) $o->stock : null,
             ]),
@@ -84,21 +90,21 @@ class ProductDetailResource extends JsonResource
         // ── Attribute options (colors / sizes) ──
         $colors = $activeVariants->flatMap(function ($variant) {
             return $variant->options->where('status', 'active')->pluck('color_name');
-        })->merge($activeVariants->pluck('attributes')->map(fn($a) => $a['color'] ?? null))->filter()->unique()->values();
+        })->filter()->unique()->values();
         $sizes = $activeVariants->pluck('attributes')->map(fn($a) => $a['size'] ?? null)->filter()->unique()->values();
 
         $colorOptions = $colors->map(fn($color) => [
             'value' => $color,
             'hex' => $activeVariants->flatMap(fn($v) => $v->options->where('color_name', $color)->pluck('color_code'))->filter()->first()
-                ?? $activeVariants->firstWhere(fn($v) => ($v->attributes['color'] ?? null) === $color)?->attributes['color_hex'] ?? null,
-            'available_count' => $activeVariants->filter(fn($v) => $v->options->where('color_name', $color)->contains(fn($o) => ! $v->track_inventory || ($o->stock ?? 0) > 0) || (($v->attributes['color'] ?? null) === $color && (! $v->track_inventory || ($v->stock ?? 0) > 0)))->count(),
-            'available' => $activeVariants->contains(fn($v) => $v->options->where('color_name', $color)->contains(fn($o) => ! $v->track_inventory || ($o->stock ?? 0) > 0) || (($v->attributes['color'] ?? null) === $color && (! $v->track_inventory || ($v->stock ?? 0) > 0))),
+                ?? null,
+            'available_count' => $activeVariants->filter(fn($v) => $v->options->where('color_name', $color)->contains(fn($o) => ! $v->track_inventory || ($o->stock ?? 0) > 0))->count(),
+            'available' => $activeVariants->contains(fn($v) => $v->options->where('color_name', $color)->contains(fn($o) => ! $v->track_inventory || ($o->stock ?? 0) > 0)),
         ])->values();
 
         $sizeOptions = $sizes->map(fn($size) => [
             'value' => $size,
-            'available_count' => $activeVariants->filter(fn($v) => ($v->attributes['size'] ?? null) === $size && (! $v->track_inventory || ($v->stock ?? 0) > 0))->count(),
-            'available' => $activeVariants->filter(fn($v) => ($v->attributes['size'] ?? null) === $size && (! $v->track_inventory || ($v->stock ?? 0) > 0))->count() > 0,
+            'available_count' => $activeVariants->filter(fn($v) => ($v->attributes['size'] ?? null) === $size && (! $v->track_inventory || $v->options->contains(fn($o) => ($o->stock ?? 0) > 0)))->count(),
+            'available' => $activeVariants->filter(fn($v) => ($v->attributes['size'] ?? null) === $size && (! $v->track_inventory || $v->options->contains(fn($o) => ($o->stock ?? 0) > 0)))->count() > 0,
         ])->values();
 
         // ── Brand ──
@@ -204,7 +210,19 @@ class ProductDetailResource extends JsonResource
         $basePrice = $option->sale_price !== null
             ? (float) $option->sale_price
             : (float) $variant->sale_price + (float) $option->price_adjustment;
+        $basePrice *= 1 - ((float) ($option->discount_percent ?? 0) / 100);
 
         return (float) $pricing->priceFor($variant, $basePrice - (float) $variant->sale_price)['price'];
+    }
+
+    private function optionComparePrice($option): ?float
+    {
+        if ($option->compare_at_price !== null) {
+            return (float) $option->compare_at_price;
+        }
+
+        return ($option->discount_percent ?? 0) > 0 && $option->sale_price !== null
+            ? (float) $option->sale_price
+            : null;
     }
 }

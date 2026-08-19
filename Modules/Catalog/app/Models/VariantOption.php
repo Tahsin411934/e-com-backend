@@ -21,8 +21,10 @@ class VariantOption extends Model
         'barcode',
         'image_url',
         'price_adjustment',
+        'cost_price',
         'sale_price',
         'compare_at_price',
+        'discount_percent',
         'stock',
         'sort_order',
         'status',
@@ -30,8 +32,10 @@ class VariantOption extends Model
 
     protected $casts = [
         'price_adjustment' => 'decimal:4',
+        'cost_price' => 'decimal:4',
         'sale_price' => 'decimal:4',
         'compare_at_price' => 'decimal:4',
+        'discount_percent' => 'decimal:2',
         'stock' => 'integer',
         'sort_order' => 'integer',
     ];

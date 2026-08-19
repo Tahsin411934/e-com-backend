@@ -17,8 +17,12 @@ class VariantOption extends Model
         'product_variant_id',
         'color_name',
         'color_code',
+        'sku',
+        'barcode',
         'image_url',
         'price_adjustment',
+        'sale_price',
+        'compare_at_price',
         'stock',
         'sort_order',
         'status',
@@ -26,6 +30,8 @@ class VariantOption extends Model
 
     protected $casts = [
         'price_adjustment' => 'decimal:4',
+        'sale_price' => 'decimal:4',
+        'compare_at_price' => 'decimal:4',
         'stock' => 'integer',
         'sort_order' => 'integer',
     ];
@@ -33,5 +39,16 @@ class VariantOption extends Model
     public function variant()
     {
         return $this->belongsTo(ProductVariant::class, 'product_variant_id');
+    }
+
+    public function inventoryStocks()
+    {
+        return $this->hasMany(\Modules\Inventory\Models\InventoryStock::class, 'variant_option_id');
+    }
+
+    public function getStockAttribute(): int
+    {
+        return $this->inventoryStocks
+            ->sum(fn ($stock) => max(0, $stock->quantity_on_hand - $stock->quantity_reserved));
     }
 }

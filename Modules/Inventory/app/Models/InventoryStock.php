@@ -16,6 +16,7 @@ class InventoryStock extends Model
     protected $fillable = [
         'location_id',
         'variant_id',
+        'variant_option_id',
         'quantity_on_hand',
         'quantity_reserved',
         'reorder_point',
@@ -29,5 +30,10 @@ class InventoryStock extends Model
     public function variant()
     {
         return $this->belongsTo(\Modules\Catalog\Models\ProductVariant::class, 'variant_id');
+    }
+
+    public function variantOption()
+    {
+        return $this->belongsTo(\Modules\Catalog\Models\VariantOption::class, 'variant_option_id');
     }
 }

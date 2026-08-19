@@ -15,13 +15,21 @@ class HomeProductResource extends JsonResource
      */
     private function imageUrl(?string $path): ?string
     {
-        if (!$path) return null;
-        if (str_starts_with($path, 'http://') || str_starts_with($path, 'https://')) return $path;
+        if (!$path) {
+            return null;
+        }
+
+        if (str_starts_with($path, 'http://') || str_starts_with($path, 'https://')) {
+            return $path;
+        }
+
         $clean = ltrim($path, '/');
         if (str_starts_with($clean, 'storage/')) {
             $clean = substr($clean, 8);
         }
+
         $url = $clean ? asset('storage/' . $clean) : null;
+
         // Add cache-busting parameter so browser always fetches latest image
         return $url ? $url . '?v=' . filemtime(storage_path('app/public/' . $clean)) : null;
     }
@@ -37,14 +45,14 @@ class HomeProductResource extends JsonResource
             ->min('sale_price');
 
         return [
-            'id'               => $this->id,
-            'name'             => $this->name,
-            'slug'             => $this->slug,
-            'short_description'=> $this->short_description,
-            'main_image'       => $this->imageUrl($mainImage?->image_url),
-            'price'            => $minPrice ? (float) $minPrice : null,
-            'product_type'     => $this->product_type,
-            'order_column'     => $this->order_column ?? 0,
+            'id' => $this->id,
+            'name' => $this->name,
+            'slug' => $this->slug,
+            'short_description' => $this->short_description,
+            'main_image' => $this->imageUrl($mainImage?->image_url),
+            'price' => $minPrice ? (float) $minPrice : null,
+            'product_type' => $this->product_type,
+            'order_column' => $this->order_column ?? 0,
         ];
     }
 }

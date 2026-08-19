@@ -21,7 +21,8 @@ class InventoryStockController extends Controller
     public function index()
     {
         $locations = InventoryLocation::with('store')->where('status', 'active')->orderBy('name')->get();
-        $variants = ProductVariant::with('product')->where('status', 'active')->orderBy('name')->get();
+        $variants = ProductVariant::with(['product', 'options' => fn ($query) => $query->where('status', 'active')])
+            ->where('status', 'active')->orderBy('name')->get();
         return view('inventory::stock.index', compact('locations', 'variants'));
     }
 

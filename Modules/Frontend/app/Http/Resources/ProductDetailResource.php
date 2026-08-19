@@ -70,22 +70,29 @@ class ProductDetailResource extends JsonResource
                 'id'               => $o->id,
                 'color_name'       => $o->color_name,
                 'color_code'       => $o->color_code,
+                'sku'              => $o->sku,
+                'barcode'          => $o->barcode,
                 'image_url'        => $this->imageUrl($o->image_url),
+                'sale_price'       => $this->optionPrice($v, $o, $pricing),
+                'compare_at_price' => $o->compare_at_price !== null ? (float) $o->compare_at_price : null,
                 'price_adjustment' => (float) $o->price_adjustment,
-                'stock'            => (int) $o->stock,
+                'stock'            => $v->track_inventory ? (int) $o->stock : null,
             ]),
             ];
         });
 
         // ── Attribute options (colors / sizes) ──
-        $colors = $activeVariants->pluck('attributes')->map(fn($a) => $a['color'] ?? null)->filter()->unique()->values();
+        $colors = $activeVariants->flatMap(function ($variant) {
+            return $variant->options->where('status', 'active')->pluck('color_name');
+        })->merge($activeVariants->pluck('attributes')->map(fn($a) => $a['color'] ?? null))->filter()->unique()->values();
         $sizes = $activeVariants->pluck('attributes')->map(fn($a) => $a['size'] ?? null)->filter()->unique()->values();
 
         $colorOptions = $colors->map(fn($color) => [
             'value' => $color,
-            'hex' => $activeVariants->firstWhere(fn($v) => ($v->attributes['color'] ?? null) === $color)?->attributes['color_hex'] ?? null,
-            'available_count' => $activeVariants->filter(fn($v) => ($v->attributes['color'] ?? null) === $color && (! $v->track_inventory || ($v->stock ?? 0) > 0))->count(),
-            'available' => $activeVariants->filter(fn($v) => ($v->attributes['color'] ?? null) === $color && (! $v->track_inventory || ($v->stock ?? 0) > 0))->count() > 0,
+            'hex' => $activeVariants->flatMap(fn($v) => $v->options->where('color_name', $color)->pluck('color_code'))->filter()->first()
+                ?? $activeVariants->firstWhere(fn($v) => ($v->attributes['color'] ?? null) === $color)?->attributes['color_hex'] ?? null,
+            'available_count' => $activeVariants->filter(fn($v) => $v->options->where('color_name', $color)->contains(fn($o) => ! $v->track_inventory || ($o->stock ?? 0) > 0) || (($v->attributes['color'] ?? null) === $color && (! $v->track_inventory || ($v->stock ?? 0) > 0)))->count(),
+            'available' => $activeVariants->contains(fn($v) => $v->options->where('color_name', $color)->contains(fn($o) => ! $v->track_inventory || ($o->stock ?? 0) > 0) || (($v->attributes['color'] ?? null) === $color && (! $v->track_inventory || ($v->stock ?? 0) > 0))),
         ])->values();
 
         $sizeOptions = $sizes->map(fn($size) => [
@@ -190,5 +197,14 @@ class ProductDetailResource extends JsonResource
             // Related products
             'related_products'  => $relatedProducts->values(),
         ];
+    }
+
+    private function optionPrice($variant, $option, $pricing): float
+    {
+        $basePrice = $option->sale_price !== null
+            ? (float) $option->sale_price
+            : (float) $variant->sale_price + (float) $option->price_adjustment;
+
+        return (float) $pricing->priceFor($variant, $basePrice - (float) $variant->sale_price)['price'];
     }
 }

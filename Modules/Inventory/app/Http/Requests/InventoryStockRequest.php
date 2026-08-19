@@ -18,6 +18,7 @@ class InventoryStockRequest extends FormRequest
         return [
             'location_id' => 'required|exists:inventory_locations,id',
             'variant_id' => 'required|exists:product_variants,id',
+            'variant_option_id' => 'nullable|exists:variant_options,id',
             'quantity_on_hand' => 'required|integer|min:0',
             'quantity_reserved' => 'required|integer|min:0',
             'reorder_point' => 'required|integer|min:0',

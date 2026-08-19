@@ -290,13 +290,17 @@
                                                             <label class="block text-[10px] font-medium text-gray-500">Hex</label>
                                                             <input type="color" name="variants[{{ $vIdx }}][options][{{ $optIdx }}][color_code]" value="{{ $option->color_code ?? '#000000' }}" class="h-8 w-14 rounded border-gray-200">
                                                         </div>
-                                                        <div class="w-20">
-                                                            <label class="block text-[10px] font-medium text-gray-500">Price ±</label>
-                                                            <input type="number" step="1" name="variants[{{ $vIdx }}][options][{{ $optIdx }}][price_adjustment]" value="{{ $option->price_adjustment }}" class="w-full rounded border-gray-200 text-sm">
+                                                        <div class="w-28">
+                                                            <label class="block text-[10px] font-medium text-gray-500">SKU *</label>
+                                                            <input type="text" required name="variants[{{ $vIdx }}][options][{{ $optIdx }}][sku]" value="{{ $option->sku }}" class="w-full rounded border-gray-200 text-sm">
                                                         </div>
-                                                        <div class="w-16">
-                                                            <label class="block text-[10px] font-medium text-gray-500">Stock</label>
-                                                            <input type="number" name="variants[{{ $vIdx }}][options][{{ $optIdx }}][stock]" value="{{ $option->stock }}" class="w-full rounded border-gray-200 text-sm">
+                                                        <div class="w-28">
+                                                            <label class="block text-[10px] font-medium text-gray-500">Barcode</label>
+                                                            <input type="text" name="variants[{{ $vIdx }}][options][{{ $optIdx }}][barcode]" value="{{ $option->barcode }}" class="w-full rounded border-gray-200 text-sm">
+                                                        </div>
+                                                        <div class="w-24">
+                                                            <label class="block text-[10px] font-medium text-gray-500">Sale Price *</label>
+                                                            <input type="number" step="0.0001" min="0" required name="variants[{{ $vIdx }}][options][{{ $optIdx }}][sale_price]" value="{{ $option->sale_price }}" class="w-full rounded border-gray-200 text-sm">
                                                         </div>
                                                         <button type="button" class="remove-option text-red-500 hover:text-red-700 text-lg pb-1" title="Remove">&times;</button>
                                                     </div>
@@ -377,13 +381,17 @@
                     <label class="block text-[10px] font-medium text-gray-500">Hex</label>
                     <input type="color" name="variants[${vIdx}][options][${optIdx}][color_code]" value="#000000" class="h-8 w-14 rounded border-gray-200">
                 </div>
-                <div class="w-20">
-                    <label class="block text-[10px] font-medium text-gray-500">Price ±</label>
-                    <input type="number" step="1" name="variants[${vIdx}][options][${optIdx}][price_adjustment]" value="0" class="w-full rounded border-gray-200 text-sm">
+                <div class="w-28">
+                    <label class="block text-[10px] font-medium text-gray-500">SKU *</label>
+                    <input type="text" required name="variants[${vIdx}][options][${optIdx}][sku]" class="w-full rounded border-gray-200 text-sm" placeholder="e.g. SHIRT-S-RED">
                 </div>
-                <div class="w-16">
-                    <label class="block text-[10px] font-medium text-gray-500">Stock</label>
-                    <input type="number" name="variants[${vIdx}][options][${optIdx}][stock]" value="0" class="w-full rounded border-gray-200 text-sm">
+                <div class="w-28">
+                    <label class="block text-[10px] font-medium text-gray-500">Barcode</label>
+                    <input type="text" name="variants[${vIdx}][options][${optIdx}][barcode]" class="w-full rounded border-gray-200 text-sm">
+                </div>
+                <div class="w-24">
+                    <label class="block text-[10px] font-medium text-gray-500">Sale Price *</label>
+                    <input type="number" step="0.0001" min="0" required name="variants[${vIdx}][options][${optIdx}][sale_price]" value="0" class="w-full rounded border-gray-200 text-sm">
                 </div>
                 <button type="button" class="remove-option text-red-500 hover:text-red-700 text-lg pb-1" title="Remove">&times;</button>
             </div>`;

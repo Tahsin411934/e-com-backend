@@ -205,7 +205,6 @@ class ProductService
                                 $optData['product_variant_id'] = $variant->id;
                                 $optData['status'] = $optData['status'] ?? 'active';
                                 $optData['sort_order'] = $optData['sort_order'] ?? 0;
-                                $optData['stock'] = $optData['stock'] ?? 0;
                                 $optData['price_adjustment'] = $optData['price_adjustment'] ?? 0;
                                 
                                 $option = VariantOption::updateOrCreate(
@@ -352,9 +351,12 @@ class ProductService
                             'product_variant_id' => $newVariant->id,
                             'color_name'         => $option->color_name,
                             'color_code'         => $option->color_code,
+                            'sku'                => $option->sku ? $this->generateUniqueVariantSku($option->sku) : null,
+                            'barcode'            => $option->barcode ? (string) Str::uuid() : null,
                             'image_url'          => $option->image_url ? $this->copyImageFile($option->image_url) : null,
                             'price_adjustment'   => $option->price_adjustment,
-                            'stock'              => (int) ($option->stock ?? 0),
+                            'sale_price'        => $price !== null ? $price : $option->sale_price,
+                            'compare_at_price'  => $option->compare_at_price,
                             'sort_order'         => $option->sort_order,
                             'status'             => $option->status,
                         ]);

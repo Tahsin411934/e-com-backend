@@ -151,7 +151,9 @@ class CartService
                 if ($variantOptionId) {
                     $variantOption = \Modules\Catalog\Models\VariantOption::find($variantOptionId);
                     if ($variantOption && $variantOption->product_variant_id === $variant->id) {
-                        $unitPrice += $variantOption->price_adjustment;
+                        $unitPrice = $variantOption->sale_price !== null
+                            ? (float) $variantOption->sale_price
+                            : $unitPrice + (float) $variantOption->price_adjustment;
                     }
                 }
                 $unitPrice = $this->campaignPricing->priceFor($variant, $unitPrice - (float) $variant->sale_price)['price'];
@@ -325,7 +327,9 @@ class CartService
                     if ($variantOptionId) {
                         $variantOption = \Modules\Catalog\Models\VariantOption::find($variantOptionId);
                         if ($variantOption && $variantOption->product_variant_id === $variant->id) {
-                            $unitPrice += $variantOption->price_adjustment;
+                            $unitPrice = $variantOption->sale_price !== null
+                                ? (float) $variantOption->sale_price
+                                : $unitPrice + (float) $variantOption->price_adjustment;
                         }
                     }
                     $unitPrice = $this->campaignPricing->priceFor($variant, $unitPrice - (float) $variant->sale_price)['price'];

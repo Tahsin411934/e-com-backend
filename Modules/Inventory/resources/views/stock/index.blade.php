@@ -31,8 +31,13 @@
             <x-form-select label="Variant" name="variant_id" id="stock_variant_id">
                 <option value="" disabled selected>Select a variant</option>
                 @foreach($variants ?? [] as $variant)
-                    <option value="{{ $variant->id }}">{{ $variant->product?->name ?? 'Unknown Product' }} - {{ $variant->name }} ({{ $variant->sku }})</option>
+                    <option value="{{ $variant->id }}" data-options='@json($variant->options->map(fn($option) => ["id" => $option->id, "name" => $option->color_name, "sku" => $option->sku]))'>{{ $variant->product?->name ?? 'Unknown Product' }} - {{ $variant->name }} ({{ $variant->sku }})</option>
                 @endforeach
+            </x-form-select>
+        </div>
+        <div class="mb-4">
+            <x-form-select label="Color Option" name="variant_option_id" id="stock_variant_option_id">
+                <option value="">Parent variant stock</option>
             </x-form-select>
         </div>
         <div class="mb-4">
@@ -58,11 +63,21 @@
     <script>
         window.fillInventoryStockForm = function(data) {
             $('#stock_variant_id').val(data.variant_id);
+            refreshStockOptions(data.variant_id, data.variant_option_id);
             $('#stock_location_id').val(data.location_id);
             $('#stock_quantity_on_hand').val(data.quantity_on_hand);
             $('#stock_quantity_reserved').val(data.quantity_reserved);
             $('#stock_reorder_point').val(data.reorder_point);
         };
+
+        function refreshStockOptions(variantId, selectedId = null) {
+            const option = $('#stock_variant_id option[value="' + variantId + '"]');
+            const options = option.data('options') || [];
+            const select = $('#stock_variant_option_id').empty().append('<option value="">Parent variant stock</option>');
+            options.forEach(item => select.append(new Option(item.name + (item.sku ? ' (' + item.sku + ')' : ''), item.id, false, String(item.id) === String(selectedId))));
+        }
+
+        $('#stock_variant_id').on('change', function() { refreshStockOptions(this.value); });
     </script>
     @endpush
 </x-app-layout>

@@ -40,7 +40,7 @@ class ProductApiController extends Controller
                     $q->orderBy('sort_order');
                 },
                 'variants' => function ($q) {
-                    $q->where('status', 'active')->with(['inventoryStocks', 'options']);
+                    $q->where('status', 'active')->with(['inventoryStocks', 'options.inventoryStocks']);
                 },
                 'variants.images',
                 'reviews' => function ($q) {

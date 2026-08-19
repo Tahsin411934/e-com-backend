@@ -26,14 +26,14 @@ class HomeApiController extends Controller
     public function productsByCategory(Request $request): JsonResponse
     {
         $limitCategories = min((int) $request->query('limit_categories', 10), 50);
-        $limitProducts   = min((int) $request->query('limit_products', 8), 20);
+        $limitProducts = min((int) $request->query('limit_products', 8), 20);
 
         $data = $this->buildHomePageData($limitCategories, $limitProducts);
 
         return response()->json([
             'success' => true,
             'message' => 'Home page data retrieved successfully.',
-            'data'    => $data,
+            'data' => $data,
         ]);
     }
 

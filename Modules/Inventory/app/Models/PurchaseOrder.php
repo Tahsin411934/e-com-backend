@@ -61,6 +61,23 @@ class PurchaseOrder extends Model
         return $this->hasMany(PurchaseOrderItem::class, 'purchase_order_id');
     }
 
+    public function payments()
+    {
+        return $this->hasMany(SupplierPayment::class, 'purchase_order_id');
+    }
+
+    /**
+     * Total amount paid against this order (from supplier_payments).
+     */
+    public function getPaidAmountAttribute(): float
+    {
+        $paid = $this->payments()
+            ->whereNull('deleted_at')
+            ->sum('amount');
+
+        return (float) $paid;
+    }
+
     public static function generatePoNumber(): string
     {
         $year = date('Y');

@@ -107,13 +107,6 @@
                         <button type="submit" class="px-4 py-2 bg-red-600 text-white rounded-lg text-sm hover:bg-red-700">Cancel Order</button>
                     </form>
                 @endif
-                @if($purchase_order->payment_status !== 'paid' && $purchase_order->status !== 'cancelled')
-                    <form action="{{ route('purchase-orders.update-status', $purchase_order->id) }}" method="POST" class="inline">
-                        @csrf
-                        <input type="hidden" name="payment_status" value="paid">
-                        <button type="submit" class="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm hover:bg-indigo-700">Mark as Paid</button>
-                    </form>
-                @endif
             </div>
         @endif
 
@@ -132,5 +125,173 @@
                 <span>This purchase order has been returned. View its <a href="{{ route('purchase-returns.index') }}" class="font-semibold underline">Purchase Return record</a>.</span>
             </div>
         @endif
+
+        <!-- Payment Section -->
+        <div class="mt-6 bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+            <div class="px-6 py-4 border-b border-gray-100 bg-gray-50/50 flex flex-wrap items-center justify-between gap-3">
+                <h2 class="text-lg font-semibold text-gray-800 flex items-center gap-2">
+                    <i class="fas fa-money-bill-wave text-emerald-600"></i> Payments
+                </h2>
+                @if($purchase_order->payment_status !== 'paid')
+                    <button onclick="openPaymentDrawer()" class="px-4 py-2 bg-emerald-600 text-white rounded-lg text-sm font-medium hover:bg-emerald-700 transition">
+                        <i class="fas fa-plus mr-1"></i> Add Payment
+                    </button>
+                @endif
+            </div>
+
+            <div class="p-6 grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div class="rounded-lg bg-gray-50 border border-gray-200 p-4">
+                    <div class="text-xs font-semibold text-gray-500 uppercase">Total</div>
+                    <div class="mt-1 text-xl font-bold text-gray-900">৳{{ number_format((float) $purchase_order->total_amount, 2) }}</div>
+                </div>
+                <div class="rounded-lg bg-emerald-50 border border-emerald-200 p-4">
+                    <div class="text-xs font-semibold text-emerald-600 uppercase">Paid</div>
+                    <div class="mt-1 text-xl font-bold text-emerald-700">৳{{ number_format((float) $purchase_order->paid_amount, 2) }}</div>
+                </div>
+                <div class="rounded-lg bg-rose-50 border border-rose-200 p-4">
+                    <div class="text-xs font-semibold text-rose-600 uppercase">Due</div>
+                    <div class="mt-1 text-xl font-bold text-rose-700">৳{{ number_format(max(0, (float) $purchase_order->total_amount - (float) $purchase_order->paid_amount), 2) }}</div>
+                </div>
+            </div>
+
+            <div class="overflow-x-auto">
+                <table class="w-full text-sm">
+                    <thead class="bg-gray-50 text-gray-500">
+                        <tr>
+                            <th class="text-left px-4 py-3">Payment No</th>
+                            <th class="text-left px-4 py-3">Date</th>
+                            <th class="text-left px-4 py-3">Account</th>
+                            <th class="text-left px-4 py-3">Method</th>
+                            <th class="text-right px-4 py-3">Amount</th>
+                            <th class="text-left px-4 py-3">Reference</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @forelse($payments as $payment)
+                            <tr class="border-t">
+                                <td class="px-4 py-3 font-medium text-gray-800">{{ $payment->payment_no }}</td>
+                                <td class="px-4 py-3">{{ $payment->payment_date?->format('d M Y') ?? '-' }}</td>
+                                <td class="px-4 py-3">{{ $payment->account?->name ?? '-' }}</td>
+                                <td class="px-4 py-3">{{ ucfirst(str_replace('_', ' ', $payment->payment_method)) }}</td>
+                                <td class="px-4 py-3 text-right font-bold text-emerald-700">৳{{ number_format((float) $payment->amount, 2) }}</td>
+                                <td class="px-4 py-3">{{ $payment->reference_no ?? '-' }}</td>
+                            </tr>
+                        @empty
+                            <tr>
+                                <td colspan="6" class="px-4 py-8 text-center text-gray-400">No payments recorded yet.</td>
+                            </tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
+        </div>
     </div>
+
+    <!-- Add Payment Drawer -->
+    <div id="paymentDrawer" class="fixed inset-0 z-50 hidden">
+        <div class="absolute inset-0 bg-black/40" onclick="closePaymentDrawer()"></div>
+        <div class="absolute right-0 top-0 h-full w-96 bg-white shadow-2xl max-w-[100vw] overflow-y-auto">
+            <div class="flex items-center justify-between px-5 py-4 border-b border-gray-100">
+                <h3 class="text-lg font-semibold text-gray-800">Record Payment</h3>
+                <button onclick="closePaymentDrawer()" class="text-gray-400 hover:text-gray-600 text-xl">&times;</button>
+            </div>
+            <form id="paymentForm" class="p-5 space-y-4">
+                @csrf
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Amount <span class="text-rose-500">*</span></label>
+                    <input type="number" name="amount" id="pay_amount" step="0.01" min="0" required class="w-full border border-slate-300 rounded-md p-2 text-sm">
+                    <p class="text-xs text-gray-400 mt-1">Due: ৳{{ number_format(max(0, (float) $purchase_order->total_amount - (float) $purchase_order->paid_amount), 2) }}</p>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Payment Account <span class="text-rose-500">*</span></label>
+                    <select name="account_id" id="pay_account_id" class="w-full rounded-lg border border-slate-300 p-2 text-sm" required>
+                        <option value="">Select Account</option>
+                        @foreach($accounts as $account)
+                            <option value="{{ $account->id }}">{{ $account->name }} - ৳{{ number_format((float) $account->current_balance, 2) }}</option>
+                        @endforeach
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Payment Date <span class="text-rose-500">*</span></label>
+                    <input type="date" name="payment_date" id="pay_date" value="{{ date('Y-m-d') }}" class="w-full rounded-lg border border-slate-300 p-2 text-sm" required>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Method</label>
+                    <select name="payment_method" id="pay_method" class="w-full rounded-lg border border-slate-300 p-2 text-sm">
+                        <option value="cash">Cash</option>
+                        <option value="bank">Bank Transfer</option>
+                        <option value="mobile_banking">Mobile Banking</option>
+                        <option value="card">Card</option>
+                        <option value="gateway">Gateway</option>
+                        <option value="other">Other</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Reference No</label>
+                    <input type="text" name="reference_no" id="pay_reference_no" class="w-full rounded-lg border border-slate-300 p-2 text-sm">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Note</label>
+                    <textarea name="note" id="pay_note" rows="2" class="w-full rounded-lg border border-slate-300 p-2 text-sm"></textarea>
+                </div>
+                <div class="pt-2">
+                    <button type="submit" class="w-full px-4 py-2 bg-emerald-600 text-white rounded-lg text-sm font-semibold hover:bg-emerald-700">
+                        <i class="fas fa-check mr-1"></i> Save Payment
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    @push('scripts')
+    <script>
+        function openPaymentDrawer() {
+            document.getElementById('paymentDrawer').classList.remove('hidden');
+        }
+        function closePaymentDrawer() {
+            document.getElementById('paymentDrawer').classList.add('hidden');
+        }
+
+        document.getElementById('paymentForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            var form = this;
+            var btn = form.querySelector('button[type="submit"]');
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
+
+            var data = new FormData(form);
+            data.append('supplier_id', '{{ $purchase_order->supplier_id }}');
+            data.append('purchase_order_id', '{{ $purchase_order->id }}');
+            data.append('store_id', '{{ $purchase_order->store_id }}');
+
+            fetch('{{ route("supplier-payments.store") }}', {
+                method: 'POST',
+                body: data,
+                headers: { 'X-CSRF-TOKEN': '{{ csrf_token() }}' }
+            })
+            .then(res => res.json())
+            .then(res => {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-check mr-1"></i> Save Payment';
+                if (res.status === 'success') {
+                    Toastify({
+                        text: res.message,
+                        duration: 3000,
+                        gravity: 'bottom',
+                        position: 'right',
+                        style: { background: 'linear-gradient(135deg, #16a34a, #4ade80)' }
+                    }).showToast();
+                    setTimeout(() => location.reload(), 1200);
+                } else {
+                    Swal.fire('Error', res.message, 'error');
+                }
+            })
+            .catch(() => {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-check mr-1"></i> Save Payment';
+                Swal.fire('Error', 'Server error occurred', 'error');
+            });
+        });
+    </script>
+    @endpush
 </x-app-layout>

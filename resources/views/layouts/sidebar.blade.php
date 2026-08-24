@@ -226,6 +226,10 @@
                     class="flex items-center gap-2.5 pl-9 pr-3 py-1.5 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-50 text-[13px] transition-colors {{ request()->routeIs('purchase-returns.*') ? 'text-primary bg-primary-light font-medium' : '' }}">
                     <i class="fas fa-undo-alt w-3.5 text-center"></i><span>Purchase Returns</span>
                 </a>
+                <a href="{{ route('supplier-payments.index') }}"
+                    class="flex items-center gap-2.5 pl-9 pr-3 py-1.5 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-50 text-[13px] transition-colors {{ request()->routeIs('supplier-payments.*') ? 'text-primary bg-primary-light font-medium' : '' }}">
+                    <i class="fas fa-money-bill-transfer w-3.5 text-center"></i><span>Supplier Payments</span>
+                </a>
             </div>
         </div>
 

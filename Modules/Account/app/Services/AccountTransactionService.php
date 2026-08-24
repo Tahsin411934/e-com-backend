@@ -20,6 +20,45 @@ use Modules\Inventory\Models\PurchaseOrder;
 
 class AccountTransactionService
 {
+    /**
+     * Payment made to a supplier (Purchase Order / supplier payment).
+     *
+     * Money goes OUT of the selected account (its current_balance DECREASES)
+     * and the Product Purchase (cost of goods) category is debited.
+     */
+    public function postSupplierPayment(Model $payment, AccountAccount $account, AccountCategory $category, float $amount): AccountTransaction
+    {
+        return DB::transaction(function () use ($payment, $account, $category, $amount) {
+            $existing = $this->findPostedSourceTransaction($payment, 'purchase');
+            if ($existing) {
+                return $existing;
+            }
+
+            $transaction = $this->createPostedTransaction([
+                'type' => 'purchase',
+                'source' => $payment,
+                'currency_code' => $account->currency_code ?? 'BDT',
+                'amount' => $amount,
+                'account_id' => $account->id,
+                'category_id' => $category->id,
+                'account_entry_type' => 'credit',
+                'category_entry_type' => 'debit',
+                'transaction_date' => $payment->payment_date ?? now(),
+                'reference_no' => $payment->payment_no,
+                'description' => $payment->note ?: 'Supplier payment for purchase order',
+                'metadata' => [
+                    'payment_no' => $payment->payment_no,
+                    'supplier_id' => $payment->supplier_id,
+                    'purchase_order_id' => $payment->purchase_order_id,
+                ],
+            ]);
+
+            $this->decreaseAccountBalance($account, $amount);
+
+            return $transaction;
+        });
+    }
+
     public function postPayment(Payment $payment): ?AccountTransaction
     {
         if (!in_array($payment->status, ['authorized', 'captured'], true)) {

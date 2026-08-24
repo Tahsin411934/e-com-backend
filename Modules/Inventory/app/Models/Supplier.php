@@ -33,6 +33,11 @@ class Supplier extends Model
         return $this->hasMany(PurchaseOrder::class, 'supplier_id');
     }
 
+    public function payments()
+    {
+        return $this->hasMany(SupplierPayment::class, 'supplier_id');
+    }
+
     public function products()
     {
         return $this->belongsToMany(

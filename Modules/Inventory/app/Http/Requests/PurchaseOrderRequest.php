@@ -21,6 +21,8 @@ class PurchaseOrderRequest extends FormRequest
             'shipping_cost' => 'nullable|numeric|min:0',
             'tax_amount' => 'nullable|numeric|min:0',
             'discount_amount' => 'nullable|numeric|min:0',
+            'paid_amount' => 'nullable|numeric|min:0',
+            'account_id' => 'nullable|exists:account_accounts,id',
             'notes' => 'nullable|string',
             'items' => 'required|array|min:1',
             'items.*.variant_id' => 'required|exists:product_variants,id',

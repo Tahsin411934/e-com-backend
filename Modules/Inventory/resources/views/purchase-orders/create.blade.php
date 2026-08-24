@@ -70,6 +70,30 @@
             <div class="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
                 <div class="px-6 py-4 border-b border-gray-100 bg-gray-50/50">
                     <h2 class="text-lg font-semibold text-gray-800 flex items-center gap-2">
+                        <i class="fas fa-hand-holding-dollar text-emerald-600"></i> Advance Payment (Optional)
+                    </h2>
+                    <p class="text-xs text-gray-500 mt-0.5">Record an advance/paid amount now. The amount is deducted from the selected account & a supplier payment is created automatically.</p>
+                </div>
+                <div class="p-6 grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <x-form-input label="Paid Amount" name="paid_amount" id="paid_amount" type="number" step="0.01" min="0" value="0" />
+                        <p class="text-xs text-gray-400 mt-1">Leave 0 for unpaid. Cannot exceed the order total.</p>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Payment Account</label>
+                        <select name="account_id" id="account_id" class="w-full border border-slate-300 dark:border-slate-600 rounded-md p-2 bg-white dark:bg-gray-700 text-slate-800 dark:text-slate-200 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all cursor-pointer">
+                            <option value="">Select Account (if paying now)</option>
+                            @foreach($accounts ?? [] as $account)
+                                <option value="{{ $account->id }}">{{ $account->name }} - ৳{{ number_format((float) $account->current_balance, 2) }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+                <div class="px-6 py-4 border-b border-gray-100 bg-gray-50/50">
+                    <h2 class="text-lg font-semibold text-gray-800 flex items-center gap-2">
                         <i class="fas fa-boxes text-purple-600"></i> Products
                     </h2>
                 </div>

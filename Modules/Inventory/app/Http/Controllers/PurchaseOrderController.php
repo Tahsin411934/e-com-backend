@@ -8,6 +8,7 @@ use Modules\Inventory\Services\PurchaseOrderService;
 use Modules\Inventory\Http\Requests\PurchaseOrderRequest;
 use Modules\Inventory\Models\Supplier;
 use Modules\Store\Models\Store;
+use Modules\Account\Models\AccountAccount;
 
 class PurchaseOrderController extends Controller
 {
@@ -22,7 +23,8 @@ class PurchaseOrderController extends Controller
     {
         $suppliers = Supplier::where('status', 'active')->orderBy('name')->get();
         $stores = Store::where('status', 'active')->orderBy('name')->get();
-        return view('inventory::purchase-orders.index', compact('suppliers', 'stores'));
+        $accounts = AccountAccount::where('is_active', true)->orderBy('name')->get();
+        return view('inventory::purchase-orders.index', compact('suppliers', 'stores', 'accounts'));
     }
 
     public function dataTable(Request $request)
@@ -34,7 +36,8 @@ class PurchaseOrderController extends Controller
     {
         $suppliers = Supplier::where('status', 'active')->orderBy('name')->get();
         $stores = Store::where('status', 'active')->orderBy('name')->get();
-        return view('inventory::purchase-orders.create', compact('suppliers', 'stores'));
+        $accounts = AccountAccount::where('is_active', true)->orderBy('name')->get();
+        return view('inventory::purchase-orders.create', compact('suppliers', 'stores', 'accounts'));
     }
 
     public function store(PurchaseOrderRequest $request)
@@ -52,7 +55,14 @@ class PurchaseOrderController extends Controller
         if ($result['status'] === 'error') {
             return redirect()->route('purchase-orders.index')->with('error', 'Purchase order not found.');
         }
-        return view('inventory::purchase-orders.show', ['purchase_order' => $result['purchase_order']]);
+        $purchase_order = $result['purchase_order'];
+        $payments = \Modules\Inventory\Models\SupplierPayment::with('account')
+            ->where('purchase_order_id', $purchase_order->id)
+            ->orderByDesc('payment_date')
+            ->get();
+        $accounts = AccountAccount::where('is_active', true)->orderBy('name')->get();
+
+        return view('inventory::purchase-orders.show', compact('purchase_order', 'payments', 'accounts'));
     }
 
     public function edit($id)
@@ -67,7 +77,8 @@ class PurchaseOrderController extends Controller
         }
         $suppliers = Supplier::where('status', 'active')->orderBy('name')->get();
         $stores = Store::where('status', 'active')->orderBy('name')->get();
-        return view('inventory::purchase-orders.edit', compact('purchase_order', 'suppliers', 'stores'));
+        $accounts = AccountAccount::where('is_active', true)->orderBy('name')->get();
+        return view('inventory::purchase-orders.edit', compact('purchase_order', 'suppliers', 'stores', 'accounts'));
     }
 
     public function update(PurchaseOrderRequest $request, $id)

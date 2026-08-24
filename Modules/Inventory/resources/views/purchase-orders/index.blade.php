@@ -6,20 +6,22 @@
             icon="fa-solid fa-file-invoice"
             :buttonId="'btnAddPurchaseOrder'"
             buttonText="Add New Purchase Order"
-            :columns="['PO Number','Supplier','Store','Status','Payment','Total','Created At','Action']"
+            :columns="['PO Number','Supplier','Store','Status','Payment','Paid','Due','Total','Created At','Action']"
             :dtColumns="[
                 ['data' => 'po_number'],
                 ['data' => 'supplier_name'],
                 ['data' => 'store_name'],
                 ['data' => 'status', 'orderable' => false, 'searchable' => false],
                 ['data' => 'payment_status', 'orderable' => false, 'searchable' => false],
+                ['data' => 'paid_amount', 'orderable' => false, 'searchable' => false],
+                ['data' => 'due_amount', 'orderable' => false, 'searchable' => false],
                 ['data' => 'total_amount'],
                 ['data' => 'created_at'],
                 ['data' => 'action', 'orderable' => false, 'searchable' => false],
             ]"
             ajaxUrl="{{ route('purchase-orders.dataTable') }}"
             :exportButtons="false"
-            :order="[[6, 'desc']]"
+            :order="[[8, 'desc']]"
         />
     </div>
 

@@ -17,6 +17,11 @@ use Yajra\DataTables\DataTables;
 
 class PurchaseOrderService
 {
+    public function __construct(
+        private \Modules\Account\Services\AccountTransactionService $transactionService,
+        private SupplierPaymentService $supplierPaymentService,
+    ) {}
+
     public function getPoDataTable(Request $request)
     {
         $query = PurchaseOrder::query()
@@ -48,6 +53,12 @@ class PurchaseOrderService
             ->editColumn('total_amount', function (PurchaseOrder $po) {
                 return number_format($po->total_amount, 2);
             })
+            ->addColumn('paid_amount', function (PurchaseOrder $po) {
+                return number_format((float) $po->paid_amount, 2);
+            })
+            ->addColumn('due_amount', function (PurchaseOrder $po) {
+                return number_format(max(0, (float) $po->total_amount - (float) $po->paid_amount), 2);
+            })
             ->addColumn('supplier_name', function (PurchaseOrder $po) {
                 return $po->supplier ? $po->supplier->name : '-';
             })
@@ -71,7 +82,7 @@ class PurchaseOrderService
                     $html .= '<button onclick="updatePoStatus(' . $po->id . ', \'cancelled\')" class="bg-red-500 text-white px-2 py-1 rounded text-xs hover:bg-red-600 mr-1" title="Cancel Order"><i class="fas fa-times"></i></button>';
                 }
                 if ($po->payment_status !== 'paid' && $po->status !== 'cancelled') {
-                    $html .= '<button onclick="updatePoStatus(' . $po->id . ', \'paid\', \'payment_status\')" class="bg-indigo-600 text-white px-2 py-1 rounded text-xs hover:bg-indigo-700 mr-1" title="Mark as Paid"><i class="fas fa-dollar-sign"></i> Pay</button>';
+                    $html .= '<a href="' . route('purchase-orders.show', $po->id) . '" class="bg-indigo-600 text-white px-2 py-1 rounded text-xs hover:bg-indigo-700 mr-1 transition" title="Record Payment"><i class="fas fa-dollar-sign"></i> Pay</a>';
                 }
 
                 // Create a purchase return for received orders.
@@ -139,6 +150,18 @@ class PurchaseOrderService
 
                 $totalAmount += ($data['shipping_cost'] ?? 0) + ($data['tax_amount'] ?? 0) - ($data['discount_amount'] ?? 0);
                 $po->update(['total_amount' => $totalAmount]);
+
+                // If an advance / paid amount was submitted with this NEW PO, record it
+                // immediately against the selected account (balance decreases).
+                // (On edit we ignore these fields to avoid double-charging; additional
+                //  payments are recorded from the PO page via Supplier Payments.)
+                $paidAmount = (float) ($data['paid_amount'] ?? 0);
+                $accountId = $data['account_id'] ?? null;
+                if (!$poId && $paidAmount > 0 && $accountId) {
+                    $this->recordPoPayment($po, $paidAmount, (string) $accountId);
+                } else {
+                    $this->supplierPaymentService->updatePurchasePaymentStatus($po->id);
+                }
 
                 return [
                     'status' => 'success',
@@ -221,21 +244,18 @@ class PurchaseOrderService
                 }
 
                 if ($paymentStatus) {
-                    $validPaymentTransitions = [
-                        'unpaid' => ['partial', 'paid'],
-                        'partial' => ['paid'],
-                        'paid' => [],
-                    ];
+                    // Payment status is now derived from actual supplier_payments records.
+                    $this->supplierPaymentService->updatePurchasePaymentStatus($po->id);
+                    $po->refresh();
 
-                    if (!isset($validPaymentTransitions[$po->payment_status]) || !in_array($paymentStatus, $validPaymentTransitions[$po->payment_status])) {
-                        return ['status' => 'error', 'message' => 'Cannot change payment status from "' . $po->payment_status . '" to "' . $paymentStatus . '".'];
+                    if ($paymentStatus === 'paid' && $po->payment_status !== 'paid') {
+                        return [
+                            'status' => 'error',
+                            'message' => 'This order is not fully paid yet. Record the remaining amount as a Supplier Payment from the order page to mark it Paid.',
+                        ];
                     }
 
-                    $po->update(['payment_status' => $paymentStatus]);
-
-                    if ($paymentStatus === 'paid' && Schema::hasTable('account_transactions')) {
-                        app(AccountTransactionService::class)->postPurchaseOrder($po->fresh());
-                    }
+                    $po->update(['payment_status' => $po->payment_status]);
                 }
 
                 $message = [];
@@ -255,6 +275,25 @@ class PurchaseOrderService
         } catch (\Exception $e) {
             return ['status' => 'error', 'message' => 'Error updating status: ' . $e->getMessage()];
         }
+    }
+
+    protected function recordPoPayment(PurchaseOrder $po, float $amount, string $accountId): array
+    {
+        $result = $this->supplierPaymentService->save([
+            'supplier_id' => $po->supplier_id,
+            'purchase_order_id' => $po->id,
+            'store_id' => $po->store_id,
+            'account_id' => (int) $accountId,
+            'amount' => $amount,
+            'payment_date' => now()->toDateString(),
+            'note' => 'Advance payment recorded during purchase order creation.',
+        ]);
+
+        if (($result['status'] ?? '') !== 'success') {
+            throw new \RuntimeException($result['message'] ?? 'Failed to record advance payment.');
+        }
+
+        return $result;
     }
 
     protected function processStockUpdate(PurchaseOrder $po): void

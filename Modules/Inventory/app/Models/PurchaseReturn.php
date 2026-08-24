@@ -57,8 +57,23 @@ class PurchaseReturn extends Model
     public static function generateReturnNumber(): string
     {
         $year = date('Y');
-        $last = static::whereYear('created_at', $year)->latest('id')->first();
-        $sequence = $last ? intval(substr($last->return_number, -4)) + 1 : 1;
-        return 'PR-' . $year . '-' . str_pad($sequence, 4, '0', STR_PAD_LEFT);
+
+        // Find the highest existing numeric suffix for this year.
+        // withTrashed() is important: soft-deleted rows still occupy their
+        // unique return_number, so they must be included in the scan.
+        $maxSequence = static::withTrashed()
+            ->whereYear('created_at', $year)
+            ->get(['return_number'])
+            ->map(fn ($return) => (int) substr((string) $return->return_number, -4))
+            ->max() ?? 0;
+
+        // Increment until we find a number that is actually free
+        // (guards against leftover rows with irregular numbers).
+        do {
+            $maxSequence++;
+            $number = 'PR-' . $year . '-' . str_pad($maxSequence, 4, '0', STR_PAD_LEFT);
+        } while (static::withTrashed()->where('return_number', $number)->exists());
+
+        return $number;
     }
 }

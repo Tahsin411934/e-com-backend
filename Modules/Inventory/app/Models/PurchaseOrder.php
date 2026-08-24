@@ -64,8 +64,20 @@ class PurchaseOrder extends Model
     public static function generatePoNumber(): string
     {
         $year = date('Y');
-        $lastPo = static::whereYear('created_at', $year)->latest('id')->first();
-        $sequence = $lastPo ? intval(substr($lastPo->po_number, -4)) + 1 : 1;
-        return 'PO-' . $year . '-' . str_pad($sequence, 4, '0', STR_PAD_LEFT);
+
+        // withTrashed() is important: soft-deleted orders keep their unique
+        // po_number, so they must be counted to avoid duplicate numbers.
+        $maxSequence = static::withTrashed()
+            ->whereYear('created_at', $year)
+            ->get(['po_number'])
+            ->map(fn ($po) => (int) substr((string) $po->po_number, -4))
+            ->max() ?? 0;
+
+        do {
+            $maxSequence++;
+            $number = 'PO-' . $year . '-' . str_pad($maxSequence, 4, '0', STR_PAD_LEFT);
+        } while (static::withTrashed()->where('po_number', $number)->exists());
+
+        return $number;
     }
 }

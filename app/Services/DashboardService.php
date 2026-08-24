@@ -32,7 +32,8 @@ class DashboardService
 
         $pendingOrders = Order::where('status', 'pending')->count();
 
-        $lowStockItems = InventoryStock::where(DB::raw('quantity_on_hand - quantity_reserved'), '<=', DB::raw('reorder_point'))
+        $lowStockItems = $this->activeStockQuery()
+            ->where(DB::raw('quantity_on_hand - quantity_reserved'), '<=', DB::raw('reorder_point'))
             ->count();
 
         // Previous period calculations for comparison
@@ -228,7 +229,8 @@ class DashboardService
             return [];
         }
 
-        return InventoryStock::with(['variant.product'])
+        return $this->activeStockQuery()
+            ->with(['variant.product', 'variantOption'])
             ->where(DB::raw('quantity_on_hand - quantity_reserved'), '<=', DB::raw('reorder_point'))
             ->orderBy(DB::raw('quantity_on_hand - quantity_reserved'))
             ->limit($limit)
@@ -248,6 +250,24 @@ class DashboardService
                 ];
             })
             ->all();
+    }
+
+    /**
+     * Query InventoryStock rows that belong to a live (non-soft-deleted)
+     * variant/product. Deleting a product usually leaves its stock rows
+     * behind, so we must exclude those to avoid inflated counts.
+     */
+    private function activeStockQuery(): \Illuminate\Database\Eloquent\Builder
+    {
+        return InventoryStock::query()
+            ->whereHas('variant', function ($q) {
+                $q->whereNull('deleted_at')
+                    ->whereHas('product', fn ($p) => $p->whereNull('deleted_at'));
+            })
+            ->where(function ($q) {
+                $q->whereNull('variant_option_id')
+                    ->orWhereHas('variantOption', fn ($o) => $o->whereNull('deleted_at'));
+            });
     }
 
     /**
@@ -308,12 +328,13 @@ class DashboardService
         }
 
         $available = DB::raw('quantity_on_hand - quantity_reserved');
-        $total = InventoryStock::count();
-        $inStock = InventoryStock::where($available, '>', DB::raw('reorder_point'))->count();
-        $lowStock = InventoryStock::where($available, '<=', DB::raw('reorder_point'))
+        $base = $this->activeStockQuery();
+        $total = (clone $base)->count();
+        $inStock = (clone $base)->where($available, '>', DB::raw('reorder_point'))->count();
+        $lowStock = (clone $base)->where($available, '<=', DB::raw('reorder_point'))
             ->where($available, '>', 0)
             ->count();
-        $outOfStock = InventoryStock::where($available, '<=', 0)->count();
+        $outOfStock = (clone $base)->where($available, '<=', 0)->count();
 
         return ['inStock' => $inStock, 'lowStock' => $lowStock, 'outOfStock' => $outOfStock, 'totalStockItems' => $total];
     }

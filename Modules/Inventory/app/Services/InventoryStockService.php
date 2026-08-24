@@ -168,6 +168,14 @@ class InventoryStockService
     public function getLowStockItems(): array
     {
         return InventoryStock::whereRaw('(quantity_on_hand - quantity_reserved) <= reorder_point')
+            ->whereHas('variant', function ($q) {
+                $q->whereNull('deleted_at')
+                    ->whereHas('product', fn ($p) => $p->whereNull('deleted_at'));
+            })
+            ->where(function ($q) {
+                $q->whereNull('variant_option_id')
+                    ->orWhereHas('variantOption', fn ($o) => $o->whereNull('deleted_at'));
+            })
             ->with('location.store')
             ->orderBy('quantity_on_hand')
             ->get()

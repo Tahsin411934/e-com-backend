@@ -68,6 +68,15 @@ class PurchaseReturnService
                     $message = 'Purchase return created successfully.';
                 }
 
+                // Reflect a completed return back on the linked purchase order.
+                if ($return->purchaseOrder) {
+                    if (in_array($return->status, ['returned', 'refunded'], true)) {
+                        $return->purchaseOrder->update(['status' => 'returned']);
+                    } elseif ($return->status === 'partially_refunded') {
+                        $return->purchaseOrder->update(['status' => 'partially_received']);
+                    }
+                }
+
                 // If status is 'returned', adjust stock (decrease stock)
                 if ($return->status === 'returned') {
                     $this->adjustStockForReturn($return);

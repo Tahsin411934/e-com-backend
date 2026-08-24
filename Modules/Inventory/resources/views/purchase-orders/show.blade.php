@@ -28,7 +28,7 @@
                 <div class="space-y-2 text-sm">
                     <div class="flex justify-between"><span class="text-gray-500">Status:</span>
                         @php
-                            $statusColors = ['draft'=>'bg-gray-100 text-gray-700','ordered'=>'bg-primary-light text-primary','partially_received'=>'bg-yellow-100 text-yellow-700','received'=>'bg-green-100 text-green-700','cancelled'=>'bg-red-100 text-red-700'];
+                            $statusColors = ['draft'=>'bg-gray-100 text-gray-700','ordered'=>'bg-primary-light text-primary','partially_received'=>'bg-yellow-100 text-yellow-700','received'=>'bg-green-100 text-green-700','returned'=>'bg-orange-100 text-orange-700','cancelled'=>'bg-red-100 text-red-700'];
                         @endphp
                         <span class="px-2 py-1 rounded-full text-xs font-medium {{ $statusColors[$purchase_order->status] ?? '' }}">{{ ucfirst(str_replace('_', ' ', $purchase_order->status)) }}</span>
                     </div>
@@ -123,6 +123,13 @@
                     class="px-4 py-2 bg-orange-500 text-white rounded-lg text-sm hover:bg-orange-600 inline-flex items-center">
                     <i class="fas fa-undo-alt mr-1"></i>Create Purchase Return
                 </a>
+            </div>
+        @endif
+
+        @if($purchase_order->status === 'returned')
+            <div class="mt-4 bg-orange-50 border border-orange-200 text-orange-700 rounded-lg p-4 text-sm flex items-center gap-2">
+                <i class="fas fa-undo-alt"></i>
+                <span>This purchase order has been returned. View its <a href="{{ route('purchase-returns.index') }}" class="font-semibold underline">Purchase Return record</a>.</span>
             </div>
         @endif
     </div>

@@ -30,6 +30,7 @@ class PurchaseOrderService
                     'ordered' => 'bg-blue-100 text-blue-700',
                     'partially_received' => 'bg-yellow-100 text-yellow-700',
                     'received' => 'bg-green-100 text-green-700',
+                    'returned' => 'bg-orange-100 text-orange-700',
                     'cancelled' => 'bg-red-100 text-red-700',
                 ];
                 $class = $colors[$po->status] ?? 'bg-gray-100';
@@ -78,13 +79,17 @@ class PurchaseOrderService
                     $html .= '<a href="' . route('purchase-returns.create', ['purchase_order_id' => $po->id]) . '" class="bg-orange-500 text-white px-2 py-1 rounded text-xs hover:bg-orange-600 mr-1 transition" title="Create Purchase Return"><i class="fas fa-undo-alt"></i> Return</a>';
                 }
 
-                // Standard action buttons
+                // Standard action buttons (hide edit/delete for locked statuses)
                 $html .= view('components.action-buttons', [
                     'id' => $po->id,
                     'show' => true,
                     'showUrl' => route('purchase-orders.show', ':id'),
-                    'editUrl' => route('purchase-orders.edit', ':id'),
-                    'deleteUrl' => route('purchase-orders.destroy', ':id'),
+                    'editUrl' => in_array($po->status, ['draft', 'ordered'], true)
+                        ? route('purchase-orders.edit', ':id')
+                        : null,
+                    'deleteUrl' => in_array($po->status, ['draft', 'ordered', 'cancelled'], true)
+                        ? route('purchase-orders.destroy', ':id')
+                        : null,
                 ])->render();
 
                 return $html;
@@ -172,8 +177,8 @@ class PurchaseOrderService
                 $po = PurchaseOrder::findOrFail($id);
                 // Received orders are locked — deleting them would orphan stock.
                 // Create a purchase return instead.
-                if (in_array($po->status, ['received', 'partially_received'], true)) {
-                    return ['status' => 'error', 'message' => 'Received orders cannot be deleted. Create a purchase return instead.'];
+                if (in_array($po->status, ['received', 'partially_received', 'returned'], true)) {
+                    return ['status' => 'error', 'message' => 'Received or returned orders cannot be deleted. Create a purchase return or adjustment instead.'];
                 }
                 $po->delete();
                 return ['status' => 'success', 'message' => 'Purchase order deleted successfully.'];
@@ -197,7 +202,10 @@ class PurchaseOrderService
                     $validTransitions = [
                         'draft' => ['ordered', 'cancelled'],
                         'ordered' => ['partially_received', 'received', 'cancelled'],
-                        'partially_received' => ['received'],
+                        'partially_received' => ['received', 'returned'],
+                        'received' => ['returned'],
+                        'returned' => [],
+                        'cancelled' => [],
                     ];
 
                     if (!in_array($status, $validTransitions[$po->status] ?? [])) {

@@ -141,6 +141,52 @@
                     }
                 }, 50);
             @endif
+
+            // Global delete function for URL-based action buttons.
+            // Defined here so any page using x-data-table can delete rows
+            // (e.g. Purchase Orders, Suppliers, Inventory Locations, etc.).
+            window.deleteEntity = function(url) {
+                Swal.fire({
+                    title: 'Are you sure?',
+                    text: 'This action cannot be undone!',
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#dc2626',
+                    cancelButtonColor: '#4b5563',
+                    confirmButtonText: 'Yes, delete it!'
+                }).then(function(result) {
+                    if (result.isConfirmed) {
+                        $.ajax({
+                            url: url,
+                            type: 'POST',
+                            data: { _method: 'DELETE', _token: '{{ csrf_token() }}' },
+                            success: function(res) {
+                                if (res.status === 'success') {
+                                    Toastify({
+                                        text: res.message || 'Deleted successfully',
+                                        duration: 3000,
+                                        gravity: 'bottom',
+                                        position: 'right',
+                                        style: { background: 'linear-gradient(135deg, #dc2626, #f87171)' }
+                                    }).showToast();
+                                    if (table) {
+                                        table.ajax.reload(null, false);
+                                    } else {
+                                        location.reload();
+                                    }
+                                } else {
+                                    Swal.fire('Error', res.message || 'Error deleting', 'error');
+                                }
+                            },
+                            error: function(xhr) {
+                                let msg = 'Server error';
+                                if (xhr.responseJSON && xhr.responseJSON.message) msg = xhr.responseJSON.message;
+                                Swal.fire('Error', msg, 'error');
+                            }
+                        });
+                    }
+                });
+            };
         });
     </script>
 @endpush

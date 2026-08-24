@@ -165,8 +165,10 @@ class PurchaseOrderService
         try {
             return DB::transaction(function () use ($id) {
                 $po = PurchaseOrder::findOrFail($id);
-                if ($po->status !== 'draft') {
-                    return ['status' => 'error', 'message' => 'Only draft orders can be deleted.'];
+                // Received orders are locked — deleting them would orphan stock.
+                // Create a purchase return instead.
+                if (in_array($po->status, ['received', 'partially_received'], true)) {
+                    return ['status' => 'error', 'message' => 'Received orders cannot be deleted. Create a purchase return instead.'];
                 }
                 $po->delete();
                 return ['status' => 'success', 'message' => 'Purchase order deleted successfully.'];

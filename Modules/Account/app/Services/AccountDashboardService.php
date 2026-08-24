@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Modules\Account\Models\AccountAccount;
 use Modules\Account\Models\AccountExpense;
+use Modules\Account\Models\AccountInvestment;
 use Modules\Account\Models\AccountProductProfitSnapshot;
 use Modules\Account\Models\AccountTransaction;
 
@@ -30,11 +31,10 @@ class AccountDashboardService
             ->whereBetween('expense_date', [$from->toDateString(), $to->toDateString()])
             ->sum('amount');
 
-        $investments = AccountExpense::query()
-            ->whereHas('category', function ($query) {
-                $query->where('system_key', 'investment');
-            })
-            ->whereBetween('expense_date', [$from->toDateString(), $to->toDateString()])
+        // Investments are owner/partner capital injections (money IN), not expenses.
+        // They are recorded in the account_investments module, not in account_expenses.
+        $investments = AccountInvestment::query()
+            ->whereBetween('investment_date', [$from->toDateString(), $to->toDateString()])
             ->sum('amount');
 
         $refunds = AccountTransaction::where('type', 'refund')
@@ -81,12 +81,13 @@ class AccountDashboardService
             ->get();
 
         $netProfit = (float) ($sales->gross_profit ?? 0) - (float) $expenses - (float) $refunds;
-        $netProfitAfterInvestment = $netProfit - (float) $investments;
+        // Capital injections do not reduce profit, they add funds to the business.
+        $netProfitAfterInvestment = $netProfit + (float) $investments;
         $cashMovement = (float) ($sales->net_sales ?? 0)
             - (float) ($sales->cost_total ?? 0)
             - (float) $expenses
             - (float) $refunds
-            - (float) $investments;
+            + (float) $investments;
 
         return [
             'from' => $from,

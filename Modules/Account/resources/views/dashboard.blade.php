@@ -45,6 +45,10 @@
 
         <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
             <div class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4">
+                <div class="text-xs font-semibold text-gray-500 uppercase">Investments</div>
+                <div class="mt-2 text-xl font-bold text-green-600">{{ $money($summary['investments']) }}</div>
+            </div>
+            <div class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4">
                 <div class="text-xs font-semibold text-gray-500 uppercase">Cash In Hand</div>
                 <div class="mt-2 text-xl font-bold">{{ $money($summary['cash']) }}</div>
             </div>

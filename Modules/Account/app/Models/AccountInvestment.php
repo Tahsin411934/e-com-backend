@@ -24,6 +24,7 @@ class AccountInvestment extends Model
         'expected_return',
         'actual_return',
         'status',
+        'transaction_id',
         'partner_name',
         'reference_no',
         'attachment_path',
@@ -41,5 +42,10 @@ class AccountInvestment extends Model
     public function account()
     {
         return $this->belongsTo(AccountAccount::class, 'account_id');
+    }
+
+    public function transaction()
+    {
+        return $this->belongsTo(AccountTransaction::class, 'transaction_id');
     }
 }

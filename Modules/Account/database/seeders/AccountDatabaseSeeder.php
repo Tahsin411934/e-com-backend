@@ -8,7 +8,9 @@ use Modules\Account\Models\AccountAccount;
 use Modules\Account\Models\AccountCategory;
 use Modules\Account\Models\AccountDailySummary;
 use Modules\Account\Models\AccountExpense;
+use Modules\Account\Models\AccountInvestment;
 use Modules\Account\Models\AccountTransfer;
+use Modules\Account\Services\AccountTransactionService;
 
 class AccountDatabaseSeeder extends Seeder
 {
@@ -125,17 +127,7 @@ class AccountDatabaseSeeder extends Seeder
                 'reference_no' => 'MKT-2026-08',
                 'note' => 'Marketing campaign spend for product launch.',
             ],
-            [
-                'expense_no' => 'EXP-0005',
-                'account_id' => $bankAccount?->id,
-                'category_id' => $investmentCategory?->id,
-                'amount' => 300000.00,
-                'expense_date' => now()->subDays(1)->toDateString(),
-                'vendor_name' => 'Equipment Capital',
-                'reference_no' => 'INV-2026-08',
-                'note' => 'Investment in new equipment and assets.',
-            ],
-        ] as $expenseData) {
+            ] as $expenseData) {
             if (!$expenseData['account_id'] || !$expenseData['category_id']) {
                 continue;
             }
@@ -147,6 +139,41 @@ class AccountDatabaseSeeder extends Seeder
                     'created_by' => $creator?->id,
                 ]
             );
+        }
+
+        // Investments are owner/partner capital injections (money IN), NOT expenses.
+        // Posting one automatically increases the selected account's balance.
+        if ($bankAccount && $creator) {
+            $investmentCategory = $investmentCategory
+                ?? (new AccountTransactionService())->ensureCategory('investment', 'Investment', 'asset');
+
+            $demoInvestment = AccountInvestment::updateOrCreate(
+                ['investment_no' => 'INV-SEED-0001'],
+                [
+                    'title' => 'Owner Capital - Business Expansion',
+                    'account_id' => $bankAccount->id,
+                    'investment_type' => 'business',
+                    'amount' => 300_000.00,
+                    'currency_code' => 'BDT',
+                    'investment_date' => now()->subDays(1)->toDateString(),
+                    'expected_return' => 0,
+                    'actual_return' => 0,
+                    'status' => 'active',
+                    'reference_no' => 'INV-2026-08',
+                    'note' => 'Owner capital injected into the main bank account.',
+                    'created_by' => $creator->id,
+                ]
+            );
+
+            if ($demoInvestment->wasRecentlyCreated) {
+                $transaction = (new AccountTransactionService())->postInvestment(
+                    $demoInvestment,
+                    $bankAccount,
+                    $investmentCategory,
+                    300_000.00
+                );
+                $demoInvestment->update(['transaction_id' => $transaction->id]);
+            }
         }
 
         foreach ([

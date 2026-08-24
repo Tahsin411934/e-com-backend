@@ -6,11 +6,14 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Modules\Account\Models\AccountAccount;
+use Modules\Account\Models\AccountCategory;
 use Modules\Account\Models\AccountInvestment;
 use Yajra\DataTables\DataTables;
 
 class AccountInvestmentService
 {
+    public function __construct(private AccountTransactionService $transactionService) {}
+
     public function getDataTable(Request $request)
     {
         $query = AccountInvestment::with(['account'])->orderByDesc('investment_date')->orderByDesc('id');
@@ -49,7 +52,23 @@ class AccountInvestmentService
                 $data['created_by'] = auth()->id();
                 $investment = AccountInvestment::create($data);
 
-                return ['status' => 'success', 'message' => 'Investment posted successfully.', 'investment' => $investment->fresh(['account'])];
+                $account = AccountAccount::findOrFail($data['account_id']);
+                $category = AccountCategory::where('system_key', 'investment')->first()
+                    ?? $this->transactionService->ensureCategory('investment', 'Investment', 'asset');
+
+                $transaction = $this->transactionService->postInvestment(
+                    $investment,
+                    $account,
+                    $category,
+                    (float) $data['amount']
+                );
+                $investment->update(['transaction_id' => $transaction->id]);
+
+                return [
+                    'status' => 'success',
+                    'message' => 'Investment posted successfully. Money was added to the "' . $account->name . '" balance.',
+                    'investment' => $investment->fresh(['account', 'transaction']),
+                ];
             });
         } catch (\Exception $e) {
             return ['status' => 'error', 'message' => 'Error saving investment: ' . $e->getMessage()];
@@ -59,7 +78,7 @@ class AccountInvestmentService
     public function find(int $id): array
     {
         try {
-            return ['status' => 'success', 'investment' => AccountInvestment::findOrFail($id)];
+            return ['status' => 'success', 'investment' => AccountInvestment::with(['account', 'transaction'])->findOrFail($id)];
         } catch (\Exception) {
             return ['status' => 'error', 'message' => 'Investment not found.'];
         }
@@ -67,7 +86,27 @@ class AccountInvestmentService
 
     public function delete(int $id): array
     {
-        return ['status' => 'error', 'message' => 'Posted investments are locked. Create a new investment entry instead.'];
+        try {
+            return DB::transaction(function () use ($id) {
+                $investment = AccountInvestment::findOrFail($id);
+
+                // Only reverse the account balance when a real posted transaction exists
+                // (legacy investments created before this fix have none, so they were never posted).
+                if ($investment->transaction) {
+                    if ($account = $investment->account) {
+                        $account->decrement('current_balance', (float) $investment->amount);
+                    }
+
+                    $investment->transaction->delete();
+                }
+
+                $investment->delete();
+
+                return ['status' => 'success', 'message' => 'Investment deleted and its account impact was reversed.'];
+            });
+        } catch (\Exception $e) {
+            return ['status' => 'error', 'message' => 'Error deleting investment: ' . $e->getMessage()];
+        }
     }
 
     private function generateInvestmentNo(): string

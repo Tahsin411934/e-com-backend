@@ -31,6 +31,10 @@
                     <option value="{{ $account->id }}">{{ $account->name }} - ৳{{ number_format((float) $account->current_balance, 2) }}</option>
                 @endforeach
             </x-form-select>
+            <p class="mt-1 text-xs text-gray-400">
+                Choosing an account adds the invested amount to that account's balance (owner/partner capital injection)
+                and records a posted accounting transaction automatically.
+            </p>
         </div>
         <div class="mb-4">
             <x-form-select label="Investment Type" name="investment_type" id="accountinvestment_investment_type" required>

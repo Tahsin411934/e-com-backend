@@ -240,6 +240,44 @@ class AccountTransactionService
             return $transaction;
         });
     }
+    
+/**
+     * Owner/partner capital injection into the business.
+     *
+     * Money comes INTO the selected account (its current_balance INCREASES)
+     * and the Investment (capital/equity) category is credited simultaneously.
+     */
+    public function postInvestment(Model $investment, AccountAccount $account, AccountCategory $category, float $amount): AccountTransaction
+    {
+        return DB::transaction(function () use ($investment, $account, $category, $amount) {
+            $existing = $this->findPostedSourceTransaction($investment, 'investment');
+            if ($existing) {
+                return $existing;
+            }
+
+            $transaction = $this->createPostedTransaction([
+                'type' => 'investment',
+                'source' => $investment,
+                'currency_code' => $investment->currency_code ?: $account->currency_code,
+                'amount' => $amount,
+                'account_id' => $account->id,
+                'category_id' => $category->id,
+                'account_entry_type' => 'debit',
+                'category_entry_type' => 'credit',
+                'transaction_date' => $investment->investment_date ?? now(),
+                'reference_no' => $investment->reference_no,
+                'description' => $investment->note ?: 'Investment from owner/partner capital',
+                'metadata' => [
+                    'investment_no' => $investment->investment_no,
+                    'investment_type' => $investment->investment_type,
+                ],
+            ]);
+
+            $this->increaseAccountBalance($account, $amount);
+
+            return $transaction;
+        });
+    }
 
     public function postTransfer(Model $transfer, AccountAccount $fromAccount, AccountAccount $toAccount): AccountTransaction
     {

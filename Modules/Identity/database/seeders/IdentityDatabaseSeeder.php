@@ -98,7 +98,7 @@ class IdentityDatabaseSeeder extends Seeder
                 'public_id' => (string) \Illuminate\Support\Str::uuid(),
                 'first_name' => 'Super',
                 'last_name' => 'Admin',
-                'email' => 'admin1@example.com',
+                'email' => 'superadmin@onehaatbd.com',
                 'phone' => '01700000001',
                 'password_hash' => $passwordHash,
                 'status' => 'active',
@@ -107,7 +107,7 @@ class IdentityDatabaseSeeder extends Seeder
                 'public_id' => (string) \Illuminate\Support\Str::uuid(),
                 'first_name' => 'John',
                 'last_name' => 'Manager',
-                'email' => 'manager1@example.com',
+                'email' => 'manager1@onehaatbd.com',
                 'phone' => '01700000002',
                 'password_hash' => $passwordHash,
                 'status' => 'active',
@@ -116,7 +116,7 @@ class IdentityDatabaseSeeder extends Seeder
                 'public_id' => (string) \Illuminate\Support\Str::uuid(),
                 'first_name' => 'Jane',
                 'last_name' => 'Staff',
-                'email' => 'staff1@example.com',
+                'email' => 'staff1@onehaatbd.com',
                 'phone' => '01700000003',
                 'password_hash' => $passwordHash,
                 'status' => 'active',
@@ -125,7 +125,7 @@ class IdentityDatabaseSeeder extends Seeder
                 'public_id' => (string) \Illuminate\Support\Str::uuid(),
                 'first_name' => 'Bob',
                 'last_name' => 'Customer',
-                'email' => 'customer1@example.com',
+                'email' => 'customer1@onehaatbd.com',
                 'phone' => '01700000004',
                 'password_hash' => $passwordHash,
                 'status' => 'active',
@@ -133,10 +133,10 @@ class IdentityDatabaseSeeder extends Seeder
         ]; 
 
         $roleMap = [
-            'admin1@example.com' => 'Super Admin',
-            'manager1@example.com' => 'Manager',
-            'staff1@example.com' => 'Staff',
-            'customer1@example.com' => 'Customer',
+            'superadmin@onehaatbd.com' => 'Super Admin',
+            'manager1@onehaatbd.com' => 'Manager',
+            'staff1@onehaatbd.com' => 'Staff',
+            'customer1@onehaatbd.com' => 'Customer',
         ];
 
         foreach ($users as $userData) {

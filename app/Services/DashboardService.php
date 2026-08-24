@@ -256,16 +256,21 @@ class DashboardService
      * Query InventoryStock rows that belong to a live (non-soft-deleted)
      * variant/product. Deleting a product usually leaves its stock rows
      * behind, so we must exclude those to avoid inflated counts.
+     *
+     * Explicit INNER JOINs on product_variants + products guarantee that any
+     * stock row whose product or variant is missing/soft-deleted is excluded
+     * (a WHERE EXISTS can silently miss orphaned/hard-deleted references).
      */
     private function activeStockQuery(): \Illuminate\Database\Eloquent\Builder
     {
         return InventoryStock::query()
-            ->whereHas('variant', function ($q) {
-                $q->whereNull('deleted_at')
-                    ->whereHas('product', fn ($p) => $p->whereNull('deleted_at'));
-            })
+            ->select('inventory_stock.*')
+            ->join('product_variants', 'inventory_stock.variant_id', '=', 'product_variants.id')
+            ->join('products', 'product_variants.product_id', '=', 'products.id')
+            ->whereNull('product_variants.deleted_at')
+            ->whereNull('products.deleted_at')
             ->where(function ($q) {
-                $q->whereNull('variant_option_id')
+                $q->whereNull('inventory_stock.variant_option_id')
                     ->orWhereHas('variantOption', fn ($o) => $o->whereNull('deleted_at'));
             });
     }

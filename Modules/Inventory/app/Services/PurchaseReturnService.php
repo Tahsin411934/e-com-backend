@@ -127,10 +127,11 @@ class PurchaseReturnService
 
     private function adjustStockForReturn(PurchaseReturn $return): void
     {
-        // Log inventory movement for stock adjustment
+        // Log an inventory movement for the return. There is no single variant for an
+        // aggregate return, so variant_id is null (the column is now nullable).
         InventoryMovement::create([
             'location_id' => $return->store_id,
-            'variant_id' => 0,
+            'variant_id' => null,
             'movement_type' => 'return',
             'quantity' => 0,
             'reference_type' => 'purchase_return',

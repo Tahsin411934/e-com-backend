@@ -87,4 +87,4 @@ jobs:
             cd /var/www/e-com-backend
             chmod +x deploy.sh
             ./deploy.sh
-            php artisan db:seed --force
+           

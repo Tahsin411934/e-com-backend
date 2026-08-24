@@ -73,6 +73,11 @@ class PurchaseOrderService
                     $html .= '<button onclick="updatePoStatus(' . $po->id . ', \'paid\', \'payment_status\')" class="bg-indigo-600 text-white px-2 py-1 rounded text-xs hover:bg-indigo-700 mr-1" title="Mark as Paid"><i class="fas fa-dollar-sign"></i> Pay</button>';
                 }
 
+                // Create a purchase return for received orders.
+                if (in_array($po->status, ['received', 'partially_received'], true)) {
+                    $html .= '<a href="' . route('purchase-returns.create', ['purchase_order_id' => $po->id]) . '" class="bg-orange-500 text-white px-2 py-1 rounded text-xs hover:bg-orange-600 mr-1 transition" title="Create Purchase Return"><i class="fas fa-undo-alt"></i> Return</a>';
+                }
+
                 // Standard action buttons
                 $html .= view('components.action-buttons', [
                     'id' => $po->id,

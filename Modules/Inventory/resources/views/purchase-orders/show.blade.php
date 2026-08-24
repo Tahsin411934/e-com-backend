@@ -116,5 +116,14 @@
                 @endif
             </div>
         @endif
+
+        @if(in_array($purchase_order->status, ['received', 'partially_received']))
+            <div class="mt-4 flex gap-2">
+                <a href="{{ route('purchase-returns.create', ['purchase_order_id' => $purchase_order->id]) }}"
+                    class="px-4 py-2 bg-orange-500 text-white rounded-lg text-sm hover:bg-orange-600 inline-flex items-center">
+                    <i class="fas fa-undo-alt mr-1"></i>Create Purchase Return
+                </a>
+            </div>
+        @endif
     </div>
 </x-app-layout>

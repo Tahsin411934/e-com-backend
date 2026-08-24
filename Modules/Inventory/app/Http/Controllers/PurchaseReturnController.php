@@ -18,7 +18,10 @@ class PurchaseReturnController extends Controller
 
     public function index(Request $request)
     {
-        return view('inventory::purchase-returns.index');
+        $stores = $this->purchaseReturnService->getStores();
+        $suppliers = $this->purchaseReturnService->getSuppliers();
+        $purchaseOrders = $this->purchaseReturnService->getPurchaseOrders();
+        return view('inventory::purchase-returns.index', compact('stores', 'suppliers', 'purchaseOrders'));
     }
 
     public function dataTable(Request $request)

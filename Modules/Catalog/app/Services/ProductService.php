@@ -217,7 +217,23 @@ class ProductService
                                 $optData['discount_percent'] = (!isset($optData['discount_percent']) || $optData['discount_percent'] === '')
                                     ? ($variant->discount_percent ?? 0)
                                     : $optData['discount_percent'];
-                                $optData['sku'] = $optData['sku'] ?: $variant->sku . '-' . Str::upper(Str::slug($optData['color_name'] ?? 'OPTION'));
+                                // Inherit pricing from the parent variant when left blank,
+                                // while still allowing per-option overrides.
+                                $optData['cost_price'] = $optData['cost_price'] ?? $variant->cost_price;
+                                $optData['sale_price'] = $optData['sale_price'] ?? $variant->sale_price;
+                                $optData['compare_at_price'] = $optData['compare_at_price'] ?? $variant->compare_at_price;
+
+                                // Derive a unique per-option SKU from the parent variant + colour
+                                // name (e.g. P9-WBH-BT50-ANC-METALLIC-BLUE) so colour variants never
+                                // collide on the variant_options.sku unique index. A manually entered
+                                // distinct SKU is respected; if it matches the parent SKU (or another
+                                // row) it is disambiguated automatically.
+                                $optData['sku'] = $this->resolveOptionSku(
+                                    $optData['sku'] ?? null,
+                                    $variant->sku,
+                                    $optData['color_name'] ?? null,
+                                    $optData['id'] ?? null
+                                );
                                 $optData['barcode'] = $optData['barcode'] ?: (string) Str::uuid();
                                 
                                 $option = VariantOption::updateOrCreate(
@@ -439,6 +455,55 @@ class ProductService
         }
 
         return Str::upper($candidate);
+    }
+
+    /**
+     * Build a unique per-option SKU derived from the parent variant + colour name.
+     *
+     * If the provided SKU is empty, or simply echoes the parent variant's SKU, it is
+     * regenerated as "{PARENT-SKU}-{COLOR}" (e.g. P9-WBH-BT50-ANC-METALLIC-BLUE) so
+     * multiple colour options never collide on the variant_options.sku unique index.
+     * A manually entered distinct SKU is kept, but a numeric suffix is appended if the
+     * value already exists on another option or a product variant.
+     */
+    private function resolveOptionSku(?string $provided, ?string $parentSku, ?string $colorName = null, $ignoreOptionId = null): string
+    {
+        $parentSku = trim((string) $parentSku);
+        $provided = trim((string) ($provided ?? ''));
+
+        // Nothing useful provided (empty or identical to the parent SKU) => generate.
+        if ($provided === '' || ($parentSku !== '' && strcasecmp($provided, $parentSku) === 0)) {
+            $suffix = Str::upper(Str::limit(Str::slug($colorName ?? ''), 40, ''));
+            $suffix = $suffix !== '' ? $suffix : 'OPTION';
+            $provided = $parentSku !== '' ? $parentSku . '-' . $suffix : $suffix;
+        }
+
+        $provided = Str::upper($provided);
+
+        if ($this->optionSkuExists($provided, $ignoreOptionId)) {
+            $candidate = $provided . '-1';
+            $counter = 2;
+            while ($this->optionSkuExists($candidate, $ignoreOptionId)) {
+                $candidate = $provided . '-' . $counter++;
+            }
+            $provided = $candidate;
+        }
+
+        return substr($provided, 0, 100);
+    }
+
+    /**
+     * Check whether an SKU is already used by another variant option or product variant.
+     */
+    private function optionSkuExists(string $sku, $ignoreOptionId = null): bool
+    {
+        $optionQuery = VariantOption::where('sku', $sku);
+        if ($ignoreOptionId) {
+            $optionQuery->where('id', '!=', (int) $ignoreOptionId);
+        }
+
+        return $optionQuery->exists()
+            || ProductVariant::where('sku', $sku)->exists();
     }
 
     /**

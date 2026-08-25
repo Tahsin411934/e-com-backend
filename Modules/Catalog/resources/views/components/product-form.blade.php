@@ -278,15 +278,15 @@
                                                         <input type="hidden" name="variants[{{ $vIdx }}][options][{{ $optIdx }}][id]" value="{{ $option->id }}">
                                                         <div class="flex-1 min-w-[120px]">
                                                             <label class="block text-[10px] font-medium text-gray-500">Color</label>
-                                                            <input type="text" name="variants[{{ $vIdx }}][options][{{ $optIdx }}][color_name]" value="{{ $option->color_name }}" class="w-full rounded border-gray-200 text-sm">
+                                                            <input type="text" name="variants[{{ $vIdx }}][options][{{ $optIdx }}][color_name]" value="{{ $option->color_name }}" class="option-color-name w-full rounded border-gray-200 text-sm">
                                                         </div>
                                                         <div>
                                                             <label class="block text-[10px] font-medium text-gray-500">Hex</label>
-                                                            <input type="color" name="variants[{{ $vIdx }}][options][{{ $optIdx }}][color_code]" value="{{ $option->color_code ?? '#000000' }}" class="h-8 w-14 rounded border-gray-200">
+                                                            <input type="text" name="variants[{{ $vIdx }}][options][{{ $optIdx }}][color_code]" value="{{ $option->color_code }}" placeholder="#000000" class="option-color-code w-28 rounded border-gray-200 text-sm" title="Paste hex code e.g. #4a6fa5">
                                                         </div>
                                                         <div class="w-28">
                                                             <label class="block text-[10px] font-medium text-gray-500">SKU *</label>
-                                                            <input type="text" required name="variants[{{ $vIdx }}][options][{{ $optIdx }}][sku]" value="{{ $option->sku }}" class="w-full rounded border-gray-200 text-sm">
+                                                            <input type="text" required name="variants[{{ $vIdx }}][options][{{ $optIdx }}][sku]" value="{{ $option->sku }}" class="option-sku w-full rounded border-gray-200 text-sm">
                                                         </div>
                                                         <div class="w-28">
                                                             <label class="block text-[10px] font-medium text-gray-500">Barcode (Auto)</label>
@@ -377,15 +377,15 @@
                 <input type="hidden" name="variants[${vIdx}][options][${optIdx}][id]" value="">
                 <div class="flex-1 min-w-[120px]">
                     <label class="block text-[10px] font-medium text-gray-500">Color</label>
-                    <input type="text" name="variants[${vIdx}][options][${optIdx}][color_name]" class="w-full rounded border-gray-200 text-sm" placeholder="e.g. Red">
+                    <input type="text" name="variants[${vIdx}][options][${optIdx}][color_name]" class="option-color-name w-full rounded border-gray-200 text-sm" placeholder="e.g. Red">
                 </div>
                 <div>
                     <label class="block text-[10px] font-medium text-gray-500">Hex</label>
-                    <input type="color" name="variants[${vIdx}][options][${optIdx}][color_code]" value="#000000" class="h-8 w-14 rounded border-gray-200">
+                    <input type="text" name="variants[${vIdx}][options][${optIdx}][color_code]" value="#000000" placeholder="#000000" class="option-color-code w-28 rounded border-gray-200 text-sm" title="Paste hex code e.g. #4a6fa5">
                 </div>
                 <div class="w-28">
                     <label class="block text-[10px] font-medium text-gray-500">SKU *</label>
-                    <input type="text" required name="variants[${vIdx}][options][${optIdx}][sku]" class="w-full rounded border-gray-200 text-sm" placeholder="e.g. SHIRT-S-RED">
+                    <input type="text" required name="variants[${vIdx}][options][${optIdx}][sku]" class="option-sku w-full rounded border-gray-200 text-sm" placeholder="Auto = parent SKU + color">
                 </div>
                 <div class="w-28">
                     <label class="block text-[10px] font-medium text-gray-500">Barcode (Auto)</label>
@@ -515,6 +515,28 @@
             $optionEl.find('.option-cost').val($item.find('.variant-cost').val() ?? '');
             $optionEl.find('.option-sale-price').val($item.find('.variant-price').val() ?? '');
             $optionEl.find('.option-discount').val($item.find('.variant-discount').val() ?? 0);
+        });
+
+        // Auto-generate the option SKU from the parent variant SKU + color name
+        // (e.g. P9-WBH-BT50-ANC-METALLIC-BLUE) so color options inherit the SKU
+        // from the parent variant. It remains fully editable after first edit.
+        function optionSkuFromParent(parentSku, color) {
+            const suffix = String(color || '').toUpperCase().replace(/[^A-Z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+            const parent = String(parentSku || '').trim().toUpperCase();
+            if (!parent) return suffix;
+            if (!suffix) return parent;
+            return `${parent}-${suffix}`;
+        }
+        $(document).on('input', '.option-color-name', function() {
+            const $opt = $(this).closest('.option-item');
+            const $sku = $opt.find('.option-sku');
+            if ($sku.data('sku-touched')) return; // respect manual edits
+            const color = $(this).val();
+            const parentSku = $opt.closest('.variant-item').find('.variant-sku').val();
+            $sku.val(optionSkuFromParent(parentSku, color));
+        });
+        $(document).on('input', '.option-sku', function() {
+            $(this).data('sku-touched', true);
         });
 
         // Remove color option

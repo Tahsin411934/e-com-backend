@@ -53,7 +53,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" />
 
     <!-- Favicon -->
-    <link rel="icon" type="image/png" href="{{ asset('favicon.jpg') }}">
+    <link rel="icon" type="image/jpeg" href="{{ asset('favicon.jpg') }}">
 
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
 

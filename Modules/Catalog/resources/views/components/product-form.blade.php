@@ -240,7 +240,7 @@
                                                 <input type="text" name="variants[{{ $vIdx }}][name]" value="{{ $v->name }}" class="variant-name w-full rounded-lg border-gray-300 shadow-sm focus:border-primary focus:ring-primary text-sm" required>
                                             </div>
                                         </div>
-                                        <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-3">
+                                        <div class="grid grid-cols-2 gap-3 mb-3">
                                             <div>
                                                 <label class="block text-xs font-medium text-gray-600 mb-1">Cost Price</label>
                                                 <input type="number" step="0.0001" min="0" name="variants[{{ $vIdx }}][cost_price]" value="{{ $v->cost_price }}" class="variant-cost w-full rounded-lg border-gray-300 shadow-sm text-sm">
@@ -424,7 +424,7 @@
                         <input type="text" name="variants[${index}][name]" class="variant-name w-full rounded-lg border-gray-300 shadow-sm text-sm" required>
                     </div>
                 </div>
-                <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-3">
+                <div class="grid grid-cols-2 gap-3 mb-3">
                     <div>
                         <label class="block text-xs font-medium text-gray-600 mb-1">Cost Price</label>
                         <input type="number" step="0.0001" min="0" name="variants[${index}][cost_price]" class="variant-cost w-full rounded-lg border-gray-300 shadow-sm text-sm">

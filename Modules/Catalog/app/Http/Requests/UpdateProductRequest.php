@@ -53,6 +53,7 @@ class UpdateProductRequest extends FormRequest
             'variants.*.sale_price' => 'required_with:variants|numeric|min:0',
             'variants.*.cost_price' => 'nullable|numeric|min:0',
             'variants.*.compare_at_price' => 'nullable|numeric|min:0',
+            'variants.*.discount_percent' => 'nullable|numeric|min:0|max:100',
             'variants.*.barcode' => 'nullable|string|max:100',
             'variants.*.weight_grams' => 'nullable|integer|min:0',
             'variants.*.track_inventory' => 'nullable|boolean',

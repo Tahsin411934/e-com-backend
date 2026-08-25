@@ -49,7 +49,7 @@ class ProductDetailResource extends JsonResource
         $pricedVariants = $activeVariants->map(fn ($variant) => $pricing->priceFor($variant));
         $optionPrices = $activeVariants->flatMap(fn ($variant) => $variant->options
             ->where('status', 'active')
-            ->map(fn ($option) => $this->optionPrice($variant, $option, $pricing)));
+            ->map(fn ($option) => $this->optionDiscountedPrice($variant, $option, $pricing)));
         $allPrices = $pricedVariants->pluck('price')->merge($optionPrices);
         $minPrice = $allPrices->min();
         $maxPrice = $allPrices->max();
@@ -63,6 +63,9 @@ class ProductDetailResource extends JsonResource
             'barcode'         => $v->barcode,
             'sale_price'      => $campaignPrice['price'],
             'compare_at_price'=> $campaignPrice['campaign'] ? $campaignPrice['original_price'] : ($v->compare_at_price ? (float) $v->compare_at_price : null),
+            'regular_price'   => $campaignPrice['campaign'] ? $campaignPrice['original_price'] : (float) ($v->compare_at_price ?? $v->sale_price),
+            'discount_price'  => $campaignPrice['price'],
+            'discount_percent'=> (float) ($v->discount_percent ?? 0),
             'campaign_name'   => $campaignPrice['campaign']?->name,
             'cost_price'      => (float) $v->cost_price,
             'stock'           => $v->track_inventory ? ($v->stock ?? 0) : null,
@@ -77,11 +80,13 @@ class ProductDetailResource extends JsonResource
                 'sku'              => $o->sku,
                 'barcode'          => $o->barcode,
                 'image_url'        => $this->imageUrl($o->image_url),
-                'cost_price'       => $o->cost_price !== null ? (float) $o->cost_price : (float) $v->cost_price,
-                'sale_price'       => $this->optionPrice($v, $o, $pricing),
-                'compare_at_price' => $this->optionComparePrice($o),
-                'discount_percent' => (float) ($o->discount_percent ?? 0),
-                'price_adjustment' => (float) $o->price_adjustment,
+                'cost_price'       => ($o->cost_price ?? null) !== null ? (float) $o->cost_price : (float) $v->cost_price,
+                'sale_price'       => $this->optionDiscountedPrice($v, $o, $pricing),
+                'regular_price'    => $this->optionRegularPrice($v, $o, $pricing),
+                'discount_price'   => $this->optionDiscountedPrice($v, $o, $pricing),
+                'compare_at_price' => $this->optionComparePrice($v, $o),
+                'discount_percent' => $this->optionDiscountPercent($v, $o),
+                'price_adjustment' => (float) ($o->price_adjustment ?? 0),
                 'stock'            => $v->track_inventory ? (int) $o->stock : null,
             ]),
             ];
@@ -205,24 +210,46 @@ class ProductDetailResource extends JsonResource
         ];
     }
 
-    private function optionPrice($variant, $option, $pricing): float
+    /**
+     * Effective discount % for an option (falls back to the parent variant discount).
+     */
+    private function optionDiscountPercent($variant, $option): float
+    {
+        return (float) (($option->discount_percent ?? null) !== null ? $option->discount_percent : ($variant->discount_percent ?? 0));
+    }
+
+    /**
+     * Option regular price = its own sale_price, else parent variant sale_price + adjustment (discount NOT applied yet).
+     */
+    private function optionRegularPrice($variant, $option, $pricing): float
     {
         $basePrice = $option->sale_price !== null
             ? (float) $option->sale_price
-            : (float) $variant->sale_price + (float) $option->price_adjustment;
-        $basePrice *= 1 - ((float) ($option->discount_percent ?? 0) / 100);
+            : (float) $variant->sale_price + (float) ($option->price_adjustment ?? 0);
 
         return (float) $pricing->priceFor($variant, $basePrice - (float) $variant->sale_price)['price'];
     }
 
-    private function optionComparePrice($option): ?float
+    /**
+     * Option final (discounted) price = regular price with the effective discount applied.
+     */
+    private function optionDiscountedPrice($variant, $option, $pricing): float
+    {
+        $regular = $this->optionRegularPrice($variant, $option, $pricing);
+        $regular *= 1 - ($this->optionDiscountPercent($variant, $option) / 100);
+        return (float) $regular;
+    }
+
+    private function optionComparePrice($variant, $option): ?float
     {
         if ($option->compare_at_price !== null) {
             return (float) $option->compare_at_price;
         }
 
-        return ($option->discount_percent ?? 0) > 0 && $option->sale_price !== null
-            ? (float) $option->sale_price
-            : null;
+        if ($this->optionDiscountPercent($variant, $option) > 0 && $option->sale_price !== null) {
+            return (float) $option->sale_price;
+        }
+
+        return null;
     }
 }

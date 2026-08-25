@@ -240,7 +240,7 @@
                                                 <input type="text" name="variants[{{ $vIdx }}][name]" value="{{ $v->name }}" class="variant-name w-full rounded-lg border-gray-300 shadow-sm focus:border-primary focus:ring-primary text-sm" required>
                                             </div>
                                         </div>
-                                        <div class="grid grid-cols-3 gap-3 mb-3">
+                                        <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-3">
                                             <div>
                                                 <label class="block text-xs font-medium text-gray-600 mb-1">Cost Price</label>
                                                 <input type="number" step="0.0001" min="0" name="variants[{{ $vIdx }}][cost_price]" value="{{ $v->cost_price }}" class="variant-cost w-full rounded-lg border-gray-300 shadow-sm text-sm">
@@ -252,6 +252,10 @@
                                             <div>
                                                 <label class="block text-xs font-medium text-gray-600 mb-1">Compare At</label>
                                                 <input type="number" step="0.0001" min="0" name="variants[{{ $vIdx }}][compare_at_price]" value="{{ $v->compare_at_price }}" class="variant-compare w-full rounded-lg border-gray-300 shadow-sm text-sm">
+                                            </div>
+                                            <div>
+                                                <label class="block text-xs font-medium text-gray-600 mb-1">Discount %</label>
+                                                <input type="number" step="0.01" min="0" max="100" name="variants[{{ $vIdx }}][discount_percent]" value="{{ $v->discount_percent ?? 0 }}" class="variant-discount w-full rounded-lg border-gray-300 shadow-sm text-sm">
                                             </div>
                                         </div>
                                         <div class="mb-3">
@@ -389,15 +393,15 @@
                 </div>
                 <div class="w-24">
                     <label class="block text-[10px] font-medium text-gray-500">Cost Price</label>
-                    <input type="number" step="0.0001" min="0" name="variants[${vIdx}][options][${optIdx}][cost_price]" class="w-full rounded border-gray-200 text-sm">
+                    <input type="number" step="0.0001" min="0" name="variants[${vIdx}][options][${optIdx}][cost_price]" class="option-cost w-full rounded border-gray-200 text-sm">
                 </div>
                 <div class="w-24">
                     <label class="block text-[10px] font-medium text-gray-500">Sale Price *</label>
-                    <input type="number" step="0.0001" min="0" required name="variants[${vIdx}][options][${optIdx}][sale_price]" value="0" class="w-full rounded border-gray-200 text-sm">
+                    <input type="number" step="0.0001" min="0" required name="variants[${vIdx}][options][${optIdx}][sale_price]" class="option-sale-price w-full rounded border-gray-200 text-sm">
                 </div>
                 <div class="w-20">
                     <label class="block text-[10px] font-medium text-gray-500">Discount %</label>
-                    <input type="number" step="0.01" min="0" max="100" name="variants[${vIdx}][options][${optIdx}][discount_percent]" value="0" class="w-full rounded border-gray-200 text-sm">
+                    <input type="number" step="0.01" min="0" max="100" name="variants[${vIdx}][options][${optIdx}][discount_percent]" value="0" class="option-discount w-full rounded border-gray-200 text-sm">
                 </div>
                 <button type="button" class="remove-option text-red-500 hover:text-red-700 text-lg pb-1" title="Remove">&times;</button>
             </div>`;
@@ -420,7 +424,7 @@
                         <input type="text" name="variants[${index}][name]" class="variant-name w-full rounded-lg border-gray-300 shadow-sm text-sm" required>
                     </div>
                 </div>
-                <div class="grid grid-cols-3 gap-3 mb-3">
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-3">
                     <div>
                         <label class="block text-xs font-medium text-gray-600 mb-1">Cost Price</label>
                         <input type="number" step="0.0001" min="0" name="variants[${index}][cost_price]" class="variant-cost w-full rounded-lg border-gray-300 shadow-sm text-sm">
@@ -432,6 +436,10 @@
                     <div>
                         <label class="block text-xs font-medium text-gray-600 mb-1">Compare At</label>
                         <input type="number" step="0.0001" min="0" name="variants[${index}][compare_at_price]" class="variant-compare w-full rounded-lg border-gray-300 shadow-sm text-sm">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-gray-600 mb-1">Discount %</label>
+                        <input type="number" step="0.01" min="0" max="100" name="variants[${index}][discount_percent]" value="0" class="variant-discount w-full rounded-lg border-gray-300 shadow-sm text-sm">
                     </div>
                 </div>
                 <div class="mb-3">
@@ -497,7 +505,16 @@
             const optIdx = optionCounters[vIdx];
             optionCounters[vIdx]++;
 
-            $container.append(getOptionTemplate(vIdx, optIdx));
+            const $item = $btn.closest('.variant-item');
+            const optionHtml = getOptionTemplate(vIdx, optIdx);
+            const $option = $(optionHtml);
+            const $added = $container.append($option);
+
+            // Auto-fill price/discount fields from the parent variant (override allowed)
+            const $optionEl = $container.children().last();
+            $optionEl.find('.option-cost').val($item.find('.variant-cost').val() ?? '');
+            $optionEl.find('.option-sale-price').val($item.find('.variant-price').val() ?? '');
+            $optionEl.find('.option-discount').val($item.find('.variant-discount').val() ?? 0);
         });
 
         // Remove color option

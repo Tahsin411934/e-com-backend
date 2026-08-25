@@ -13,9 +13,12 @@ class ProductVariant extends Model
 
     protected $table = 'product_variants';
 
-    protected $fillable = ['product_id', 'sku', 'barcode', 'name', 'attributes', 'cost_price', 'sale_price', 'compare_at_price', 'weight_grams', 'length_mm', 'width_mm', 'height_mm', 'track_inventory', 'allow_backorder', 'status'];
+    protected $fillable = ['product_id', 'sku', 'barcode', 'name', 'attributes', 'cost_price', 'sale_price', 'discount_percent', 'compare_at_price', 'weight_grams', 'length_mm', 'width_mm', 'height_mm', 'track_inventory', 'allow_backorder', 'status'];
 
-    protected $casts = ['attributes' => 'array'];
+    protected $casts = [
+        'attributes' => 'array',
+        'discount_percent' => 'decimal:2',
+    ];
 
     public function product()
     {

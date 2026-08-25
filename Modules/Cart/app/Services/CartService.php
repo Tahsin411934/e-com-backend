@@ -145,6 +145,8 @@ class CartService
                 $variant = \Modules\Catalog\Models\ProductVariant::findOrFail($data['variant_id']);
 
                 // Calculate price with variant option adjustment if provided
+                $variantDiscount = (float) ($variant->discount_percent ?? 0);
+                $effectiveDiscount = $variantDiscount;
                 $unitPrice = (float) $variant->sale_price;
                 $variantOptionId = $data['variant_option_id'] ?? null;
                 
@@ -154,9 +156,13 @@ class CartService
                         $unitPrice = $variantOption->sale_price !== null
                             ? (float) $variantOption->sale_price
                             : $unitPrice + (float) $variantOption->price_adjustment;
-                        $unitPrice *= 1 - ((float) ($variantOption->discount_percent ?? 0) / 100);
+                        // Option discount overrides parent; otherwise fall back to parent discount
+                        $effectiveDiscount = $variantOption->discount_percent !== null
+                            ? (float) $variantOption->discount_percent
+                            : $variantDiscount;
                     }
                 }
+                $unitPrice *= 1 - ($effectiveDiscount / 100);
                 $unitPrice = $this->campaignPricing->priceFor($variant, $unitPrice - (float) $variant->sale_price)['price'];
 
                 // Check for existing item with same variant AND variant_option
@@ -322,6 +328,8 @@ class CartService
                     $variant = \Modules\Catalog\Models\ProductVariant::findOrFail($itemData['variant_id']);
                     
                     // Calculate price with variant option adjustment
+                    $variantDiscount = (float) ($variant->discount_percent ?? 0);
+                    $effectiveDiscount = $variantDiscount;
                     $unitPrice = (float) $variant->sale_price;
                     $variantOptionId = $itemData['variant_option_id'] ?? null;
                     
@@ -331,9 +339,13 @@ class CartService
                             $unitPrice = $variantOption->sale_price !== null
                                 ? (float) $variantOption->sale_price
                                 : $unitPrice + (float) $variantOption->price_adjustment;
-                            $unitPrice *= 1 - ((float) ($variantOption->discount_percent ?? 0) / 100);
+                            // Option discount overrides parent; otherwise fall back to parent discount
+                            $effectiveDiscount = $variantOption->discount_percent !== null
+                                ? (float) $variantOption->discount_percent
+                                : $variantDiscount;
                         }
                     }
+                    $unitPrice *= 1 - ($effectiveDiscount / 100);
                     $unitPrice = $this->campaignPricing->priceFor($variant, $unitPrice - (float) $variant->sale_price)['price'];
                     
                     $itemsToUpsert[] = [

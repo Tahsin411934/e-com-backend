@@ -202,10 +202,21 @@ class ProductService
                         if (!empty($optionsData) && is_array($optionsData)) {
                             $keepOptionIds = [];
                             foreach ($optionsData as $optData) {
+                                // Normalize numeric option fields: blank string -> null so pricing
+                                // can inherit from the parent variant at cart/API time.
+                                foreach (['cost_price', 'sale_price', 'compare_at_price'] as $priceField) {
+                                    if (isset($optData[$priceField]) && $optData[$priceField] === '') {
+                                        $optData[$priceField] = null;
+                                    }
+                                }
                                 $optData['product_variant_id'] = $variant->id;
                                 $optData['status'] = $optData['status'] ?? 'active';
                                 $optData['sort_order'] = $optData['sort_order'] ?? 0;
                                 $optData['price_adjustment'] = $optData['price_adjustment'] ?? 0;
+                                // Option discount falls back to the parent variant discount when empty
+                                $optData['discount_percent'] = (!isset($optData['discount_percent']) || $optData['discount_percent'] === '')
+                                    ? ($variant->discount_percent ?? 0)
+                                    : $optData['discount_percent'];
                                 $optData['sku'] = $optData['sku'] ?: $variant->sku . '-' . Str::upper(Str::slug($optData['color_name'] ?? 'OPTION'));
                                 $optData['barcode'] = $optData['barcode'] ?: (string) Str::uuid();
                                 
@@ -337,6 +348,7 @@ class ProductService
                         'attributes'       => $variant->attributes,
                         'cost_price'       => $variant->cost_price,
                         'sale_price'       => $price !== null ? $price : $variant->sale_price,
+                        'discount_percent' => $variant->discount_percent ?? 0,
                         'compare_at_price' => $variant->compare_at_price,
                         'weight_grams'     => $variant->weight_grams,
                         'length_mm'        => $variant->length_mm,

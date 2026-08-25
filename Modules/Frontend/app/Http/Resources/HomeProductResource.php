@@ -4,6 +4,7 @@ namespace Modules\Frontend\Http\Resources;
 
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
+use Modules\Frontend\Services\ProductPricingService;
 
 class HomeProductResource extends JsonResource
 {
@@ -39,10 +40,8 @@ class HomeProductResource extends JsonResource
         $mainImage = $this->images->firstWhere('is_main', true)
             ?? $this->images->first();
 
-        // Get the lowest active variant price
-        $minPrice = $this->variants
-            ->where('status', 'active')
-            ->min('sale_price');
+        // Discount-aware pricing (price after discount, regular price, discount %)
+        $priceInfo = app(ProductPricingService::class)->priceInfo($this->resource);
 
         return [
             'id' => $this->id,
@@ -50,7 +49,16 @@ class HomeProductResource extends JsonResource
             'slug' => $this->slug,
             'short_description' => $this->short_description,
             'main_image' => $this->imageUrl($mainImage?->image_url),
-            'price' => $minPrice ? (float) $minPrice : null,
+            // Price after discount
+            'price' => $priceInfo['price'],
+            // Regular price (pre-discount, for strikethrough display)
+            'regular_price' => $priceInfo['regular_price'],
+            // Effective discount percentage
+            'discount_percent' => $priceInfo['discount_percent'],
+            // Discount amount = regular_price - price
+            'discount_amount' => $priceInfo['discount_amount'],
+            // Whether the product currently has a discount
+            'has_discount' => $priceInfo['has_discount'],
             'product_type' => $this->product_type,
             'order_column' => $this->order_column ?? 0,
         ];

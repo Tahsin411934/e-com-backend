@@ -46,27 +46,36 @@ class ProductDetailResource extends JsonResource
         // ── Variants ──
         $activeVariants = $this->variants->where('status', 'active');
         $pricing = app(\Modules\Cart\Services\CampaignPricingService::class);
-        $pricedVariants = $activeVariants->map(fn ($variant) => $pricing->priceFor($variant));
+        $variantPrices = $activeVariants->map(fn ($variant) => $this->variantPricing($variant, $pricing)['price']);
         $optionPrices = $activeVariants->flatMap(fn ($variant) => $variant->options
             ->where('status', 'active')
             ->map(fn ($option) => $this->optionDiscountedPrice($variant, $option, $pricing)));
-        $allPrices = $pricedVariants->pluck('price')->merge($optionPrices);
+        $allPrices = $variantPrices->merge($optionPrices);
         $minPrice = $allPrices->min();
         $maxPrice = $allPrices->max();
 
         $variants = $activeVariants->map(function ($v) use ($pricing) {
-            $campaignPrice = $pricing->priceFor($v);
+            $variantPrice = $this->variantPricing($v, $pricing);
+            $final    = $variantPrice['price'];
+            $regular  = $variantPrice['regular'];
+            $compare  = $variantPrice['compare'];
+            $hasDiscount = $final < $regular;
+            $effectivePct = $regular > 0
+                ? (float) round((($regular - $final) / $regular) * 100, 0)
+                : 0;
+
             return [
             'id'              => $v->id,
             'name'            => $v->name,
             'sku'             => $v->sku,
             'barcode'         => $v->barcode,
-            'sale_price'      => $campaignPrice['price'],
-            'compare_at_price'=> $campaignPrice['campaign'] ? $campaignPrice['original_price'] : ($v->compare_at_price ? (float) $v->compare_at_price : null),
-            'regular_price'   => $campaignPrice['campaign'] ? $campaignPrice['original_price'] : (float) ($v->compare_at_price ?? $v->sale_price),
-            'discount_price'  => $campaignPrice['price'],
-            'discount_percent'=> (float) ($v->discount_percent ?? 0),
-            'campaign_name'   => $campaignPrice['campaign']?->name,
+            'sale_price'      => $final,
+            'compare_at_price'=> $compare,
+            'regular_price'   => $regular,
+            'discount_price'  => $final,
+            'discount_percent'=> $effectivePct,
+            'has_discount'    => $hasDiscount,
+            'campaign_name'   => $variantPrice['campaign']?->name,
             'cost_price'      => (float) $v->cost_price,
             'stock'           => $v->track_inventory ? ($v->stock ?? 0) : null,
             'track_inventory' => (bool) $v->track_inventory,
@@ -86,6 +95,7 @@ class ProductDetailResource extends JsonResource
                 'discount_price'   => $this->optionDiscountedPrice($v, $o, $pricing),
                 'compare_at_price' => $this->optionComparePrice($v, $o),
                 'discount_percent' => $this->optionDiscountPercent($v, $o),
+                'has_discount'     => $this->optionDiscountedPrice($v, $o, $pricing) < $this->optionRegularPrice($v, $o, $pricing),
                 'price_adjustment' => (float) ($o->price_adjustment ?? 0),
                 'stock'            => $v->track_inventory ? (int) $o->stock : null,
             ]),
@@ -153,7 +163,8 @@ class ProductDetailResource extends JsonResource
         // ── Related Products (same categories, excluding current) ──
         $relatedProducts = collect();
         if ($this->relationLoaded('relatedProducts')) {
-            $relatedProducts = $this->relatedProducts->map(fn($p) => [
+            $pricing = app(\Modules\Frontend\Services\ProductPricingService::class);
+            $relatedProducts = $this->relatedProducts->map(fn($p) => array_merge([
                 'id'               => $p->id,
                 'name'             => $p->name,
                 'slug'             => $p->slug,
@@ -161,9 +172,8 @@ class ProductDetailResource extends JsonResource
                 'short_description'=> $p->short_description,
                 'main_image'       => $this->imageUrl($p->images->firstWhere('is_main', true)?->image_url
                     ?? $p->images->first()?->image_url),
-                'price'            => $p->variants->where('status', 'active')->min('sale_price'),
                 'product_type'     => $p->product_type,
-            ]);
+            ], $pricing->priceInfo($p)));
         }
 
         return [
@@ -207,6 +217,39 @@ class ProductDetailResource extends JsonResource
 
             // Related products
             'related_products'  => $relatedProducts->values(),
+        ];
+    }
+
+    /**
+     * Variant pricing with discount_percent + campaign applied.
+     *
+     * Mirrors CartService::syncCart:
+     *   final = sale_price * (1 - discount_percent / 100), then campaign pricing on top.
+     *
+     * @return array{price: float, regular: float, compare: float|null, campaign: object|null}
+     */
+    private function variantPricing($variant, $pricing): array
+    {
+        $salePrice       = (float) $variant->sale_price;
+        $discountPercent = max(0, min(100, (float) ($variant->discount_percent ?? 0)));
+
+        $finalBeforeCampaign = $salePrice * (1 - $discountPercent / 100);
+        $campaign            = $pricing->priceFor($variant, $finalBeforeCampaign - $salePrice);
+        $final               = (float) $campaign['price'];
+
+        $regular = $campaign['campaign']
+            ? (float) $campaign['original_price']
+            : ($variant->compare_at_price !== null ? (float) $variant->compare_at_price : $salePrice);
+
+        $compare = $campaign['campaign']
+            ? round(max(0, $regular), 2)
+            : ($variant->compare_at_price !== null ? (float) $variant->compare_at_price : null);
+
+        return [
+            'price'    => round(max(0, $final), 2),
+            'regular'  => round(max(0, $regular), 2),
+            'compare'  => $compare,
+            'campaign' => $campaign['campaign'],
         ];
     }
 

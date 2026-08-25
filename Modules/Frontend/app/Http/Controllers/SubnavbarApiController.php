@@ -8,6 +8,7 @@ use Illuminate\Http\Request;
 use Modules\Frontend\Models\SubnavbarItem;
 use Modules\Catalog\Models\Product;
 use Modules\Catalog\Models\ProductVariant;
+use Modules\Frontend\Services\ProductPricingService;
 
 class SubnavbarApiController extends Controller
 {
@@ -63,9 +64,14 @@ class SubnavbarApiController extends Controller
                 break;
         }
 
-        $products = $query->with(['images' => function ($q) {
-            $q->where('is_main', true);
-        }])->paginate($perPage, [
+        $products = $query->with([
+            'images' => function ($q) {
+                $q->where('is_main', true);
+            },
+            'variants' => function ($q) {
+                $q->where('status', 'active');
+            },
+        ])->paginate($perPage, [
             'products.id',
             'products.name',
             'products.slug',
@@ -75,8 +81,9 @@ class SubnavbarApiController extends Controller
         ], page: $page);
 
         // Format products
-        $formatted = $products->map(function ($product) {
-            $minPrice = ProductVariant::where('product_id', $product->id)->min('sale_price');
+        $pricing = app(ProductPricingService::class);
+        $formatted = $products->map(function ($product) use ($pricing) {
+            $priceInfo = $pricing->priceInfo($product);
             $mainImage = $product->images->first();
 
             return [
@@ -85,7 +92,12 @@ class SubnavbarApiController extends Controller
                 'slug'              => $product->slug,
                 'short_description' => $product->short_description,
                 'main_image'        => $mainImage?->image_url,
-                'price'             => $minPrice ? (float) $minPrice : null,
+                // Price after discount
+                'price'             => $priceInfo['price'],
+                'regular_price'     => $priceInfo['regular_price'],
+                'discount_percent'  => $priceInfo['discount_percent'],
+                'discount_amount'   => $priceInfo['discount_amount'],
+                'has_discount'      => $priceInfo['has_discount'],
                 'product_type'      => $product->product_type,
                 'stock_status'      => 'in_stock',
             ];

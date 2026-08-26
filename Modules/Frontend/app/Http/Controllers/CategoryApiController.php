@@ -140,16 +140,18 @@ class CategoryApiController extends Controller
         }
 
         // Apply sorting (order_column first, then secondary sort)
+        // Price sorts use the discounted price (sale_price after discount_percent) so
+        // the order matches the discounted prices shown in the UI.
         switch ($sort) {
             case 'price_asc':
                 $query->orderBy('order_column')->orderBy(
-                    \DB::raw('(SELECT MIN(sale_price) FROM product_variants WHERE product_variants.product_id = products.id AND product_variants.status = "active")'),
+                    \DB::raw('(SELECT MIN(sale_price * (1 - COALESCE(discount_percent, 0) / 100)) FROM product_variants WHERE product_variants.product_id = products.id AND product_variants.status = "active")'),
                     'asc'
                 );
                 break;
             case 'price_desc':
                 $query->orderBy('order_column')->orderBy(
-                    \DB::raw('(SELECT MIN(sale_price) FROM product_variants WHERE product_variants.product_id = products.id AND product_variants.status = "active")'),
+                    \DB::raw('(SELECT MIN(sale_price * (1 - COALESCE(discount_percent, 0) / 100)) FROM product_variants WHERE product_variants.product_id = products.id AND product_variants.status = "active")'),
                     'desc'
                 );
                 break;

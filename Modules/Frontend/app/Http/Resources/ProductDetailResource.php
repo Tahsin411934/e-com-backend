@@ -46,7 +46,7 @@ class ProductDetailResource extends JsonResource
         // ── Variants ──
         $activeVariants = $this->variants->where('status', 'active');
         $pricing = app(\Modules\Cart\Services\CampaignPricingService::class);
-        $variantPrices = $activeVariants->map(fn ($variant) => $this->variantPricing($variant, $pricing)['price']);
+        $variantPrices = $activeVariants->map(fn ($variant) => $this->variantPricing($variant, $pricing)['final']);
         $optionPrices = $activeVariants->flatMap(fn ($variant) => $variant->options
             ->where('status', 'active')
             ->map(fn ($option) => $this->optionDiscountedPrice($variant, $option, $pricing)));
@@ -56,11 +56,11 @@ class ProductDetailResource extends JsonResource
 
         $variants = $activeVariants->map(function ($v) use ($pricing) {
             $variantPrice = $this->variantPricing($v, $pricing);
-            $final    = $variantPrice['price'];
+            $final    = $variantPrice['final'];
             $regular  = $variantPrice['regular'];
             $compare  = $variantPrice['compare'];
-            $hasDiscount = $final < $regular;
-            $effectivePct = $regular > 0
+            $hasDiscount = $variantPrice['has_discount'];
+            $effectivePct = $hasDiscount && $regular > 0
                 ? (float) round((($regular - $final) / $regular) * 100, 0)
                 : 0;
 
@@ -245,11 +245,15 @@ class ProductDetailResource extends JsonResource
             ? round(max(0, $regular), 2)
             : ($variant->compare_at_price !== null ? (float) $variant->compare_at_price : null);
 
+        $hasDiscount = $final < $regular;
+
         return [
-            'price'    => round(max(0, $final), 2),
-            'regular'  => round(max(0, $regular), 2),
-            'compare'  => $compare,
-            'campaign' => $campaign['campaign'],
+            'has_discount' => $hasDiscount,
+            'final'        => $final,
+            // When no discount exists, regular == final (never a lower value).
+            'regular'      => $hasDiscount ? $regular : $final,
+            'compare'      => $hasDiscount ? $compare : null,
+            'campaign'     => $campaign['campaign'],
         ];
     }
 

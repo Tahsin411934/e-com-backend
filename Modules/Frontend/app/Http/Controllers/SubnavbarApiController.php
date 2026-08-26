@@ -43,16 +43,18 @@ class SubnavbarApiController extends Controller
             ->where('subnavbar_item_id', $subnavbarItem->id);
 
         // Apply sorting
+        // Price sorts use the discounted price (sale_price after discount_percent) so
+        // the order matches the discounted prices shown in the UI.
         switch ($sort) {
             case 'price_asc':
                 $query->orderBy(
-                    ProductVariant::selectRaw('COALESCE(MIN(sale_price), 0)')
+                    ProductVariant::selectRaw('COALESCE(MIN(sale_price * (1 - COALESCE(discount_percent, 0) / 100)), 0)')
                         ->whereColumn('product_id', 'products.id')
                 );
                 break;
             case 'price_desc':
                 $query->orderByDesc(
-                    ProductVariant::selectRaw('COALESCE(MIN(sale_price), 0)')
+                    ProductVariant::selectRaw('COALESCE(MIN(sale_price * (1 - COALESCE(discount_percent, 0) / 100)), 0)')
                         ->whereColumn('product_id', 'products.id')
                 );
                 break;

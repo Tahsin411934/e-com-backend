@@ -38,7 +38,7 @@ return [
 
     'allowed_methods' => ['*'],
 
-    'allowed_origins' => $allowedOrigins ?: ['http://localhost:3000'],
+    'allowed_origins' => $allowedOrigins ?: ['http://localhost:3000','https://onehaatbd.com'],
 
     'allowed_origins_patterns' => [
         '#^https?://([a-zA-Z0-9-]+\.)*aftsoftandlimited\.com$#i',

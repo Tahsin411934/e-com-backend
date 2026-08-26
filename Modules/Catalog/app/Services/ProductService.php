@@ -204,7 +204,7 @@ class ProductService
                             foreach ($optionsData as $optData) {
                                 // Normalize numeric option fields: blank string -> null so pricing
                                 // can inherit from the parent variant at cart/API time.
-                                foreach (['cost_price', 'sale_price', 'compare_at_price'] as $priceField) {
+                                foreach (['cost_price', 'sale_price'] as $priceField) {
                                     if (isset($optData[$priceField]) && $optData[$priceField] === '') {
                                         $optData[$priceField] = null;
                                     }
@@ -221,7 +221,6 @@ class ProductService
                                 // while still allowing per-option overrides.
                                 $optData['cost_price'] = $optData['cost_price'] ?? $variant->cost_price;
                                 $optData['sale_price'] = $optData['sale_price'] ?? $variant->sale_price;
-                                $optData['compare_at_price'] = $optData['compare_at_price'] ?? $variant->compare_at_price;
 
                                 // Derive a unique per-option SKU from the parent variant + colour
                                 // name (e.g. P9-WBH-BT50-ANC-METALLIC-BLUE) so colour variants never

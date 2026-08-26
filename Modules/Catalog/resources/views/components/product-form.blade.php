@@ -250,12 +250,16 @@
                                                 <input type="number" step="0.0001" min="0" name="variants[{{ $vIdx }}][sale_price]" value="{{ $v->sale_price }}" class="variant-price w-full rounded-lg border-gray-300 shadow-sm text-sm" required>
                                             </div>
                                             <div>
-                                                <label class="block text-xs font-medium text-gray-600 mb-1">Compare At</label>
-                                                <input type="number" step="0.0001" min="0" name="variants[{{ $vIdx }}][compare_at_price]" value="{{ $v->compare_at_price }}" class="variant-compare w-full rounded-lg border-gray-300 shadow-sm text-sm">
+                                                <label class="block text-xs font-medium text-gray-600 mb-1">Profit <span class="text-gray-400 font-normal text-[10px]">(auto)</span></label>
+                                                <input type="text" readonly class="variant-profit w-full rounded-lg bg-gray-100 border-gray-300 shadow-sm text-sm" placeholder="auto">
                                             </div>
                                             <div>
                                                 <label class="block text-xs font-medium text-gray-600 mb-1">Discount %</label>
                                                 <input type="number" step="0.01" min="0" max="100" name="variants[{{ $vIdx }}][discount_percent]" value="{{ $v->discount_percent ?? 0 }}" class="variant-discount w-full rounded-lg border-gray-300 shadow-sm text-sm">
+                                            </div>
+                                            <div>
+                                                <label class="block text-xs font-medium text-gray-600 mb-1">Price After Discount <span class="text-gray-400 font-normal text-[10px]">(auto)</span></label>
+                                                <input type="text" readonly class="variant-after-price w-full rounded-lg bg-gray-100 border-gray-300 shadow-sm text-sm" placeholder="auto">
                                             </div>
                                         </div>
                                         <div class="mb-3">
@@ -294,15 +298,23 @@
                                                         </div>
                                                         <div class="w-24">
                                                             <label class="block text-[10px] font-medium text-gray-500">Cost Price</label>
-                                                            <input type="number" step="0.0001" min="0" name="variants[{{ $vIdx }}][options][{{ $optIdx }}][cost_price]" value="{{ $option->cost_price }}" class="w-full rounded border-gray-200 text-sm">
+                                                            <input type="number" step="0.0001" min="0" name="variants[{{ $vIdx }}][options][{{ $optIdx }}][cost_price]" value="{{ $option->cost_price }}" class="option-cost w-full rounded border-gray-200 text-sm">
                                                         </div>
                                                         <div class="w-24">
                                                             <label class="block text-[10px] font-medium text-gray-500">Sale Price *</label>
-                                                            <input type="number" step="0.0001" min="0" required name="variants[{{ $vIdx }}][options][{{ $optIdx }}][sale_price]" value="{{ $option->sale_price }}" class="w-full rounded border-gray-200 text-sm">
+                                                            <input type="number" step="0.0001" min="0" required name="variants[{{ $vIdx }}][options][{{ $optIdx }}][sale_price]" value="{{ $option->sale_price }}" class="option-sale-price w-full rounded border-gray-200 text-sm">
+                                                        </div>
+                                                        <div class="w-20">
+                                                            <label class="block text-[10px] font-medium text-gray-500">Profit <span class="text-gray-400">(auto)</span></label>
+                                                            <input type="text" readonly class="option-profit w-full rounded border-gray-200 text-sm bg-gray-50" placeholder="auto">
                                                         </div>
                                                         <div class="w-20">
                                                             <label class="block text-[10px] font-medium text-gray-500">Discount %</label>
-                                                            <input type="number" step="0.01" min="0" max="100" name="variants[{{ $vIdx }}][options][{{ $optIdx }}][discount_percent]" value="{{ $option->discount_percent ?? 0 }}" class="w-full rounded border-gray-200 text-sm">
+                                                            <input type="number" step="0.01" min="0" max="100" name="variants[{{ $vIdx }}][options][{{ $optIdx }}][discount_percent]" value="{{ $option->discount_percent ?? 0 }}" class="option-discount w-full rounded border-gray-200 text-sm">
+                                                        </div>
+                                                        <div class="w-24">
+                                                            <label class="block text-[10px] font-medium text-gray-500">Price After Disc <span class="text-gray-400">(auto)</span></label>
+                                                            <input type="text" readonly class="option-after-price w-full rounded border-gray-200 text-sm bg-gray-50" placeholder="auto">
                                                         </div>
                                                         <button type="button" class="remove-option text-red-500 hover:text-red-700 text-lg pb-1" title="Remove">&times;</button>
                                                     </div>
@@ -400,8 +412,16 @@
                     <input type="number" step="0.0001" min="0" required name="variants[${vIdx}][options][${optIdx}][sale_price]" class="option-sale-price w-full rounded border-gray-200 text-sm">
                 </div>
                 <div class="w-20">
+                    <label class="block text-[10px] font-medium text-gray-500">Profit <span class="text-gray-400">(auto)</span></label>
+                    <input type="text" readonly class="option-profit w-full rounded border-gray-200 text-sm bg-gray-50" placeholder="auto">
+                </div>
+                <div class="w-20">
                     <label class="block text-[10px] font-medium text-gray-500">Discount %</label>
                     <input type="number" step="0.01" min="0" max="100" name="variants[${vIdx}][options][${optIdx}][discount_percent]" value="0" class="option-discount w-full rounded border-gray-200 text-sm">
+                </div>
+                <div class="w-24">
+                    <label class="block text-[10px] font-medium text-gray-500">Price After Disc <span class="text-gray-400">(auto)</span></label>
+                    <input type="text" readonly class="option-after-price w-full rounded border-gray-200 text-sm bg-gray-50" placeholder="auto">
                 </div>
                 <button type="button" class="remove-option text-red-500 hover:text-red-700 text-lg pb-1" title="Remove">&times;</button>
             </div>`;
@@ -434,12 +454,16 @@
                         <input type="number" step="0.0001" min="0" name="variants[${index}][sale_price]" class="variant-price w-full rounded-lg border-gray-300 shadow-sm text-sm" required>
                     </div>
                     <div>
-                        <label class="block text-xs font-medium text-gray-600 mb-1">Compare At</label>
-                        <input type="number" step="0.0001" min="0" name="variants[${index}][compare_at_price]" class="variant-compare w-full rounded-lg border-gray-300 shadow-sm text-sm">
+                        <label class="block text-xs font-medium text-gray-600 mb-1">Profit <span class="text-gray-400 font-normal text-[10px]">(auto)</span></label>
+                        <input type="text" readonly class="variant-profit w-full rounded-lg bg-gray-100 border-gray-300 shadow-sm text-sm" placeholder="auto">
                     </div>
                     <div>
                         <label class="block text-xs font-medium text-gray-600 mb-1">Discount %</label>
                         <input type="number" step="0.01" min="0" max="100" name="variants[${index}][discount_percent]" value="0" class="variant-discount w-full rounded-lg border-gray-300 shadow-sm text-sm">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-gray-600 mb-1">Price After Discount <span class="text-gray-400 font-normal text-[10px]">(auto)</span></label>
+                        <input type="text" readonly class="variant-after-price w-full rounded-lg bg-gray-100 border-gray-300 shadow-sm text-sm" placeholder="auto">
                     </div>
                 </div>
                 <div class="mb-3">
@@ -475,6 +499,39 @@
                 </div>
             </div>`;
         }
+
+        // Auto-calc Price After Discount (sale * (1 - discount%)) and
+        // Profit = Price After Discount - Cost (discount-এ বিক্রি করলে actual profit)
+        function recalcVariant($row) {
+            const cost = parseFloat($row.find('.variant-cost').val()) || 0;
+            const sale = parseFloat($row.find('.variant-price').val()) || 0;
+            const disc = parseFloat($row.find('.variant-discount').val()) || 0;
+            const after = sale * (1 - (disc / 100));
+            const profit = after - cost;
+            $row.find('.variant-profit').val(sale ? Math.max(0, profit).toFixed(2) : '');
+            $row.find('.variant-after-price').val(sale ? Math.max(0, after).toFixed(2) : '');
+        }
+        function recalcOption($opt) {
+            const cost = parseFloat($opt.find('.option-cost').val()) || 0;
+            const sale = parseFloat($opt.find('.option-sale-price').val()) || 0;
+            const disc = parseFloat($opt.find('.option-discount').val()) || 0;
+            const after = sale * (1 - (disc / 100));
+            const profit = after - cost;
+            $opt.find('.option-profit').val(sale ? Math.max(0, profit).toFixed(2) : '');
+            $opt.find('.option-after-price').val(sale ? Math.max(0, after).toFixed(2) : '');
+        }
+        // Recalc on any relevant input (variants + options, edit & new)
+        $(document).on('input', '.variant-cost, .variant-price, .variant-discount', function() {
+            recalcVariant($(this).closest('.variant-item'));
+        });
+        $(document).on('input', '.option-cost, .option-sale-price, .option-discount', function() {
+            recalcOption($(this).closest('.option-item'));
+        });
+        // Recalc existing rows on load (edit mode)
+        $(function() {
+            $('.variant-item').each(function() { recalcVariant($(this)); });
+            $('.option-item').each(function() { recalcOption($(this)); });
+        });
 
         // Add variant
         $('#btnAddVariant').on('click', function() {
@@ -515,6 +572,7 @@
             $optionEl.find('.option-cost').val($item.find('.variant-cost').val() ?? '');
             $optionEl.find('.option-sale-price').val($item.find('.variant-price').val() ?? '');
             $optionEl.find('.option-discount').val($item.find('.variant-discount').val() ?? 0);
+            recalcOption($optionEl);
         });
 
         // Auto-generate the option SKU from the parent variant SKU + color name

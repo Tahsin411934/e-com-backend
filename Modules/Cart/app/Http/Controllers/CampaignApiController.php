@@ -4,7 +4,6 @@ namespace Modules\Cart\Http\Controllers;
 
 use App\Http\Controllers\Controller;
 use Modules\Cart\Models\Campaign;
-use Modules\Frontend\Services\ProductPricingService;
 
 class CampaignApiController extends Controller
 {
@@ -22,7 +21,7 @@ class CampaignApiController extends Controller
 
     private function serialize(Campaign $campaign): array
     {
-        $pricing = app(ProductPricingService::class);
+        $campaignPricing = app(\Modules\Cart\Services\CampaignPricingService::class);
 
         return [
             'id'           => $campaign->id,
@@ -34,27 +33,33 @@ class CampaignApiController extends Controller
             'starts_at'    => $campaign->starts_at?->toIso8601String(),
             'ends_at'      => $campaign->ends_at?->toIso8601String(),
             'products'     => $campaign->products
-                ->map(function ($entry) use ($pricing) {
+                ->map(function ($entry) use ($campaignPricing) {
                     $product = $entry->product;
                     $variant = $entry->variant ?? $product?->variants->firstWhere('status', 'active');
                     if (! $product || ! $variant) {
                         return null;
                     }
 
-                    $info       = $pricing->priceInfoForVariant($variant);
-                    $mainImage  = $product->images->firstWhere('is_main', true) ?? $product->images->first();
+                    // Campaign discount is the ONLY discount here.
+                    // regular_price = sale price; price = after campaign discount.
+                    $campaignPrice = $campaignPricing->priceFor($variant, 0);
+                    $price         = round(max(0, (float) $campaignPrice['price']), 0);
+                    $regular       = round(max(0, (float) $campaignPrice['original_price']), 0);
+                    $hasDiscount   = $price < $regular && $regular > 0;
+                    $discountAmt   = round($regular - $price, 0);
+                    $mainImage     = $product->images->firstWhere('is_main', true) ?? $product->images->first();
 
                     return [
                         'id'               => $product->id,
                         'name'             => $this->cleanText($product->name),
                         'slug'             => $product->slug,
                         'main_image'       => $this->absoluteUrl($mainImage?->image_url),
-                        'price'            => $info['price'],
-                        'regular_price'    => $info['regular_price'],
-                        'original_price'   => $info['regular_price'],
-                        'discount_percent' => $info['discount_percent'],
-                        'discount_amount'  => $info['discount_amount'],
-                        'has_discount'     => $info['has_discount'],
+                        'price'            => $price,
+                        'regular_price'    => $regular,
+                        'original_price'   => $regular,
+                        'discount_percent' => $hasDiscount ? (float) round(($discountAmt / $regular) * 100, 0) : 0,
+                        'discount_amount'  => $hasDiscount ? $discountAmt : 0,
+                        'has_discount'     => $hasDiscount,
                     ];
                 })
                 ->filter()

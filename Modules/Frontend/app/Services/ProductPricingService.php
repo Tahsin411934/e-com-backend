@@ -81,12 +81,18 @@ class ProductPricingService
         $salePrice   = round(max(0, (float) $variant->sale_price), 0);
         $discountPct = max(0, min(100, (float) ($variant->discount_percent ?? 0)));
 
-        // 1) Price after discount = sale price * (1 - discount%) (matches CartService::syncCart)
-        $final = $salePrice * (1 - $discountPct / 100);
+        // Campaign pricing takes precedence over the variant's own discount:
+        // if the variant is covered by a live campaign, its price wins.
+        // Otherwise the variant's own discount_percent is applied.
+        $campaign = $this->campaignPricing->priceFor($variant, 0);
 
-        // 2) Apply live campaign pricing on top (matches CartService::syncCart)
-        $campaign = $this->campaignPricing->priceFor($variant, $final - $salePrice);
-        $final    = round(max(0, (float) $campaign['price']), 0);
+        if ($campaign['campaign']) {
+            // Campaign price computed from the raw sale price (no product-discount stacking).
+            $final = round(max(0, (float) $campaign['price']), 0);
+        } else {
+            // No campaign -> apply the variant's own discount.
+            $final = round(max(0, $salePrice * (1 - $discountPct / 100)), 0);
+        }
 
         // regular_price always = the base sale price (never null, never lower than price).
         $regular = $salePrice;

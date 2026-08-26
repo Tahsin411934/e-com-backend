@@ -345,8 +345,12 @@ class CartService
                                 : $variantDiscount;
                         }
                     }
-                    $unitPrice *= 1 - ($effectiveDiscount / 100);
-                    $unitPrice = $this->campaignPricing->priceFor($variant, $unitPrice - (float) $variant->sale_price)['price'];
+                    // Campaign pricing takes precedence over the product/option discount (no stacking):
+                    // if this variant is under a live campaign, its price wins; otherwise use the variant's discount.
+                    $campaign = $this->campaignPricing->priceFor($variant, $unitPrice - (float) $variant->sale_price);
+                    $unitPrice = $campaign['campaign']
+                        ? round(max(0, (float) $campaign['price']), 4)
+                        : round(max(0, $unitPrice * (1 - $effectiveDiscount / 100)), 4);
                     
                     $itemsToUpsert[] = [
                         'cart_id' => $cart->id,

@@ -40,7 +40,7 @@ class ProductApiController extends Controller
                     $q->orderBy('sort_order');
                 },
                 'variants' => function ($q) {
-                    $q->where('status', 'active')->with(['inventoryStocks', 'options.inventoryStocks']);
+                    $q->whereNull('deleted_at')->where('status', 'active')->with(['inventoryStocks', 'options.inventoryStocks']);
                 },
                 'variants.images',
                 'reviews' => function ($q) {
@@ -76,7 +76,7 @@ class ProductApiController extends Controller
             $relatedProducts = Product::whereIn('id', $relatedIds)
                 ->where('status', 'active')
                 ->where('visibility', 'public')
-                ->with(['images', 'variants' => fn($q) => $q->where('status', 'active')])
+                ->with(['images', 'variants' => fn($q) => $q->whereNull('deleted_at')->where('status', 'active')])
                 ->orderBy('order_column')
                 ->get();
         }

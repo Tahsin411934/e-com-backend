@@ -44,7 +44,11 @@ class ProductDetailResource extends JsonResource
         ]);
 
         // ── Variants ──
-        $activeVariants = $this->variants->where('status', 'active');
+        // Explicitly drop any soft-deleted (deleted_at) variants/options so they never
+        // surface on the storefront, even if they were loaded through a bare relation.
+        $activeVariants = $this->variants
+            ->whereNull('deleted_at')
+            ->where('status', 'active');
         $pricing = app(\Modules\Cart\Services\CampaignPricingService::class);
         $variantPrices = $activeVariants->map(fn ($variant) => $this->variantPricing($variant, $pricing)['final']);
         $optionPrices = $activeVariants->flatMap(fn ($variant) => $variant->options
@@ -233,9 +237,15 @@ class ProductDetailResource extends JsonResource
         $salePrice       = round(max(0, (float) $variant->sale_price), 0);
         $discountPercent = max(0, min(100, (float) ($variant->discount_percent ?? 0)));
 
-        $finalBeforeCampaign = $salePrice * (1 - $discountPercent / 100);
-        $campaign            = $pricing->priceFor($variant, $finalBeforeCampaign - $salePrice);
-        $final               = round(max(0, (float) $campaign['price']), 0);
+        // Campaign pricing takes precedence over the variant's own discount:
+        // if under a live campaign use the campaign price, otherwise the variant discount.
+        $campaign = $pricing->priceFor($variant, 0);
+
+        if ($campaign['campaign']) {
+            $final = round(max(0, (float) $campaign['price']), 0);
+        } else {
+            $final = round(max(0, $salePrice * (1 - $discountPercent / 100)), 0);
+        }
 
         $compare = $campaign['campaign']
             ? round(max(0, (float) $campaign['original_price']), 0)
@@ -280,6 +290,19 @@ class ProductDetailResource extends JsonResource
     private function optionDiscountedPrice($variant, $option, $pricing): float
     {
         $regular = $this->optionRegularPrice($variant, $option, $pricing);
+
+        // Campaign pricing takes precedence: optionRegularPrice already resolves it,
+        // so if the variant is under a live campaign we must NOT stack the option's
+        // own discount on top — the campaign price wins.
+        $basePrice = $option->sale_price !== null
+            ? (float) $option->sale_price
+            : (float) $variant->sale_price + (float) ($option->price_adjustment ?? 0);
+        $offer = $pricing->priceFor($variant, $basePrice - (float) $variant->sale_price);
+
+        if ($offer['campaign']) {
+            return round(max(0, (float) $offer['price']), 2);
+        }
+
         $regular *= 1 - ($this->optionDiscountPercent($variant, $option) / 100);
         return round(max(0, $regular), 0);
     }

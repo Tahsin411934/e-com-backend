@@ -24,6 +24,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/campaigns/{campaign}/toggle-active', [CampaignController::class, 'toggleActive'])->name('campaigns.toggleActive');
     Route::get('/campaign-products/search', [CampaignController::class, 'searchProducts'])->name('campaigns.products.search');
     Route::post('/campaigns/{campaign}/products', [CampaignController::class, 'addProduct'])->name('campaigns.products.add');
+    Route::put('/campaigns/{campaign}/products/{campaignProduct}', [CampaignController::class, 'updateProduct'])->name('campaigns.products.update');
     Route::delete('/campaigns/{campaign}/products/{campaignProduct}', [CampaignController::class, 'removeProduct'])->name('campaigns.products.remove');
 
     // Wishlists

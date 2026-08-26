@@ -65,7 +65,31 @@
                 <div class="border-t pt-3">
                     <p class="text-sm font-medium mb-2">Included products</p>
                     <template x-for="item in selectedData.products" :key="item.id">
-                        <div class="flex justify-between text-sm py-1"><span x-text="item.product.name + ' — ' + item.discount_value + ' ' + item.discount_type"></span><button @click="removeProduct(item.id)" class="text-red-500">Remove</button></div>
+                        <div class="flex items-center justify-between gap-2 text-sm py-1.5 border-t">
+                            <template x-if="editingEntryId !== item.id">
+                                <span class="truncate" x-text="item.product.name + ' — ' + item.discount_value + ' ' + item.discount_type"></span>
+                            </template>
+                            <template x-if="editingEntryId === item.id">
+                                <div class="flex items-center gap-1 flex-1 min-w-0">
+                                    <select x-model="editEntry.discount_type" class="rounded border-gray-300 text-xs py-1">
+                                        <option value="percentage">Percent</option>
+                                        <option value="fixed_amount">Fixed off</option>
+                                        <option value="fixed_price">Fixed price</option>
+                                    </select>
+                                    <input x-model="editEntry.discount_value" type="number" min="0" step="0.01" class="w-24 rounded border-gray-300 text-xs py-1">
+                                    <button @click="editEntryCancel()" class="text-gray-400 text-xs">Cancel</button>
+                                </div>
+                            </template>
+                            <div class="flex items-center gap-2 shrink-0">
+                                <template x-if="editingEntryId !== item.id">
+                                    <button @click="editEntryStart(item)" class="text-blue-600 text-xs font-medium">Edit</button>
+                                </template>
+                                <template x-if="editingEntryId === item.id">
+                                    <button @click="editEntrySave(item)" class="text-green-600 text-xs font-semibold">Save</button>
+                                </template>
+                                <button @click="removeProduct(item.id)" class="text-red-500 text-xs">Remove</button>
+                            </div>
+                        </div>
                     </template>
                 </div>
             </template>
@@ -113,7 +137,7 @@
             const request = (url, options={}) => { const isForm = options.body instanceof FormData; return fetch(url,{headers:{'X-CSRF-TOKEN':csrf,'Accept':'application/json',...(isForm ? {} : {'Content-Type':'application/json'})},...options}).then(r=>r.json()) };
             const toLocalInput = (iso) => { if(!iso) return ''; const d=new Date(iso); if(isNaN(d.getTime())) return ''; const p=n=>String(n).padStart(2,'0'); return d.getFullYear()+'-'+p(d.getMonth()+1)+'-'+p(d.getDate())+'T'+p(d.getHours())+':'+p(d.getMinutes()); };
             return {
-                campaigns:[], selected:null, selectedData:null, searchResults:[], discount_type:'percentage', discount_value:'',
+                campaigns:[], selected:null, selectedData:null, searchResults:[], discount_type:'percentage', discount_value:'', editingEntryId:null, editEntry:{discount_type:'percentage',discount_value:''},
                 form:{name:'',description:'',banner_image:null,starts_at:'',ends_at:'',status:'draft'},
                 editForm:{id:null,name:'',description:'',button_text:'',priority:0,status:'draft',starts_at:'',ends_at:'',is_featured:false,is_active:true,banner_image:null,banner_preview:null},
                 load(){ window.__campaignVM = this; request('{{ route('campaigns.list') }}').then(d=>this.campaigns=d.campaigns); },
@@ -123,6 +147,9 @@
                 searchProducts(q){ if(q.length<2){this.searchResults=[]; return} request('{{ route('campaigns.products.search') }}?q='+encodeURIComponent(q)).then(d=>this.searchResults=d.products); },
                 addProduct(product_id){ if(!this.discount_value) return; request('/campaigns/'+this.selected+'/products',{method:'POST',body:JSON.stringify({product_id,discount_type:this.discount_type,discount_value:this.discount_value})}).then(()=>this.select(this.selected)); },
                 removeProduct(id){ request('/campaigns/'+this.selected+'/products/'+id,{method:'DELETE'}).then(()=>this.select(this.selected)); },
+                editEntryStart(item){ this.editingEntryId=item.id; this.editEntry={discount_type:item.discount_type||'percentage',discount_value:String(item.discount_value??'')}; },
+                editEntryCancel(){ this.editingEntryId=null; },
+                editEntrySave(item){ if(!this.editingEntryId) return; request('/campaigns/'+this.selected+'/products/'+item.id,{method:'POST',body:JSON.stringify({_method:'PUT',discount_type:this.editEntry.discount_type,discount_value:this.editEntry.discount_value})}).then(()=>{ this.editingEntryId=null; this.select(this.selected); }); },
                 formatDate(iso){ if(!iso) return ''; const d=new Date(iso); return isNaN(d.getTime()) ? '' : d.toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'}); },
                 editCampaign(campaign){ window.__campaignVM = this; this.editForm={id:campaign.id,name:campaign.name??'',description:campaign.description??'',button_text:campaign.button_text??'',priority:campaign.priority??0,status:campaign.status??'draft',starts_at:toLocalInput(campaign.starts_at),ends_at:toLocalInput(campaign.ends_at),is_featured:!!campaign.is_featured,is_active:!!campaign.is_active,banner_image:null,banner_preview:(campaign.banner_image?('/storage/'+campaign.banner_image.replace(/^\//,'')):null)}; this.$refs.bannerInput.value=''; if(window.openGlobalDrawer) openGlobalDrawer('campaignDrawer','campaignOverlay'); },
                 saveEdit(){ if(!this.editForm.id) return; const body=new FormData(); ['name','description','button_text','status','priority'].forEach(k=>{ const v=this.editForm[k]; if(v!==null && v!=='') body.append(k,v); }); body.append('is_featured', this.editForm.is_featured?'1':'0'); body.append('is_active', this.editForm.is_active?'1':'0'); ['starts_at','ends_at'].forEach(k=>{ const v=this.editForm[k]; if(v!==null && v!=='') body.append(k,v); }); if(this.editForm.banner_image) body.append('banner_image', this.editForm.banner_image); body.append('_method','PUT'); request('/campaigns/'+this.editForm.id,{method:'POST',body}).then(()=>{ if(window.closeGlobalDrawer) closeGlobalDrawer('campaignDrawer','campaignOverlay'); this.load(); }); }

@@ -58,5 +58,13 @@ class CampaignController extends Controller
         return response()->json(['status' => 'success', 'campaign_product' => $entry->load('product', 'variant')]);
     }
 
+    public function updateProduct(Request $request, Campaign $campaign, int $campaignProduct)
+    {
+        $data = $request->validate(['discount_type' => 'sometimes|required|in:percentage,fixed_amount,fixed_price', 'discount_value' => 'sometimes|required|numeric|min:0']);
+        $entry = $campaign->products()->whereKey($campaignProduct)->firstOrFail();
+        $entry->update($data);
+        return response()->json(['status' => 'success', 'campaign_product' => $entry->load('product', 'variant')]);
+    }
+
     public function removeProduct(Campaign $campaign, int $campaignProduct) { $campaign->products()->whereKey($campaignProduct)->delete(); return response()->json(['status' => 'success']); }
 }

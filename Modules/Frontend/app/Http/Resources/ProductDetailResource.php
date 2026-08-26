@@ -76,7 +76,7 @@ class ProductDetailResource extends JsonResource
             'discount_percent'=> $effectivePct,
             'has_discount'    => $hasDiscount,
             'campaign_name'   => $variantPrice['campaign']?->name,
-            'cost_price'      => (float) $v->cost_price,
+            'cost_price'      => round((float) $v->cost_price, 0),
             'stock'           => $v->track_inventory ? ($v->stock ?? 0) : null,
             'track_inventory' => (bool) $v->track_inventory,
             'allow_backorder' => (bool) $v->allow_backorder,
@@ -89,7 +89,7 @@ class ProductDetailResource extends JsonResource
                 'sku'              => $o->sku,
                 'barcode'          => $o->barcode,
                 'image_url'        => $this->imageUrl($o->image_url),
-                'cost_price'       => ($o->cost_price ?? null) !== null ? (float) $o->cost_price : (float) $v->cost_price,
+                'cost_price'       => ($o->cost_price ?? null) !== null ? round((float) $o->cost_price, 0) : round((float) $v->cost_price, 0),
                 'sale_price'       => $this->optionDiscountedPrice($v, $o, $pricing),
                 'regular_price'    => $this->optionRegularPrice($v, $o, $pricing),
                 'discount_price'   => $this->optionDiscountedPrice($v, $o, $pricing),
@@ -230,20 +230,16 @@ class ProductDetailResource extends JsonResource
      */
     private function variantPricing($variant, $pricing): array
     {
-        $salePrice       = (float) $variant->sale_price;
+        $salePrice       = round(max(0, (float) $variant->sale_price), 0);
         $discountPercent = max(0, min(100, (float) ($variant->discount_percent ?? 0)));
 
         $finalBeforeCampaign = $salePrice * (1 - $discountPercent / 100);
         $campaign            = $pricing->priceFor($variant, $finalBeforeCampaign - $salePrice);
-        $final               = (float) $campaign['price'];
-
-        $regular = $campaign['campaign']
-            ? (float) $campaign['original_price']
-            : ($variant->compare_at_price !== null ? (float) $variant->compare_at_price : $salePrice);
+        $final               = round(max(0, (float) $campaign['price']), 0);
 
         $compare = $campaign['campaign']
-            ? round(max(0, $regular), 2)
-            : ($variant->compare_at_price !== null ? (float) $variant->compare_at_price : null);
+            ? round(max(0, (float) $campaign['original_price']), 0)
+            : ($variant->compare_at_price !== null ? round((float) $variant->compare_at_price, 0) : null);
 
         $hasDiscount = $final < $salePrice;
 
@@ -275,7 +271,7 @@ class ProductDetailResource extends JsonResource
             ? (float) $option->sale_price
             : (float) $variant->sale_price + (float) ($option->price_adjustment ?? 0);
 
-        return (float) $pricing->priceFor($variant, $basePrice - (float) $variant->sale_price)['price'];
+        return round(max(0, (float) $pricing->priceFor($variant, $basePrice - (float) $variant->sale_price)['price']), 0);
     }
 
     /**
@@ -285,17 +281,17 @@ class ProductDetailResource extends JsonResource
     {
         $regular = $this->optionRegularPrice($variant, $option, $pricing);
         $regular *= 1 - ($this->optionDiscountPercent($variant, $option) / 100);
-        return (float) $regular;
+        return round(max(0, $regular), 0);
     }
 
     private function optionComparePrice($variant, $option): ?float
     {
         if ($option->compare_at_price !== null) {
-            return (float) $option->compare_at_price;
+            return round((float) $option->compare_at_price, 0);
         }
 
         if ($this->optionDiscountPercent($variant, $option) > 0 && $option->sale_price !== null) {
-            return (float) $option->sale_price;
+            return round((float) $option->sale_price, 0);
         }
 
         return null;

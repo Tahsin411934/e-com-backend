@@ -58,6 +58,14 @@ class ProductPricingService
     }
 
     /**
+     * Public helper for a single variant (used by campaign API etc).
+     */
+    public function priceInfoForVariant(ProductVariant $variant): array
+    {
+        return $this->variantPriceInfo($variant);
+    }
+
+    /**
      * Compute the final (price after discount), regular (base sale price) and
      * discount fields for one variant.
      *
@@ -70,7 +78,7 @@ class ProductPricingService
      */
     private function variantPriceInfo(ProductVariant $variant): array
     {
-        $salePrice   = round(max(0, (float) $variant->sale_price), 2);
+        $salePrice   = round(max(0, (float) $variant->sale_price), 0);
         $discountPct = max(0, min(100, (float) ($variant->discount_percent ?? 0)));
 
         // 1) Price after discount = sale price * (1 - discount%) (matches CartService::syncCart)
@@ -78,13 +86,13 @@ class ProductPricingService
 
         // 2) Apply live campaign pricing on top (matches CartService::syncCart)
         $campaign = $this->campaignPricing->priceFor($variant, $final - $salePrice);
-        $final    = round(max(0, (float) $campaign['price']), 2);
+        $final    = round(max(0, (float) $campaign['price']), 0);
 
         // regular_price always = the base sale price (never null, never lower than price).
         $regular = $salePrice;
 
         $hasDiscount = $final < $regular && $regular > 0;
-        $discountAmt = round($regular - $final, 2);
+        $discountAmt = round($regular - $final, 0);
 
         return [
             'price'            => $final,

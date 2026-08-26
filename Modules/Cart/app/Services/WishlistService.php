@@ -165,14 +165,39 @@ class WishlistService
                 return ['status' => 'error', 'message' => 'Unauthenticated'];
             }
 
-            $items = Wishlist::with('product')
+            $items = Wishlist::with(['product.images', 'product.variants' => fn ($q) => $q->where('status', 'active')])
                 ->where('user_id', $userId)
                 ->orderByDesc('created_at')
                 ->get();
 
+            $pricing = app(\Modules\Frontend\Services\ProductPricingService::class);
+
+            $wishlist = $items->map(function (Wishlist $item) use ($pricing) {
+                $product  = $item->product;
+                $priceInfo = $product ? $pricing->priceInfo($product) : null;
+                $mainImage = $product?->images->firstWhere('is_main', true) ?? $product?->images->first();
+
+                return [
+                    'id'         => $item->id,
+                    'product_id' => $item->product_id,
+                    'created_at' => $item->created_at,
+                    'product'    => [
+                        'id'               => $product->id,
+                        'name'             => $product->name,
+                        'slug'             => $product->slug,
+                        'main_image'       => $mainImage?->image_url ? asset('storage/' . ltrim($mainImage->image_url, '/')) : null,
+                        'price'            => $priceInfo['price'],
+                        'regular_price'    => $priceInfo['regular_price'],
+                        'discount_percent' => $priceInfo['discount_percent'],
+                        'discount_amount'  => $priceInfo['discount_amount'],
+                        'has_discount'     => $priceInfo['has_discount'],
+                    ],
+                ];
+            });
+
             return [
-                'status' => 'success',
-                'wishlist' => $items,
+                'status'   => 'success',
+                'wishlist' => $wishlist->values()->all(),
             ];
         } catch (\Exception $e) {
             return [

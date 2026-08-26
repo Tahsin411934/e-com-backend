@@ -13,7 +13,10 @@ class Campaign extends Model
     protected $fillable = ['name', 'slug', 'description', 'banner_image', 'button_text', 'priority', 'is_featured', 'is_active', 'status', 'starts_at', 'ends_at'];
     protected $casts = ['is_featured' => 'boolean', 'is_active' => 'boolean', 'starts_at' => 'datetime', 'ends_at' => 'datetime'];
 
-    public function products() { return $this->hasMany(CampaignProduct::class); }
+    public function products()
+    {
+        return $this->hasMany(CampaignProduct::class)->orderBy('sort_order')->orderBy('id');
+    }
 
     public function scopeLive(Builder $query): Builder
     {

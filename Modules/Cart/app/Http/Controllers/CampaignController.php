@@ -54,7 +54,12 @@ class CampaignController extends Controller
     public function addProduct(Request $request, Campaign $campaign)
     {
         $data = $request->validate(['product_id' => 'required|exists:products,id', 'variant_id' => 'nullable|exists:product_variants,id', 'discount_type' => 'required|in:percentage,fixed_amount,fixed_price', 'discount_value' => 'required|numeric|min:0']);
-        $entry = $campaign->products()->updateOrCreate(['product_id' => $data['product_id'], 'variant_id' => $data['variant_id'] ?? null], $data);
+        $entry = $campaign->products()->firstOrNew(['product_id' => $data['product_id'], 'variant_id' => $data['variant_id'] ?? null]);
+        if (!$entry->exists) {
+            $entry->sort_order = ((int) $campaign->products()->max('sort_order')) + 1;
+        }
+        $entry->fill($data);
+        $entry->save();
         return response()->json(['status' => 'success', 'campaign_product' => $entry->load('product', 'variant')]);
     }
 
@@ -64,6 +69,16 @@ class CampaignController extends Controller
         $entry = $campaign->products()->whereKey($campaignProduct)->firstOrFail();
         $entry->update($data);
         return response()->json(['status' => 'success', 'campaign_product' => $entry->load('product', 'variant')]);
+    }
+
+    public function reorderProducts(Request $request, Campaign $campaign)
+    {
+        $data = $request->validate(['ordered_ids' => 'required|array', 'ordered_ids.*' => 'integer']);
+        foreach ((array) $data['ordered_ids'] as $i => $id) {
+            $campaign->products()->whereKey($id)->update(['sort_order' => $i + 1]);
+        }
+        $campaign->products()->whereNotIn('id', $data['ordered_ids'])->update(['sort_order' => 999999]);
+        return response()->json(['status' => 'success']);
     }
 
     public function removeProduct(Campaign $campaign, int $campaignProduct) { $campaign->products()->whereKey($campaignProduct)->delete(); return response()->json(['status' => 'success']); }

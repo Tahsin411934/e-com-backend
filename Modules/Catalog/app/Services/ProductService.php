@@ -246,10 +246,10 @@ class ProductService
                         }
                     }
 
-                    // Delete variants that were removed from the UI and not explicitly tracked
-                    if (empty($data['deleted_variant_ids'])) {
-                        $product->variants()->whereNotIn('id', $keepVariantIds)->delete();
-                    }
+                    // Delete variants that were removed from the UI (not in keepVariantIds).
+                    // Always run — regardless of deleted_variant_ids — so removed
+                    // variants are reliably cleaned up.
+                    $product->variants()->whereNotIn('id', $keepVariantIds)->delete();
                 }
 
                 return [

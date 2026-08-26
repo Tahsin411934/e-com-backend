@@ -545,7 +545,8 @@
             const $item = $(this).closest('.variant-item');
             const id = $item.find('.variant-id').val();
             if (id) {
-                $item.append(`<input type="hidden" name="deleted_variant_ids[]" value="${id}">`);
+                // Append to the FORM (not the removed element) so it is submitted
+                $('#productForm').append(`<input type="hidden" name="deleted_variant_ids[]" value="${id}">`);
             }
             $item.fadeOut(300, function() { $(this).remove(); });
         });
@@ -602,8 +603,8 @@
             const $item = $(this).closest('.option-item');
             const id = $item.find('input[name*="[id]"]').val();
             if (id) {
-                // Mark for deletion by appending a hidden input to the form
-                $item.append(`<input type="hidden" name="deleted_option_ids[]" value="${id}">`);
+                // Append to the FORM (not the removed element) so it is submitted
+                $('#productForm').append(`<input type="hidden" name="deleted_option_ids[]" value="${id}">`);
             }
             $item.fadeOut(200, function() { $(this).remove(); });
         });

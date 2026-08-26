@@ -21,11 +21,10 @@ class ProductPricingService
      *   2. apply the variant discount_percent
      *   3. apply any live campaign pricing on top
      *
-     * The cheapest variant defines the product price. The regular price (the
-     * strikethrough reference) is the compare-at price if set, otherwise the
-     * campaign original price, otherwise the sale price — but ONLY when it is
-     * genuinely higher than the final discounted price. Otherwise the product
-     * has no discount and no regular/strikethrough price is returned.
+     * The cheapest variant defines the product price. The regular price is the
+     * variant's base sale price (before any discount). The price after discount
+     * is never higher than the regular price, so discount_percent can never be
+     * negative.
      *
      * @return array{price: float|null, regular_price: float|null, discount_percent: float, discount_amount: float, has_discount: bool}
      */
@@ -59,52 +58,40 @@ class ProductPricingService
     }
 
     /**
-     * Compute the final (discounted) price and discount fields for one variant.
+     * Compute the final (price after discount), regular (base sale price) and
+     * discount fields for one variant.
      *
-     * Guards: a discount is only reported when the regular reference price is
-     * strictly greater than the final price. This prevents impossible/negative
-     * values (e.g. compare_at_price lower than the sale price in the DB).
+     * Mapping (per requirement):
+     *   regular_price = product_variants.sale_price   (base price before any discount)
+     *   price         = sale_price * (1 - discount_percent/100)  (what customer pays, after discount)
+     *
+     * compare_at_price is NOT used as the regular price (it can be lower than the
+     * sale price for some rows), so it can never cause a negative/backwards discount.
      */
     private function variantPriceInfo(ProductVariant $variant): array
     {
-        $salePrice   = (float) $variant->sale_price;
+        $salePrice   = round(max(0, (float) $variant->sale_price), 2);
         $discountPct = max(0, min(100, (float) ($variant->discount_percent ?? 0)));
-        $compareAt   = $variant->compare_at_price !== null ? (float) $variant->compare_at_price : null;
 
-        // 1) Apply the variant discount % (matches CartService::syncCart)
+        // 1) Price after discount = sale price * (1 - discount%) (matches CartService::syncCart)
         $final = $salePrice * (1 - $discountPct / 100);
 
         // 2) Apply live campaign pricing on top (matches CartService::syncCart)
         $campaign = $this->campaignPricing->priceFor($variant, $final - $salePrice);
         $final    = round(max(0, (float) $campaign['price']), 2);
 
-        // Regular (strikethrough) reference price for this same variant
-        if ($campaign['campaign']) {
-            $regular = (float) $campaign['original_price'];
-        } elseif ($compareAt !== null) {
-            $regular = $compareAt;
-        } else {
-            $regular = $salePrice;
-        }
-        $regular = round(max(0, $regular), 2);
+        // regular_price always = the base sale price (never null, never lower than price).
+        $regular = $salePrice;
 
-        // A discount only exists when the reference price is really higher.
-        if ($final < $regular && $regular > 0) {
-            return [
-                'price'            => $final,
-                'regular_price'    => $regular,
-                'discount_percent' => (float) round((($regular - $final) / $regular) * 100, 0),
-                'discount_amount'  => round($regular - $final, 2),
-                'has_discount'     => true,
-            ];
-        }
+        $hasDiscount = $final < $regular && $regular > 0;
+        $discountAmt = round($regular - $final, 2);
 
         return [
             'price'            => $final,
-            'regular_price'    => null,
-            'discount_percent' => 0,
-            'discount_amount'  => 0,
-            'has_discount'     => false,
+            'regular_price'    => $regular,
+            'discount_percent' => $hasDiscount ? (float) round(($discountAmt / $regular) * 100, 0) : 0,
+            'discount_amount'  => $hasDiscount ? $discountAmt : 0,
+            'has_discount'     => $hasDiscount,
         ];
     }
 }

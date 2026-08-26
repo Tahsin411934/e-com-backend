@@ -245,14 +245,15 @@ class ProductDetailResource extends JsonResource
             ? round(max(0, $regular), 2)
             : ($variant->compare_at_price !== null ? (float) $variant->compare_at_price : null);
 
-        $hasDiscount = $final < $regular;
+        $hasDiscount = $final < $salePrice;
 
         return [
             'has_discount' => $hasDiscount,
             'final'        => $final,
-            // When no discount exists, regular == final (never a lower value).
-            'regular'      => $hasDiscount ? $regular : $final,
-            'compare'      => $hasDiscount ? $compare : null,
+            // regular = base sale price (pre-discount), never lower than final.
+            'regular'      => $salePrice,
+            // compare (strikethrough reference) only shown when there is a real discount.
+            'compare'      => $hasDiscount ? ($compare !== null && $compare > $final ? $compare : $salePrice) : null,
             'campaign'     => $campaign['campaign'],
         ];
     }

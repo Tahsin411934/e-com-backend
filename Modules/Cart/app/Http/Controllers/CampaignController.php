@@ -28,7 +28,10 @@ class CampaignController extends Controller
     public function update(Request $request, Campaign $campaign)
     {
         $data = $request->validate(['name' => 'sometimes|required|string|max:160', 'description' => 'nullable|string', 'banner_image' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:5120', 'button_text' => 'nullable|string|max:60', 'priority' => 'nullable|integer|min:0', 'is_featured' => 'nullable|boolean', 'is_active' => 'sometimes|nullable|boolean', 'status' => 'sometimes|required|in:draft,active,paused', 'starts_at' => 'nullable|date', 'ends_at' => 'nullable|date|after:starts_at']);
-        if ($request->hasFile('banner_image')) {
+        if ($request->boolean('remove_banner')) {
+            if ($campaign->banner_image) Storage::disk('public')->delete($campaign->banner_image);
+            $data['banner_image'] = null;
+        } elseif ($request->hasFile('banner_image')) {
             if ($campaign->banner_image) Storage::disk('public')->delete($campaign->banner_image);
             $data['banner_image'] = $request->file('banner_image')->store('campaigns/banners', 'public');
         }

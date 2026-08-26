@@ -63,3 +63,4 @@ class HomeProductResource extends JsonResource
             'order_column' => $this->order_column ?? 0,
         ];
     }
+}

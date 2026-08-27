@@ -22,6 +22,13 @@ class HistoryObserver
             return;
         }
 
+        // Skip non-meaningful writes (e.g. last_login_at updated on every
+        // login, remember_token rotations) so the audit trail stays clean.
+        $noiseKeys = ['last_login_at', 'remember_token'];
+        if (count(array_diff(array_keys($changes), $noiseKeys)) === 0) {
+            return;
+        }
+
         $old = [];
         foreach (array_keys($changes) as $field) {
             $old[$field] = $model->getOriginal($field);

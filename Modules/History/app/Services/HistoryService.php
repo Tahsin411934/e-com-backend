@@ -13,8 +13,8 @@ class HistoryService
     {
         return History::query()
             ->with('user')
-            ->when($request->filled('action'), fn (Builder $query) => $query->where('action', $request->string('action')))
-            ->when($request->filled('entity_type'), fn (Builder $query) => $query->where('entity_type', $request->string('entity_type')))
+            ->when($request->filled('action'), fn (Builder $query) => $query->where('action', (string) $request->string('action')))
+            ->when($request->filled('entity_type'), fn (Builder $query) => $query->where('entity_type', (string) $request->string('entity_type')))
             ->when($request->filled('entity_id'), fn (Builder $query) => $query->where('entity_id', $request->integer('entity_id')))
             ->when($request->filled('from'), fn (Builder $query) => $query->whereDate('created_at', '>=', $request->date('from')))
             ->when($request->filled('to'), fn (Builder $query) => $query->whereDate('created_at', '<=', $request->date('to')))

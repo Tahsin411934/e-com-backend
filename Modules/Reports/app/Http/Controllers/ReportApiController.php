@@ -10,16 +10,9 @@ use Modules\Reports\Support\ReportFilters;
 use Modules\Reports\Services\ExecutiveReportService;
 use Modules\Reports\Services\SalesReportService;
 use Modules\Reports\Services\SalesPerformanceService;
-use Modules\Reports\Services\ProductReportService;
-use Modules\Reports\Services\OrderFulfillmentReportService;
-use Modules\Reports\Services\CustomerReportService;
-use Modules\Reports\Services\CampaignReportService;
-use Modules\Reports\Services\FinanceReportService;
-use Modules\Reports\Services\RefundReportService;
-use Modules\Reports\Services\PurchaseSupplierReportService;
-use Modules\Reports\Services\StaffReportService;
-use Modules\Reports\Services\ShippingReportService;
 use Modules\Reports\Services\ProductPerformanceService;
+use Modules\Reports\Services\CustomerReportService;
+use Modules\Reports\Services\ShippingReportService;
 use Modules\Reports\Services\InventoryReportService;
 use Modules\Reports\Services\InventoryStockReportService;
 use Modules\Reports\Services\OrderFulfillmentTimingService;
@@ -36,22 +29,18 @@ class ReportApiController extends Controller
         private CsvExporter $csv,
     ) {
         $this->dispatchMap = [
-            'executive' => [app(ExecutiveReportService::class), '', ['overview', 'topMetrics', 'alerts']],
-            'sales' => [app(SalesReportService::class), '', ['totalSales', 'byProduct', 'byCategory', 'byDay', 'bySalesChannel']],
-            'performance' => [app(SalesPerformanceService::class), '', ['performance', 'trend']],
-            'products' => [app(ProductReportService::class), '', ['topProducts', 'lowStock', 'sales', 'ratings']],
-            'product-perf' => [app(ProductPerformanceService::class), '', ['performance', 'byCategory', 'byBrand']],
-            'inventory' => [app(InventoryReportService::class), '', ['movement', 'valuation', 'adjustments']],
-            'inventory-stock' => [app(InventoryStockReportService::class), '', ['summary', 'byLocation', 'lowStock', 'stockAging']],
-            'orders' => [app(OrderFulfillmentReportService::class), '', ['fulfillmentStatus', 'fulfillmentTime', 'returnRate']],
-            'order-timing' => [app(OrderFulfillmentTimingService::class), '', ['avgFulfillmentTime', 'fulfillmentByDay', 'delays']],
-            'shipping' => [app(ShippingReportService::class), '', ['costs', 'methods', 'carriers', 'timing']],
+            // NOTE: only categories backed by an existing service class are
+            // registered here — the whitelist must match real public methods
+            // (ReportFilters is the only argument injected by report()).
+            'executive' => [app(ExecutiveReportService::class), '', ['dashboard', 'kpis', 'alerts', 'salesTrend']],
+            'sales' => [app(SalesReportService::class), '', ['salesByDate', 'salesByStore', 'salesBySource', 'salesByPaymentMethod', 'salesByOrderStatus']],
+            'performance' => [app(SalesPerformanceService::class), '', ['topProducts', 'topCategories', 'posSalesByCashier']],
+            'product-perf' => [app(ProductPerformanceService::class), '', ['variantWise', 'returnRate', 'conversion', 'stockTurnover']],
+            'inventory' => [app(InventoryReportService::class), '', ['currentStock', 'lowOutOfStock', 'variantLevelStock', 'valuation']],
+            'inventory-stock' => [app(InventoryStockReportService::class), '', ['movements', 'damagedExpiredLost', 'deadStock', 'reorder', 'transfers']],
+            'order-timing' => [app(OrderFulfillmentTimingService::class), '', ['fulfillmentTimes', 'failedDeliveries', 'codVsPrepaid']],
+            'shipping' => [app(ShippingReportService::class), '', ['overview', 'driverPerformance', 'zoneCost', 'failedReasons']],
             'customers' => [app(CustomerReportService::class), '', ['kpis', 'topCustomers', 'citySales', 'orderFrequency']],
-            'campaigns' => [app(CampaignReportService::class), '', ['overview', 'byChannel', 'roi', 'engagement']],
-            'finance' => [app(FinanceReportService::class), '', ['revenue', 'expenses', 'profitMargin', 'cashFlow']],
-            'refunds' => [app(RefundReportService::class), '', ['summary', 'byReason', 'byCategory', 'trends']],
-            'purchases' => [app(PurchaseSupplierReportService::class), '', ['bySupplier', 'byProduct', 'costs', 'leadTime']],
-            'staff' => [app(StaffReportService::class), '', ['sales', 'performance', 'targets']],
         ];
     }
 

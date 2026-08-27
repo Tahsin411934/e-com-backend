@@ -400,9 +400,9 @@
                     class="flex items-center gap-2.5 pl-9 pr-3 py-1.5 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-50 text-[13px] transition-colors {{ request()->routeIs('notifications.*') ? 'text-primary bg-primary-light font-medium' : '' }}">
                     <i class="fas fa-bell w-3.5 text-center"></i><span>Notifications</span>
                 </a>
-                <a href="{{ route('audit-logs.index') }}"
-                    class="flex items-center gap-2.5 pl-9 pr-3 py-1.5 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-50 text-[13px] transition-colors {{ request()->routeIs('audit-logs.*') ? 'text-primary bg-primary-light font-medium' : '' }}">
-                    <i class="fas fa-history w-3.5 text-center"></i><span>Audit Logs</span>
+                <a href="{{ route('history.page') }}"
+                    class="flex items-center gap-2.5 pl-9 pr-3 py-1.5 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-50 text-[13px] transition-colors {{ request()->routeIs('history.*') ? 'text-primary bg-primary-light font-medium' : '' }}">
+                    <i class="fas fa-history w-3.5 text-center"></i><span>History</span>
                 </a>
                 <a href="{{ route('webhooks.index') }}"
                     class="flex items-center gap-2.5 pl-9 pr-3 py-1.5 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-50 text-[13px] transition-colors {{ request()->routeIs('webhooks.*') ? 'text-primary bg-primary-light font-medium' : '' }}">

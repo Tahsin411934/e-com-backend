@@ -2,12 +2,13 @@
 
 namespace Modules\Account\Models;
 
+use App\Traits\CustomSoftDeletes;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class AccountDailySummary extends Model
 {
-    use HasFactory;
+    use HasFactory, CustomSoftDeletes;
 
     protected $table = 'account_daily_summaries';
 

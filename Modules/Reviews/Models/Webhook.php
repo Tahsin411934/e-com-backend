@@ -2,13 +2,13 @@
 
 namespace Modules\Reviews\Models;
 
+use App\Traits\CustomSoftDeletes;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Webhook extends Model
 {
-    use HasFactory, SoftDeletes;
+    use HasFactory, CustomSoftDeletes;
 
     protected $table = 'webhooks';
 

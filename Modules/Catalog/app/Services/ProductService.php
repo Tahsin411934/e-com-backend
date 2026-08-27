@@ -177,7 +177,7 @@ class ProductService
 
                 // Handle explicitly deleted variants from edit form
                 if (isset($data['deleted_variant_ids']) && is_array($data['deleted_variant_ids'])) {
-                    $product->variants()->whereIn('id', $data['deleted_variant_ids'])->delete();
+                    $product->variants()->whereIn('id', $data['deleted_variant_ids'])->get()->each->delete();
                 }
 
                 if (isset($data['variants']) && is_array($data['variants'])) {
@@ -242,14 +242,14 @@ class ProductService
                                 $keepOptionIds[] = $option->id;
                             }
                             // Delete options that were removed
-                            $variant->options()->whereNotIn('id', $keepOptionIds)->delete();
+                            $variant->options()->whereNotIn('id', $keepOptionIds)->get()->each->delete();
                         }
                     }
 
                     // Delete variants that were removed from the UI (not in keepVariantIds).
                     // Always run — regardless of deleted_variant_ids — so removed
                     // variants are reliably cleaned up.
-                    $product->variants()->whereNotIn('id', $keepVariantIds)->delete();
+                    $product->variants()->whereNotIn('id', $keepVariantIds)->get()->each->delete();
                 }
 
                 return [
@@ -289,6 +289,12 @@ class ProductService
         try {
             return DB::transaction(function () use ($id) {
                 $product = Product::findOrFail($id);
+
+                $product->variants()->get()->each(function (ProductVariant $variant) {
+                    $variant->options()->get()->each->delete();
+                    $variant->delete();
+                });
+                $product->images()->get()->each->delete();
                 $product->delete();
 
                 return [

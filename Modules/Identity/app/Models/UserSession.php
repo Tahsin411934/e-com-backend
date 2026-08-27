@@ -4,13 +4,13 @@ namespace Modules\Identity\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\SoftDeletes;
+use App\Traits\CustomSoftDeletes;
 use Modules\Identity\Models\User;
 
 class UserSession extends Model
 {
     use HasFactory;
-    use SoftDeletes;
+    use CustomSoftDeletes;
 
     protected $table = 'user_sessions';
 

@@ -2,15 +2,15 @@
 
 namespace Modules\Reviews\Models;
 
+use App\Traits\CustomSoftDeletes;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\SoftDeletes;
 use Modules\Catalog\Models\Product;
 use Modules\Identity\Models\User;
 
 class ProductReview extends Model
 {
-    use HasFactory, SoftDeletes;
+    use HasFactory, CustomSoftDeletes;
 
     protected $table = 'product_reviews';
 

@@ -415,6 +415,18 @@
             </div>
         </div>
 
+        <!-- History -->
+        @if(auth()->check() && auth()->user()->hasAnyRole(['Super Admin', 'Admin']))
+        <div class="mb-0.5">
+            <a href="{{ route('history.page') }}"
+                class="nav-item flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-medium transition-colors duration-150 mb-0.5 {{ request()->routeIs('history.*') ? 'text-white active' : 'text-gray-500 hover:bg-gray-50 hover:text-gray-800' }}"
+                data-label="History">
+                <i class="fas fa-clock-rotate-left w-4 text-center flex-shrink-0 text-base"></i>
+                <span class="nav-label">History</span>
+            </a>
+        </div>
+        @endif
+
         <!-- Frontend -->
         <div class="mb-0.5">
             <button

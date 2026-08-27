@@ -4,13 +4,13 @@ namespace Modules\Inventory\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\SoftDeletes;
+use App\Traits\CustomSoftDeletes;
 use Modules\Identity\Models\User;
 
 class InventoryMovement extends Model
 {
     use HasFactory;
-    use SoftDeletes;
+    use CustomSoftDeletes;
 
     protected $table = 'inventory_movements';
 

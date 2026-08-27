@@ -4,14 +4,14 @@ namespace Modules\Shipping\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\SoftDeletes;
+use App\Traits\CustomSoftDeletes;
 use Modules\Order\Models\Order;
 use Modules\Store\Models\Address;
 use Modules\Store\Models\Store;
 
 class Shipment extends Model
 {
-    use HasFactory, SoftDeletes;
+    use HasFactory, CustomSoftDeletes;
 
     protected $table = 'shipments';
 

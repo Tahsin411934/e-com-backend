@@ -4,7 +4,7 @@ namespace Modules\Inventory\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\SoftDeletes;
+use App\Traits\CustomSoftDeletes;
 use Modules\Account\Models\AccountAccount;
 use Modules\Account\Models\AccountTransaction;
 use Modules\Identity\Models\User;
@@ -13,7 +13,7 @@ use Modules\Store\Models\Store;
 class SupplierPayment extends Model
 {
     use HasFactory;
-    use SoftDeletes;
+    use CustomSoftDeletes;
 
     protected $table = 'supplier_payments';
 

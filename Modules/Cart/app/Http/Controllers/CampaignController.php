@@ -84,5 +84,11 @@ class CampaignController extends Controller
         return response()->json(['status' => 'success']);
     }
 
-    public function removeProduct(Campaign $campaign, int $campaignProduct) { $campaign->products()->whereKey($campaignProduct)->delete(); return response()->json(['status' => 'success']); }
+    public function removeProduct(Campaign $campaign, int $campaignProduct)
+    {
+        $entry = $campaign->products()->whereKey($campaignProduct)->firstOrFail();
+        $entry->delete();
+
+        return response()->json(['status' => 'success']);
+    }
 }

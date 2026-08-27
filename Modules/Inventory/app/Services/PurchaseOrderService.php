@@ -135,8 +135,8 @@ class PurchaseOrderService
                     $message = 'Purchase order created successfully.';
                 }
 
-                // Sync items
-                $po->items()->delete();
+                // Soft-delete old items individually so each deletion is audited.
+                $po->items()->get()->each->delete();
                 $totalAmount = 0;
                 foreach ($items as $item) {
                     $subtotal = ($item['quantity'] ?? 0) * ($item['unit_cost'] ?? 0);

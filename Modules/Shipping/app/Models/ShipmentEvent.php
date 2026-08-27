@@ -4,12 +4,12 @@ namespace Modules\Shipping\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\SoftDeletes;
+use App\Traits\CustomSoftDeletes;
 use Modules\Identity\Models\User;
 
 class ShipmentEvent extends Model
 {
-    use HasFactory, SoftDeletes;
+    use HasFactory, CustomSoftDeletes;
 
     protected $table = 'shipment_events';
 

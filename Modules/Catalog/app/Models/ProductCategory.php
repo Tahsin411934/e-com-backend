@@ -3,11 +3,11 @@
 namespace Modules\Catalog\Models;
 
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\SoftDeletes;
+use App\Traits\CustomSoftDeletes;
 
 class ProductCategory extends Model
 {
-    use SoftDeletes;
+    use CustomSoftDeletes;
 
     protected $table = 'product_categories';
 

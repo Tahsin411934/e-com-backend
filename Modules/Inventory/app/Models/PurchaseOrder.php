@@ -4,13 +4,13 @@ namespace Modules\Inventory\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\SoftDeletes;
+use App\Traits\CustomSoftDeletes;
 use Modules\Store\Models\Store;
 
 class PurchaseOrder extends Model
 {
     use HasFactory;
-    use SoftDeletes;
+    use CustomSoftDeletes;
 
     protected $table = 'purchase_orders';
 

@@ -2,16 +2,16 @@
 
 namespace Modules\Identity\Models;
 
+use App\Traits\CustomSoftDeletes;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
-use Illuminate\Database\Eloquent\SoftDeletes;
 use Laravel\Sanctum\HasApiTokens;
 use Modules\Identity\Models\Role;
 use Modules\Identity\Models\UserSession;
 
 class User extends Authenticatable
 {
-    use HasApiTokens, HasFactory, SoftDeletes;
+    use HasApiTokens, HasFactory, CustomSoftDeletes;
 
     protected $table = 'users';
 

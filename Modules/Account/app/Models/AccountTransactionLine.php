@@ -2,12 +2,13 @@
 
 namespace Modules\Account\Models;
 
+use App\Traits\CustomSoftDeletes;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class AccountTransactionLine extends Model
 {
-    use HasFactory;
+    use HasFactory, CustomSoftDeletes;
 
     protected $table = 'account_transaction_lines';
 

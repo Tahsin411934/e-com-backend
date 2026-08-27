@@ -5,12 +5,12 @@ namespace Modules\Catalog\Models;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\SoftDeletes;
+use App\Traits\CustomSoftDeletes;
 
 class Product extends Model
 {
     use HasFactory;
-    use SoftDeletes;
+    use CustomSoftDeletes;
 
     protected $table = 'products';
 

@@ -2,16 +2,16 @@
 
 namespace Modules\Pos\Models;
 
+use App\Traits\CustomSoftDeletes;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\SoftDeletes;
 use Modules\Identity\Models\User;
 use Modules\Order\Models\Order;
 
 class PosSale extends Model
 {
     use HasFactory;
-    use SoftDeletes;
+    use CustomSoftDeletes;
 
     protected $table = 'pos_sales';
 

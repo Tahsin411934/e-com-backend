@@ -162,8 +162,10 @@ class CartService
                             : $variantDiscount;
                     }
                 }
-                $unitPrice *= 1 - ($effectiveDiscount / 100);
-                $unitPrice = $this->campaignPricing->priceFor($variant, $unitPrice - (float) $variant->sale_price)['price'];
+                $campaign = $this->campaignPricing->priceFor($variant, $unitPrice - (float) $variant->sale_price);
+                $unitPrice = $campaign['campaign']
+                    ? round(max(0, (float) $campaign['price']), 4)
+                    : round(max(0, $unitPrice * (1 - $effectiveDiscount / 100)), 4);
 
                 // Check for existing item with same variant AND variant_option
                 $existingItem = CartItem::where('cart_id', $cart->id)

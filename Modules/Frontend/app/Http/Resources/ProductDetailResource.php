@@ -98,7 +98,7 @@ class ProductDetailResource extends JsonResource
                 'regular_price'    => $this->optionRegularPrice($v, $o, $pricing),
                 'discount_price'   => $this->optionDiscountedPrice($v, $o, $pricing),
                 'compare_at_price' => $this->optionComparePrice($v, $o),
-                'discount_percent' => $this->optionDiscountPercent($v, $o),
+                'discount_percent' => $this->optionDiscountPercent($v, $o, $pricing),
                 'has_discount'     => $this->optionDiscountedPrice($v, $o, $pricing) < $this->optionRegularPrice($v, $o, $pricing),
                 'price_adjustment' => (float) ($o->price_adjustment ?? 0),
                 'stock'            => $v->track_inventory ? (int) $o->stock : null,
@@ -267,9 +267,18 @@ class ProductDetailResource extends JsonResource
     /**
      * Effective discount % for an option (falls back to the parent variant discount).
      */
-    private function optionDiscountPercent($variant, $option): float
+    private function optionDiscountPercent($variant, $option, $pricing = null): float
     {
-        return (float) (($option->discount_percent ?? null) !== null ? $option->discount_percent : ($variant->discount_percent ?? 0));
+        if ($pricing === null) {
+            return (float) (($option->discount_percent ?? null) !== null ? $option->discount_percent : ($variant->discount_percent ?? 0));
+        }
+
+        $regular = $this->optionRegularPrice($variant, $option, $pricing);
+        $final = $this->optionDiscountedPrice($variant, $option, $pricing);
+
+        return $regular > 0 && $final < $regular
+            ? (float) round((($regular - $final) / $regular) * 100, 0)
+            : 0;
     }
 
     /**
@@ -281,7 +290,7 @@ class ProductDetailResource extends JsonResource
             ? (float) $option->sale_price
             : (float) $variant->sale_price + (float) ($option->price_adjustment ?? 0);
 
-        return round(max(0, (float) $pricing->priceFor($variant, $basePrice - (float) $variant->sale_price)['price']), 0);
+        return round(max(0, $basePrice), 0);
     }
 
     /**

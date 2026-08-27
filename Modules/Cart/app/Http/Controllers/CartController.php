@@ -86,11 +86,12 @@ class CartController extends Controller
     public function myCart()
     {
         $userId = auth()->id();
-        $cart = $this->cartService->getOrCreateCart($userId);
 
+        // Prices are recalculated server-side (campaign > 0 wins, else
+        // variant/option discount) so the cart never returns stale prices.
         return response()->json([
             'status' => 'success',
-            'cart' => $cart->load('items.variant.product'),
+            'cart' => $this->cartService->freshPricedCart($userId),
         ]);
     }
 

@@ -38,21 +38,18 @@ class CheckoutController extends Controller
                     ];
                 }
 
-                // Recalculate campaign prices on the server so an expired or changed
-                // frontend/cart price can never be used for an order.
+                // Recalculate prices on the server using the shared pricing rule
+                // (a live campaign with a discount > 0 wins, otherwise the
+                // variant/option discount applies) so an expired campaign or a
+                // stale cart price can never be used for an order.
                 foreach ($cart->items as $cartItem) {
-                    $variant = $cartItem->variant;
-                    $option = $cartItem->variantOption;
-                    $basePrice = $option?->sale_price !== null
-                        ? (float) $option->sale_price
-                        : (float) $variant->sale_price + (float) ($option?->price_adjustment ?? 0);
-                    $optionDiscount = $option?->discount_percent !== null
-                        ? (float) $option->discount_percent
-                        : (float) ($variant->discount_percent ?? 0);
-                    $campaign = $this->campaignPricing->priceFor($variant, $basePrice - (float) $variant->sale_price);
-                    $currentPrice = $campaign['campaign']
-                        ? round(max(0, (float) $campaign['price']), 4)
-                        : round(max(0, $basePrice * (1 - $optionDiscount / 100)), 4);
+                    if (!$cartItem->variant) {
+                        continue;
+                    }
+
+                    $currentPrice = $this->campaignPricing
+                        ->finalPriceFor($cartItem->variant, $cartItem->variantOption)['unit_price'];
+
                     if ((float) $cartItem->unit_price !== $currentPrice) {
                         $cartItem->update(['unit_price' => $currentPrice]);
                     }

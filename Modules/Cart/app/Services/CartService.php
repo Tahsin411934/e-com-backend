@@ -135,6 +135,42 @@ class CartService
         return $cart;
     }
 
+    /**
+     * Recalculate every cart item's unit price using the shared pricing rule
+     * (a live campaign with a discount > 0 wins, otherwise the variant-option /
+     * variant discount applies) and persist any changed prices. This keeps old
+     * carts — whose stored prices may pre-date a campaign or discount change —
+     * consistent with what every other API would charge today.
+     */
+    public function refreshCartPrices(Cart $cart): void
+    {
+        $cart->load(['items.variant', 'items.variantOption']);
+
+        foreach ($cart->items as $item) {
+            if (!$item->variant) {
+                continue;
+            }
+
+            $unitPrice = $this->campaignPricing->finalPriceFor($item->variant, $item->variantOption)['unit_price'];
+
+            if ((float) $item->unit_price !== $unitPrice) {
+                $item->update(['unit_price' => $unitPrice]);
+            }
+        }
+    }
+
+    /**
+     * The user's active cart with fresh, rule-consistent prices — used by the
+     * "my cart" API so the cart screen can never show a stale/stacked price.
+     */
+    public function freshPricedCart(int $userId): Cart
+    {
+        $cart = $this->getOrCreateCart($userId);
+        $this->refreshCartPrices($cart);
+
+        return $cart->fresh()->load('items.variant.product', 'items.variantOption');
+    }
+
     public function addToCart(array $data): array
     {
         try {
@@ -144,28 +180,21 @@ class CartService
                 // Find the variant - using direct class reference since import removed
                 $variant = \Modules\Catalog\Models\ProductVariant::findOrFail($data['variant_id']);
 
-                // Calculate price with variant option adjustment if provided
-                $variantDiscount = (float) ($variant->discount_percent ?? 0);
-                $effectiveDiscount = $variantDiscount;
-                $unitPrice = (float) $variant->sale_price;
+                // Resolve the selected variant option (must belong to the variant)
                 $variantOptionId = $data['variant_option_id'] ?? null;
-                
+                $variantOption = null;
                 if ($variantOptionId) {
-                    $variantOption = \Modules\Catalog\Models\VariantOption::find($variantOptionId);
-                    if ($variantOption && $variantOption->product_variant_id === $variant->id) {
-                        $unitPrice = $variantOption->sale_price !== null
-                            ? (float) $variantOption->sale_price
-                            : $unitPrice + (float) $variantOption->price_adjustment;
-                        // Option discount overrides parent; otherwise fall back to parent discount
-                        $effectiveDiscount = $variantOption->discount_percent !== null
-                            ? (float) $variantOption->discount_percent
-                            : $variantDiscount;
+                    $candidate = \Modules\Catalog\Models\VariantOption::find($variantOptionId);
+                    if ($candidate && $candidate->product_variant_id === $variant->id) {
+                        $variantOption = $candidate;
                     }
                 }
-                $campaign = $this->campaignPricing->priceFor($variant, $unitPrice - (float) $variant->sale_price);
-                $unitPrice = $campaign['campaign']
-                    ? round(max(0, (float) $campaign['price']), 4)
-                    : round(max(0, $unitPrice * (1 - $effectiveDiscount / 100)), 4);
+
+                // One shared pricing rule for every API: a LIVE campaign with a
+                // discount greater than 0 wins (never stacked), otherwise the
+                // variant-option discount applies (falling back to the parent
+                // variant discount when the option has none).
+                $unitPrice = $this->campaignPricing->finalPriceFor($variant, $variantOption)['unit_price'];
 
                 // Check for existing item with same variant AND variant_option
                 $existingItem = CartItem::where('cart_id', $cart->id)
@@ -174,8 +203,11 @@ class CartService
                     ->first();
 
                 if ($existingItem) {
+                    // Refresh the stored price too so items added before a
+                    // campaign/discount change never keep a stale price.
                     $existingItem->update([
                         'quantity' => $existingItem->quantity + ($data['quantity'] ?? 1),
+                        'unit_price' => $unitPrice,
                     ]);
                     $message = 'Cart updated successfully.';
                 } else {
@@ -188,6 +220,9 @@ class CartService
                     ]);
                     $message = 'Item added to cart successfully.';
                 }
+
+                // Make sure the returned cart never carries stale prices.
+                $this->refreshCartPrices($cart);
 
                 return [
                     'status' => 'success',
@@ -212,6 +247,9 @@ class CartService
                     'quantity' => $data['quantity'],
                 ]);
 
+                // Keep prices in sync with the current campaign/discount state.
+                $this->refreshCartPrices($item->cart);
+
                 return [
                     'status' => 'success',
                     'message' => 'Cart item updated successfully.',
@@ -233,6 +271,9 @@ class CartService
                 $item = CartItem::findOrFail($itemId);
                 $cart = $item->cart;
                 $item->delete();
+
+                // Keep the remaining items' prices in sync as well.
+                $this->refreshCartPrices($cart);
 
                 return [
                     'status' => 'success',
@@ -328,32 +369,23 @@ class CartService
                 $itemsToUpsert = [];
                 foreach ($items as $itemData) {
                     $variant = \Modules\Catalog\Models\ProductVariant::findOrFail($itemData['variant_id']);
-                    
-                    // Calculate price with variant option adjustment
-                    $variantDiscount = (float) ($variant->discount_percent ?? 0);
-                    $effectiveDiscount = $variantDiscount;
-                    $unitPrice = (float) $variant->sale_price;
+
+                    // Resolve the selected option (must belong to the variant)
                     $variantOptionId = $itemData['variant_option_id'] ?? null;
-                    
+                    $variantOption = null;
                     if ($variantOptionId) {
-                        $variantOption = \Modules\Catalog\Models\VariantOption::find($variantOptionId);
-                        if ($variantOption && $variantOption->product_variant_id === $variant->id) {
-                            $unitPrice = $variantOption->sale_price !== null
-                                ? (float) $variantOption->sale_price
-                                : $unitPrice + (float) $variantOption->price_adjustment;
-                            // Option discount overrides parent; otherwise fall back to parent discount
-                            $effectiveDiscount = $variantOption->discount_percent !== null
-                                ? (float) $variantOption->discount_percent
-                                : $variantDiscount;
+                        $candidate = \Modules\Catalog\Models\VariantOption::find($variantOptionId);
+                        if ($candidate && $candidate->product_variant_id === $variant->id) {
+                            $variantOption = $candidate;
                         }
                     }
-                    // Campaign pricing takes precedence over the product/option discount (no stacking):
-                    // if this variant is under a live campaign, its price wins; otherwise use the variant's discount.
-                    $campaign = $this->campaignPricing->priceFor($variant, $unitPrice - (float) $variant->sale_price);
-                    $unitPrice = $campaign['campaign']
-                        ? round(max(0, (float) $campaign['price']), 4)
-                        : round(max(0, $unitPrice * (1 - $effectiveDiscount / 100)), 4);
-                    
+
+                    // Shared pricing rule across all APIs: a LIVE campaign with a
+                    // discount greater than 0 wins (never stacked), otherwise the
+                    // variant-option discount applies (falling back to the parent
+                    // variant discount when the option has none).
+                    $unitPrice = $this->campaignPricing->finalPriceFor($variant, $variantOption)['unit_price'];
+
                     $itemsToUpsert[] = [
                         'cart_id' => $cart->id,
                         'variant_id' => $itemData['variant_id'],

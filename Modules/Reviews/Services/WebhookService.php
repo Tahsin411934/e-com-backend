@@ -13,11 +13,30 @@ class WebhookService
     public function getWebhookDataTable(Request $request)
     {
         $query = Webhook::query()->orderByDesc('created_at');
+
         return DataTables::of($query)
-            ->editColumn('status', fn($w) => ucfirst($w->status))
-            ->editColumn('created_at', fn($w) => $w->created_at->format('d M Y H:i'))
+            ->filter(function ($query) use ($request) {
+                if ($request->filled('status')) {
+                    $query->where('status', (string) $request->string('status'));
+                }
+            })
+            ->editColumn('url', fn($w) => '<span class="text-xs break-all">'.e(\Illuminate\Support\Str::limit($w->url ?? '', 60)).'</span>')
+            ->editColumn('events', function ($w) {
+                $events = collect($w->events ?? []);
+
+                return $events->isNotEmpty()
+                    ? $events->map(fn ($event) => '<span class="px-1.5 py-0.5 rounded text-[11px] font-medium bg-indigo-100 text-indigo-700 mr-1">'.e($event).'</span>')->implode('')
+                    : '<span class="text-gray-400 text-xs">All events</span>';
+            })
+            ->editColumn('status', function ($w) {
+                $colors = ['active' => 'bg-green-100 text-green-700', 'inactive' => 'bg-gray-100 text-gray-600', 'failed' => 'bg-red-100 text-red-700'];
+                $color = $colors[$w->status] ?? 'bg-gray-100 text-gray-700';
+
+                return '<span class="px-2 py-0.5 rounded-full text-xs font-semibold '.$color.'">'.e(ucfirst($w->status)).'</span>';
+            })
+            ->editColumn('created_at', fn($w) => $w->created_at?->format('d M Y H:i'))
             ->addColumn('action', fn($w) => view('components.action-buttons', ['id' => $w->id, 'edit' => 'webhookEdit', 'delete' => 'webhookDelete'])->render())
-            ->rawColumns(['action'])->make(true);
+            ->rawColumns(['action', 'status', 'events', 'url'])->make(true);
     }
 
     public function saveWebhook(array $data): array

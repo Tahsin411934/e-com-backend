@@ -18,6 +18,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/dataTable/notifications', [NotificationController::class, 'dataTable'])->name('notifications.dataTable');
     Route::post('/notifications/{id}/mark-read', [NotificationController::class, 'markAsRead'])->name('notifications.mark-read');
 
+    // Navbar notification bell (polling endpoints)
+    Route::get('/notifications/bell', [NotificationController::class, 'bell'])->name('notifications.bell');
+    Route::post('/notifications/mark-all-read', [NotificationController::class, 'markAllRead'])->name('notifications.mark-all-read');
+
     // Audit Logs
     Route::resource('audit-logs', AuditLogController::class)->except(['create', 'edit'])->names('audit-logs');
     Route::get('/dataTable/audit-logs', [AuditLogController::class, 'dataTable'])->name('audit-logs.dataTable');

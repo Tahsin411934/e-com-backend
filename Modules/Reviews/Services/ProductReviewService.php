@@ -9,6 +9,10 @@ use Yajra\DataTables\DataTables;
 
 class ProductReviewService
 {
+    public function __construct(private readonly NotificationService $notifications)
+    {
+    }
+
     public function getReviewDataTable(Request $request)
     {
         $query = ProductReview::query()->with(['product', 'user'])->orderByDesc('created_at');
@@ -63,7 +67,23 @@ class ProductReviewService
             return DB::transaction(function () use ($data) {
                 $id = $data['review_id'] ?? null; unset($data['review_id']);
                 if ($id) { $item = ProductReview::findOrFail($id); $item->update($data); $msg = 'Review updated.'; }
-                else { $item = ProductReview::create($data); $msg = 'Review created.'; }
+                else {
+                    $item = ProductReview::create($data); $msg = 'Review created.';
+
+                    // In-app bell notification for every admin (user_id = null = broadcast).
+                    $this->notifications->notify(
+                        null,
+                        'review.created',
+                        'New product review received',
+                        sprintf(
+                            '%s left a %d★ review: %s',
+                            $item->user?->name ?? 'A customer',
+                            $item->rating,
+                            $item->title
+                        ),
+                        ['review_id' => $item->id, 'product_id' => $item->product_id, 'url' => '/product-reviews'],
+                    );
+                }
                 return ['status' => 'success', 'message' => $msg, 'review' => $item->fresh()->load(['product', 'user'])];
             });
         } catch (\Exception $e) {

@@ -8,6 +8,7 @@ use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 use Modules\Catalog\Models\Product;
 use Modules\Reviews\Models\ProductReview;
+use Modules\Reviews\Services\NotificationService;
 
 class ProductReviewApiController extends Controller
 {
@@ -78,6 +79,21 @@ class ProductReviewApiController extends Controller
             'status' => 'pending',
             'is_verified_purchase' => false,
         ]);
+
+        // In-app bell notification for every admin (user_id = null = broadcast).
+        app(NotificationService::class)->notify(
+            null,
+            'review.created',
+            'New product review received',
+            sprintf(
+                '%s left a %d★ review on %s: %s',
+                $request->user()->name ?? 'A customer',
+                $review->rating,
+                Product::find($productId)?->name ?? ('Product #' . $productId),
+                $review->title
+            ),
+            ['review_id' => $review->id, 'product_id' => $productId, 'url' => '/product-reviews'],
+        );
 
         return response()->json([
             'success' => true,

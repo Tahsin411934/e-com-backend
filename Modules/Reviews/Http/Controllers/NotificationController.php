@@ -16,7 +16,12 @@ class NotificationController extends Controller
 
     public function index()
     {
-        $users = User::orderBy('first_name')->orderBy('last_name')->get(['id', 'first_name', 'last_name'])->map(fn($u) => ['id' => $u->id, 'name' => $u->name]);
+        // Keep Eloquent models so the view can use $user->id / $user->name accessor.
+        $users = User::query()
+            ->select('id', 'first_name', 'last_name')
+            ->orderBy('first_name')
+            ->orderBy('last_name')
+            ->get();
         $types = Notification::query()->select('type')->distinct()->orderBy('type')->pluck('type');
         return view('reviews::notifications.index', compact('users', 'types'));
     }

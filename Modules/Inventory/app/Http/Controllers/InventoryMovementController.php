@@ -4,22 +4,18 @@ namespace Modules\Inventory\Http\Controllers;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
-use Modules\Inventory\Services\InventoryMovementService;
 use Modules\Inventory\Http\Requests\InventoryMovementRequest;
 use Modules\Inventory\Models\InventoryLocation;
+use Modules\Inventory\Services\InventoryMovementService;
 
 class InventoryMovementController extends Controller
 {
-    protected InventoryMovementService $movementService;
-
-    public function __construct(InventoryMovementService $movementService)
-    {
-        $this->movementService = $movementService;
-    }
+    public function __construct(private InventoryMovementService $movementService) {}
 
     public function index()
     {
         $locations = InventoryLocation::where('status', 'active')->orderBy('name')->get();
+
         return view('inventory::movements.index', compact('locations'));
     }
 
@@ -30,27 +26,21 @@ class InventoryMovementController extends Controller
 
     public function store(InventoryMovementRequest $request)
     {
-        $result = $this->movementService->saveMovement($request->validated());
-        return response()->json($result, $result['status'] === 'success' ? 200 : 500);
+        return $this->movementService->saveMovement($request->validated());
     }
 
     public function show($id)
     {
-        $result = $this->movementService->getMovementById($id);
-        return response()->json($result);
+        return $this->movementService->getMovementById((int) $id);
     }
 
     public function update(InventoryMovementRequest $request, $id)
     {
-        $data = $request->validated();
-        $data['movement_id'] = $id;
-        $result = $this->movementService->saveMovement($data);
-        return response()->json($result, $result['status'] === 'success' ? 200 : 500);
+        return $this->movementService->saveMovement($request->validated() + ['movement_id' => $id]);
     }
 
     public function destroy($id)
     {
-        $result = $this->movementService->deleteMovement($id);
-        return response()->json($result, $result['status'] === 'success' ? 200 : 500);
+        return $this->movementService->deleteMovement((int) $id);
     }
 }

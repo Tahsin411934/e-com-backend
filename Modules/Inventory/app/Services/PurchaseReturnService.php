@@ -2,15 +2,16 @@
 
 namespace Modules\Inventory\Services;
 
+use App\Helpers\ApiResponse;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
-use Modules\Inventory\Models\PurchaseReturn;
-use Modules\Inventory\Models\InventoryStock;
 use Modules\Inventory\Models\InventoryMovement;
-use Modules\Store\Models\Store;
-use Modules\Inventory\Models\Supplier;
 use Modules\Inventory\Models\PurchaseOrder;
+use Modules\Inventory\Models\PurchaseReturn;
+use Modules\Inventory\Models\Supplier;
+use Modules\Store\Models\Store;
 use Yajra\DataTables\DataTables;
 
 class PurchaseReturnService
@@ -24,7 +25,8 @@ class PurchaseReturnService
             ->editColumn('status', function (PurchaseReturn $return) {
                 $colors = ['draft' => 'gray', 'returned' => 'orange', 'partially_refunded' => 'yellow', 'refunded' => 'green', 'cancelled' => 'red'];
                 $color = $colors[$return->status] ?? 'gray';
-                return '<span class="px-2 py-1 text-xs font-medium rounded-full bg-' . $color . '-100 text-' . $color . '-800">' . ucfirst(str_replace('_', ' ', $return->status)) . '</span>';
+
+                return '<span class="px-2 py-1 text-xs font-medium rounded-full bg-'.$color.'-100 text-'.$color.'-800">'.ucfirst(str_replace('_', ' ', $return->status)).'</span>';
             })
             ->editColumn('refund_status', function (PurchaseReturn $return) {
                 return ucfirst($return->refund_status);
@@ -49,7 +51,7 @@ class PurchaseReturnService
             ->make(true);
     }
 
-    public function saveReturn(array $data): array
+    public function saveReturn(array $data): JsonResponse
     {
         try {
             return DB::transaction(function () use ($data) {
@@ -82,40 +84,45 @@ class PurchaseReturnService
                     $this->adjustStockForReturn($return);
                 }
 
-                return [
-                    'status' => 'success',
-                    'message' => $message,
-                    'return' => $return->fresh()->load(['supplier', 'store', 'purchaseOrder']),
-                ];
+                if ($returnId) {
+                    return ApiResponse::success($return->fresh()->load(['supplier', 'store', 'purchaseOrder']), $message);
+                }
+
+                return ApiResponse::created($return->fresh()->load(['supplier', 'store', 'purchaseOrder']), $message);
             });
         } catch (\Exception $e) {
-            return [
-                'status' => 'error',
-                'message' => 'Error saving purchase return: ' . $e->getMessage(),
-            ];
+            return ApiResponse::error('Error saving purchase return: '.$e->getMessage(), 500);
         }
     }
 
-    public function getReturnById(int $id): array
+    public function getReturnById(int $id): JsonResponse
     {
         try {
-            $return = PurchaseReturn::with(['supplier', 'store', 'purchaseOrder'])->findOrFail($id);
-            return ['status' => 'success', 'return' => $return];
-        } catch (\Exception $e) {
-            return ['status' => 'error', 'message' => 'Purchase return not found.'];
+            return ApiResponse::success(PurchaseReturn::with(['supplier', 'store', 'purchaseOrder'])->findOrFail($id));
+        } catch (\Exception) {
+            return ApiResponse::notFound('Purchase return not found.');
         }
     }
 
-    public function deleteReturn(int $id): array
+    /**
+     * Raw model lookup for edit views (findOrFail → automatic 404).
+     */
+    public function getReturnModel(int $id): PurchaseReturn
+    {
+        return PurchaseReturn::with(['supplier', 'store', 'purchaseOrder'])->findOrFail($id);
+    }
+
+    public function deleteReturn(int $id): JsonResponse
     {
         try {
             return DB::transaction(function () use ($id) {
                 $return = PurchaseReturn::findOrFail($id);
                 $return->delete();
-                return ['status' => 'success', 'message' => 'Purchase return deleted successfully.'];
+
+                return ApiResponse::success(null, 'Purchase return deleted successfully.');
             });
         } catch (\Exception $e) {
-            return ['status' => 'error', 'message' => 'Error deleting purchase return: ' . $e->getMessage()];
+            return ApiResponse::error('Error deleting purchase return: '.$e->getMessage(), 500);
         }
     }
 
@@ -145,7 +152,7 @@ class PurchaseReturnService
             'quantity' => 0,
             'reference_type' => 'purchase_return',
             'reference_id' => $return->id,
-            'note' => 'Purchase return: ' . $return->return_number . ' - ' . ($return->reason ?? ''),
+            'note' => 'Purchase return: '.$return->return_number.' - '.($return->reason ?? ''),
             'created_by' => Auth::id(),
         ]);
     }

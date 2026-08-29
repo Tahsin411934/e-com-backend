@@ -9,8 +9,8 @@ use Modules\Store\Models\Store;
 
 class PosRegister extends Model
 {
-    use HasFactory;
     use CustomSoftDeletes;
+    use HasFactory;
 
     protected $table = 'pos_registers';
 

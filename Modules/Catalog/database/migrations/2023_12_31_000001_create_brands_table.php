@@ -8,13 +8,13 @@ return new class extends Migration
 {
     public function up()
     {
-        if (!Schema::hasTable('brands')) {
+        if (! Schema::hasTable('brands')) {
             Schema::create('brands', function (Blueprint $table) {
                 $table->bigIncrements('id');
                 $table->string('name', 160);
                 $table->string('slug', 180)->unique();
                 $table->string('logo_url', 500)->nullable();
-                $table->enum('status', ['active','inactive'])->default('active');
+                $table->enum('status', ['active', 'inactive'])->default('active');
                 $table->timestamps();
                 $table->softDeletes();
 

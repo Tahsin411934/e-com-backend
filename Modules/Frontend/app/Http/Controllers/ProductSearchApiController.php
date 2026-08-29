@@ -2,6 +2,7 @@
 
 namespace Modules\Frontend\Http\Controllers;
 
+use App\Helpers\ApiResponse;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -13,8 +14,6 @@ class ProductSearchApiController extends Controller
     /**
      * Search products with fuzzy matching.
      *
-     * @param Request $request
-     * @return JsonResponse
      *
      * @queryParam q string required The search query (e.g. "smartphne" or "ipad")
      * @queryParam category_id int optional Filter by category ID
@@ -23,13 +22,13 @@ class ProductSearchApiController extends Controller
     public function search(Request $request): JsonResponse
     {
         $request->validate([
-            'q'           => 'required|string|max:255',
+            'q' => 'required|string|max:255',
             'category_id' => 'nullable|integer|exists:categories,id',
         ]);
 
-        $query      = $request->query('q', '');
+        $query = $request->query('q', '');
         $categoryId = $request->query('category_id');
-        $perPage    = $request->has('per_page') ? min((int) $request->query('per_page', 10), 40) : 10;
+        $perPage = $request->has('per_page') ? min((int) $request->query('per_page', 10), 40) : 10;
 
         $service = app(ProductSearchService::class);
         $searchResult = $service->search($query, $perPage, $categoryId ? (int) $categoryId : null);
@@ -39,8 +38,8 @@ class ProductSearchApiController extends Controller
         $response = [
             'success' => true,
             'message' => $products->isEmpty() ? 'No products found.' : 'Products found.',
-            'data'    => $products->isEmpty() ? [] : ProductSearchResource::collection($products),
-            'query'   => $query,
+            'data' => $products->isEmpty() ? [] : ProductSearchResource::collection($products),
+            'query' => $query,
         ];
 
         if ($categoryId) {
@@ -51,6 +50,6 @@ class ProductSearchApiController extends Controller
             $response['suggestion'] = $searchResult['suggestion'];
         }
 
-        return response()->json($response);
+        return ApiResponse::fromResult($response);
     }
 }

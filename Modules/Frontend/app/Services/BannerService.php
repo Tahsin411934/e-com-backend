@@ -2,7 +2,10 @@
 
 namespace Modules\Frontend\Services;
 
+use App\Helpers\ApiResponse;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Modules\Frontend\Models\Banner;
@@ -17,9 +20,11 @@ class BannerService
         return DataTables::of($query)
             ->editColumn('banner_image', function (Banner $banner) {
                 if ($banner->banner_image) {
-                    $url = asset('storage/' . $banner->banner_image);
-                    return '<img src="' . $url . '" alt="Banner" class="w-16 h-10 object-cover rounded" />';
+                    $url = asset('storage/'.$banner->banner_image);
+
+                    return '<img src="'.$url.'" alt="Banner" class="w-16 h-10 object-cover rounded" />';
                 }
+
                 return '-';
             })
             ->editColumn('status', function (Banner $banner) {
@@ -29,15 +34,16 @@ class BannerService
                 return $banner->created_at->format('d M Y H:i');
             })
             ->addColumn('action', function (Banner $banner) {
-                $editBtn = '<button onclick="bannerEdit(' . $banner->id . ')" class="bg-blue-900 text-white px-2 py-1 rounded text-sm hover:bg-blue-600 mr-2"><i class="fa fa-pencil"></i></button>';
-                $deleteBtn = '<button onclick="bannerDelete(' . $banner->id . ')" class="bg-red-500 text-white px-2 py-1 rounded text-sm hover:bg-red-600"><i class="fa fa-trash"></i></button>';
-                return '<div class="flex space-x-2 justify-center">' . $editBtn . $deleteBtn . '</div>';
+                $editBtn = '<button onclick="bannerEdit('.$banner->id.')" class="bg-blue-900 text-white px-2 py-1 rounded text-sm hover:bg-blue-600 mr-2"><i class="fa fa-pencil"></i></button>';
+                $deleteBtn = '<button onclick="bannerDelete('.$banner->id.')" class="bg-red-500 text-white px-2 py-1 rounded text-sm hover:bg-red-600"><i class="fa fa-trash"></i></button>';
+
+                return '<div class="flex space-x-2 justify-center">'.$editBtn.$deleteBtn.'</div>';
             })
             ->rawColumns(['banner_image', 'action'])
             ->make(true);
     }
 
-    public function saveBanner(array $data): array
+    public function saveBanner(array $data): JsonResponse
     {
         try {
             return DB::transaction(function () use ($data) {
@@ -47,7 +53,7 @@ class BannerService
                 unset($data['banner_id']);
 
                 // Handle image upload
-                if (isset($data['banner_image']) && $data['banner_image'] instanceof \Illuminate\Http\UploadedFile) {
+                if (isset($data['banner_image']) && $data['banner_image'] instanceof UploadedFile) {
                     // Delete old image if updating
                     if ($bannerId) {
                         $oldBanner = Banner::find($bannerId);
@@ -70,21 +76,14 @@ class BannerService
                     $message = 'Banner created successfully.';
                 }
 
-                return [
-                    'status' => 'success',
-                    'message' => $message,
-                    'banner' => $banner->fresh(),
-                ];
+                return ApiResponse::success($banner->fresh(), $message);
             });
         } catch (\Exception $e) {
-            return [
-                'status' => 'error',
-                'message' => 'Error saving banner: ' . $e->getMessage(),
-            ];
+            return ApiResponse::error('Error saving banner: '.$e->getMessage(), 500);
         }
     }
 
-    public function getBannerById(int $id): array
+    public function getBannerById(int $id): JsonResponse
     {
         try {
             $banner = Banner::findOrFail($id);
@@ -92,22 +91,16 @@ class BannerService
             // Add full image URL for the form
             $bannerArray = $banner->toArray();
             if ($banner->banner_image) {
-                $bannerArray['banner_image_url'] = asset('storage/' . $banner->banner_image);
+                $bannerArray['banner_image_url'] = asset('storage/'.$banner->banner_image);
             }
 
-            return [
-                'status' => 'success',
-                'banner' => $bannerArray,
-            ];
+            return ApiResponse::success($bannerArray);
         } catch (\Exception $e) {
-            return [
-                'status' => 'error',
-                'message' => 'Banner not found.',
-            ];
+            return ApiResponse::notFound('Banner not found.');
         }
     }
 
-    public function deleteBanner(int $id): array
+    public function deleteBanner(int $id): JsonResponse
     {
         try {
             return DB::transaction(function () use ($id) {
@@ -120,17 +113,10 @@ class BannerService
 
                 $banner->delete();
 
-                return [
-                    'status' => 'success',
-                    'message' => 'Banner deleted successfully.',
-                ];
+                return ApiResponse::success(null, 'Banner deleted successfully.');
             });
         } catch (\Exception $e) {
-            return [
-                'status' => 'error',
-                'message' => 'Error deleting banner: ' . $e->getMessage(),
-            ];
+            return ApiResponse::error('Error deleting banner: '.$e->getMessage(), 500);
         }
     }
-
 }

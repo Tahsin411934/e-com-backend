@@ -2,18 +2,21 @@
 
 namespace Modules\Cart\Services;
 
+use App\Helpers\ApiResponse;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Modules\Cart\Models\Cart;
 use Modules\Cart\Models\CartItem;
 use Modules\Cart\Models\Coupon;
+use Modules\Catalog\Models\ProductVariant;
+use Modules\Catalog\Models\VariantOption;
 use Yajra\DataTables\DataTables;
 
 class CartService
 {
-    public function __construct(protected CampaignPricingService $campaignPricing)
-    {
-    }
+    public function __construct(protected CampaignPricingService $campaignPricing) {}
+
     public function getCartDataTable(Request $request)
     {
         $query = Cart::query()
@@ -48,7 +51,7 @@ class CartService
             ->make(true);
     }
 
-    public function saveCart(array $data): array
+    public function saveCart(array $data): JsonResponse
     {
         try {
             return DB::transaction(function () use ($data) {
@@ -67,53 +70,35 @@ class CartService
                     $message = 'Cart created successfully.';
                 }
 
-                return [
-                    'status' => 'success',
-                    'message' => $message,
-                    'cart' => $cart->fresh()->load('items'),
-                ];
+                return ApiResponse::success($cart->fresh()->load('items'), $message);
             });
         } catch (\Exception $e) {
-            return [
-                'status' => 'error',
-                'message' => 'Error saving cart: ' . $e->getMessage(),
-            ];
+            return ApiResponse::error('Error saving cart: '.$e->getMessage(), 500);
         }
     }
 
-    public function getCartById(int $id): array
+    public function getCartById(int $id): JsonResponse
     {
         try {
             $cart = Cart::with(['user', 'store', 'items'])->findOrFail($id);
-            return [
-                'status' => 'success',
-                'cart' => $cart,
-            ];
+
+            return ApiResponse::success($cart);
         } catch (\Exception $e) {
-            return [
-                'status' => 'error',
-                'message' => 'Cart not found.',
-            ];
+            return ApiResponse::notFound('Cart not found.');
         }
     }
 
-    public function deleteCart(int $id): array
+    public function deleteCart(int $id): JsonResponse
     {
         try {
             return DB::transaction(function () use ($id) {
                 $cart = Cart::findOrFail($id);
                 $cart->delete();
 
-                return [
-                    'status' => 'success',
-                    'message' => 'Cart deleted successfully.',
-                ];
+                return ApiResponse::success(null, 'Cart deleted successfully.');
             });
         } catch (\Exception $e) {
-            return [
-                'status' => 'error',
-                'message' => 'Error deleting cart: ' . $e->getMessage(),
-            ];
+            return ApiResponse::error('Error deleting cart: '.$e->getMessage(), 500);
         }
     }
 
@@ -123,7 +108,7 @@ class CartService
             ->where('status', 'active')
             ->first();
 
-        if (!$cart) {
+        if (! $cart) {
             $cart = Cart::create([
                 'user_id' => $userId,
                 'store_id' => $storeId,
@@ -147,7 +132,7 @@ class CartService
         $cart->load(['items.variant', 'items.variantOption']);
 
         foreach ($cart->items as $item) {
-            if (!$item->variant) {
+            if (! $item->variant) {
                 continue;
             }
 
@@ -171,20 +156,20 @@ class CartService
         return $cart->fresh()->load('items.variant.product', 'items.variantOption');
     }
 
-    public function addToCart(array $data): array
+    public function addToCart(array $data): JsonResponse
     {
         try {
             return DB::transaction(function () use ($data) {
                 $cart = $this->getOrCreateCart($data['user_id'], $data['store_id'] ?? null);
 
                 // Find the variant - using direct class reference since import removed
-                $variant = \Modules\Catalog\Models\ProductVariant::findOrFail($data['variant_id']);
+                $variant = ProductVariant::findOrFail($data['variant_id']);
 
                 // Resolve the selected variant option (must belong to the variant)
                 $variantOptionId = $data['variant_option_id'] ?? null;
                 $variantOption = null;
                 if ($variantOptionId) {
-                    $candidate = \Modules\Catalog\Models\VariantOption::find($variantOptionId);
+                    $candidate = VariantOption::find($variantOptionId);
                     if ($candidate && $candidate->product_variant_id === $variant->id) {
                         $variantOption = $candidate;
                     }
@@ -224,21 +209,14 @@ class CartService
                 // Make sure the returned cart never carries stale prices.
                 $this->refreshCartPrices($cart);
 
-                return [
-                    'status' => 'success',
-                    'message' => $message,
-                    'cart' => $cart->fresh()->load('items.variant.product'),
-                ];
+                return ApiResponse::success($cart->fresh()->load('items.variant.product'), $message);
             });
         } catch (\Exception $e) {
-            return [
-                'status' => 'error',
-                'message' => 'Error adding to cart: ' . $e->getMessage(),
-            ];
+            return ApiResponse::error('Error adding to cart: '.$e->getMessage(), 500);
         }
     }
 
-    public function updateCartItem(int $itemId, array $data): array
+    public function updateCartItem(int $itemId, array $data): JsonResponse
     {
         try {
             return DB::transaction(function () use ($itemId, $data) {
@@ -250,21 +228,14 @@ class CartService
                 // Keep prices in sync with the current campaign/discount state.
                 $this->refreshCartPrices($item->cart);
 
-                return [
-                    'status' => 'success',
-                    'message' => 'Cart item updated successfully.',
-                    'cart' => $item->cart->fresh()->load('items.variant.product'),
-                ];
+                return ApiResponse::success($item->cart->fresh()->load('items.variant.product'), 'Cart item updated successfully.');
             });
         } catch (\Exception $e) {
-            return [
-                'status' => 'error',
-                'message' => 'Error updating cart item: ' . $e->getMessage(),
-            ];
+            return ApiResponse::error('Error updating cart item: '.$e->getMessage(), 500);
         }
     }
 
-    public function removeCartItem(int $itemId): array
+    public function removeCartItem(int $itemId): JsonResponse
     {
         try {
             return DB::transaction(function () use ($itemId) {
@@ -275,21 +246,14 @@ class CartService
                 // Keep the remaining items' prices in sync as well.
                 $this->refreshCartPrices($cart);
 
-                return [
-                    'status' => 'success',
-                    'message' => 'Item removed from cart successfully.',
-                    'cart' => $cart->fresh()->load('items.variant.product'),
-                ];
+                return ApiResponse::success($cart->fresh()->load('items.variant.product'), 'Item removed from cart successfully.');
             });
         } catch (\Exception $e) {
-            return [
-                'status' => 'error',
-                'message' => 'Error removing cart item: ' . $e->getMessage(),
-            ];
+            return ApiResponse::error('Error removing cart item: '.$e->getMessage(), 500);
         }
     }
 
-    public function applyCoupon(int $cartId, string $couponCode): array
+    public function applyCoupon(int $cartId, string $couponCode): JsonResponse
     {
         try {
             return DB::transaction(function () use ($cartId, $couponCode) {
@@ -299,82 +263,60 @@ class CartService
                     ->where('status', 'active')
                     ->first();
 
-                if (!$coupon) {
-                    return [
-                        'status' => 'error',
-                        'message' => 'Invalid coupon code.',
-                    ];
+                if (! $coupon) {
+                    return ApiResponse::error('Invalid coupon code.', 500);
                 }
 
-                if (!$coupon->isActive()) {
-                    return [
-                        'status' => 'error',
-                        'message' => 'This coupon is no longer valid.',
-                    ];
+                if (! $coupon->isActive()) {
+                    return ApiResponse::error('This coupon is no longer valid.', 500);
                 }
 
                 $cartTotal = $cart->items->sum(fn ($item) => $item->unit_price * $item->quantity);
 
                 if ($cartTotal < $coupon->minimum_order_amount) {
-                    return [
-                        'status' => 'error',
-                        'message' => 'Minimum order amount not met for this coupon.',
-                    ];
+                    return ApiResponse::error('Minimum order amount not met for this coupon.', 500);
                 }
 
-                return [
-                    'status' => 'success',
-                    'message' => 'Coupon applied successfully.',
-                    'coupon' => $coupon,
-                ];
+                return ApiResponse::success($coupon, 'Coupon applied successfully.');
             });
         } catch (\Exception $e) {
-            return [
-                'status' => 'error',
-                'message' => 'Error applying coupon: ' . $e->getMessage(),
-            ];
+            return ApiResponse::error('Error applying coupon: '.$e->getMessage(), 500);
         }
     }
 
-    public function removeCoupon(int $cartId): array
+    public function removeCoupon(int $cartId): JsonResponse
     {
         try {
             return DB::transaction(function () use ($cartId) {
                 $cart = Cart::findOrFail($cartId);
 
-                return [
-                    'status' => 'success',
-                    'message' => 'Coupon removed successfully.',
-                ];
+                return ApiResponse::success(null, 'Coupon removed successfully.');
             });
         } catch (\Exception $e) {
-            return [
-                'status' => 'error',
-                'message' => 'Error removing coupon: ' . $e->getMessage(),
-            ];
+            return ApiResponse::error('Error removing coupon: '.$e->getMessage(), 500);
         }
     }
 
-    public function syncCart(array $data): array
+    public function syncCart(array $data): JsonResponse
     {
         try {
             return DB::transaction(function () use ($data) {
                 $userId = $data['user_id'];
                 $items = $data['items'] ?? [];
-                
+
                 // Get or create cart for user
                 $cart = $this->getOrCreateCart($userId);
-                
+
                 // Use upsert to handle duplicates (update if exists, insert if not)
                 $itemsToUpsert = [];
                 foreach ($items as $itemData) {
-                    $variant = \Modules\Catalog\Models\ProductVariant::findOrFail($itemData['variant_id']);
+                    $variant = ProductVariant::findOrFail($itemData['variant_id']);
 
                     // Resolve the selected option (must belong to the variant)
                     $variantOptionId = $itemData['variant_option_id'] ?? null;
                     $variantOption = null;
                     if ($variantOptionId) {
-                        $candidate = \Modules\Catalog\Models\VariantOption::find($variantOptionId);
+                        $candidate = VariantOption::find($variantOptionId);
                         if ($candidate && $candidate->product_variant_id === $variant->id) {
                             $variantOption = $candidate;
                         }
@@ -396,25 +338,18 @@ class CartService
                         'updated_at' => now(),
                     ];
                 }
-                
+
                 // Upsert items (this will update existing or insert new)
-                \Modules\Cart\Models\CartItem::upsert(
+                CartItem::upsert(
                     $itemsToUpsert,
                     ['cart_id', 'variant_id', 'variant_option_id'],
                     ['quantity', 'unit_price', 'updated_at']
                 );
-                
-                return [
-                    'status' => 'success',
-                    'message' => 'Cart synced successfully.',
-                    'cart' => $cart->fresh()->load('items.variant.product'),
-                ];
+
+                return ApiResponse::success($cart->fresh()->load('items.variant.product'), 'Cart synced successfully.');
             });
         } catch (\Exception $e) {
-            return [
-                'status' => 'error',
-                'message' => 'Error syncing cart: ' . $e->getMessage(),
-            ];
+            return ApiResponse::error('Error syncing cart: '.$e->getMessage(), 500);
         }
     }
 }

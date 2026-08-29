@@ -22,7 +22,7 @@
         showUrl="{{ route('delivery-zones.show', ':id') }}"
         destroyUrl="{{ route('delivery-zones.destroy', ':id') }}"
         drawerTitle="Delivery Zone"
-        dataKey="zone"
+        dataKey="data"
         idField="zone_id"
         :order="[[0, 'asc']]"
     >

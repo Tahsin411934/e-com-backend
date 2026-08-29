@@ -2,6 +2,7 @@
 
 namespace Modules\Frontend\Http\Controllers;
 
+use App\Helpers\ApiResponse;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -21,7 +22,7 @@ class CustomerOrderApiController extends Controller
             ->get()
             ->map(fn (Order $order) => $this->summary($order));
 
-        return response()->json(['status' => 'success', 'orders' => $orders]);
+        return ApiResponse::fromResult(['status' => 'success', 'orders' => $orders]);
     }
 
     public function show(Request $request, Order $order): JsonResponse
@@ -34,7 +35,7 @@ class CustomerOrderApiController extends Controller
             'shipments.events' => fn ($query) => $query->orderBy('occurred_at'),
         ]);
 
-        return response()->json([
+        return ApiResponse::fromResult([
             'status' => 'success',
             'order' => array_merge($this->summary($order), [
                 'items' => $order->items->map(fn ($item) => [

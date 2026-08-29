@@ -2,6 +2,8 @@
 
 namespace Modules\Store\Services;
 
+use App\Helpers\ApiResponse;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Modules\Store\Models\Address;
@@ -15,7 +17,7 @@ class AddressService
 
         return DataTables::of($query)
             ->addColumn('user_name', function (Address $address) {
-                return $address->user?->first_name . ' ' . $address->user?->last_name ?? '-';
+                return $address->user?->first_name.' '.$address->user?->last_name ?? '-';
             })
             ->addColumn('store_name', function (Address $address) {
                 return $address->store?->name ?? '-';
@@ -40,7 +42,7 @@ class AddressService
             ->make(true);
     }
 
-    public function saveAddress(array $data): array
+    public function saveAddress(array $data): JsonResponse
     {
         try {
             return DB::transaction(function () use ($data) {
@@ -56,52 +58,35 @@ class AddressService
                     $message = 'Address created successfully.';
                 }
 
-                return [
-                    'status' => 'success',
-                    'message' => $message,
-                    'address' => $address->fresh(['user', 'store', 'country']),
-                ];
+                return ApiResponse::success($address->fresh(['user', 'store', 'country']), $message);
             });
         } catch (\Exception $e) {
-            return [
-                'status' => 'error',
-                'message' => 'Error saving address: ' . $e->getMessage(),
-            ];
+            return ApiResponse::error('Error saving address: '.$e->getMessage(), 500);
         }
     }
 
-    public function getAddressById(int $id): array
+    public function getAddressById(int $id): JsonResponse
     {
         try {
             $address = Address::with(['user', 'store', 'country'])->findOrFail($id);
-            return [
-                'status' => 'success',
-                'address' => $address,
-            ];
+
+            return ApiResponse::success($address);
         } catch (\Exception $e) {
-            return [
-                'status' => 'error',
-                'message' => 'Address not found.',
-            ];
+            return ApiResponse::notFound('Address not found.');
         }
     }
 
-    public function deleteAddress(int $id): array
+    public function deleteAddress(int $id): JsonResponse
     {
         try {
             return DB::transaction(function () use ($id) {
                 $address = Address::findOrFail($id);
                 $address->delete();
-                return [
-                    'status' => 'success',
-                    'message' => 'Address deleted successfully.',
-                ];
+
+                return ApiResponse::success(null, 'Address deleted successfully.');
             });
         } catch (\Exception $e) {
-            return [
-                'status' => 'error',
-                'message' => 'Error deleting address: ' . $e->getMessage(),
-            ];
+            return ApiResponse::error('Error deleting address: '.$e->getMessage(), 500);
         }
     }
 }

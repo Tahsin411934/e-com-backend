@@ -21,7 +21,7 @@
         showUrl="{{ route('coupons.show', ':id') }}"
         destroyUrl="{{ route('coupons.destroy', ':id') }}"
         drawerTitle="Coupon"
-        dataKey="coupon"
+        dataKey="data"
         idField="coupon_id"
     >
         <div class="mb-4">

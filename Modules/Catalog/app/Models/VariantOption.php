@@ -2,14 +2,15 @@
 
 namespace Modules\Catalog\Models;
 
+use App\Traits\CustomSoftDeletes;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use App\Traits\CustomSoftDeletes;
+use Modules\Inventory\Models\InventoryStock;
 
 class VariantOption extends Model
 {
-    use HasFactory;
     use CustomSoftDeletes;
+    use HasFactory;
 
     protected $table = 'variant_options';
 
@@ -47,7 +48,7 @@ class VariantOption extends Model
 
     public function inventoryStocks()
     {
-        return $this->hasMany(\Modules\Inventory\Models\InventoryStock::class, 'variant_option_id');
+        return $this->hasMany(InventoryStock::class, 'variant_option_id');
     }
 
     public function getStockAttribute(): int

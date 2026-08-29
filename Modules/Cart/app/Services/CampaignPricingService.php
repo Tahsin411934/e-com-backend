@@ -28,7 +28,9 @@ class CampaignPricingService
         $originalPrice = (float) $variant->sale_price + $optionAdjustment;
         $offer = $this->offerFor($variant);
 
-        if (!$offer) return ['price' => $originalPrice, 'original_price' => $originalPrice, 'discount_amount' => 0, 'campaign' => null];
+        if (! $offer) {
+            return ['price' => $originalPrice, 'original_price' => $originalPrice, 'discount_amount' => 0, 'campaign' => null];
+        }
 
         $price = match ($offer->discount_type) {
             'percentage' => $originalPrice * max(0, 1 - ((float) $offer->discount_value / 100)),
@@ -93,4 +95,3 @@ class CampaignPricingService
         ];
     }
 }
-

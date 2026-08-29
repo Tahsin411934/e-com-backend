@@ -4,22 +4,18 @@ namespace Modules\Catalog\Http\Controllers;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
-use Modules\Catalog\Services\CategoryService;
 use Modules\Catalog\Http\Requests\StoreCategoryRequest;
 use Modules\Catalog\Http\Requests\UpdateCategoryRequest;
+use Modules\Catalog\Services\CategoryService;
 
 class CategoryController extends Controller
 {
-    protected CategoryService $categoryService;
-
-    public function __construct(CategoryService $categoryService)
-    {
-        $this->categoryService = $categoryService;
-    }
+    public function __construct(private CategoryService $categoryService) {}
 
     public function index(Request $request)
     {
         $parents = $this->categoryService->getParentCategories();
+
         return view('catalog::categories', compact('parents'));
     }
 
@@ -30,27 +26,21 @@ class CategoryController extends Controller
 
     public function store(StoreCategoryRequest $request)
     {
-        $result = $this->categoryService->saveCategory($request->validated());
-        return response()->json($result);
+        return $this->categoryService->saveCategory($request->validated());
     }
 
     public function show($id)
     {
-        $result = $this->categoryService->getCategoryById($id);
-        return response()->json($result);
+        return $this->categoryService->getCategoryById((int) $id);
     }
 
     public function update(UpdateCategoryRequest $request, $id)
     {
-        $data = $request->validated();
-        $data['category_id'] = $id;
-        $result = $this->categoryService->saveCategory($data);
-        return response()->json($result);
+        return $this->categoryService->saveCategory($request->validated() + ['category_id' => $id]);
     }
 
     public function destroy($id)
     {
-        $result = $this->categoryService->deleteCategory($id);
-        return response()->json($result);
+        return $this->categoryService->deleteCategory((int) $id);
     }
 }

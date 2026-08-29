@@ -18,7 +18,7 @@ class PosRegisterRequest extends FormRequest
         return [
             'store_id' => 'required|exists:stores,id',
             'name' => 'required|string|max:160',
-            'code' => 'required|string|max:50|unique:pos_registers,code,' . $registerId,
+            'code' => 'required|string|max:50|unique:pos_registers,code,'.$registerId,
             'type' => 'required|in:counter,mobile,kiosk',
             'status' => 'required|in:active,inactive,offline',
         ];

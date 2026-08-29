@@ -2,6 +2,8 @@
 
 namespace Modules\Account\Services;
 
+use App\Helpers\ApiResponse;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -28,12 +30,12 @@ class AccountTransferService
             ->make(true);
     }
 
-    public function save(array $data): array
+    public function save(array $data): JsonResponse
     {
         try {
             return DB::transaction(function () use ($data) {
-                if (!empty($data['transfer_id'])) {
-                    return ['status' => 'error', 'message' => 'Posted transfers cannot be edited.'];
+                if (! empty($data['transfer_id'])) {
+                    return ApiResponse::error('Posted transfers cannot be edited.', 500);
                 }
 
                 $from = AccountAccount::findOrFail($data['from_account_id']);
@@ -41,7 +43,7 @@ class AccountTransferService
                 $amountOut = (float) $data['amount'] + (float) ($data['transfer_fee'] ?? 0);
 
                 if ((float) $from->current_balance < $amountOut) {
-                    return ['status' => 'error', 'message' => 'Insufficient balance in source account.'];
+                    return ApiResponse::error('Insufficient balance in source account.', 500);
                 }
 
                 $data['transfer_no'] = $this->generateTransferNo();
@@ -52,17 +54,17 @@ class AccountTransferService
                 $transaction = $this->transactionService->postTransfer($transfer, $from, $to);
                 $transfer->update(['transaction_id' => $transaction->id]);
 
-                return ['status' => 'success', 'message' => 'Transfer posted successfully.', 'transfer' => $transfer->fresh(['fromAccount', 'toAccount'])];
+                return ApiResponse::created($transfer->fresh(['fromAccount', 'toAccount']), 'Transfer posted successfully.');
             });
         } catch (\Exception $e) {
-            return ['status' => 'error', 'message' => 'Error saving transfer: ' . $e->getMessage()];
+            return ApiResponse::error('Error saving transfer: '.$e->getMessage(), 500);
         }
     }
 
     private function generateTransferNo(): string
     {
         do {
-            $number = 'TRF-' . now()->format('YmdHis') . '-' . strtoupper(Str::random(4));
+            $number = 'TRF-'.now()->format('YmdHis').'-'.strtoupper(Str::random(4));
         } while (AccountTransfer::where('transfer_no', $number)->exists());
 
         return $number;

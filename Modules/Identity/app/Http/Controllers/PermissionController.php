@@ -4,17 +4,12 @@ namespace Modules\Identity\Http\Controllers;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
-use Modules\Identity\Services\PermissionService;
 use Modules\Identity\Http\Requests\PermissionRequest;
+use Modules\Identity\Services\PermissionService;
 
 class PermissionController extends Controller
 {
-    protected PermissionService $permissionService;
-
-    public function __construct(PermissionService $permissionService)
-    {
-        $this->permissionService = $permissionService;
-    }
+    public function __construct(private PermissionService $permissionService) {}
 
     public function index()
     {
@@ -28,27 +23,21 @@ class PermissionController extends Controller
 
     public function store(PermissionRequest $request)
     {
-        $result = $this->permissionService->savePermission($request->validated());
-        return response()->json($result, $result['status'] === 'success' ? 200 : 500);
+        return $this->permissionService->savePermission($request->validated());
     }
 
     public function show($id)
     {
-        $result = $this->permissionService->getPermissionById($id);
-        return response()->json($result);
+        return $this->permissionService->getPermissionById((int) $id);
     }
 
     public function update(PermissionRequest $request, $id)
     {
-        $data = $request->validated();
-        $data['permission_id'] = $id;
-        $result = $this->permissionService->savePermission($data);
-        return response()->json($result, $result['status'] === 'success' ? 200 : 500);
+        return $this->permissionService->savePermission($request->validated() + ['permission_id' => $id]);
     }
 
     public function destroy($id)
     {
-        $result = $this->permissionService->deletePermission($id);
-        return response()->json($result, $result['status'] === 'success' ? 200 : 500);
+        return $this->permissionService->deletePermission((int) $id);
     }
 }

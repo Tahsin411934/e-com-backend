@@ -2,11 +2,9 @@
 
 namespace Modules\Reports\Services;
 
-use Illuminate\Support\Facades\DB;
 use Modules\Identity\Models\User;
 use Modules\Order\Models\Order;
 use Modules\Reports\Support\ReportFilters;
-use Modules\Store\Models\Address;
 
 /**
  * Customer reports: KPIs (new vs returning, lifetime value), top customers
@@ -41,6 +39,7 @@ class CustomerReportService extends BaseReportService
             ->selectRaw('COUNT(*) as orders, SUM(orders.grand_total) as spent')
             ->groupBy('users.id')->orderByDesc('spent')->limit($limit)->get()
             ->map(fn ($r) => ['customer' => trim($r->customer_name) ?: $r->email, 'orders' => (int) $r->orders, 'spent' => round((float) $r->spent, 2)]);
+
         return ['columns' => ['customer' => 'Customer', 'orders' => 'Orders', 'spent' => 'Total Spent'], 'rows' => $rows->all()];
     }
 
@@ -52,6 +51,7 @@ class CustomerReportService extends BaseReportService
             ->selectRaw('COUNT(*) as orders, SUM(orders.grand_total) as revenue')
             ->groupBy('addresses.city')->orderByDesc('revenue')->get()
             ->map(fn ($r) => ['city' => $r->city, 'orders' => (int) $r->orders, 'revenue' => round((float) $r->revenue, 2)]);
+
         return ['columns' => ['city' => 'City', 'orders' => 'Orders', 'revenue' => 'Revenue'], 'rows' => $rows->all()];
     }
 

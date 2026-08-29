@@ -100,7 +100,7 @@
                     Swal.fire('Error', res.message || 'Webhook not found.', 'error');
                     return;
                 }
-                fillWebhookForm(res.webhook);
+                fillWebhookForm(res.data);
                 $('#drawerTitle').text('Edit Webhook');
                 $('#drawerButtonText').text('Update Webhook');
                 openGlobalDrawer('webhookDrawer', 'webhookOverlay');

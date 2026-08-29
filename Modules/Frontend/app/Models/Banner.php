@@ -2,14 +2,14 @@
 
 namespace Modules\Frontend\Models;
 
+use App\Traits\CustomSoftDeletes;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use App\Traits\CustomSoftDeletes;
 
 class Banner extends Model
 {
-    use HasFactory;
     use CustomSoftDeletes;
+    use HasFactory;
 
     protected $table = 'banners';
 

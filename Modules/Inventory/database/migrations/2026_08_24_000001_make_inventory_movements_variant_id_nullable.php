@@ -12,7 +12,7 @@ return new class extends Migration
         // (aggregate entries) have no single variant and used to send a fake id = 0,
         // which violated the foreign key. Make it nullable so return/summary
         // movements can be stored without a variant.
-        if (!Schema::hasColumn('inventory_movements', 'variant_id')) {
+        if (! Schema::hasColumn('inventory_movements', 'variant_id')) {
             return;
         }
 

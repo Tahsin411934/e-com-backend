@@ -2,17 +2,17 @@
 
 namespace Modules\Identity\Http\Controllers;
 
+use App\Helpers\ApiResponse;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Password;
 use Illuminate\Support\Str;
-use Illuminate\Validation\ValidationException;
-use Modules\Identity\Models\User;
+use Modules\Identity\Http\Requests\ForgotPasswordRequest;
 use Modules\Identity\Http\Requests\LoginRequest;
 use Modules\Identity\Http\Requests\RegisterRequest;
-use Modules\Identity\Http\Requests\ForgotPasswordRequest;
 use Modules\Identity\Http\Requests\ResetPasswordRequest;
+use Modules\Identity\Models\User;
 
 class AuthController extends Controller
 {
@@ -41,12 +41,10 @@ class AuthController extends Controller
         // Create token
         $token = $user->createToken('auth_token')->plainTextToken;
 
-        return response()->json([
-            'status' => 'success',
-            'message' => 'Registration successful.',
+        return ApiResponse::created([
             'user' => $user->load('roles'),
             'token' => $token,
-        ], 201);
+        ], 'Registration successful.');
     }
 
     /**
@@ -58,20 +56,12 @@ class AuthController extends Controller
 
         $user = User::where('email', $credentials['email'])->first();
 
-        if (!$user || !Hash::check($credentials['password'], $user->password_hash)) {
-            return response()->json([
-                'status' => 'error',
-                'message' => 'The provided credentials are incorrect.',
-                'errors' => ['email' => ['The provided credentials are incorrect.']],
-            ], 401);
+        if (! $user || ! Hash::check($credentials['password'], $user->password_hash)) {
+            return ApiResponse::error('The provided credentials are incorrect.', 401, ['email' => ['The provided credentials are incorrect.']]);
         }
 
         if ($user->status !== 'active') {
-            return response()->json([
-                'status' => 'error',
-                'message' => 'Your account is inactive. Please contact support.',
-                'errors' => ['email' => ['Your account is inactive. Please contact support.']],
-            ], 403);
+            return ApiResponse::error('Your account is inactive. Please contact support.', 403, ['email' => ['Your account is inactive. Please contact support.']]);
         }
 
         $user->tokens()->delete();
@@ -79,12 +69,10 @@ class AuthController extends Controller
         $token = $user->createToken('auth_token')->plainTextToken;
         $user->update(['last_login_at' => now()]);
 
-        return response()->json([
-            'status' => 'success',
-            'message' => 'Login successful.',
+        return ApiResponse::success([
             'user' => $user->load('roles'),
             'token' => $token,
-        ], 200);
+        ], 'Login successful.');
     }
 
     /**
@@ -94,10 +82,7 @@ class AuthController extends Controller
     {
         $request->user()->currentAccessToken()->delete();
 
-        return response()->json([
-            'status' => 'success',
-            'message' => 'Logged out successfully.',
-        ]);
+        return ApiResponse::success(null, 'Logged out successfully.');
     }
 
     /**
@@ -107,10 +92,7 @@ class AuthController extends Controller
     {
         $request->user()->tokens()->delete();
 
-        return response()->json([
-            'status' => 'success',
-            'message' => 'Logged out from all devices.',
-        ]);
+        return ApiResponse::success(null, 'Logged out from all devices.');
     }
 
     /**
@@ -118,10 +100,7 @@ class AuthController extends Controller
      */
     public function user(Request $request)
     {
-        return response()->json([
-            'status' => 'success',
-            'user' => $request->user()->load('roles'),
-        ]);
+        return ApiResponse::success(['user' => $request->user()->load('roles')]);
     }
 
     /**
@@ -129,7 +108,7 @@ class AuthController extends Controller
      */
     public function me(Request $request)
     {
-        
+
         return $this->user($request);
     }
 
@@ -143,16 +122,10 @@ class AuthController extends Controller
         );
 
         if ($status === Password::RESET_THROTTLED) {
-            return response()->json([
-                'status' => 'error',
-                'message' => 'Too many reset attempts. Please try again later.',
-            ], 429);
+            return ApiResponse::error('Too many reset attempts. Please try again later.', 429);
         }
 
-        return response()->json([
-            'status' => 'success',
-            'message' => 'Password reset link sent to your email.',
-        ]);
+        return ApiResponse::success(null, 'Password reset link sent to your email.');
     }
 
     /**
@@ -169,16 +142,10 @@ class AuthController extends Controller
         );
 
         if ($status === Password::PASSWORD_RESET) {
-            return response()->json([
-                'status' => 'success',
-                'message' => 'Password reset successful.',
-            ]);
+            return ApiResponse::success(null, 'Password reset successful.');
         }
 
-        return response()->json([
-            'status' => 'error',
-            'message' => 'Failed to reset password. Please try again.',
-        ], 400);
+        return ApiResponse::error('Failed to reset password. Please try again.', 400);
     }
 
     /**
@@ -198,10 +165,7 @@ class AuthController extends Controller
         // Revoke all tokens except current
         $user->tokens()->where('id', '!=', $request->user()->currentAccessToken()->id)->delete();
 
-        return response()->json([
-            'status' => 'success',
-            'message' => 'Password changed successfully.',
-        ]);
+        return ApiResponse::success(null, 'Password changed successfully.');
     }
 
     /**
@@ -214,10 +178,6 @@ class AuthController extends Controller
         // Revoke old token
         $request->user()->currentAccessToken()->delete();
 
-        return response()->json([
-            'status' => 'success',
-            'message' => 'Token refreshed.',
-            'token' => $token,
-        ]);
+        return ApiResponse::success(['token' => $token], 'Token refreshed.');
     }
 }

@@ -341,9 +341,9 @@
 
         function searchCustomers(term) {
             $.get('{{ route("pos.sell.search-customers") }}', { term: term }, function(res) {
-                if (res.status === 'success' && res.customers.length > 0) {
+                if (res.status === 'success' && res.data.length > 0) {
                     $customerResults.empty().show();
-                    res.customers.forEach(c => {
+                    res.data.forEach(c => {
                         $customerResults.append(`
                             <a class="dropdown-item customer-item" href="#" data-id="${c.id}" data-name="${c.name}" data-phone="${c.phone}" style="padding: 8px 12px; border-radius: 6px; font-size: 13px;">
                                 <div class="d-flex align-items-center">
@@ -420,9 +420,9 @@
 
         function searchProducts(term) {
             $.get('{{ route("pos.sell.search-products") }}', { term: term }, function(res) {
-                if (res.status === 'success' && res.products.length > 0) {
+                if (res.status === 'success' && res.data.length > 0) {
                     $productResults.empty().show();
-                    res.products.forEach(p => {
+                    res.data.forEach(p => {
                         $productResults.append(`
                             <a class="dropdown-item product-item" href="#" 
                                 data-id="${p.id}" data-name="${p.name}" data-price="${p.price}" data-sku="${p.sku}" 
@@ -727,8 +727,8 @@
                 headers: { 'X-CSRF-TOKEN': '{{ csrf_token() }}' },
                 success: function(res) {
                     if (res.status === 'success') {
-                        $('#receiptNumber').text(res.receipt.receipt_number);
-                        $('#saleTotalDisplay').text('৳' + parseFloat(res.receipt.total).toFixed(2));
+                        $('#receiptNumber').text(res.data.receipt.receipt_number);
+                        $('#saleTotalDisplay').text('৳' + parseFloat(res.data.receipt.total).toFixed(2));
                         $('#saleSuccessModal').modal('show');
                         
                         // Reset cart
@@ -762,9 +762,9 @@
         $('#btnPosHistory').on('click', function() {
             const registerId = $('#pos_register_id').val();
             $.get('{{ route("pos.sell.recent-sales") }}', { register_id: registerId }, function(res) {
-                if (res.status === 'success' && res.sales.length > 0) {
+                if (res.status === 'success' && res.data.length > 0) {
                     let html = '';
-                    res.sales.forEach(s => {
+                    res.data.forEach(s => {
                         html += `
                             <tr>
                                 <td style="padding: 10px 16px; font-weight: 600;">${s.receipt_number}</td>

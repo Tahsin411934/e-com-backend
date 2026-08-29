@@ -1,11 +1,11 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use Modules\Order\Http\Controllers\CheckoutController;
+use Modules\Order\Http\Controllers\DeliveryController;
 use Modules\Order\Http\Controllers\OrderController;
 use Modules\Order\Http\Controllers\PaymentController;
 use Modules\Order\Http\Controllers\RefundController;
-use Modules\Order\Http\Controllers\CheckoutController;
-use Modules\Order\Http\Controllers\DeliveryController;
 
 Route::middleware(['auth', 'verified'])->group(function () {
     // Checkout - Convert cart to order

@@ -26,7 +26,7 @@
         showUrl="{{ route('frontend.announcement-bars.show', ':id') }}"
         destroyUrl="{{ route('frontend.announcement-bars.destroy', ':id') }}"
         drawerTitle="Announcement Bar"
-        dataKey="announcement_bar"
+        dataKey="data"
         idField="announcement_bar_id"
         :order="[[4, 'asc']]"
     >

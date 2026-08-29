@@ -27,10 +27,10 @@ class AppServiceProvider extends ServiceProvider
         $configuredPath = config('view.compiled');
         $compiledDir = is_string($configuredPath) ? $configuredPath : storage_path('framework/views');
 
-        if (!is_dir($compiledDir) || !is_writable($compiledDir)) {
-            $fallback = sys_get_temp_dir() . DIRECTORY_SEPARATOR . 'ecom_compiled_views';
+        if (! is_dir($compiledDir) || ! is_writable($compiledDir)) {
+            $fallback = sys_get_temp_dir().DIRECTORY_SEPARATOR.'ecom_compiled_views';
 
-            if (!is_dir($fallback)) {
+            if (! is_dir($fallback)) {
                 @mkdir($fallback, 0775, true);
             }
 

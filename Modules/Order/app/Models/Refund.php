@@ -2,13 +2,13 @@
 
 namespace Modules\Order\Models;
 
+use App\Traits\CustomSoftDeletes;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use App\Traits\CustomSoftDeletes;
 
 class Refund extends Model
 {
-    use HasFactory, CustomSoftDeletes;
+    use CustomSoftDeletes, HasFactory;
 
     protected $table = 'refunds';
 

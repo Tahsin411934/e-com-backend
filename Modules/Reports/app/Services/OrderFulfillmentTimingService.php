@@ -41,6 +41,7 @@ class OrderFulfillmentTimingService extends BaseReportService
             ->selectRaw('orders.order_number, deliveries.status, orders.grand_total as amount')
             ->orderByDesc('deliveries.created_at')->limit(200)->get()
             ->map(fn ($r) => ['order_number' => $r->order_number, 'status' => $r->status, 'amount' => round((float) $r->amount, 2)]);
+
         return ['columns' => ['order_number' => 'Order #', 'status' => 'Status', 'amount' => 'Amount'], 'rows' => $rows->all()];
     }
 
@@ -52,6 +53,7 @@ class OrderFulfillmentTimingService extends BaseReportService
             ->selectRaw('COUNT(DISTINCT orders.id) as orders, SUM(payments.amount) as amount')
             ->groupBy('type')->orderByDesc('amount')->get()
             ->map(fn ($r) => ['type' => $r->type, 'orders' => (int) $r->orders, 'amount' => round((float) $r->amount, 2)]);
+
         return ['columns' => ['type' => 'Payment Type', 'orders' => 'Orders', 'amount' => 'Amount'], 'rows' => $rows->all()];
     }
 }

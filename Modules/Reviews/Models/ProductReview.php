@@ -10,7 +10,7 @@ use Modules\Identity\Models\User;
 
 class ProductReview extends Model
 {
-    use HasFactory, CustomSoftDeletes;
+    use CustomSoftDeletes, HasFactory;
 
     protected $table = 'product_reviews';
 
@@ -23,6 +23,13 @@ class ProductReview extends Model
         'is_verified_purchase' => 'boolean',
     ];
 
-    public function product() { return $this->belongsTo(Product::class); }
-    public function user() { return $this->belongsTo(User::class); }
+    public function product()
+    {
+        return $this->belongsTo(Product::class);
+    }
+
+    public function user()
+    {
+        return $this->belongsTo(User::class);
+    }
 }

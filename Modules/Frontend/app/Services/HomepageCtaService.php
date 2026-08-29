@@ -2,6 +2,8 @@
 
 namespace Modules\Frontend\Services;
 
+use App\Helpers\ApiResponse;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
@@ -18,9 +20,11 @@ class HomepageCtaService
         return DataTables::of($query)
             ->editColumn('image', function (HomepageCta $cta) {
                 if ($cta->image) {
-                    $url = asset('storage/' . $cta->image);
-                    return '<img src="' . $url . '" alt="CTA Image" class="w-16 h-10 object-cover rounded" />';
+                    $url = asset('storage/'.$cta->image);
+
+                    return '<img src="'.$url.'" alt="CTA Image" class="w-16 h-10 object-cover rounded" />';
                 }
+
                 return '-';
             })
             ->editColumn('status', function (HomepageCta $cta) {
@@ -30,15 +34,16 @@ class HomepageCtaService
                 return $cta->created_at->format('d M Y H:i');
             })
             ->addColumn('action', function (HomepageCta $cta) {
-                $editBtn = '<button onclick="ctaEdit(' . $cta->id . ')" class="bg-blue-900 text-white px-2 py-1 rounded text-sm hover:bg-blue-600 mr-2"><i class="fa fa-pencil"></i></button>';
-                $deleteBtn = '<button onclick="ctaDelete(' . $cta->id . ')" class="bg-red-500 text-white px-2 py-1 rounded text-sm hover:bg-red-600"><i class="fa fa-trash"></i></button>';
-                return '<div class="flex space-x-2 justify-center">' . $editBtn . $deleteBtn . '</div>';
+                $editBtn = '<button onclick="ctaEdit('.$cta->id.')" class="bg-blue-900 text-white px-2 py-1 rounded text-sm hover:bg-blue-600 mr-2"><i class="fa fa-pencil"></i></button>';
+                $deleteBtn = '<button onclick="ctaDelete('.$cta->id.')" class="bg-red-500 text-white px-2 py-1 rounded text-sm hover:bg-red-600"><i class="fa fa-trash"></i></button>';
+
+                return '<div class="flex space-x-2 justify-center">'.$editBtn.$deleteBtn.'</div>';
             })
             ->rawColumns(['image', 'action'])
             ->make(true);
     }
 
-    public function saveCta(array $data): array
+    public function saveCta(array $data): JsonResponse
     {
         try {
             return DB::transaction(function () use ($data) {
@@ -82,45 +87,32 @@ class HomepageCtaService
                     $message = 'CTA created successfully.';
                 }
 
-                return [
-                    'status' => 'success',
-                    'message' => $message,
-                    'cta' => $cta->fresh(),
-                ];
+                return ApiResponse::success($cta->fresh(), $message);
             });
         } catch (\Exception $e) {
-            return [
-                'status' => 'error',
-                'message' => 'Error saving CTA: ' . $e->getMessage(),
-            ];
+            return ApiResponse::error('Error saving CTA: '.$e->getMessage(), 500);
         }
     }
 
-    public function getCtaById(int $id): array
+    public function getCtaById(int $id): JsonResponse
     {
         try {
             $cta = HomepageCta::findOrFail($id);
             $ctaArray = $cta->toArray();
             if ($cta->image) {
-                $ctaArray['image_url'] = asset('storage/' . $cta->image);
+                $ctaArray['image_url'] = asset('storage/'.$cta->image);
             }
             if ($cta->banner_image) {
-                $ctaArray['banner_image_url'] = asset('storage/' . $cta->banner_image);
+                $ctaArray['banner_image_url'] = asset('storage/'.$cta->banner_image);
             }
 
-            return [
-                'status' => 'success',
-                'cta' => $ctaArray,
-            ];
+            return ApiResponse::success($ctaArray);
         } catch (\Exception $e) {
-            return [
-                'status' => 'error',
-                'message' => 'CTA not found.',
-            ];
+            return ApiResponse::notFound('CTA not found.');
         }
     }
 
-    public function deleteCta(int $id): array
+    public function deleteCta(int $id): JsonResponse
     {
         try {
             return DB::transaction(function () use ($id) {
@@ -135,16 +127,10 @@ class HomepageCtaService
 
                 $cta->delete();
 
-                return [
-                    'status' => 'success',
-                    'message' => 'CTA deleted successfully.',
-                ];
+                return ApiResponse::success(null, 'CTA deleted successfully.');
             });
         } catch (\Exception $e) {
-            return [
-                'status' => 'error',
-                'message' => 'Error deleting CTA: ' . $e->getMessage(),
-            ];
+            return ApiResponse::error('Error deleting CTA: '.$e->getMessage(), 500);
         }
     }
 }

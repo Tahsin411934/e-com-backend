@@ -18,7 +18,7 @@
         showUrl="{{ route('account-categories.show', ':id') }}"
         destroyUrl="{{ route('account-categories.destroy', ':id') }}"
         drawerTitle="Category"
-        dataKey="category"
+        dataKey="data"
         idField="category_id"
         :order="[[0, 'asc']]"
     >

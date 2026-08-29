@@ -118,7 +118,7 @@
                     Swal.fire('Error', res.message || 'Review not found.', 'error');
                     return;
                 }
-                fillReviewForm(res.review);
+                fillReviewForm(res.data);
                 $('#drawerTitle').text('Edit Review');
                 $('#drawerButtonText').text('Update Review');
                 openGlobalDrawer('productReviewDrawer', 'productReviewOverlay');

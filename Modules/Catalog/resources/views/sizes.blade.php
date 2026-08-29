@@ -20,7 +20,7 @@
             showUrl="{{ route('sizes.show', ':id') }}"
             destroyUrl="{{ route('sizes.destroy', ':id') }}"
             drawerTitle="Size Group"
-            dataKey="size"
+            dataKey="data"
             idField="size_id"
             :order="[[3, 'desc']]"
         >

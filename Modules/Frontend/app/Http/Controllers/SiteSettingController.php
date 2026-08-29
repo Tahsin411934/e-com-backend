@@ -6,6 +6,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Validator;
+use Modules\Frontend\Models\Setting;
 use Modules\Frontend\Services\SettingService;
 
 class SiteSettingController extends Controller
@@ -18,13 +19,14 @@ class SiteSettingController extends Controller
     {
         $grouped = $this->settingService->getGrouped();
         $groups = ['general', 'social', 'contact', 'seo', 'marketing'];
+
         return view('frontend::site-settings', compact('grouped', 'groups'));
     }
 
     public function update(Request $request): RedirectResponse
     {
         // Fetch settings directly from DB
-        $settings = \Modules\Frontend\Models\Setting::all()->keyBy('key');
+        $settings = Setting::all()->keyBy('key');
         $data = $request->except('_token', '_method');
         $updateData = [];
 
@@ -56,7 +58,7 @@ class SiteSettingController extends Controller
                 // For image type: handle replace or keep existing.
                 // (Removal is handled above via remove_<key> checkbox.)
                 if ($type === 'image') {
-                    if (!$request->hasFile($key)) {
+                    if (! $request->hasFile($key)) {
                         continue; // No new file selected, keep the existing image
                     }
 
@@ -66,6 +68,7 @@ class SiteSettingController extends Controller
                     }
 
                     $updateData[$key] = $this->settingService->uploadImage($request->file($key));
+
                     continue;
                 }
 
@@ -78,7 +81,7 @@ class SiteSettingController extends Controller
             }
         }
 
-        if (!empty($updateData)) {
+        if (! empty($updateData)) {
             $this->settingService->updateBulk($updateData);
         }
 
@@ -97,12 +100,14 @@ class SiteSettingController extends Controller
     {
         $grouped = $this->settingService->getGrouped();
         $items = $grouped['marketing'] ?? [];
+
         return view('frontend::marketing.gtm', compact('items'));
     }
 
     public function seed(): RedirectResponse
     {
         $this->settingService->seedDefaults();
+
         return redirect()->route('frontend.site-settings.index')
             ->with('success', 'Default settings have been created!');
     }

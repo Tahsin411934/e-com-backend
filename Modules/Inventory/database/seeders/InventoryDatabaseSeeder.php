@@ -3,16 +3,15 @@
 namespace Modules\Inventory\Database\Seeders;
 
 use Illuminate\Database\Seeder;
-use Illuminate\Support\Str;
-use Modules\Inventory\Models\InventoryLocation;
-use Modules\Inventory\Models\InventoryStock;
-use Modules\Inventory\Models\InventoryMovement;
-use Modules\Inventory\Models\Supplier;
-use Modules\Inventory\Models\PurchaseOrder;
-use Modules\Inventory\Models\PurchaseOrderItem;
-use Modules\Store\Models\Store;
 use Modules\Catalog\Models\ProductVariant;
 use Modules\Identity\Models\User;
+use Modules\Inventory\Models\InventoryLocation;
+use Modules\Inventory\Models\InventoryMovement;
+use Modules\Inventory\Models\InventoryStock;
+use Modules\Inventory\Models\PurchaseOrder;
+use Modules\Inventory\Models\PurchaseOrderItem;
+use Modules\Inventory\Models\Supplier;
+use Modules\Store\Models\Store;
 
 class InventoryDatabaseSeeder extends Seeder
 {
@@ -21,8 +20,9 @@ class InventoryDatabaseSeeder extends Seeder
         $mainStore = Store::where('slug', 'main-store-dhaka')->first();
         $onlineStore = Store::where('slug', 'online-store')->first();
 
-        if (!$mainStore) {
+        if (! $mainStore) {
             $this->command->warn('No stores found. Skipping inventory seeding.');
+
             return;
         }
 
@@ -50,6 +50,7 @@ class InventoryDatabaseSeeder extends Seeder
         $variants = ProductVariant::all();
         if ($variants->isEmpty()) {
             $this->command->warn('No product variants found. Skipping stock seeding.');
+
             return;
         }
 
@@ -82,7 +83,7 @@ class InventoryDatabaseSeeder extends Seeder
 
         // ===== Inventory Movements =====
         $adminUser = User::where('email', 'admin@example.com')->first();
-        if ($warehouseLocation && !$variants->isEmpty()) {
+        if ($warehouseLocation && ! $variants->isEmpty()) {
             $firstVariant = $variants->first();
             InventoryMovement::create([
                 'location_id' => $warehouseLocation->id,
@@ -155,7 +156,7 @@ class InventoryDatabaseSeeder extends Seeder
         $adminUser = User::where('email', 'admin@example.com')->first();
         $variants = ProductVariant::all();
 
-        if ($adminUser && $variants->isNotEmpty() && !empty($createdSuppliers[0])) {
+        if ($adminUser && $variants->isNotEmpty() && ! empty($createdSuppliers[0])) {
             // PO 1 - Received
             $po1 = PurchaseOrder::firstOrCreate(
                 ['po_number' => 'PO-2026-0001'],
@@ -181,7 +182,7 @@ class InventoryDatabaseSeeder extends Seeder
                 PurchaseOrderItem::firstOrCreate([
                     'purchase_order_id' => $po1->id,
                     'variant_id' => $variant1->id,
-                ],[
+                ], [
                     'quantity' => 100,
                     'received_quantity' => 100,
                     'unit_cost' => 50.00,
@@ -217,7 +218,7 @@ class InventoryDatabaseSeeder extends Seeder
                 PurchaseOrderItem::firstOrCreate([
                     'purchase_order_id' => $po2->id,
                     'variant_id' => $variant2->id,
-                ],[
+                ], [
                     'quantity' => 50,
                     'received_quantity' => 0,
                     'unit_cost' => 70.00,
@@ -253,7 +254,7 @@ class InventoryDatabaseSeeder extends Seeder
                 PurchaseOrderItem::firstOrCreate([
                     'purchase_order_id' => $po3->id,
                     'variant_id' => $variant3->id,
-                ],[
+                ], [
                     'quantity' => 200,
                     'received_quantity' => 0,
                     'unit_cost' => 25.00,

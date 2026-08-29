@@ -111,7 +111,7 @@
                     Swal.fire('Error', res.message || 'Notification not found.', 'error');
                     return;
                 }
-                fillNotificationForm(res.notification);
+                fillNotificationForm(res.data);
                 $('#drawerTitle').text('Edit Notification');
                 openGlobalDrawer('notificationDrawer', 'notificationOverlay');
             }).fail(function (xhr) {

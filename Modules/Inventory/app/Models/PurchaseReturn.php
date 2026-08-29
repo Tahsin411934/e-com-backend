@@ -2,16 +2,16 @@
 
 namespace Modules\Inventory\Models;
 
+use App\Traits\CustomSoftDeletes;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use App\Traits\CustomSoftDeletes;
 use Modules\Identity\Models\User;
 use Modules\Store\Models\Store;
 
 class PurchaseReturn extends Model
 {
-    use HasFactory;
     use CustomSoftDeletes;
+    use HasFactory;
 
     protected $table = 'purchase_returns';
 
@@ -71,7 +71,7 @@ class PurchaseReturn extends Model
         // (guards against leftover rows with irregular numbers).
         do {
             $maxSequence++;
-            $number = 'PR-' . $year . '-' . str_pad($maxSequence, 4, '0', STR_PAD_LEFT);
+            $number = 'PR-'.$year.'-'.str_pad($maxSequence, 4, '0', STR_PAD_LEFT);
         } while (static::withTrashed()->where('return_number', $number)->exists());
 
         return $number;

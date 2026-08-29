@@ -2,6 +2,8 @@
 
 namespace Modules\Store\Services;
 
+use App\Helpers\ApiResponse;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -32,13 +34,13 @@ class StoreService
             ->make(true);
     }
 
-    public function saveStore(array $data): array
+    public function saveStore(array $data): JsonResponse
     {
         try {
             return DB::transaction(function () use ($data) {
                 $storeId = $data['store_id'] ?? null;
 
-                if (!isset($data['slug']) && isset($data['name'])) {
+                if (! isset($data['slug']) && isset($data['name'])) {
                     $data['slug'] = Str::slug($data['name']);
                 }
 
@@ -53,57 +55,39 @@ class StoreService
                     $message = 'Store created successfully.';
                 }
 
-                return [
-                    'status' => 'success',
-                    'message' => $message,
-                    'store' => $store->fresh(),
-                ];
+                return ApiResponse::success($store->fresh(), $message);
             });
         } catch (\Exception $e) {
-            return [
-                'status' => 'error',
-                'message' => 'Error saving store: ' . $e->getMessage(),
-            ];
+            return ApiResponse::error('Error saving store: '.$e->getMessage(), 500);
         }
     }
 
-    public function getStoreById(int $id): array
+    public function getStoreById(int $id): JsonResponse
     {
         try {
             $store = Store::findOrFail($id);
-            return [
-                'status' => 'success',
-                'store' => $store,
-            ];
+
+            return ApiResponse::success($store);
         } catch (\Exception $e) {
-            return [
-                'status' => 'error',
-                'message' => 'Store not found.',
-            ];
+            return ApiResponse::notFound('Store not found.');
         }
     }
 
-    public function deleteStore(int $id): array
+    public function deleteStore(int $id): JsonResponse
     {
         try {
             return DB::transaction(function () use ($id) {
                 $store = Store::findOrFail($id);
                 $store->delete();
 
-                return [
-                    'status' => 'success',
-                    'message' => 'Store deleted successfully.',
-                ];
+                return ApiResponse::success(null, 'Store deleted successfully.');
             });
         } catch (\Exception $e) {
-            return [
-                'status' => 'error',
-                'message' => 'Error deleting store: ' . $e->getMessage(),
-            ];
+            return ApiResponse::error('Error deleting store: '.$e->getMessage(), 500);
         }
     }
 
-    public function getAllActiveStores(): array
+    public function getAllActiveStores(): JsonResponse
     {
         return Store::where('status', 'active')->orderBy('name')->get()->toArray();
     }

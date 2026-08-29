@@ -2,6 +2,8 @@
 
 namespace Modules\Catalog\Services;
 
+use App\Helpers\ApiResponse;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
@@ -24,8 +26,9 @@ class CategoryService
             ->addColumn('image_preview', function (Category $category) {
                 $imageUrl = $this->getCategoryImageUrl($category);
                 if ($imageUrl) {
-                    return '<img src="' . $imageUrl . '" alt="' . e($category->name) . '" class="w-12 h-12 object-cover rounded" />';
+                    return '<img src="'.$imageUrl.'" alt="'.e($category->name).'" class="w-12 h-12 object-cover rounded" />';
                 }
+
                 return '-';
             })
             ->addColumn('parent', function (Category $category) {
@@ -54,15 +57,16 @@ class CategoryService
     public function getCategoryImageUrl(Category $category): ?string
     {
         if ($category->image) {
-            return asset('storage/' . $category->image);
+            return asset('storage/'.$category->image);
         }
         if ($category->image_url) {
             return $category->image_url;
         }
+
         return null;
     }
 
-    public function saveCategory(array $data): array
+    public function saveCategory(array $data): JsonResponse
     {
         try {
             return DB::transaction(function () use ($data) {
@@ -89,46 +93,33 @@ class CategoryService
                 if ($categoryId) {
                     $category = Category::findOrFail($categoryId);
                     $category->update($data);
-                    $message = 'Category updated successfully.';
-                } else {
-                    $category = Category::create($data);
-                    $message = 'Category created successfully.';
+
+                    return ApiResponse::success($category->fresh(), 'Category updated successfully.');
                 }
 
-                return [
-                    'status' => 'success',
-                    'message' => $message,
-                    'category' => $category->fresh(),
-                ];
+                $category = Category::create($data);
+
+                return ApiResponse::created($category->fresh(), 'Category created successfully.');
             });
         } catch (\Exception $e) {
-            return [
-                'status' => 'error',
-                'message' => 'Error saving category: ' . $e->getMessage(),
-            ];
+            return ApiResponse::error('Error saving category: '.$e->getMessage(), 500);
         }
     }
 
-    public function getCategoryById(int $id): array
+    public function getCategoryById(int $id): JsonResponse
     {
         try {
             $category = Category::findOrFail($id);
             $categoryArray = $category->toArray();
             $categoryArray['category_image_url'] = $this->getCategoryImageUrl($category);
 
-            return [
-                'status' => 'success',
-                'category' => $categoryArray,
-            ];
-        } catch (\Exception $e) {
-            return [
-                'status' => 'error',
-                'message' => 'Category not found.',
-            ];
+            return ApiResponse::success($categoryArray);
+        } catch (\Exception) {
+            return ApiResponse::notFound('Category not found.');
         }
     }
 
-    public function deleteCategory(int $id): array
+    public function deleteCategory(int $id): JsonResponse
     {
         try {
             return DB::transaction(function () use ($id) {
@@ -141,16 +132,10 @@ class CategoryService
 
                 $category->delete();
 
-                return [
-                    'status' => 'success',
-                    'message' => 'Category deleted successfully.',
-                ];
+                return ApiResponse::success(null, 'Category deleted successfully.');
             });
         } catch (\Exception $e) {
-            return [
-                'status' => 'error',
-                'message' => 'Error deleting category: ' . $e->getMessage(),
-            ];
+            return ApiResponse::error('Error deleting category: '.$e->getMessage(), 500);
         }
     }
 }

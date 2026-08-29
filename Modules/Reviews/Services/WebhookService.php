@@ -2,10 +2,12 @@
 
 namespace Modules\Reviews\Services;
 
+use App\Helpers\ApiResponse;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 use Modules\Reviews\Models\Webhook;
-use Modules\Reviews\Models\WebhookDelivery;
 use Yajra\DataTables\DataTables;
 
 class WebhookService
@@ -20,7 +22,7 @@ class WebhookService
                     $query->where('status', (string) $request->string('status'));
                 }
             })
-            ->editColumn('url', fn($w) => '<span class="text-xs break-all">'.e(\Illuminate\Support\Str::limit($w->url ?? '', 60)).'</span>')
+            ->editColumn('url', fn ($w) => '<span class="text-xs break-all">'.e(Str::limit($w->url ?? '', 60)).'</span>')
             ->editColumn('events', function ($w) {
                 $events = collect($w->events ?? []);
 
@@ -34,32 +36,51 @@ class WebhookService
 
                 return '<span class="px-2 py-0.5 rounded-full text-xs font-semibold '.$color.'">'.e(ucfirst($w->status)).'</span>';
             })
-            ->editColumn('created_at', fn($w) => $w->created_at?->format('d M Y H:i'))
-            ->addColumn('action', fn($w) => view('components.action-buttons', ['id' => $w->id, 'edit' => 'webhookEdit', 'delete' => 'webhookDelete'])->render())
+            ->editColumn('created_at', fn ($w) => $w->created_at?->format('d M Y H:i'))
+            ->addColumn('action', fn ($w) => view('components.action-buttons', ['id' => $w->id, 'edit' => 'webhookEdit', 'delete' => 'webhookDelete'])->render())
             ->rawColumns(['action', 'status', 'events', 'url'])->make(true);
     }
 
-    public function saveWebhook(array $data): array
+    public function saveWebhook(array $data): JsonResponse
     {
         try {
             return DB::transaction(function () use ($data) {
-                $id = $data['webhook_id'] ?? null; unset($data['webhook_id']);
-                if ($id) { $item = Webhook::findOrFail($id); $item->update($data); $msg = 'Webhook updated.'; }
-                else { $item = Webhook::create($data); $msg = 'Webhook created.'; }
-                return ['status' => 'success', 'message' => $msg, 'webhook' => $item->fresh()];
+                $id = $data['webhook_id'] ?? null;
+                unset($data['webhook_id']);
+
+                if ($id) {
+                    $item = Webhook::findOrFail($id);
+                    $item->update($data);
+
+                    return ApiResponse::success($item->fresh(), 'Webhook updated.');
+                }
+
+                $item = Webhook::create($data);
+
+                return ApiResponse::created($item->fresh(), 'Webhook created.');
             });
-        } catch (\Exception $e) { return ['status' => 'error', 'message' => 'Error: ' . $e->getMessage()]; }
+        } catch (\Exception $e) {
+            return ApiResponse::error('Error: '.$e->getMessage(), 500);
+        }
     }
 
-    public function getWebhookById(int $id): array
+    public function getWebhookById(int $id): JsonResponse
     {
-        try { $item = Webhook::with('deliveries')->findOrFail($id); return ['status' => 'success', 'webhook' => $item]; }
-        catch (\Exception $e) { return ['status' => 'error', 'message' => 'Webhook not found.']; }
+        try {
+            return ApiResponse::success(Webhook::with('deliveries')->findOrFail($id));
+        } catch (\Exception) {
+            return ApiResponse::notFound('Webhook not found.');
+        }
     }
 
-    public function deleteWebhook(int $id): array
+    public function deleteWebhook(int $id): JsonResponse
     {
-        try { Webhook::findOrFail($id)->delete(); return ['status' => 'success', 'message' => 'Webhook deleted.']; }
-        catch (\Exception $e) { return ['status' => 'error', 'message' => 'Error: ' . $e->getMessage()]; }
+        try {
+            Webhook::findOrFail($id)->delete();
+
+            return ApiResponse::success(null, 'Webhook deleted.');
+        } catch (\Exception $e) {
+            return ApiResponse::error('Error: '.$e->getMessage(), 500);
+        }
     }
 }

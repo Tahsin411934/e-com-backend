@@ -11,12 +11,11 @@ use Modules\Account\Models\AccountCategory;
 use Modules\Account\Models\AccountProductProfitSnapshot;
 use Modules\Account\Models\AccountTransaction;
 use Modules\Catalog\Models\ProductVariant;
+use Modules\Inventory\Models\PurchaseOrder;
 use Modules\Order\Models\Order;
-use Modules\Order\Models\OrderItem;
 use Modules\Order\Models\Payment;
 use Modules\Order\Models\Refund;
 use Modules\Pos\Models\PosSale;
-use Modules\Inventory\Models\PurchaseOrder;
 
 class AccountTransactionService
 {
@@ -61,7 +60,7 @@ class AccountTransactionService
 
     public function postPayment(Payment $payment): ?AccountTransaction
     {
-        if (!in_array($payment->status, ['authorized', 'captured'], true)) {
+        if (! in_array($payment->status, ['authorized', 'captured'], true)) {
             return null;
         }
 
@@ -187,7 +186,7 @@ class AccountTransactionService
 
     public function postPosSale(PosSale $sale): ?AccountTransaction
     {
-        if ($sale->status !== 'completed' || !in_array($sale->payment_status, ['paid', 'partial'], true)) {
+        if ($sale->status !== 'completed' || ! in_array($sale->payment_status, ['paid', 'partial'], true)) {
             return null;
         }
 
@@ -234,7 +233,7 @@ class AccountTransactionService
                     'account_id' => $account->id,
                     'entry_type' => 'debit',
                     'amount' => $amount,
-                    'memo' => ucfirst($method) . ' received',
+                    'memo' => ucfirst($method).' received',
                 ]);
                 $this->increaseAccountBalance($account, $amount);
             }
@@ -279,8 +278,8 @@ class AccountTransactionService
             return $transaction;
         });
     }
-    
-/**
+
+    /**
      * Owner/partner capital injection into the business.
      *
      * Money comes INTO the selected account (its current_balance INCREASES)
@@ -378,7 +377,7 @@ class AccountTransactionService
 
     public function syncOrderProfitSnapshots(?Order $order): void
     {
-        if (!$order) {
+        if (! $order) {
             return;
         }
 
@@ -505,8 +504,8 @@ class AccountTransactionService
         }
 
         return AccountAccount::create([
-            'name' => Str::headline($type) . ' Account',
-            'code' => strtoupper($type) . '-DEFAULT',
+            'name' => Str::headline($type).' Account',
+            'code' => strtoupper($type).'-DEFAULT',
             'type' => $type,
             'currency_code' => 'BDT',
             'opening_balance' => 0,
@@ -575,7 +574,7 @@ class AccountTransactionService
     private function generateTransactionNo(string $prefix): string
     {
         do {
-            $number = $prefix . '-' . now()->format('YmdHis') . '-' . strtoupper(Str::random(5));
+            $number = $prefix.'-'.now()->format('YmdHis').'-'.strtoupper(Str::random(5));
         } while (AccountTransaction::where('transaction_no', $number)->exists());
 
         return $number;

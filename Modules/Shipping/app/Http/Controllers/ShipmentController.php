@@ -14,9 +14,7 @@ use Modules\Store\Models\Store;
 
 class ShipmentController extends Controller
 {
-    public function __construct(protected ShipmentService $shipmentService)
-    {
-    }
+    public function __construct(protected ShipmentService $shipmentService) {}
 
     public function index()
     {
@@ -36,26 +34,21 @@ class ShipmentController extends Controller
 
     public function store(ShipmentRequest $request)
     {
-        $result = $this->shipmentService->saveShipment($request->validated());
-        return response()->json($result, $result['status'] === 'success' ? 200 : 500);
+        return $this->shipmentService->saveShipment($request->validated());
     }
 
-    public function show(int $id)
+    public function show($id)
     {
-        return response()->json($this->shipmentService->getShipmentById($id));
+        return $this->shipmentService->getShipmentById((int) $id);
     }
 
     public function update(ShipmentRequest $request, int $id)
     {
-        $data = $request->validated();
-        $data['shipment_id'] = $id;
-        $result = $this->shipmentService->saveShipment($data);
-        return response()->json($result, $result['status'] === 'success' ? 200 : 500);
+        return $this->shipmentService->saveShipment($request->validated() + ['shipment_id' => $id]);
     }
 
-    public function destroy(int $id)
+    public function destroy($id)
     {
-        $result = $this->shipmentService->deleteShipment($id);
-        return response()->json($result, $result['status'] === 'success' ? 200 : 500);
+        return $this->shipmentService->deleteShipment((int) $id);
     }
 }

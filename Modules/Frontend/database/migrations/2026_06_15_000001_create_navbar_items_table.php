@@ -8,7 +8,7 @@ return new class extends Migration
 {
     public function up()
     {
-        if (!Schema::hasTable('navbar_items')) {
+        if (! Schema::hasTable('navbar_items')) {
             Schema::create('navbar_items', function (Blueprint $table) {
                 $table->bigIncrements('id');
                 $table->string('name', 160);
@@ -16,7 +16,7 @@ return new class extends Migration
                 $table->string('url', 500)->nullable();
                 $table->string('icon', 255)->nullable();
                 $table->integer('sort_order')->default(0);
-                $table->enum('status', ['active','inactive'])->default('active');
+                $table->enum('status', ['active', 'inactive'])->default('active');
                 $table->timestamps();
                 $table->softDeletes();
 

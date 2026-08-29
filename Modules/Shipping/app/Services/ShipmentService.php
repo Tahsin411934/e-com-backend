@@ -2,6 +2,8 @@
 
 namespace Modules\Shipping\Services;
 
+use App\Helpers\ApiResponse;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Modules\Shipping\Models\DeliveryDriver;
@@ -36,7 +38,7 @@ class ShipmentService
             ->make(true);
     }
 
-    public function saveShipment(array $data): array
+    public function saveShipment(array $data): JsonResponse
     {
         try {
             return DB::transaction(function () use ($data) {
@@ -60,34 +62,35 @@ class ShipmentService
                     $message = 'Shipment created successfully.';
                 }
 
-                if (!$shipmentId || $oldStatus !== $shipment->status) {
+                if (! $shipmentId || $oldStatus !== $shipment->status) {
                     $this->recordStatusEvent($shipment, $oldStatus);
                 }
 
                 $this->syncDriverStatus($shipment, $oldDriverId);
 
-                return [
-                    'status' => 'success',
-                    'message' => $message,
-                    'shipment' => $shipment->fresh()->load(['order', 'store', 'zone', 'driver', 'shippingAddress']),
-                ];
+                if ($shipmentId) {
+                    return ApiResponse::success($shipment->fresh()->load(['order', 'store', 'zone', 'driver', 'shippingAddress']), $message);
+                }
+
+                return ApiResponse::created($shipment->fresh()->load(['order', 'store', 'zone', 'driver', 'shippingAddress']), $message);
             });
         } catch (\Exception $e) {
-            return ['status' => 'error', 'message' => 'Error saving shipment: ' . $e->getMessage()];
+            return ApiResponse::error('Error saving shipment: '.$e->getMessage(), 500);
         }
     }
 
-    public function getShipmentById(int $id): array
+    public function getShipmentById(int $id): JsonResponse
     {
         try {
-            $shipment = Shipment::with(['order', 'store', 'zone', 'driver', 'shippingAddress', 'events'])->findOrFail($id);
-            return ['status' => 'success', 'shipment' => $shipment];
-        } catch (\Exception $e) {
-            return ['status' => 'error', 'message' => 'Shipment not found.'];
+            return ApiResponse::success(
+                Shipment::with(['order', 'store', 'zone', 'driver', 'shippingAddress', 'events'])->findOrFail($id)
+            );
+        } catch (\Exception) {
+            return ApiResponse::notFound('Shipment not found.');
         }
     }
 
-    public function deleteShipment(int $id): array
+    public function deleteShipment(int $id): JsonResponse
     {
         try {
             return DB::transaction(function () use ($id) {
@@ -95,17 +98,18 @@ class ShipmentService
                 $driverId = $shipment->driver_id;
                 $shipment->delete();
                 $this->freeDriverIfIdle($driverId);
-                return ['status' => 'success', 'message' => 'Shipment deleted successfully.'];
+
+                return ApiResponse::success(null, 'Shipment deleted successfully.');
             });
         } catch (\Exception $e) {
-            return ['status' => 'error', 'message' => 'Error deleting shipment: ' . $e->getMessage()];
+            return ApiResponse::error('Error deleting shipment: '.$e->getMessage(), 500);
         }
     }
 
     protected function generateTrackingNumber(): string
     {
         do {
-            $number = 'SHP-' . now()->format('ymd') . '-' . strtoupper(substr(uniqid(), -6));
+            $number = 'SHP-'.now()->format('ymd').'-'.strtoupper(substr(uniqid(), -6));
         } while (Shipment::where('tracking_number', $number)->exists());
 
         return $number;
@@ -119,11 +123,11 @@ class ShipmentService
             'event_type' => $oldStatus ? 'status_update' : 'note',
             'status' => $shipment->status,
             'title' => $oldStatus
-                ? 'Shipment status changed to ' . str_replace('_', ' ', $shipment->status)
+                ? 'Shipment status changed to '.str_replace('_', ' ', $shipment->status)
                 : 'Shipment created',
             'description' => $oldStatus
-                ? 'Previous status: ' . str_replace('_', ' ', $oldStatus)
-                : 'Tracking number ' . $shipment->tracking_number . ' was created.',
+                ? 'Previous status: '.str_replace('_', ' ', $oldStatus)
+                : 'Tracking number '.$shipment->tracking_number.' was created.',
             'occurred_at' => now(),
         ]);
     }
@@ -134,7 +138,7 @@ class ShipmentService
             $this->freeDriverIfIdle($oldDriverId);
         }
 
-        if (!$shipment->driver_id) {
+        if (! $shipment->driver_id) {
             return;
         }
 
@@ -150,7 +154,7 @@ class ShipmentService
 
     protected function freeDriverIfIdle(?int $driverId): void
     {
-        if (!$driverId) {
+        if (! $driverId) {
             return;
         }
 
@@ -158,7 +162,7 @@ class ShipmentService
             ->whereIn('status', ['ready_for_pickup', 'out_for_delivery'])
             ->exists();
 
-        if (!$hasActiveShipment) {
+        if (! $hasActiveShipment) {
             DeliveryDriver::whereKey($driverId)->update(['status' => 'available']);
         }
     }

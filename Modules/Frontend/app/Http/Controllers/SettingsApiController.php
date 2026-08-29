@@ -2,6 +2,7 @@
 
 namespace Modules\Frontend\Http\Controllers;
 
+use App\Helpers\ApiResponse;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Routing\Controller;
 use Modules\Frontend\Services\SettingService;
@@ -22,7 +23,7 @@ class SettingsApiController extends Controller
 
                 // Convert relative storage paths (e.g. /storage/settings/xxx.png)
                 // to full absolute URLs so the frontend can display the image.
-                if ($item['type'] === 'image' && $value && !str_starts_with($value, 'http')) {
+                if ($item['type'] === 'image' && $value && ! str_starts_with($value, 'http')) {
                     $value = asset(ltrim($value, '/'));
                 }
 
@@ -30,7 +31,7 @@ class SettingsApiController extends Controller
             }
         }
 
-        return response()->json([
+        return ApiResponse::fromResult([
             'success' => true,
             'data' => $flat,
         ]);

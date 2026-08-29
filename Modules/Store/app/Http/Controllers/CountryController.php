@@ -4,17 +4,12 @@ namespace Modules\Store\Http\Controllers;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
-use Modules\Store\Services\CountryService;
 use Modules\Store\Http\Requests\CountryRequest;
+use Modules\Store\Services\CountryService;
 
 class CountryController extends Controller
 {
-    protected CountryService $countryService;
-
-    public function __construct(CountryService $countryService)
-    {
-        $this->countryService = $countryService;
-    }
+    public function __construct(private CountryService $countryService) {}
 
     public function index()
     {
@@ -28,27 +23,21 @@ class CountryController extends Controller
 
     public function store(CountryRequest $request)
     {
-        $result = $this->countryService->saveCountry($request->validated());
-        return response()->json($result, $result['status'] === 'success' ? 200 : 500);
+        return $this->countryService->saveCountry($request->validated());
     }
 
     public function show($id)
     {
-        $result = $this->countryService->getCountryById($id);
-        return response()->json($result);
+        return $this->countryService->getCountryById((int) $id);
     }
 
     public function update(CountryRequest $request, $id)
     {
-        $data = $request->validated();
-        $data['country_id'] = $id;
-        $result = $this->countryService->saveCountry($data);
-        return response()->json($result, $result['status'] === 'success' ? 200 : 500);
+        return $this->countryService->saveCountry($request->validated() + ['country_id' => $id]);
     }
 
     public function destroy($id)
     {
-        $result = $this->countryService->deleteCountry($id);
-        return response()->json($result, $result['status'] === 'success' ? 200 : 500);
+        return $this->countryService->deleteCountry((int) $id);
     }
 }

@@ -2,14 +2,14 @@
 
 namespace Modules\Cart\Models;
 
+use App\Traits\CustomSoftDeletes;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use App\Traits\CustomSoftDeletes;
 
 class Coupon extends Model
 {
-    use HasFactory;
     use CustomSoftDeletes;
+    use HasFactory;
 
     protected $table = 'coupons';
 
@@ -36,7 +36,7 @@ class Coupon extends Model
     public function isActive(): bool
     {
         return $this->status === 'active'
-            && (!$this->starts_at || $this->starts_at->isPast())
-            && (!$this->ends_at || $this->ends_at->isFuture());
+            && (! $this->starts_at || $this->starts_at->isPast())
+            && (! $this->ends_at || $this->ends_at->isFuture());
     }
 }

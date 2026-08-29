@@ -21,7 +21,7 @@
         showUrl="{{ route('account-accounts.show', ':id') }}"
         destroyUrl="{{ route('account-accounts.destroy', ':id') }}"
         drawerTitle="Account"
-        dataKey="account"
+        dataKey="data"
         idField="account_id"
     >
         <div class="mb-4"><x-form-input label="Name" name="name" id="accountaccount_name" required /></div>

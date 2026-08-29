@@ -4,22 +4,18 @@ namespace Modules\Pos\Http\Controllers;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
-use Modules\Pos\Services\PosRegisterService;
 use Modules\Pos\Http\Requests\PosRegisterRequest;
+use Modules\Pos\Services\PosRegisterService;
 use Modules\Store\Models\Store;
 
 class PosRegisterController extends Controller
 {
-    protected PosRegisterService $registerService;
-
-    public function __construct(PosRegisterService $registerService)
-    {
-        $this->registerService = $registerService;
-    }
+    public function __construct(private PosRegisterService $registerService) {}
 
     public function index()
     {
         $stores = Store::where('status', 'active')->orderBy('name')->get();
+
         return view('pos::registers.index', compact('stores'));
     }
 
@@ -30,27 +26,21 @@ class PosRegisterController extends Controller
 
     public function store(PosRegisterRequest $request)
     {
-        $result = $this->registerService->saveRegister($request->validated());
-        return response()->json($result, $result['status'] === 'success' ? 200 : 500);
+        return $this->registerService->saveRegister($request->validated());
     }
 
     public function show($id)
     {
-        $result = $this->registerService->getRegisterById($id);
-        return response()->json($result);
+        return $this->registerService->getRegisterById((int) $id);
     }
 
     public function update(PosRegisterRequest $request, $id)
     {
-        $data = $request->validated();
-        $data['register_id'] = $id;
-        $result = $this->registerService->saveRegister($data);
-        return response()->json($result, $result['status'] === 'success' ? 200 : 500);
+        return $this->registerService->saveRegister($request->validated() + ['register_id' => $id]);
     }
 
     public function destroy($id)
     {
-        $result = $this->registerService->deleteRegister($id);
-        return response()->json($result, $result['status'] === 'success' ? 200 : 500);
+        return $this->registerService->deleteRegister((int) $id);
     }
 }

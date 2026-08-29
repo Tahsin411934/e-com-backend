@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class AccountTransactionLine extends Model
 {
-    use HasFactory, CustomSoftDeletes;
+    use CustomSoftDeletes, HasFactory;
 
     protected $table = 'account_transaction_lines';
 

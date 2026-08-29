@@ -39,6 +39,7 @@ class ProductPerformanceService extends BaseReportService
 
         $rows = $sold->map(function ($row) use ($returned) {
             $r = $returned->get($row->product_id);
+
             return ['product_name' => $row->product_name, 'qty_sold' => (int) $row->qty, 'refund_count' => (int) ($r->refund_count ?? 0), 'refund_amount' => round((float) ($r->refund_amount ?? 0), 2), 'return_rate' => (int) $row->qty > 0 ? round(((int) ($r->refund_count ?? 0) / (int) $row->qty) * 100, 2) : 0];
         })->sortByDesc('refund_amount')->values();
 
@@ -62,7 +63,8 @@ class ProductPerformanceService extends BaseReportService
         $rows = $variants->map(function ($v) use ($cartAdds, $purchased) {
             $added = (int) ($cartAdds->get($v->id)->cart_qty ?? 0);
             $bought = (int) ($purchased->get($v->id)->purchased_qty ?? 0);
-            return ['variant' => ($v->product?->name ?? '-') . ' / ' . ($v->name ?? '-'), 'cart_adds' => $added, 'purchased' => $bought, 'conversion_rate' => $added > 0 ? round(($bought / $added) * 100, 2) : 0];
+
+            return ['variant' => ($v->product?->name ?? '-').' / '.($v->name ?? '-'), 'cart_adds' => $added, 'purchased' => $bought, 'conversion_rate' => $added > 0 ? round(($bought / $added) * 100, 2) : 0];
         })->sortByDesc('cart_adds')->values();
 
         return ['note' => 'Product views are not tracked; funnel is add-to-cart → purchase.', 'columns' => ['variant' => 'Product/Variant', 'cart_adds' => 'Cart Adds', 'purchased' => 'Purchased', 'conversion_rate' => 'Conversion %'], 'rows' => $rows->all()];
@@ -78,10 +80,14 @@ class ProductPerformanceService extends BaseReportService
         $vp = ProductVariant::whereIn('id', $stock->pluck('variant_id'))->pluck('product_id', 'id');
 
         $byProduct = collect();
-        foreach ($stock as $s) { $pid = $vp->get($s->variant_id); $byProduct->put($pid, (float) $byProduct->get($pid, 0) + (float) $s->on_hand); }
+        foreach ($stock as $s) {
+            $pid = $vp->get($s->variant_id);
+            $byProduct->put($pid, (float) $byProduct->get($pid, 0) + (float) $s->on_hand);
+        }
 
         $rows = $sold->map(function ($row) use ($byProduct) {
             $avg = (float) $byProduct->get($row->product_id, 0);
+
             return ['product_name' => $row->product_name, 'qty_sold' => (int) $row->qty, 'avg_stock' => $avg, 'turnover' => $avg > 0 ? round((int) $row->qty / $avg, 2) : 0];
         })->sortByDesc('qty_sold')->values();
 

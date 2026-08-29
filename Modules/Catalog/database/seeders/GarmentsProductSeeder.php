@@ -3,14 +3,13 @@
 namespace Modules\Catalog\Database\Seeders;
 
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Str;
 use Modules\Catalog\Models\Brand;
 use Modules\Catalog\Models\Category;
 use Modules\Catalog\Models\Product;
-use Modules\Catalog\Models\ProductVariant;
 use Modules\Catalog\Models\ProductImage;
-use Modules\Frontend\Models\NavbarItem;
+use Modules\Catalog\Models\ProductVariant;
 use Modules\Frontend\Models\SubnavbarItem;
-use Illuminate\Support\Str;
 
 class GarmentsProductSeeder extends Seeder
 {
@@ -1295,22 +1294,36 @@ class GarmentsProductSeeder extends Seeder
             $colorForProduct = null;
             // Determine color based on product name
             $productNameLower = strtolower($pData['name']);
-            if (str_contains($productNameLower, 'white')) $colorForProduct = ['color' => 'White', 'color_hex' => 'FFFFFF'];
-            elseif (str_contains($productNameLower, 'black')) $colorForProduct = ['color' => 'Black', 'color_hex' => '111827'];
-            elseif (str_contains($productNameLower, 'blue') || str_contains($productNameLower, 'navy')) $colorForProduct = ['color' => 'Blue', 'color_hex' => '1E40AF'];
-            elseif (str_contains($productNameLower, 'red') || str_contains($productNameLower, 'maroon')) $colorForProduct = ['color' => 'Red', 'color_hex' => 'DC2626'];
-            elseif (str_contains($productNameLower, 'green') || str_contains($productNameLower, 'olive')) $colorForProduct = ['color' => 'Green', 'color_hex' => '16A34A'];
-            elseif (str_contains($productNameLower, 'grey') || str_contains($productNameLower, 'gray')) $colorForProduct = ['color' => 'Grey', 'color_hex' => '6B7280'];
-            elseif (str_contains($productNameLower, 'brown')) $colorForProduct = ['color' => 'Brown', 'color_hex' => '92400E'];
-            elseif (str_contains($productNameLower, 'pink')) $colorForProduct = ['color' => 'Pink', 'color_hex' => 'EC4899'];
-            elseif (str_contains($productNameLower, 'purple')) $colorForProduct = ['color' => 'Purple', 'color_hex' => '7C3AED'];
-            elseif (str_contains($productNameLower, 'yellow')) $colorForProduct = ['color' => 'Yellow', 'color_hex' => 'EAB308'];
-            elseif (str_contains($productNameLower, 'orange')) $colorForProduct = ['color' => 'Orange', 'color_hex' => 'EA580C'];
-            elseif (str_contains($productNameLower, 'beige') || str_contains($productNameLower, 'off-white')) $colorForProduct = ['color' => 'Beige', 'color_hex' => 'F5F5DC'];
-            else $colorForProduct = null;
+            if (str_contains($productNameLower, 'white')) {
+                $colorForProduct = ['color' => 'White', 'color_hex' => 'FFFFFF'];
+            } elseif (str_contains($productNameLower, 'black')) {
+                $colorForProduct = ['color' => 'Black', 'color_hex' => '111827'];
+            } elseif (str_contains($productNameLower, 'blue') || str_contains($productNameLower, 'navy')) {
+                $colorForProduct = ['color' => 'Blue', 'color_hex' => '1E40AF'];
+            } elseif (str_contains($productNameLower, 'red') || str_contains($productNameLower, 'maroon')) {
+                $colorForProduct = ['color' => 'Red', 'color_hex' => 'DC2626'];
+            } elseif (str_contains($productNameLower, 'green') || str_contains($productNameLower, 'olive')) {
+                $colorForProduct = ['color' => 'Green', 'color_hex' => '16A34A'];
+            } elseif (str_contains($productNameLower, 'grey') || str_contains($productNameLower, 'gray')) {
+                $colorForProduct = ['color' => 'Grey', 'color_hex' => '6B7280'];
+            } elseif (str_contains($productNameLower, 'brown')) {
+                $colorForProduct = ['color' => 'Brown', 'color_hex' => '92400E'];
+            } elseif (str_contains($productNameLower, 'pink')) {
+                $colorForProduct = ['color' => 'Pink', 'color_hex' => 'EC4899'];
+            } elseif (str_contains($productNameLower, 'purple')) {
+                $colorForProduct = ['color' => 'Purple', 'color_hex' => '7C3AED'];
+            } elseif (str_contains($productNameLower, 'yellow')) {
+                $colorForProduct = ['color' => 'Yellow', 'color_hex' => 'EAB308'];
+            } elseif (str_contains($productNameLower, 'orange')) {
+                $colorForProduct = ['color' => 'Orange', 'color_hex' => 'EA580C'];
+            } elseif (str_contains($productNameLower, 'beige') || str_contains($productNameLower, 'off-white')) {
+                $colorForProduct = ['color' => 'Beige', 'color_hex' => 'F5F5DC'];
+            } else {
+                $colorForProduct = null;
+            }
 
             foreach ($pData['variants'] as $i => $variantName) {
-                $sku = strtoupper(Str::slug($pData['slug'])) . '-' . ($i + 1);
+                $sku = strtoupper(Str::slug($pData['slug'])).'-'.($i + 1);
                 $price = $pData['price'];
 
                 // Add price variation for sizes
@@ -1338,7 +1351,7 @@ class GarmentsProductSeeder extends Seeder
                         'cost_price' => (int) round($price * $sizeMultiplier * 0.6),
                         'track_inventory' => true,
                         'status' => 'active',
-                        'attributes' => !empty($attributes) ? $attributes : null,
+                        'attributes' => ! empty($attributes) ? $attributes : null,
                     ]
                 );
             }
@@ -1360,20 +1373,20 @@ class GarmentsProductSeeder extends Seeder
 
         // Assign some existing products to Sale
         if ($saleSubnavbarId) {
-            $saleSlugs = ['classic-white-cotton-tshirt', 'black-edition-premium-tee', 'striped-casual-blue-tee', 
-                          'white-formal-shirt', 'blue-checkered-casual-shirt', 'white-cotton-kurti-embroidered',
-                          'black-palazzo-pants', 'cotton-hijab-multipack', 'deodorant-spray-200ml'];
+            $saleSlugs = ['classic-white-cotton-tshirt', 'black-edition-premium-tee', 'striped-casual-blue-tee',
+                'white-formal-shirt', 'blue-checkered-casual-shirt', 'white-cotton-kurti-embroidered',
+                'black-palazzo-pants', 'cotton-hijab-multipack', 'deodorant-spray-200ml'];
             Product::whereIn('slug', $saleSlugs)->update(['subnavbar_item_id' => $saleSubnavbarId]);
         }
 
         // Assign some products to New Arrivals
         if ($newArrivalsSubnavbarId) {
             $newSlugs = ['navy-blue-polo-tshirt', 'black-slim-fit-shirt', 'green-embroidered-panjabi-set',
-                         'black-abaya-embroidered', 'gold-digital-smart-watch', 'floral-maxi-dress'];
+                'black-abaya-embroidered', 'gold-digital-smart-watch', 'floral-maxi-dress'];
             Product::whereIn('slug', $newSlugs)->update(['subnavbar_item_id' => $newArrivalsSubnavbarId]);
         }
 
         $this->command->info('Garments product seeder completed successfully!');
-        $this->command->info('Total products seeded: ' . count($products));
+        $this->command->info('Total products seeded: '.count($products));
     }
 }

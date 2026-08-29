@@ -2,13 +2,18 @@
 
 namespace Modules\Order\Models;
 
+use App\Traits\CustomSoftDeletes;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use App\Traits\CustomSoftDeletes;
+use Modules\Cart\Models\Coupon;
+use Modules\Identity\Models\User;
+use Modules\Shipping\Models\Shipment;
+use Modules\Store\Models\Address;
+use Modules\Store\Models\Store;
 
 class Order extends Model
 {
-    use HasFactory, CustomSoftDeletes;
+    use CustomSoftDeletes, HasFactory;
 
     protected $table = 'orders';
 
@@ -32,12 +37,12 @@ class Order extends Model
 
     public function user()
     {
-        return $this->belongsTo(\Modules\Identity\Models\User::class);
+        return $this->belongsTo(User::class);
     }
 
     public function store()
     {
-        return $this->belongsTo(\Modules\Store\Models\Store::class);
+        return $this->belongsTo(Store::class);
     }
 
     public function items()
@@ -52,7 +57,7 @@ class Order extends Model
 
     public function shipments()
     {
-        return $this->hasMany(\Modules\Shipping\Models\Shipment::class);
+        return $this->hasMany(Shipment::class);
     }
 
     public function payments()
@@ -67,16 +72,16 @@ class Order extends Model
 
     public function coupon()
     {
-        return $this->belongsTo(\Modules\Cart\Models\Coupon::class);
+        return $this->belongsTo(Coupon::class);
     }
 
     public function billingAddress()
     {
-        return $this->belongsTo(\Modules\Store\Models\Address::class, 'billing_address_id');
+        return $this->belongsTo(Address::class, 'billing_address_id');
     }
 
     public function shippingAddress()
     {
-        return $this->belongsTo(\Modules\Store\Models\Address::class, 'shipping_address_id');
+        return $this->belongsTo(Address::class, 'shipping_address_id');
     }
 }

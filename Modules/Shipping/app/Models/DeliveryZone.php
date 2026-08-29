@@ -2,15 +2,15 @@
 
 namespace Modules\Shipping\Models;
 
+use App\Traits\CustomSoftDeletes;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use App\Traits\CustomSoftDeletes;
 use Modules\Store\Models\Country;
 use Modules\Store\Models\Store;
 
 class DeliveryZone extends Model
 {
-    use HasFactory, CustomSoftDeletes;
+    use CustomSoftDeletes, HasFactory;
 
     protected $table = 'delivery_zones';
 

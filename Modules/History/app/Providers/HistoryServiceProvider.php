@@ -2,9 +2,9 @@
 
 namespace Modules\History\Providers;
 
-use Nwidart\Modules\Support\ModuleServiceProvider;
 use Illuminate\Console\Scheduling\Schedule;
 use Modules\History\Observers\HistoryObserver;
+use Nwidart\Modules\Support\ModuleServiceProvider;
 
 class HistoryServiceProvider extends ModuleServiceProvider
 {
@@ -48,8 +48,8 @@ class HistoryServiceProvider extends ModuleServiceProvider
 
     /**
      * Define module schedules.
-     * 
-     * @param $schedule
+     *
+     * @param  $schedule
      */
     // protected function configureSchedules(Schedule $schedule): void
     // {

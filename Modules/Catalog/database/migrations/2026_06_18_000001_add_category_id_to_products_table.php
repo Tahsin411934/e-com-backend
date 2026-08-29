@@ -8,7 +8,7 @@ return new class extends Migration
 {
     public function up()
     {
-        if (!Schema::hasColumn('products', 'category_id')) {
+        if (! Schema::hasColumn('products', 'category_id')) {
             Schema::table('products', function (Blueprint $table) {
                 $table->unsignedBigInteger('category_id')->nullable()->after('brand_id');
                 $table->foreign('category_id')->references('id')->on('categories')->onDelete('set null');

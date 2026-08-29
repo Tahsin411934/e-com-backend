@@ -9,8 +9,8 @@ use Modules\Catalog\Models\Product;
 
 class PosSaleItem extends Model
 {
-    use HasFactory;
     use CustomSoftDeletes;
+    use HasFactory;
 
     protected $table = 'pos_sale_items';
 

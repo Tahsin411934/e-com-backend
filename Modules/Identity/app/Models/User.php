@@ -5,13 +5,12 @@ namespace Modules\Identity\Models;
 use App\Traits\CustomSoftDeletes;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
+use Illuminate\Support\Collection;
 use Laravel\Sanctum\HasApiTokens;
-use Modules\Identity\Models\Role;
-use Modules\Identity\Models\UserSession;
 
 class User extends Authenticatable
 {
-    use HasApiTokens, HasFactory, CustomSoftDeletes;
+    use CustomSoftDeletes, HasApiTokens, HasFactory;
 
     protected $table = 'users';
 
@@ -35,7 +34,7 @@ class User extends Authenticatable
 
     public function getNameAttribute(): string
     {
-        return trim(($this->first_name ?? '') . ' ' . ($this->last_name ?? ''));
+        return trim(($this->first_name ?? '').' '.($this->last_name ?? ''));
     }
 
     public function getAuthPassword(): string
@@ -110,7 +109,7 @@ class User extends Authenticatable
     /**
      * Get all permission names for the user
      */
-    public function getAllPermissionNames(): \Illuminate\Support\Collection
+    public function getAllPermissionNames(): Collection
     {
         return $this->roles
             ->flatMap->permissions

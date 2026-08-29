@@ -9,7 +9,7 @@ return new class extends Migration
 {
     public function up()
     {
-        if (!Schema::hasTable('products')) {
+        if (! Schema::hasTable('products')) {
             Schema::create('products', function (Blueprint $table) {
                 $table->bigIncrements('id');
                 $table->unsignedBigInteger('brand_id')->nullable();
@@ -17,9 +17,9 @@ return new class extends Migration
                 $table->string('slug', 240)->unique();
                 $table->string('short_description', 500)->nullable();
                 $table->longText('description')->nullable();
-                $table->enum('product_type', ['physical','digital','service','bundle'])->default('physical');
-                $table->enum('status', ['draft','active','archived'])->default('draft');
-                $table->enum('visibility', ['public','hidden','private'])->default('public');
+                $table->enum('product_type', ['physical', 'digital', 'service', 'bundle'])->default('physical');
+                $table->enum('status', ['draft', 'active', 'archived'])->default('draft');
+                $table->enum('visibility', ['public', 'hidden', 'private'])->default('public');
                 $table->string('seo_title')->nullable();
                 $table->string('seo_description', 500)->nullable();
                 $table->timestamp('published_at')->nullable();

@@ -1,80 +1,60 @@
-<?php return array (
-  'laravel/breeze' => 
-  array (
-    'providers' => 
-    array (
-      0 => 'Laravel\\Breeze\\BreezeServiceProvider',
-    ),
-  ),
-  'laravel/pail' => 
-  array (
-    'providers' => 
-    array (
-      0 => 'Laravel\\Pail\\PailServiceProvider',
-    ),
-  ),
-  'laravel/sail' => 
-  array (
-    'providers' => 
-    array (
-      0 => 'Laravel\\Sail\\SailServiceProvider',
-    ),
-  ),
-  'laravel/sanctum' => 
-  array (
-    'providers' => 
-    array (
-      0 => 'Laravel\\Sanctum\\SanctumServiceProvider',
-    ),
-  ),
-  'laravel/tinker' => 
-  array (
-    'providers' => 
-    array (
-      0 => 'Laravel\\Tinker\\TinkerServiceProvider',
-    ),
-  ),
-  'nesbot/carbon' => 
-  array (
-    'providers' => 
-    array (
-      0 => 'Carbon\\Laravel\\ServiceProvider',
-    ),
-  ),
-  'nunomaduro/collision' => 
-  array (
-    'providers' => 
-    array (
-      0 => 'NunoMaduro\\Collision\\Adapters\\Laravel\\CollisionServiceProvider',
-    ),
-  ),
-  'nunomaduro/termwind' => 
-  array (
-    'providers' => 
-    array (
-      0 => 'Termwind\\Laravel\\TermwindServiceProvider',
-    ),
-  ),
-  'nwidart/laravel-modules' => 
-  array (
-    'aliases' => 
-    array (
-      'Module' => 'Nwidart\\Modules\\Facades\\Module',
-    ),
-    'providers' => 
-    array (
-      0 => 'Nwidart\\Modules\\LaravelModulesServiceProvider',
-    ),
-  ),
-  'yajra/laravel-datatables-oracle' => 
-  array (
-    'aliases' => 
-    array (
-      'DataTables' => 'Yajra\\DataTables\\Facades\\DataTables',
-    ),
-    'providers' => 
-    array (
-      0 => 'Yajra\\DataTables\\DataTablesServiceProvider',
-    ),
-  ),
-);
+<?php
+
+return [
+    'laravel/breeze' => [
+        'providers' => [
+            0 => 'Laravel\\Breeze\\BreezeServiceProvider',
+        ],
+    ],
+    'laravel/pail' => [
+        'providers' => [
+            0 => 'Laravel\\Pail\\PailServiceProvider',
+        ],
+    ],
+    'laravel/sail' => [
+        'providers' => [
+            0 => 'Laravel\\Sail\\SailServiceProvider',
+        ],
+    ],
+    'laravel/sanctum' => [
+        'providers' => [
+            0 => 'Laravel\\Sanctum\\SanctumServiceProvider',
+        ],
+    ],
+    'laravel/tinker' => [
+        'providers' => [
+            0 => 'Laravel\\Tinker\\TinkerServiceProvider',
+        ],
+    ],
+    'nesbot/carbon' => [
+        'providers' => [
+            0 => 'Carbon\\Laravel\\ServiceProvider',
+        ],
+    ],
+    'nunomaduro/collision' => [
+        'providers' => [
+            0 => 'NunoMaduro\\Collision\\Adapters\\Laravel\\CollisionServiceProvider',
+        ],
+    ],
+    'nunomaduro/termwind' => [
+        'providers' => [
+            0 => 'Termwind\\Laravel\\TermwindServiceProvider',
+        ],
+    ],
+    'nwidart/laravel-modules' => [
+        'aliases' => [
+            'Module' => 'Nwidart\\Modules\\Facades\\Module',
+        ],
+        'providers' => [
+            0 => 'Nwidart\\Modules\\LaravelModulesServiceProvider',
+        ],
+    ],
+    'yajra/laravel-datatables-oracle' => [
+        'aliases' => [
+            'DataTables' => 'Yajra\\DataTables\\Facades\\DataTables',
+        ],
+        'providers' => [
+            0 => 'Yajra\\DataTables\\DataTablesServiceProvider',
+        ],
+    ],
+];

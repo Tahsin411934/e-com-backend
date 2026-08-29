@@ -10,8 +10,8 @@ use Modules\Order\Models\Order;
 
 class PosSale extends Model
 {
-    use HasFactory;
     use CustomSoftDeletes;
+    use HasFactory;
 
     protected $table = 'pos_sales';
 

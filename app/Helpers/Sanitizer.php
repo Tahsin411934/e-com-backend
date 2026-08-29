@@ -12,6 +12,7 @@ class Sanitizer
         if ($value === null) {
             return null;
         }
+
         return strip_tags($value);
     }
 
@@ -27,6 +28,7 @@ class Sanitizer
                 }
             }
         }
+
         return $data;
     }
 }

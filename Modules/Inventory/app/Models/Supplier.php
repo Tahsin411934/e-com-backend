@@ -2,14 +2,15 @@
 
 namespace Modules\Inventory\Models;
 
+use App\Traits\CustomSoftDeletes;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use App\Traits\CustomSoftDeletes;
+use Modules\Catalog\Models\Product;
 
 class Supplier extends Model
 {
-    use HasFactory;
     use CustomSoftDeletes;
+    use HasFactory;
 
     protected $table = 'suppliers';
 
@@ -41,7 +42,7 @@ class Supplier extends Model
     public function products()
     {
         return $this->belongsToMany(
-            \Modules\Catalog\Models\Product::class,
+            Product::class,
             'product_supplier',
             'supplier_id',
             'product_id'

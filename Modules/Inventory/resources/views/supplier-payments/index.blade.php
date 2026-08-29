@@ -19,7 +19,7 @@
         showUrl="#"
         destroyUrl="{{ route('supplier-payments.destroy', ':id') }}"
         drawerTitle="Supplier Payment"
-        dataKey="payment"
+        dataKey="data"
         idField="payment_id"
         :order="[[6, 'desc']]"
     >

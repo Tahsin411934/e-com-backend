@@ -19,7 +19,7 @@
         showUrl="{{ route('refunds.show', ':id') }}"
         destroyUrl="{{ route('refunds.destroy', ':id') }}"
         drawerTitle="Refund"
-        dataKey="refund"
+        dataKey="data"
         idField="refund_id"
         :order="[[4, 'desc']]"
     >

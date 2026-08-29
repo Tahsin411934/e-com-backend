@@ -2,12 +2,12 @@
 
 use Illuminate\Support\Facades\Route;
 use Modules\Inventory\Http\Controllers\InventoryLocationController;
-use Modules\Inventory\Http\Controllers\InventoryStockController;
 use Modules\Inventory\Http\Controllers\InventoryMovementController;
-use Modules\Inventory\Http\Controllers\SupplierController;
-use Modules\Inventory\Http\Controllers\SupplierPaymentController;
+use Modules\Inventory\Http\Controllers\InventoryStockController;
 use Modules\Inventory\Http\Controllers\PurchaseOrderController;
 use Modules\Inventory\Http\Controllers\PurchaseReturnController;
+use Modules\Inventory\Http\Controllers\SupplierController;
+use Modules\Inventory\Http\Controllers\SupplierPaymentController;
 
 Route::middleware(['auth', 'verified'])->group(function () {
     // Inventory Locations

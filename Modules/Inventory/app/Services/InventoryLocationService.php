@@ -2,6 +2,8 @@
 
 namespace Modules\Inventory\Services;
 
+use App\Helpers\ApiResponse;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Modules\Inventory\Models\InventoryLocation;
@@ -37,7 +39,7 @@ class InventoryLocationService
             ->make(true);
     }
 
-    public function saveLocation(array $data): array
+    public function saveLocation(array $data): JsonResponse
     {
         try {
             return DB::transaction(function () use ($data) {
@@ -53,56 +55,39 @@ class InventoryLocationService
                     $message = 'Location created successfully.';
                 }
 
-                return [
-                    'status' => 'success',
-                    'message' => $message,
-                    'location' => $location->fresh()->load('store'),
-                ];
+                return ApiResponse::success($location->fresh()->load('store'), $message);
             });
         } catch (\Exception $e) {
-            return [
-                'status' => 'error',
-                'message' => 'Error saving location: ' . $e->getMessage(),
-            ];
+            return ApiResponse::error('Error saving location: '.$e->getMessage(), 500);
         }
     }
 
-    public function getLocationById(int $id): array
+    public function getLocationById(int $id): JsonResponse
     {
         try {
             $location = InventoryLocation::with('store')->findOrFail($id);
-            return [
-                'status' => 'success',
-                'location' => $location,
-            ];
+
+            return ApiResponse::success($location);
         } catch (\Exception $e) {
-            return [
-                'status' => 'error',
-                'message' => 'Location not found.',
-            ];
+            return ApiResponse::notFound('Location not found.');
         }
     }
 
-    public function deleteLocation(int $id): array
+    public function deleteLocation(int $id): JsonResponse
     {
         try {
             return DB::transaction(function () use ($id) {
                 $location = InventoryLocation::findOrFail($id);
                 $location->delete();
-                return [
-                    'status' => 'success',
-                    'message' => 'Location deleted successfully.',
-                ];
+
+                return ApiResponse::success(null, 'Location deleted successfully.');
             });
         } catch (\Exception $e) {
-            return [
-                'status' => 'error',
-                'message' => 'Error deleting location: ' . $e->getMessage(),
-            ];
+            return ApiResponse::error('Error deleting location: '.$e->getMessage(), 500);
         }
     }
 
-    public function getAllActiveLocations(): array
+    public function getAllActiveLocations(): JsonResponse
     {
         return InventoryLocation::where('status', 'active')
             ->with('store')

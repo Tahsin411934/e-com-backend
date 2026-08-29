@@ -3,13 +3,12 @@
 namespace Modules\Catalog\Database\Seeders;
 
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Str;
 use Modules\Catalog\Models\Brand;
 use Modules\Catalog\Models\Category;
 use Modules\Catalog\Models\Product;
-use Modules\Catalog\Models\ProductVariant;
 use Modules\Catalog\Models\ProductImage;
-use Modules\Catalog\Models\ProductCategory;
-use Illuminate\Support\Str;
+use Modules\Catalog\Models\ProductVariant;
 
 class CatalogDatabaseSeeder extends Seeder
 {

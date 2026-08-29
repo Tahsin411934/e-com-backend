@@ -2,13 +2,15 @@
 
 namespace Modules\Order\Models;
 
+use App\Traits\CustomSoftDeletes;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use App\Traits\CustomSoftDeletes;
+use Modules\Catalog\Models\Product;
+use Modules\Catalog\Models\ProductVariant;
 
 class OrderItem extends Model
 {
-    use HasFactory, CustomSoftDeletes;
+    use CustomSoftDeletes, HasFactory;
 
     protected $table = 'order_items';
 
@@ -37,11 +39,11 @@ class OrderItem extends Model
 
     public function product()
     {
-        return $this->belongsTo(\Modules\Catalog\Models\Product::class);
+        return $this->belongsTo(Product::class);
     }
 
     public function variant()
     {
-        return $this->belongsTo(\Modules\Catalog\Models\ProductVariant::class);
+        return $this->belongsTo(ProductVariant::class);
     }
 }

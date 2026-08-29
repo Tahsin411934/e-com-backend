@@ -11,9 +11,7 @@ use Modules\Store\Models\Store;
 
 class DeliveryZoneController extends Controller
 {
-    public function __construct(protected DeliveryZoneService $zoneService)
-    {
-    }
+    public function __construct(protected DeliveryZoneService $zoneService) {}
 
     public function index()
     {
@@ -30,26 +28,21 @@ class DeliveryZoneController extends Controller
 
     public function store(DeliveryZoneRequest $request)
     {
-        $result = $this->zoneService->saveZone($request->validated());
-        return response()->json($result, $result['status'] === 'success' ? 200 : 500);
+        return $this->zoneService->saveZone($request->validated());
     }
 
-    public function show(int $id)
+    public function show($id)
     {
-        return response()->json($this->zoneService->getZoneById($id));
+        return $this->zoneService->getZoneById((int) $id);
     }
 
     public function update(DeliveryZoneRequest $request, int $id)
     {
-        $data = $request->validated();
-        $data['zone_id'] = $id;
-        $result = $this->zoneService->saveZone($data);
-        return response()->json($result, $result['status'] === 'success' ? 200 : 500);
+        return $this->zoneService->saveZone($request->validated() + ['zone_id' => $id]);
     }
 
-    public function destroy(int $id)
+    public function destroy($id)
     {
-        $result = $this->zoneService->deleteZone($id);
-        return response()->json($result, $result['status'] === 'success' ? 200 : 500);
+        return $this->zoneService->deleteZone((int) $id);
     }
 }

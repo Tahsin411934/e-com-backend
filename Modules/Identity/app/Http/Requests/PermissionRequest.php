@@ -14,10 +14,10 @@ class PermissionRequest extends FormRequest
     public function rules(): array
     {
         $permissionId = $this->route('permission') ?? $this->input('permission_id');
-        $uniqueName = 'unique:permissions,name' . ($permissionId ? ',' . $permissionId : '');
+        $uniqueName = 'unique:permissions,name'.($permissionId ? ','.$permissionId : '');
 
         return [
-            'name' => 'required|string|max:120|' . $uniqueName,
+            'name' => 'required|string|max:120|'.$uniqueName,
             'description' => 'nullable|string|max:255',
         ];
     }

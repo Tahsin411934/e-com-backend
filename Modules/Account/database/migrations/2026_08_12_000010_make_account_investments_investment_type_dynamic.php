@@ -19,7 +19,7 @@ return new class extends Migration
     {
         Schema::table('account_investments', function (Blueprint $table) {
             $table->enum('investment_type', [
-                'marketing', 'equipment', 'property', 'stocks', 'fixed_deposit', 'business', 'other'
+                'marketing', 'equipment', 'property', 'stocks', 'fixed_deposit', 'business', 'other',
             ])->default('marketing')->change();
         });
     }

@@ -8,7 +8,7 @@ return new class extends Migration
 {
     public function up()
     {
-        if (!Schema::hasTable('product_images')) {
+        if (! Schema::hasTable('product_images')) {
             Schema::create('product_images', function (Blueprint $table) {
                 $table->bigIncrements('id');
                 $table->unsignedBigInteger('product_id');

@@ -18,7 +18,7 @@
         showUrl="{{ route('brands.show', ':id') }}"
         destroyUrl="{{ route('brands.destroy', ':id') }}"
         drawerTitle="Brand"
-        dataKey="brand"
+        dataKey="data"
         idField="brand_id"
         :order="[[4, 'desc']]"
     >

@@ -2,15 +2,16 @@
 
 namespace Modules\Inventory\Models;
 
+use App\Traits\CustomSoftDeletes;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use App\Traits\CustomSoftDeletes;
+use Modules\Identity\Models\User;
 use Modules\Store\Models\Store;
 
 class PurchaseOrder extends Model
 {
-    use HasFactory;
     use CustomSoftDeletes;
+    use HasFactory;
 
     protected $table = 'purchase_orders';
 
@@ -53,7 +54,7 @@ class PurchaseOrder extends Model
 
     public function creator()
     {
-        return $this->belongsTo(\Modules\Identity\Models\User::class, 'created_by');
+        return $this->belongsTo(User::class, 'created_by');
     }
 
     public function items()
@@ -92,7 +93,7 @@ class PurchaseOrder extends Model
 
         do {
             $maxSequence++;
-            $number = 'PO-' . $year . '-' . str_pad($maxSequence, 4, '0', STR_PAD_LEFT);
+            $number = 'PO-'.$year.'-'.str_pad($maxSequence, 4, '0', STR_PAD_LEFT);
         } while (static::withTrashed()->where('po_number', $number)->exists());
 
         return $number;

@@ -8,7 +8,7 @@ return new class extends Migration
 {
     public function up()
     {
-        if (!Schema::hasTable('units')) {
+        if (! Schema::hasTable('units')) {
             Schema::create('units', function (Blueprint $table) {
                 $table->bigIncrements('id');
                 $table->string('name', 120);

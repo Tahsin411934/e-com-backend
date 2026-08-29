@@ -4,17 +4,12 @@ namespace Modules\Catalog\Http\Controllers;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
-use Modules\Catalog\Services\SizeService;
 use Modules\Catalog\Http\Requests\StoreSizeRequest;
+use Modules\Catalog\Services\SizeService;
 
 class SizeController extends Controller
 {
-    protected SizeService $sizeService;
-
-    public function __construct(SizeService $sizeService)
-    {
-        $this->sizeService = $sizeService;
-    }
+    public function __construct(private SizeService $sizeService) {}
 
     public function index(Request $request)
     {
@@ -28,27 +23,21 @@ class SizeController extends Controller
 
     public function store(StoreSizeRequest $request)
     {
-        $result = $this->sizeService->saveSize($request->validated());
-        return response()->json($result, $result['status'] === 'success' ? 200 : 500);
+        return $this->sizeService->saveSize($request->validated());
     }
 
     public function show($id)
     {
-        $result = $this->sizeService->getSizeById($id);
-        return response()->json($result);
+        return $this->sizeService->getSizeById((int) $id);
     }
 
     public function update(StoreSizeRequest $request, $id)
     {
-        $data = $request->validated();
-        $data['size_id'] = $id;
-        $result = $this->sizeService->saveSize($data);
-        return response()->json($result, $result['status'] === 'success' ? 200 : 500);
+        return $this->sizeService->saveSize($request->validated() + ['size_id' => $id]);
     }
 
     public function destroy($id)
     {
-        $result = $this->sizeService->deleteSize($id);
-        return response()->json($result, $result['status'] === 'success' ? 200 : 500);
+        return $this->sizeService->deleteSize((int) $id);
     }
 }

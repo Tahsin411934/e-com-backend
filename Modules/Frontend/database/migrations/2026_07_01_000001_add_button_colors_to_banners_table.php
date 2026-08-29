@@ -8,7 +8,7 @@ return new class extends Migration
 {
     public function up()
     {
-        if (!Schema::hasColumn('banners', 'primary_btn_color')) {
+        if (! Schema::hasColumn('banners', 'primary_btn_color')) {
             Schema::table('banners', function (Blueprint $table) {
                 $table->string('primary_btn_color', 50)->nullable()->after('primary_btn_url');
                 $table->string('primary_btn_text_color', 50)->nullable()->after('primary_btn_color');

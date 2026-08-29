@@ -2,6 +2,8 @@
 
 namespace Modules\Shipping\Services;
 
+use App\Helpers\ApiResponse;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Modules\Shipping\Models\DeliveryZone;
@@ -19,7 +21,7 @@ class DeliveryZoneService
             ->editColumn('status', fn (DeliveryZone $zone) => ucfirst($zone->status))
             ->editColumn('base_fee', fn (DeliveryZone $zone) => number_format($zone->base_fee, 2))
             ->editColumn('per_km_fee', fn (DeliveryZone $zone) => number_format($zone->per_km_fee, 2))
-            ->addColumn('eta_window', fn (DeliveryZone $zone) => $zone->estimated_min_days . '-' . $zone->estimated_max_days . ' days')
+            ->addColumn('eta_window', fn (DeliveryZone $zone) => $zone->estimated_min_days.'-'.$zone->estimated_max_days.' days')
             ->editColumn('created_at', fn (DeliveryZone $zone) => $zone->created_at->format('d M Y H:i'))
             ->addColumn('action', function (DeliveryZone $zone) {
                 return view('components.action-buttons', [
@@ -32,7 +34,7 @@ class DeliveryZoneService
             ->make(true);
     }
 
-    public function saveZone(array $data): array
+    public function saveZone(array $data): JsonResponse
     {
         try {
             return DB::transaction(function () use ($data) {
@@ -49,42 +51,42 @@ class DeliveryZoneService
                     $message = 'Delivery zone created successfully.';
                 }
 
-                return [
-                    'status' => 'success',
-                    'message' => $message,
-                    'zone' => $zone->fresh()->load(['store', 'country']),
-                ];
+                if ($zoneId) {
+                    return ApiResponse::success($zone->fresh()->load(['store', 'country']), $message);
+                }
+
+                return ApiResponse::created($zone->fresh()->load(['store', 'country']), $message);
             });
         } catch (\Exception $e) {
-            return ['status' => 'error', 'message' => 'Error saving delivery zone: ' . $e->getMessage()];
+            return ApiResponse::error('Error saving delivery zone: '.$e->getMessage(), 500);
         }
     }
 
-    public function getZoneById(int $id): array
+    public function getZoneById(int $id): JsonResponse
     {
         try {
-            $zone = DeliveryZone::with(['store', 'country'])->findOrFail($id);
-            return ['status' => 'success', 'zone' => $zone];
-        } catch (\Exception $e) {
-            return ['status' => 'error', 'message' => 'Delivery zone not found.'];
+            return ApiResponse::success(DeliveryZone::with(['store', 'country'])->findOrFail($id));
+        } catch (\Exception) {
+            return ApiResponse::notFound('Delivery zone not found.');
         }
     }
 
-    public function deleteZone(int $id): array
+    public function deleteZone(int $id): JsonResponse
     {
         try {
             return DB::transaction(function () use ($id) {
                 DeliveryZone::findOrFail($id)->delete();
-                return ['status' => 'success', 'message' => 'Delivery zone deleted successfully.'];
+
+                return ApiResponse::success(null, 'Delivery zone deleted successfully.');
             });
         } catch (\Exception $e) {
-            return ['status' => 'error', 'message' => 'Error deleting delivery zone: ' . $e->getMessage()];
+            return ApiResponse::error('Error deleting delivery zone: '.$e->getMessage(), 500);
         }
     }
 
     protected function normalizePostalCodes(?string $postalCodes): ?array
     {
-        if (!$postalCodes) {
+        if (! $postalCodes) {
             return null;
         }
 

@@ -29,7 +29,7 @@
             showUrl="{{ route('app-settings.show', ':id') }}"
             destroyUrl="{{ route('app-settings.destroy', ':id') }}"
             drawerTitle="Setting"
-            dataKey="setting"
+            dataKey="data"
             idField="setting_id"
             :order="[[5, 'desc']]"
         >

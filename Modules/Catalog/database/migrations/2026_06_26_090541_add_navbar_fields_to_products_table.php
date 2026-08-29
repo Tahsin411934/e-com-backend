@@ -12,20 +12,20 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('products', function (Blueprint $table) {
-            if (!Schema::hasColumn('products', 'navbar_item_id')) {
+            if (! Schema::hasColumn('products', 'navbar_item_id')) {
                 $table->unsignedBigInteger('navbar_item_id')->nullable()->after('category_id');
                 $table->foreign('navbar_item_id')
-                      ->references('id')
-                      ->on('navbar_items')
-                      ->onDelete('set null');
+                    ->references('id')
+                    ->on('navbar_items')
+                    ->onDelete('set null');
             }
 
-            if (!Schema::hasColumn('products', 'subnavbar_item_id')) {
+            if (! Schema::hasColumn('products', 'subnavbar_item_id')) {
                 $table->unsignedBigInteger('subnavbar_item_id')->nullable()->after('navbar_item_id');
                 $table->foreign('subnavbar_item_id')
-                      ->references('id')
-                      ->on('subnavbar_items')
-                      ->onDelete('set null');
+                    ->references('id')
+                    ->on('subnavbar_items')
+                    ->onDelete('set null');
             }
         });
     }

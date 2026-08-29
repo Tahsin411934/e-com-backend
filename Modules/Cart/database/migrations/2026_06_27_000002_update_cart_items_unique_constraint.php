@@ -13,13 +13,13 @@ return new class extends Migration
             $table->dropForeign(['cart_id']);
             $table->dropForeign(['variant_id']);
             $table->dropForeign(['variant_option_id']);
-            
+
             // Drop the old unique constraint
             $table->dropUnique(['cart_id', 'variant_id']);
-            
+
             // Add new unique constraint including variant_option_id
             $table->unique(['cart_id', 'variant_id', 'variant_option_id'], 'cart_items_cart_id_variant_id_option_unique');
-            
+
             // Re-add foreign key constraints
             $table->foreign('cart_id')->references('id')->on('carts')->onDelete('cascade');
             $table->foreign('variant_id')->references('id')->on('product_variants')->onDelete('cascade');
@@ -34,13 +34,13 @@ return new class extends Migration
             $table->dropForeign(['cart_id']);
             $table->dropForeign(['variant_id']);
             $table->dropForeign(['variant_option_id']);
-            
+
             // Drop the new unique constraint
             $table->dropUnique('cart_items_cart_id_variant_id_option_unique');
-            
+
             // Restore the old unique constraint
             $table->unique(['cart_id', 'variant_id']);
-            
+
             // Re-add foreign key constraints
             $table->foreign('cart_id')->references('id')->on('carts')->onDelete('cascade');
             $table->foreign('variant_id')->references('id')->on('product_variants')->onDelete('cascade');

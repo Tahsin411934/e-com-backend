@@ -17,7 +17,7 @@ return new class extends Migration
             $table->char('currency_code', 3)->default('BDT');
             $table->date('investment_date');
             $table->enum('investment_type', [
-                'marketing', 'equipment', 'property', 'stocks', 'fixed_deposit', 'business', 'other'
+                'marketing', 'equipment', 'property', 'stocks', 'fixed_deposit', 'business', 'other',
             ])->default('marketing');
             $table->decimal('expected_return', 19, 4)->default(0);
             $table->decimal('actual_return', 19, 4)->default(0);

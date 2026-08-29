@@ -23,26 +23,21 @@ class AccountAccountController extends Controller
 
     public function store(AccountAccountRequest $request)
     {
-        $result = $this->service->save($request->validated());
-        return response()->json($result, $result['status'] === 'success' ? 200 : 500);
+        return $this->service->save($request->validated());
     }
 
     public function show($id)
     {
-        return response()->json($this->service->find((int) $id));
+        return $this->service->find((int) $id);
     }
 
     public function update(AccountAccountRequest $request, $id)
     {
-        $data = $request->validated();
-        $data['account_id'] = $id;
-        $result = $this->service->save($data);
-        return response()->json($result, $result['status'] === 'success' ? 200 : 500);
+        return $this->service->save($request->validated() + ['account_id' => $id]);
     }
 
     public function destroy($id)
     {
-        $result = $this->service->delete((int) $id);
-        return response()->json($result, $result['status'] === 'success' ? 200 : 500);
+        return $this->service->delete((int) $id);
     }
 }

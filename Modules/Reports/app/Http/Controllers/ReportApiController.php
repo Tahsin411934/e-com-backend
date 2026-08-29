@@ -2,20 +2,21 @@
 
 namespace Modules\Reports\Http\Controllers;
 
+use App\Helpers\ApiResponse;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Modules\Reports\Support\CsvExporter;
-use Modules\Reports\Support\ReportFilters;
-use Modules\Reports\Services\ExecutiveReportService;
-use Modules\Reports\Services\SalesReportService;
-use Modules\Reports\Services\SalesPerformanceService;
-use Modules\Reports\Services\ProductPerformanceService;
 use Modules\Reports\Services\CustomerReportService;
-use Modules\Reports\Services\ShippingReportService;
+use Modules\Reports\Services\ExecutiveReportService;
 use Modules\Reports\Services\InventoryReportService;
 use Modules\Reports\Services\InventoryStockReportService;
 use Modules\Reports\Services\OrderFulfillmentTimingService;
+use Modules\Reports\Services\ProductPerformanceService;
+use Modules\Reports\Services\SalesPerformanceService;
+use Modules\Reports\Services\SalesReportService;
+use Modules\Reports\Services\ShippingReportService;
+use Modules\Reports\Support\CsvExporter;
+use Modules\Reports\Support\ReportFilters;
 
 class ReportApiController extends Controller
 {
@@ -54,28 +55,28 @@ class ReportApiController extends Controller
 
         $map = $this->dispatchMap[$category] ?? null;
         if (! $map) {
-            return response()->json(['error' => 'Unknown report category.', 'code' => 404], 404);
+            return ApiResponse::fromResult(['error' => 'Unknown report category.', 'code' => 404], 200, 404);
         }
 
         [$service, $prefix, $whitelist] = $map;
-        $methodName = $prefix ? $prefix . ucfirst($method) : $method;
+        $methodName = $prefix ? $prefix.ucfirst($method) : $method;
 
         // Security check: validate method is in whitelist
         if (! in_array($methodName, $whitelist, true)) {
-            return response()->json(['error' => "Report method '{$category}.{$methodName}' is not allowed.", 'code' => 403], 403);
+            return ApiResponse::fromResult(['error' => "Report method '{$category}.{$methodName}' is not allowed.", 'code' => 403], 200, 403);
         }
 
         if (! method_exists($service, $methodName)) {
-            return response()->json(['error' => "Report method '{$category}.{$methodName}' not found.", 'code' => 404], 404);
+            return ApiResponse::fromResult(['error' => "Report method '{$category}.{$methodName}' not found.", 'code' => 404], 200, 404);
         }
 
         try {
             $result = $service->{$methodName}($filters);
         } catch (\Throwable $e) {
-            return response()->json(['error' => $e->getMessage(), 'code' => 500], 500);
+            return ApiResponse::fromResult(['error' => $e->getMessage(), 'code' => 500], 200, 500);
         }
 
-        return response()->json($result);
+        return ApiResponse::fromResult($result);
     }
 
     /**
@@ -92,7 +93,7 @@ class ReportApiController extends Controller
         }
 
         [$service, $prefix, $whitelist] = $map;
-        $methodName = $prefix ? $prefix . ucfirst($method) : $method;
+        $methodName = $prefix ? $prefix.ucfirst($method) : $method;
 
         // Security check: validate method is in whitelist
         if (! in_array($methodName, $whitelist, true)) {
@@ -105,7 +106,7 @@ class ReportApiController extends Controller
 
         $data = $service->{$methodName}($filters);
 
-        $filename = "{$category}_{$method}_" . now()->format('Y-m-d') . '.csv';
+        $filename = "{$category}_{$method}_".now()->format('Y-m-d').'.csv';
         $columns = $data['columns'] ?? [];
         $rows = $data['rows'] ?? [];
 

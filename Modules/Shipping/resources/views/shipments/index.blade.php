@@ -22,7 +22,7 @@
         showUrl="{{ route('shipments.show', ':id') }}"
         destroyUrl="{{ route('shipments.destroy', ':id') }}"
         drawerTitle="Shipment"
-        dataKey="shipment"
+        dataKey="data"
         idField="shipment_id"
         :order="[[0, 'desc']]"
     >

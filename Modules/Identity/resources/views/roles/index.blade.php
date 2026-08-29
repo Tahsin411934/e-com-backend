@@ -17,7 +17,7 @@
         showUrl="{{ route('roles.show', ':id') }}"
         destroyUrl="{{ route('roles.destroy', ':id') }}"
         drawerTitle="Role"
-        dataKey="role"
+        dataKey="data"
         idField="role_id"
         :order="[[3, 'desc']]"
     >

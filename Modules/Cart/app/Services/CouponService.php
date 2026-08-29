@@ -2,6 +2,8 @@
 
 namespace Modules\Cart\Services;
 
+use App\Helpers\ApiResponse;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -41,13 +43,13 @@ class CouponService
             ->make(true);
     }
 
-    public function saveCoupon(array $data): array
+    public function saveCoupon(array $data): JsonResponse
     {
         try {
             return DB::transaction(function () use ($data) {
                 $couponId = $data['coupon_id'] ?? null;
 
-                if (!isset($data['code']) && isset($data['name'])) {
+                if (! isset($data['code']) && isset($data['name'])) {
                     $data['code'] = strtoupper(Str::slug($data['name'], '-'));
                 }
 
@@ -56,59 +58,39 @@ class CouponService
                 if ($couponId) {
                     $coupon = Coupon::findOrFail($couponId);
                     $coupon->update($data);
-                    $message = 'Coupon updated successfully.';
-                } else {
-                    $coupon = Coupon::create($data);
-                    $message = 'Coupon created successfully.';
+
+                    return ApiResponse::success($coupon->fresh(), 'Coupon updated successfully.');
                 }
 
-                return [
-                    'status' => 'success',
-                    'message' => $message,
-                    'coupon' => $coupon->fresh(),
-                ];
+                $coupon = Coupon::create($data);
+
+                return ApiResponse::created($coupon->fresh(), 'Coupon created successfully.');
             });
         } catch (\Exception $e) {
-            return [
-                'status' => 'error',
-                'message' => 'Error saving coupon: ' . $e->getMessage(),
-            ];
+            return ApiResponse::error('Error saving coupon: '.$e->getMessage(), 500);
         }
     }
 
-    public function getCouponById(int $id): array
+    public function getCouponById(int $id): JsonResponse
     {
         try {
-            $coupon = Coupon::findOrFail($id);
-            return [
-                'status' => 'success',
-                'coupon' => $coupon,
-            ];
-        } catch (\Exception $e) {
-            return [
-                'status' => 'error',
-                'message' => 'Coupon not found.',
-            ];
+            return ApiResponse::success(Coupon::findOrFail($id));
+        } catch (\Exception) {
+            return ApiResponse::notFound('Coupon not found.');
         }
     }
 
-    public function deleteCoupon(int $id): array
+    public function deleteCoupon(int $id): JsonResponse
     {
         try {
             return DB::transaction(function () use ($id) {
                 $coupon = Coupon::findOrFail($id);
                 $coupon->delete();
 
-                return [
-                    'status' => 'success',
-                    'message' => 'Coupon deleted successfully.',
-                ];
+                return ApiResponse::success(null, 'Coupon deleted successfully.');
             });
         } catch (\Exception $e) {
-            return [
-                'status' => 'error',
-                'message' => 'Error deleting coupon: ' . $e->getMessage(),
-            ];
+            return ApiResponse::error('Error deleting coupon: '.$e->getMessage(), 500);
         }
     }
 }

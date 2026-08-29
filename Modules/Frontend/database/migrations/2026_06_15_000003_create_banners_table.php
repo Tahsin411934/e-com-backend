@@ -8,7 +8,7 @@ return new class extends Migration
 {
     public function up()
     {
-        if (!Schema::hasTable('banners')) {
+        if (! Schema::hasTable('banners')) {
             Schema::create('banners', function (Blueprint $table) {
                 $table->bigIncrements('id');
                 $table->string('banner_image', 255)->nullable();

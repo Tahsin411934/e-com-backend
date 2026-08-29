@@ -4,8 +4,9 @@ namespace Modules\Identity\Database\Seeders;
 
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
-use Modules\Identity\Models\Role;
+use Illuminate\Support\Str;
 use Modules\Identity\Models\Permission;
+use Modules\Identity\Models\Role;
 use Modules\Identity\Models\User;
 
 class IdentityDatabaseSeeder extends Seeder
@@ -58,10 +59,10 @@ class IdentityDatabaseSeeder extends Seeder
 
         // ===== Roles =====
         $superAdminRole = Role::firstOrCreate(['name' => 'Super Admin'], ['description' => 'Full system access']);
-        $adminRole     = Role::firstOrCreate(['name' => 'Admin'], ['description' => 'Administrative access']);
-        $managerRole   = Role::firstOrCreate(['name' => 'Manager'], ['description' => 'Day-to-day management']);
-        $staffRole     = Role::firstOrCreate(['name' => 'Staff'], ['description' => 'Limited staff access']);
-        $customerRole  = Role::firstOrCreate(['name' => 'Customer'], ['description' => 'Customer account']);
+        $adminRole = Role::firstOrCreate(['name' => 'Admin'], ['description' => 'Administrative access']);
+        $managerRole = Role::firstOrCreate(['name' => 'Manager'], ['description' => 'Day-to-day management']);
+        $staffRole = Role::firstOrCreate(['name' => 'Staff'], ['description' => 'Limited staff access']);
+        $customerRole = Role::firstOrCreate(['name' => 'Customer'], ['description' => 'Customer account']);
 
         // Super Admin gets all permissions
         $superAdminRole->permissions()->sync(Permission::all()->pluck('id'));
@@ -95,7 +96,7 @@ class IdentityDatabaseSeeder extends Seeder
 
         $users = [
             [
-                'public_id' => (string) \Illuminate\Support\Str::uuid(),
+                'public_id' => (string) Str::uuid(),
                 'first_name' => 'Super',
                 'last_name' => 'Admin',
                 'email' => 'superadmin@onehaatbd.com',
@@ -104,7 +105,7 @@ class IdentityDatabaseSeeder extends Seeder
                 'status' => 'active',
             ],
             [
-                'public_id' => (string) \Illuminate\Support\Str::uuid(),
+                'public_id' => (string) Str::uuid(),
                 'first_name' => 'John',
                 'last_name' => 'Manager',
                 'email' => 'manager1@onehaatbd.com',
@@ -113,7 +114,7 @@ class IdentityDatabaseSeeder extends Seeder
                 'status' => 'active',
             ],
             [
-                'public_id' => (string) \Illuminate\Support\Str::uuid(),
+                'public_id' => (string) Str::uuid(),
                 'first_name' => 'Jane',
                 'last_name' => 'Staff',
                 'email' => 'staff1@onehaatbd.com',
@@ -122,7 +123,7 @@ class IdentityDatabaseSeeder extends Seeder
                 'status' => 'active',
             ],
             [
-                'public_id' => (string) \Illuminate\Support\Str::uuid(),
+                'public_id' => (string) Str::uuid(),
                 'first_name' => 'Bob',
                 'last_name' => 'Customer',
                 'email' => 'customer1@onehaatbd.com',
@@ -130,7 +131,7 @@ class IdentityDatabaseSeeder extends Seeder
                 'password_hash' => $passwordHash,
                 'status' => 'active',
             ],
-        ]; 
+        ];
 
         $roleMap = [
             'superadmin@onehaatbd.com' => 'Super Admin',

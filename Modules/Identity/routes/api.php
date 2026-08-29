@@ -3,9 +3,9 @@
 use Illuminate\Support\Facades\Route;
 use Modules\Identity\Http\Controllers\AuthController;
 use Modules\Identity\Http\Controllers\IdentityController;
-use Modules\Identity\Http\Controllers\UserController;
-use Modules\Identity\Http\Controllers\RoleController;
 use Modules\Identity\Http\Controllers\PermissionController;
+use Modules\Identity\Http\Controllers\RoleController;
+use Modules\Identity\Http\Controllers\UserController;
 
 // Public authentication routes
 Route::post('/v1/register', [AuthController::class, 'register']);

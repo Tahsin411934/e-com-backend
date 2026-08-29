@@ -4,17 +4,11 @@ namespace Modules\Catalog\Http\Controllers;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
-use Modules\Catalog\Models\ProductRequest;
 use Modules\Catalog\Services\ProductRequestService;
 
 class ProductRequestController extends Controller
 {
-    protected ProductRequestService $productRequestService;
-
-    public function __construct(ProductRequestService $productRequestService)
-    {
-        $this->productRequestService = $productRequestService;
-    }
+    public function __construct(private ProductRequestService $productRequestService) {}
 
     public function index()
     {
@@ -26,10 +20,9 @@ class ProductRequestController extends Controller
         return $this->productRequestService->getProductRequestDataTable($request);
     }
 
-    public function show(int $id)
+    public function show($id)
     {
-        $result = $this->productRequestService->getProductRequestById($id);
-        return response()->json($result);
+        return $this->productRequestService->getProductRequestById((int) $id);
     }
 
     public function store(Request $request)
@@ -54,8 +47,7 @@ class ProductRequestController extends Controller
             $validated['product_image'] = $request->file('product_image');
         }
 
-        $result = $this->productRequestService->store($validated);
-        return response()->json($result, $result['status'] === 'success' ? 201 : 500);
+        return $this->productRequestService->store($validated);
     }
 
     public function update(Request $request, int $id)
@@ -79,14 +71,12 @@ class ProductRequestController extends Controller
             $validated['product_image'] = $request->file('product_image');
         }
 
-        $result = $this->productRequestService->update($id, $validated);
-        return response()->json($result);
+        return $this->productRequestService->update($id, $validated);
     }
 
-    public function destroy(int $id)
+    public function destroy($id)
     {
-        $result = $this->productRequestService->destroy($id);
-        return response()->json($result);
+        return $this->productRequestService->destroy((int) $id);
     }
 
     public function updateStatus(Request $request, int $id)
@@ -95,7 +85,6 @@ class ProductRequestController extends Controller
             'status' => 'required|in:pending,approved,rejected,fulfilled',
         ]);
 
-        $result = $this->productRequestService->updateStatus($id, $request->input('status'));
-        return response()->json($result);
+        return $this->productRequestService->updateStatus($id, $request->input('status'));
     }
 }

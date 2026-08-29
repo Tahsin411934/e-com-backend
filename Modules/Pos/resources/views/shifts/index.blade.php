@@ -21,7 +21,7 @@
         showUrl="{{ route('pos-shifts.show', ':id') }}"
         destroyUrl="{{ route('pos-shifts.destroy', ':id') }}"
         drawerTitle="POS Shift"
-        dataKey="shift"
+        dataKey="data"
         idField="shift_id"
         :order="[[3, 'desc']]"
     >

@@ -3,7 +3,6 @@
 namespace Modules\Frontend\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
-use Illuminate\Validation\Rule;
 
 class UpdateBannerRequest extends FormRequest
 {

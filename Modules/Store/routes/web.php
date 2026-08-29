@@ -1,11 +1,11 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
-use Modules\Store\Http\Controllers\StoreController;
-use Modules\Store\Http\Controllers\StoreStaffController;
-use Modules\Store\Http\Controllers\CountryController;
 use Modules\Store\Http\Controllers\AddressController;
 use Modules\Store\Http\Controllers\AppSettingController;
+use Modules\Store\Http\Controllers\CountryController;
+use Modules\Store\Http\Controllers\StoreController;
+use Modules\Store\Http\Controllers\StoreStaffController;
 
 Route::middleware(['auth', 'verified'])->group(function () {
     // Stores

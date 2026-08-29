@@ -18,7 +18,7 @@
         showUrl="{{ route('inventory-locations.show', ':id') }}"
         destroyUrl="{{ route('inventory-locations.destroy', ':id') }}"
         drawerTitle="Inventory Location"
-        dataKey="location"
+        dataKey="data"
         idField="location_id"
         :order="[[4, 'desc']]"
     >

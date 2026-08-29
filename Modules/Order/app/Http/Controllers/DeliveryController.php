@@ -2,11 +2,12 @@
 
 namespace Modules\Order\Http\Controllers;
 
+use App\Helpers\ApiResponse;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
+use Modules\Identity\Models\User;
 use Modules\Order\Models\Delivery;
 use Modules\Order\Models\Order;
-use Modules\Identity\Models\User;
 
 class DeliveryController extends Controller
 {
@@ -26,33 +27,33 @@ class DeliveryController extends Controller
         }
 
         // For regular users, only show their own deliveries
-        if (!auth()->user()->hasRole('admin') && !auth()->user()->hasRole('delivery_boy')) {
+        if (! auth()->user()->hasRole('admin') && ! auth()->user()->hasRole('delivery_boy')) {
             $query->where('user_id', auth()->id());
         }
 
         $deliveries = $query->paginate(20);
 
-        return response()->json([
+        return ApiResponse::fromResult([
             'status' => 'success',
             'deliveries' => $deliveries,
         ]);
     }
 
-    public function show(int $id)
+    public function show($id)
     {
-        $delivery = Delivery::with(['order.items', 'user', 'deliveryBoy'])->findOrFail($id);
+        $delivery = Delivery::with(['order.items', 'user', 'deliveryBoy'])->findOrFail((int) $id);
 
         // Check authorization
-        if (!auth()->user()->hasRole('admin') && 
-            !auth()->user()->hasRole('delivery_boy') &&
+        if (! auth()->user()->hasRole('admin') &&
+            ! auth()->user()->hasRole('delivery_boy') &&
             $delivery->user_id !== auth()->id()) {
-            return response()->json([
+            return ApiResponse::fromResult([
                 'status' => 'error',
                 'message' => 'Unauthorized.',
-            ], 403);
+            ], 200, 403);
         }
 
-        return response()->json([
+        return ApiResponse::fromResult([
             'status' => 'success',
             'delivery' => $delivery,
         ]);
@@ -68,11 +69,11 @@ class DeliveryController extends Controller
 
         // Check if user is delivery boy
         $deliveryBoy = User::findOrFail($request->delivery_boy_id);
-        if (!$deliveryBoy->hasRole('delivery_boy')) {
-            return response()->json([
+        if (! $deliveryBoy->hasRole('delivery_boy')) {
+            return ApiResponse::fromResult([
                 'status' => 'error',
                 'message' => 'Selected user is not a delivery boy.',
-            ], 400);
+            ], 200, 400);
         }
 
         $delivery->update([
@@ -81,7 +82,7 @@ class DeliveryController extends Controller
             'assigned_at' => now(),
         ]);
 
-        return response()->json([
+        return ApiResponse::fromResult([
             'status' => 'success',
             'message' => 'Delivery boy assigned successfully.',
             'delivery' => $delivery->load('deliveryBoy'),
@@ -115,7 +116,7 @@ class DeliveryController extends Controller
 
         $delivery->update($updateData);
 
-        return response()->json([
+        return ApiResponse::fromResult([
             'status' => 'success',
             'message' => 'Delivery status updated successfully.',
             'delivery' => $delivery->load('order'),
@@ -125,13 +126,13 @@ class DeliveryController extends Controller
     public function myDeliveries()
     {
         $user = auth()->user();
-        
+
         $deliveries = Delivery::with(['order.items'])
             ->where('user_id', $user->id)
             ->orderByDesc('created_at')
             ->paginate(20);
 
-        return response()->json([
+        return ApiResponse::fromResult([
             'status' => 'success',
             'deliveries' => $deliveries,
         ]);

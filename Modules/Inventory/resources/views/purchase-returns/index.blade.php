@@ -24,7 +24,7 @@
             showUrl="{{ route('purchase-returns.show', ':id') }}"
             destroyUrl="{{ route('purchase-returns.destroy', ':id') }}"
             drawerTitle="Purchase Return"
-            dataKey="return"
+            dataKey="data"
             idField="return_id"
             :order="[[7, 'desc']]"
         >

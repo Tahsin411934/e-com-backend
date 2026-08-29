@@ -8,12 +8,7 @@ use Modules\Cart\Services\WishlistService;
 
 class WishlistController extends Controller
 {
-    protected WishlistService $wishlistService;
-
-    public function __construct(WishlistService $wishlistService)
-    {
-        $this->wishlistService = $wishlistService;
-    }
+    public function __construct(private WishlistService $wishlistService) {}
 
     public function index()
     {
@@ -27,33 +22,30 @@ class WishlistController extends Controller
 
     public function store(Request $request)
     {
-        $result = $this->wishlistService->saveWishlist($request->all());
-        return response()->json($result);
+        return $this->wishlistService->saveWishlist($request->all());
     }
 
-    public function show(int $id)
+    public function show($id)
     {
-        $result = $this->wishlistService->getWishlistById($id);
-        return response()->json($result);
+        return $this->wishlistService->getWishlistById((int) $id);
     }
 
     public function update(Request $request, int $id)
     {
         $data = $request->all();
         $data['wishlist_id'] = $id;
-        $result = $this->wishlistService->saveWishlist($data);
-        return response()->json($result);
+
+        return $this->wishlistService->saveWishlist($data);
     }
 
-    public function destroy(int $id)
+    public function destroy($id)
     {
-        $result = $this->wishlistService->deleteWishlist($id);
-        return response()->json($result);
+        return $this->wishlistService->deleteWishlist((int) $id);
     }
 
     public function apiIndex()
     {
-        return response()->json($this->wishlistService->getCurrentUserWishlist());
+        return $this->wishlistService->getCurrentUserWishlist();
     }
 
     public function apiToggle(Request $request)
@@ -62,14 +54,13 @@ class WishlistController extends Controller
             'product_id' => 'required|integer|exists:products,id',
         ]);
 
-        $result = $this->wishlistService->toggleWishlist((int) $request->input('product_id'));
-        return response()->json($result);
+        return $this->wishlistService->toggleWishlist((int) $request->input('product_id'));
     }
 
     public function apiRemove(int $productId)
     {
         $userId = auth()->id();
-        $result = $this->wishlistService->removeWishlistItem($userId, $productId);
-        return response()->json($result);
+
+        return $this->wishlistService->removeWishlistItem($userId, $productId);
     }
 }

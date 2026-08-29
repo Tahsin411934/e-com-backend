@@ -8,7 +8,7 @@ return new class extends Migration
 {
     public function up()
     {
-        if (!Schema::hasColumn('products', 'is_homepage')) {
+        if (! Schema::hasColumn('products', 'is_homepage')) {
             Schema::table('products', function (Blueprint $table) {
                 $table->boolean('is_homepage')->default(false)->after('published_at');
                 $table->index('is_homepage');

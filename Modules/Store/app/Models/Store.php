@@ -2,16 +2,14 @@
 
 namespace Modules\Store\Models;
 
+use App\Traits\CustomSoftDeletes;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use App\Traits\CustomSoftDeletes;
-use Modules\Store\Models\StoreStaff;
-use Modules\Store\Models\Address;
 
 class Store extends Model
 {
-    use HasFactory;
     use CustomSoftDeletes;
+    use HasFactory;
 
     protected $table = 'stores';
 

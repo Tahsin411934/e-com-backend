@@ -2,23 +2,23 @@
 
 namespace Modules\Inventory\Services;
 
+use App\Helpers\ApiResponse;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Schema;
 use Modules\Account\Services\AccountTransactionService;
-use Modules\Inventory\Models\PurchaseOrder;
-use Modules\Inventory\Models\PurchaseOrderItem;
-use Modules\Inventory\Models\InventoryStock;
-use Modules\Inventory\Models\InventoryMovement;
-use Modules\Inventory\Models\InventoryLocation;
-use Modules\Catalog\Models\ProductVariant;
 use Modules\Catalog\Models\Product;
+use Modules\Catalog\Models\ProductVariant;
+use Modules\Inventory\Models\InventoryLocation;
+use Modules\Inventory\Models\InventoryMovement;
+use Modules\Inventory\Models\InventoryStock;
+use Modules\Inventory\Models\PurchaseOrder;
 use Yajra\DataTables\DataTables;
 
 class PurchaseOrderService
 {
     public function __construct(
-        private \Modules\Account\Services\AccountTransactionService $transactionService,
+        private AccountTransactionService $transactionService,
         private SupplierPaymentService $supplierPaymentService,
     ) {}
 
@@ -39,7 +39,8 @@ class PurchaseOrderService
                     'cancelled' => 'bg-red-100 text-red-700',
                 ];
                 $class = $colors[$po->status] ?? 'bg-gray-100';
-                return '<span class="px-2 py-1 rounded-full text-xs font-medium ' . $class . '">' . ucfirst(str_replace('_', ' ', $po->status)) . '</span>';
+
+                return '<span class="px-2 py-1 rounded-full text-xs font-medium '.$class.'">'.ucfirst(str_replace('_', ' ', $po->status)).'</span>';
             })
             ->editColumn('payment_status', function (PurchaseOrder $po) {
                 $colors = [
@@ -48,7 +49,8 @@ class PurchaseOrderService
                     'paid' => 'bg-green-100 text-green-700',
                 ];
                 $class = $colors[$po->payment_status] ?? 'bg-gray-100';
-                return '<span class="px-2 py-1 rounded-full text-xs font-medium ' . $class . '">' . ucfirst(str_replace('_', ' ', $po->payment_status)) . '</span>';
+
+                return '<span class="px-2 py-1 rounded-full text-xs font-medium '.$class.'">'.ucfirst(str_replace('_', ' ', $po->payment_status)).'</span>';
             })
             ->editColumn('total_amount', function (PurchaseOrder $po) {
                 return number_format($po->total_amount, 2);
@@ -73,21 +75,21 @@ class PurchaseOrderService
 
                 // Quick status workflow buttons (inline)
                 if ($po->status === 'draft') {
-                    $html .= '<button onclick="updatePoStatus(' . $po->id . ', \'ordered\')" class="bg-blue-600 text-white px-2 py-1 rounded text-xs hover:bg-blue-700 mr-1" title="Mark as Ordered"><i class="fas fa-check"></i> Order</button>';
+                    $html .= '<button onclick="updatePoStatus('.$po->id.', \'ordered\')" class="bg-blue-600 text-white px-2 py-1 rounded text-xs hover:bg-blue-700 mr-1" title="Mark as Ordered"><i class="fas fa-check"></i> Order</button>';
                 }
                 if (in_array($po->status, ['ordered', 'partially_received'])) {
-                    $html .= '<button onclick="updatePoStatus(' . $po->id . ', \'received\')" class="bg-green-600 text-white px-2 py-1 rounded text-xs hover:bg-green-700 mr-1" title="Mark as Received"><i class="fas fa-check-double"></i> Receive</button>';
+                    $html .= '<button onclick="updatePoStatus('.$po->id.', \'received\')" class="bg-green-600 text-white px-2 py-1 rounded text-xs hover:bg-green-700 mr-1" title="Mark as Received"><i class="fas fa-check-double"></i> Receive</button>';
                 }
                 if (in_array($po->status, ['draft', 'ordered'])) {
-                    $html .= '<button onclick="updatePoStatus(' . $po->id . ', \'cancelled\')" class="bg-red-500 text-white px-2 py-1 rounded text-xs hover:bg-red-600 mr-1" title="Cancel Order"><i class="fas fa-times"></i></button>';
+                    $html .= '<button onclick="updatePoStatus('.$po->id.', \'cancelled\')" class="bg-red-500 text-white px-2 py-1 rounded text-xs hover:bg-red-600 mr-1" title="Cancel Order"><i class="fas fa-times"></i></button>';
                 }
                 if ($po->payment_status !== 'paid' && $po->status !== 'cancelled') {
-                    $html .= '<a href="' . route('purchase-orders.show', $po->id) . '" class="bg-indigo-600 text-white px-2 py-1 rounded text-xs hover:bg-indigo-700 mr-1 transition" title="Record Payment"><i class="fas fa-dollar-sign"></i> Pay</a>';
+                    $html .= '<a href="'.route('purchase-orders.show', $po->id).'" class="bg-indigo-600 text-white px-2 py-1 rounded text-xs hover:bg-indigo-700 mr-1 transition" title="Record Payment"><i class="fas fa-dollar-sign"></i> Pay</a>';
                 }
 
                 // Create a purchase return for received orders.
                 if (in_array($po->status, ['received', 'partially_received'], true)) {
-                    $html .= '<a href="' . route('purchase-returns.create', ['purchase_order_id' => $po->id]) . '" class="bg-orange-500 text-white px-2 py-1 rounded text-xs hover:bg-orange-600 mr-1 transition" title="Create Purchase Return"><i class="fas fa-undo-alt"></i> Return</a>';
+                    $html .= '<a href="'.route('purchase-returns.create', ['purchase_order_id' => $po->id]).'" class="bg-orange-500 text-white px-2 py-1 rounded text-xs hover:bg-orange-600 mr-1 transition" title="Create Purchase Return"><i class="fas fa-undo-alt"></i> Return</a>';
                 }
 
                 // Standard action buttons (hide edit/delete for locked statuses)
@@ -109,7 +111,7 @@ class PurchaseOrderService
             ->make(true);
     }
 
-    public function savePo(array $data): array
+    public function savePo(array $data): JsonResponse
     {
         try {
             return DB::transaction(function () use ($data) {
@@ -157,43 +159,35 @@ class PurchaseOrderService
                 //  payments are recorded from the PO page via Supplier Payments.)
                 $paidAmount = (float) ($data['paid_amount'] ?? 0);
                 $accountId = $data['account_id'] ?? null;
-                if (!$poId && $paidAmount > 0 && $accountId) {
+                if (! $poId && $paidAmount > 0 && $accountId) {
                     $this->recordPoPayment($po, $paidAmount, (string) $accountId);
                 } else {
                     $this->supplierPaymentService->updatePurchasePaymentStatus($po->id);
                 }
 
-                return [
-                    'status' => 'success',
-                    'message' => $message,
-                    'purchase_order' => $po->fresh()->load(['supplier', 'store', 'items.variant']),
-                ];
+                if ($poId) {
+                    return ApiResponse::success($po->fresh()->load(['supplier', 'store', 'items.variant']), $message);
+                }
+
+                return ApiResponse::created($po->fresh()->load(['supplier', 'store', 'items.variant']), $message);
             });
         } catch (\Exception $e) {
-            return [
-                'status' => 'error',
-                'message' => 'Error saving purchase order: ' . $e->getMessage(),
-            ];
+            return ApiResponse::error('Error saving purchase order: '.$e->getMessage(), 500);
         }
     }
 
-    public function getPoById(int $id): array
+    public function getPoById(int $id): JsonResponse
     {
         try {
-            $po = PurchaseOrder::with(['supplier', 'store', 'items.variant.product', 'creator'])->findOrFail($id);
-            return [
-                'status' => 'success',
-                'purchase_order' => $po,
-            ];
-        } catch (\Exception $e) {
-            return [
-                'status' => 'error',
-                'message' => 'Purchase order not found.',
-            ];
+            return ApiResponse::success(
+                PurchaseOrder::with(['supplier', 'store', 'items.variant.product', 'creator'])->findOrFail($id)
+            );
+        } catch (\Exception) {
+            return ApiResponse::notFound('Purchase order not found.');
         }
     }
 
-    public function deletePo(int $id): array
+    public function deletePo(int $id): JsonResponse
     {
         try {
             return DB::transaction(function () use ($id) {
@@ -201,24 +195,25 @@ class PurchaseOrderService
                 // Received orders are locked — deleting them would orphan stock.
                 // Create a purchase return instead.
                 if (in_array($po->status, ['received', 'partially_received', 'returned'], true)) {
-                    return ['status' => 'error', 'message' => 'Received or returned orders cannot be deleted. Create a purchase return or adjustment instead.'];
+                    return ApiResponse::error('Received or returned orders cannot be deleted. Create a purchase return or adjustment instead.', 500);
                 }
                 $po->delete();
-                return ['status' => 'success', 'message' => 'Purchase order deleted successfully.'];
+
+                return ApiResponse::success(null, 'Purchase order deleted successfully.');
             });
         } catch (\Exception $e) {
-            return ['status' => 'error', 'message' => 'Error deleting purchase order: ' . $e->getMessage()];
+            return ApiResponse::error('Error deleting purchase order: '.$e->getMessage(), 500);
         }
     }
 
-    public function updateStatus(int $id, ?string $status = null, ?string $paymentStatus = null): array
+    public function updateStatus(int $id, ?string $status = null, ?string $paymentStatus = null): JsonResponse
     {
         try {
             return DB::transaction(function () use ($id, $status, $paymentStatus) {
                 $po = PurchaseOrder::findOrFail($id);
 
-                if (!$status && !$paymentStatus) {
-                    return ['status' => 'error', 'message' => 'Nothing to update.'];
+                if (! $status && ! $paymentStatus) {
+                    return ApiResponse::error('Nothing to update.', 500);
                 }
 
                 if ($status) {
@@ -231,8 +226,8 @@ class PurchaseOrderService
                         'cancelled' => [],
                     ];
 
-                    if (!in_array($status, $validTransitions[$po->status] ?? [])) {
-                        return ['status' => 'error', 'message' => 'Cannot change status from "' . $po->status . '" to "' . $status . '".'];
+                    if (! in_array($status, $validTransitions[$po->status] ?? [])) {
+                        return ApiResponse::error('Cannot change status from "'.$po->status.'" to "'.$status.'".', 500);
                     }
 
                     $po->update(['status' => $status]);
@@ -249,10 +244,10 @@ class PurchaseOrderService
                     $po->refresh();
 
                     if ($paymentStatus === 'paid' && $po->payment_status !== 'paid') {
-                        return [
-                            'status' => 'error',
-                            'message' => 'This order is not fully paid yet. Record the remaining amount as a Supplier Payment from the order page to mark it Paid.',
-                        ];
+                        return ApiResponse::error(
+                            'This order is not fully paid yet. Record the remaining amount as a Supplier Payment from the order page to mark it Paid.',
+                            500
+                        );
                     }
 
                     $po->update(['payment_status' => $po->payment_status]);
@@ -260,26 +255,33 @@ class PurchaseOrderService
 
                 $message = [];
                 if ($status) {
-                    $message[] = 'Status updated to "' . ucfirst(str_replace('_', ' ', $status)) . '".';
+                    $message[] = 'Status updated to "'.ucfirst(str_replace('_', ' ', $status)).'".';
                 }
                 if ($paymentStatus) {
-                    $message[] = 'Payment status updated to "' . ucfirst(str_replace('_', ' ', $paymentStatus)) . '".';
+                    $message[] = 'Payment status updated to "'.ucfirst(str_replace('_', ' ', $paymentStatus)).'".';
                 }
 
-                return [
-                    'status' => 'success',
-                    'message' => implode(' ', $message),
-                    'purchase_order' => $po->fresh()->load(['supplier', 'store', 'items.variant']),
-                ];
+                return ApiResponse::success(
+                    $po->fresh()->load(['supplier', 'store', 'items.variant']),
+                    implode(' ', $message)
+                );
             });
         } catch (\Exception $e) {
-            return ['status' => 'error', 'message' => 'Error updating status: ' . $e->getMessage()];
+            return ApiResponse::error('Error updating status: '.$e->getMessage(), 500);
         }
+    }
+
+    /**
+     * Raw model lookup for show/edit views (findOrFail → automatic 404).
+     */
+    public function getPoModel(int $id): PurchaseOrder
+    {
+        return PurchaseOrder::with(['supplier', 'store', 'items.variant.product', 'creator'])->findOrFail($id);
     }
 
     protected function recordPoPayment(PurchaseOrder $po, float $amount, string $accountId): array
     {
-        $result = $this->supplierPaymentService->save([
+        $response = $this->supplierPaymentService->save([
             'supplier_id' => $po->supplier_id,
             'purchase_order_id' => $po->id,
             'store_id' => $po->store_id,
@@ -289,21 +291,23 @@ class PurchaseOrderService
             'note' => 'Advance payment recorded during purchase order creation.',
         ]);
 
-        if (($result['status'] ?? '') !== 'success') {
-            throw new \RuntimeException($result['message'] ?? 'Failed to record advance payment.');
+        $payload = $response->getData(true);
+
+        if (($payload['status'] ?? '') !== 'success') {
+            throw new \RuntimeException($payload['message'] ?? 'Failed to record advance payment.');
         }
 
-        return $result;
+        return $payload;
     }
 
     protected function processStockUpdate(PurchaseOrder $po): void
     {
         $location = InventoryLocation::where('store_id', $po->store_id)->first();
 
-        if (!$location) {
+        if (! $location) {
             $location = InventoryLocation::create([
                 'store_id' => $po->store_id,
-                'name' => $po->store->name . ' - Main',
+                'name' => $po->store->name.' - Main',
                 'location_type' => 'warehouse',
                 'status' => 'active',
             ]);
@@ -311,7 +315,9 @@ class PurchaseOrderService
 
         foreach ($po->items as $item) {
             $receivedQty = $item->quantity - $item->received_quantity;
-            if ($receivedQty <= 0) continue;
+            if ($receivedQty <= 0) {
+                continue;
+            }
 
             $item->update(['received_quantity' => $item->quantity]);
 
@@ -328,7 +334,7 @@ class PurchaseOrderService
                 'quantity' => $receivedQty,
                 'reference_type' => PurchaseOrder::class,
                 'reference_id' => $po->id,
-                'note' => 'PO ' . $po->po_number . ' received',
+                'note' => 'PO '.$po->po_number.' received',
                 'created_by' => auth()->id(),
             ]);
 
@@ -345,11 +351,11 @@ class PurchaseOrderService
     {
         $search = $request->get('q', '');
         $results = Product::where(function ($q) use ($search) {
-                $q->where('name', 'like', "%{$search}%")
-                  ->orWhereHas('variants', function ($qv) use ($search) {
-                      $qv->where('sku', 'like', "%{$search}%");
-                  });
-            })
+            $q->where('name', 'like', "%{$search}%")
+                ->orWhereHas('variants', function ($qv) use ($search) {
+                    $qv->where('sku', 'like', "%{$search}%");
+                });
+        })
             ->with(['variants' => function ($q) {
                 $q->select('id', 'product_id', 'name', 'sku', 'sale_price', 'cost_price');
             }])
@@ -362,7 +368,7 @@ class PurchaseOrderService
             foreach ($product->variants as $variant) {
                 $items[] = [
                     'id' => $variant->id,
-                    'text' => $product->name . ' - ' . $variant->name . ' (' . $variant->sku . ')',
+                    'text' => $product->name.' - '.$variant->name.' ('.$variant->sku.')',
                     'product_name' => $product->name,
                     'variant_name' => $variant->name,
                     'sku' => $variant->sku,

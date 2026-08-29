@@ -2,7 +2,6 @@
 
 namespace Modules\Reports\Services;
 
-use Illuminate\Support\Facades\DB;
 use Modules\Reports\Support\ReportFilters;
 use Modules\Shipping\Models\DeliveryDriver;
 use Modules\Shipping\Models\DeliveryZone;
@@ -41,6 +40,7 @@ class ShippingReportService extends BaseReportService
             ->when($f && $f->to, fn ($q) => $q->whereDate('shipments.delivered_at', '<=', $f->to))
             ->groupBy('delivery_drivers.id')->orderByDesc('total_deliveries')->get()
             ->map(fn ($r) => ['driver' => $r->name, 'total' => (int) $r->total_deliveries, 'delivered' => (int) $r->delivered, 'rate' => (int) $r->total_deliveries > 0 ? round(((int) $r->delivered / (int) $r->total_deliveries) * 100, 1) : 0]);
+
         return ['columns' => ['driver' => 'Driver', 'total' => 'Assigned', 'delivered' => 'Delivered', 'rate' => 'Success Rate (%)'], 'rows' => $rows->all()];
     }
 
@@ -54,6 +54,7 @@ class ShippingReportService extends BaseReportService
             ->when($f && $f->to, fn ($q) => $q->whereDate('shipments.created_at', '<=', $f->to))
             ->groupBy('delivery_zones.id')->orderByDesc('cost')->get()
             ->map(fn ($r) => ['zone' => $r->name, 'shipments' => (int) $r->total, 'cost' => round((float) $r->cost, 2)]);
+
         return ['columns' => ['zone' => 'Zone', 'shipments' => 'Shipments', 'cost' => 'Cost'], 'rows' => $rows->all()];
     }
 
@@ -65,6 +66,7 @@ class ShippingReportService extends BaseReportService
             ->selectRaw("COALESCE(NULLIF(delivery_instructions, ''), 'Unknown') as reason, COUNT(*) as count")
             ->groupBy('reason')->orderByDesc('count')->get()
             ->map(fn ($r) => ['reason' => mb_strimwidth($r->reason, 0, 80, '…'), 'count' => (int) $r->count]);
+
         return ['columns' => ['reason' => 'Reason', 'count' => 'Shipments'], 'rows' => $rows->all()];
     }
 }

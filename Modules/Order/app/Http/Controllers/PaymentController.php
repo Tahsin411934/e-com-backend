@@ -8,12 +8,7 @@ use Modules\Order\Services\PaymentService;
 
 class PaymentController extends Controller
 {
-    protected PaymentService $paymentService;
-
-    public function __construct(PaymentService $paymentService)
-    {
-        $this->paymentService = $paymentService;
-    }
+    public function __construct(private PaymentService $paymentService) {}
 
     public function index()
     {
@@ -27,27 +22,21 @@ class PaymentController extends Controller
 
     public function store(Request $request)
     {
-        $result = $this->paymentService->savePayment($request->all());
-        return response()->json($result);
+        return $this->paymentService->savePayment($request->all());
     }
 
-    public function show(int $id)
+    public function show($id)
     {
-        $result = $this->paymentService->getPaymentById($id);
-        return response()->json($result);
+        return $this->paymentService->getPaymentById((int) $id);
     }
 
     public function update(Request $request, int $id)
     {
-        $data = $request->all();
-        $data['payment_id'] = $id;
-        $result = $this->paymentService->savePayment($data);
-        return response()->json($result);
+        return $this->paymentService->savePayment($request->all() + ['payment_id' => $id]);
     }
 
-    public function destroy(int $id)
+    public function destroy($id)
     {
-        $result = $this->paymentService->deletePayment($id);
-        return response()->json($result);
+        return $this->paymentService->deletePayment((int) $id);
     }
 }

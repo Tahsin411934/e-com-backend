@@ -4,17 +4,12 @@ namespace Modules\Inventory\Http\Controllers;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
-use Modules\Inventory\Services\SupplierService;
 use Modules\Inventory\Http\Requests\SupplierRequest;
+use Modules\Inventory\Services\SupplierService;
 
 class SupplierController extends Controller
 {
-    protected SupplierService $supplierService;
-
-    public function __construct(SupplierService $supplierService)
-    {
-        $this->supplierService = $supplierService;
-    }
+    public function __construct(private SupplierService $supplierService) {}
 
     public function index()
     {
@@ -28,27 +23,21 @@ class SupplierController extends Controller
 
     public function store(SupplierRequest $request)
     {
-        $result = $this->supplierService->saveSupplier($request->validated());
-        return response()->json($result, $result['status'] === 'success' ? 200 : 500);
+        return $this->supplierService->saveSupplier($request->validated());
     }
 
     public function show($id)
     {
-        $result = $this->supplierService->getSupplierById($id);
-        return response()->json($result);
+        return $this->supplierService->getSupplierById((int) $id);
     }
 
     public function update(SupplierRequest $request, $id)
     {
-        $data = $request->validated();
-        $data['supplier_id'] = $id;
-        $result = $this->supplierService->saveSupplier($data);
-        return response()->json($result, $result['status'] === 'success' ? 200 : 500);
+        return $this->supplierService->saveSupplier($request->validated() + ['supplier_id' => $id]);
     }
 
     public function destroy($id)
     {
-        $result = $this->supplierService->deleteSupplier($id);
-        return response()->json($result, $result['status'] === 'success' ? 200 : 500);
+        return $this->supplierService->deleteSupplier((int) $id);
     }
 }

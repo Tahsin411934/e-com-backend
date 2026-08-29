@@ -103,6 +103,7 @@ class ReportFilters
 
         if ($period === 'custom') {
             $span = (int) $to->copy()->diffInDays($from) + 1;
+
             return [$from->copy()->subDays($span), $to->copy()->subDays($span)];
         }
 

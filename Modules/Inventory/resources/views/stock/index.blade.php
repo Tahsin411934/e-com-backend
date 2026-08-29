@@ -23,7 +23,7 @@
         showUrl="{{ route('inventory-stock.show', ':id') }}"
         destroyUrl="{{ route('inventory-stock.destroy', ':id') }}"
         drawerTitle="Stock Record"
-        dataKey="stock"
+        dataKey="data"
         idField="stock_id"
         :order="[[7, 'desc']]"
     >

@@ -2,6 +2,8 @@
 
 namespace Modules\Account\Services;
 
+use App\Helpers\ApiResponse;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -35,7 +37,7 @@ class AccountAccountService
             ->make(true);
     }
 
-    public function save(array $data): array
+    public function save(array $data): JsonResponse
     {
         try {
             return DB::transaction(function () use ($data) {
@@ -57,43 +59,44 @@ class AccountAccountService
                 if ($id) {
                     $account = AccountAccount::findOrFail($id);
                     $account->update($data);
-                    $message = 'Account updated successfully.';
-                } else {
-                    $data['current_balance'] = $data['opening_balance'] ?? 0;
-                    $data['created_by'] = auth()->id();
-                    $account = AccountAccount::create($data);
-                    $message = 'Account created successfully.';
+
+                    return ApiResponse::success($account->fresh(), 'Account updated successfully.');
                 }
 
-                return ['status' => 'success', 'message' => $message, 'account' => $account->fresh()];
+                $data['current_balance'] = $data['opening_balance'] ?? 0;
+                $data['created_by'] = auth()->id();
+                $account = AccountAccount::create($data);
+
+                return ApiResponse::created($account->fresh(), 'Account created successfully.');
             });
         } catch (\Exception $e) {
-            return ['status' => 'error', 'message' => 'Error saving account: ' . $e->getMessage()];
+            return ApiResponse::error('Error saving account: '.$e->getMessage(), 500);
         }
     }
 
-    public function find(int $id): array
+    public function find(int $id): JsonResponse
     {
         try {
-            return ['status' => 'success', 'account' => AccountAccount::findOrFail($id)];
+            return ApiResponse::success(AccountAccount::findOrFail($id));
         } catch (\Exception) {
-            return ['status' => 'error', 'message' => 'Account not found.'];
+            return ApiResponse::notFound('Account not found.');
         }
     }
 
-    public function delete(int $id): array
+    public function delete(int $id): JsonResponse
     {
         try {
             return DB::transaction(function () use ($id) {
                 $account = AccountAccount::findOrFail($id);
                 if ($account->transactionLines()->exists() || $account->expenses()->exists()) {
-                    return ['status' => 'error', 'message' => 'This account has transactions and cannot be deleted. Deactivate it instead.'];
+                    return ApiResponse::error('This account has transactions and cannot be deleted. Deactivate it instead.', 500);
                 }
                 $account->delete();
-                return ['status' => 'success', 'message' => 'Account deleted successfully.'];
+
+                return ApiResponse::success(null, 'Account deleted successfully.');
             });
         } catch (\Exception $e) {
-            return ['status' => 'error', 'message' => 'Error deleting account: ' . $e->getMessage()];
+            return ApiResponse::error('Error deleting account: '.$e->getMessage(), 500);
         }
     }
 

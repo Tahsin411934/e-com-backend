@@ -2,6 +2,8 @@
 
 namespace Modules\Store\Services;
 
+use App\Helpers\ApiResponse;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -22,7 +24,7 @@ class StoreStaffService
                 ->addColumn('user_name', function (StoreStaff $staff) {
                     $firstName = $staff->user?->first_name ?? '';
                     $lastName = $staff->user?->last_name ?? '';
-                    $name = trim($firstName . ' ' . $lastName);
+                    $name = trim($firstName.' '.$lastName);
 
                     return $name !== '' ? $name : '-';
                 })
@@ -60,7 +62,7 @@ class StoreStaffService
         }
     }
 
-    public function saveStoreStaff(array $data): array
+    public function saveStoreStaff(array $data): JsonResponse
     {
         try {
             return DB::transaction(function () use ($data) {
@@ -76,52 +78,35 @@ class StoreStaffService
                     $message = 'Staff created successfully.';
                 }
 
-                return [
-                    'status' => 'success',
-                    'message' => $message,
-                    'staff' => $staff->fresh(['store', 'user']),
-                ];
+                return ApiResponse::success($staff->fresh(['store', 'user']), $message);
             });
         } catch (\Exception $e) {
-            return [
-                'status' => 'error',
-                'message' => 'Error saving staff: ' . $e->getMessage(),
-            ];
+            return ApiResponse::error('Error saving staff: '.$e->getMessage(), 500);
         }
     }
 
-    public function getStoreStaffById(int $id): array
+    public function getStoreStaffById(int $id): JsonResponse
     {
         try {
             $staff = StoreStaff::with(['store', 'user'])->findOrFail($id);
-            return [
-                'status' => 'success',
-                'staff' => $staff,
-            ];
+
+            return ApiResponse::success($staff);
         } catch (\Exception $e) {
-            return [
-                'status' => 'error',
-                'message' => 'Staff not found.',
-            ];
+            return ApiResponse::notFound('Staff not found.');
         }
     }
 
-    public function deleteStoreStaff(int $id): array
+    public function deleteStoreStaff(int $id): JsonResponse
     {
         try {
             return DB::transaction(function () use ($id) {
                 $staff = StoreStaff::findOrFail($id);
                 $staff->delete();
-                return [
-                    'status' => 'success',
-                    'message' => 'Staff deleted successfully.',
-                ];
+
+                return ApiResponse::success(null, 'Staff deleted successfully.');
             });
         } catch (\Exception $e) {
-            return [
-                'status' => 'error',
-                'message' => 'Error deleting staff: ' . $e->getMessage(),
-            ];
+            return ApiResponse::error('Error deleting staff: '.$e->getMessage(), 500);
         }
     }
 }

@@ -2,6 +2,8 @@
 
 namespace Modules\Order\Services;
 
+use App\Helpers\ApiResponse;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
@@ -42,7 +44,7 @@ class RefundService
             ->make(true);
     }
 
-    public function saveRefund(array $data): array
+    public function saveRefund(array $data): JsonResponse
     {
         try {
             return DB::transaction(function () use ($data) {
@@ -62,52 +64,35 @@ class RefundService
                     app(AccountTransactionService::class)->postRefund($refund->fresh(['payment', 'order']));
                 }
 
-                return [
-                    'status' => 'success',
-                    'message' => $message,
-                    'refund' => $refund->fresh(),
-                ];
+                return ApiResponse::success($refund->fresh(), $message);
             });
         } catch (\Exception $e) {
-            return [
-                'status' => 'error',
-                'message' => 'Error saving refund: ' . $e->getMessage(),
-            ];
+            return ApiResponse::error('Error saving refund: '.$e->getMessage(), 500);
         }
     }
 
-    public function getRefundById(int $id): array
+    public function getRefundById(int $id): JsonResponse
     {
         try {
             $refund = Refund::with(['order', 'payment'])->findOrFail($id);
-            return [
-                'status' => 'success',
-                'refund' => $refund,
-            ];
+
+            return ApiResponse::success($refund);
         } catch (\Exception $e) {
-            return [
-                'status' => 'error',
-                'message' => 'Refund not found.',
-            ];
+            return ApiResponse::notFound('Refund not found.');
         }
     }
 
-    public function deleteRefund(int $id): array
+    public function deleteRefund(int $id): JsonResponse
     {
         try {
             return DB::transaction(function () use ($id) {
                 $refund = Refund::findOrFail($id);
                 $refund->delete();
-                return [
-                    'status' => 'success',
-                    'message' => 'Refund deleted successfully.',
-                ];
+
+                return ApiResponse::success(null, 'Refund deleted successfully.');
             });
         } catch (\Exception $e) {
-            return [
-                'status' => 'error',
-                'message' => 'Error deleting refund: ' . $e->getMessage(),
-            ];
+            return ApiResponse::error('Error deleting refund: '.$e->getMessage(), 500);
         }
     }
 }

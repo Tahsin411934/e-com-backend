@@ -8,7 +8,7 @@ return new class extends Migration
 {
     public function up()
     {
-        if (!Schema::hasColumn('homepage_ctas', 'cta_style')) {
+        if (! Schema::hasColumn('homepage_ctas', 'cta_style')) {
             Schema::table('homepage_ctas', function (Blueprint $table) {
                 $table->string('cta_style', 50)->default('style1')->after('id');
                 $table->string('banner_image', 255)->nullable()->after('image');

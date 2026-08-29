@@ -2,7 +2,10 @@
 
 namespace Modules\Inventory\Services;
 
+use App\Helpers\ApiResponse;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Modules\Inventory\Models\Supplier;
@@ -32,7 +35,7 @@ class SupplierService
             ->make(true);
     }
 
-    public function saveSupplier(array $data): array
+    public function saveSupplier(array $data): JsonResponse
     {
         try {
             return DB::transaction(function () use ($data) {
@@ -52,56 +55,39 @@ class SupplierService
                     $message = 'Supplier created successfully.';
                 }
 
-                return [
-                    'status' => 'success',
-                    'message' => $message,
-                    'supplier' => $supplier->fresh(),
-                ];
+                return ApiResponse::success($supplier->fresh(), $message);
             });
         } catch (\Exception $e) {
-            return [
-                'status' => 'error',
-                'message' => 'Error saving supplier: ' . $e->getMessage(),
-            ];
+            return ApiResponse::error('Error saving supplier: '.$e->getMessage(), 500);
         }
     }
 
-    public function getSupplierById(int $id): array
+    public function getSupplierById(int $id): JsonResponse
     {
         try {
             $supplier = Supplier::findOrFail($id);
-            return [
-                'status' => 'success',
-                'supplier' => $supplier,
-            ];
+
+            return ApiResponse::success($supplier);
         } catch (\Exception $e) {
-            return [
-                'status' => 'error',
-                'message' => 'Supplier not found.',
-            ];
+            return ApiResponse::notFound('Supplier not found.');
         }
     }
 
-    public function deleteSupplier(int $id): array
+    public function deleteSupplier(int $id): JsonResponse
     {
         try {
             return DB::transaction(function () use ($id) {
                 $supplier = Supplier::findOrFail($id);
                 $supplier->delete();
-                return [
-                    'status' => 'success',
-                    'message' => 'Supplier deleted successfully.',
-                ];
+
+                return ApiResponse::success(null, 'Supplier deleted successfully.');
             });
         } catch (\Exception $e) {
-            return [
-                'status' => 'error',
-                'message' => 'Error deleting supplier: ' . $e->getMessage(),
-            ];
+            return ApiResponse::error('Error deleting supplier: '.$e->getMessage(), 500);
         }
     }
 
-    public function getAllActiveSuppliers(): \Illuminate\Support\Collection
+    public function getAllActiveSuppliers(): Collection
     {
         return Supplier::where('status', 'active')
             ->orderBy('name')

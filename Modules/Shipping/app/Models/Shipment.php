@@ -2,16 +2,16 @@
 
 namespace Modules\Shipping\Models;
 
+use App\Traits\CustomSoftDeletes;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use App\Traits\CustomSoftDeletes;
 use Modules\Order\Models\Order;
 use Modules\Store\Models\Address;
 use Modules\Store\Models\Store;
 
 class Shipment extends Model
 {
-    use HasFactory, CustomSoftDeletes;
+    use CustomSoftDeletes, HasFactory;
 
     protected $table = 'shipments';
 

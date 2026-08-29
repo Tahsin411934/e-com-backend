@@ -2,15 +2,17 @@
 
 namespace Modules\Catalog\Services;
 
+use App\Helpers\ApiResponse;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
-use Modules\Catalog\Models\Product;
 use Modules\Catalog\Models\Brand;
 use Modules\Catalog\Models\Category;
+use Modules\Catalog\Models\Product;
 use Modules\Catalog\Models\ProductImage;
 use Modules\Catalog\Models\ProductVariant;
 use Modules\Catalog\Models\VariantOption;
@@ -18,7 +20,6 @@ use Yajra\DataTables\DataTables;
 
 class ProductService
 {
-
     public function getProductDataTable(Request $request)
     {
         $query = Product::with(['brand'])
@@ -67,21 +68,20 @@ class ProductService
             ->make(true);
     }
 
-    public function saveProduct(array $data): array
+    public function saveProduct(array $data): JsonResponse
     {
         // Validate SKU uniqueness across all variants (create + update)
         if (isset($data['variants']) && is_array($data['variants'])) {
             $allSkus = [];
             foreach ($data['variants'] as $index => $variantData) {
                 $sku = trim($variantData['sku'] ?? '');
-                if (empty($sku)) continue;
+                if (empty($sku)) {
+                    continue;
+                }
 
                 // Check for duplicate SKUs within the same request
                 if (in_array($sku, $allSkus)) {
-                    return [
-                        'status' => 'error',
-                        'message' => "Duplicate SKU '{$sku}' found at variant #" . ($index + 1) . '. Each variant must have a unique SKU.',
-                    ];
+                    return ApiResponse::error("Duplicate SKU '{$sku}' found at variant #".($index + 1).'. Each variant must have a unique SKU.', 422);
                 }
                 $allSkus[] = $sku;
             }
@@ -91,7 +91,7 @@ class ProductService
             $productId = $data['product_id'] ?? null;
             $existingVariantIds = [];
             if ($productId) {
-                $product = \Modules\Catalog\Models\Product::find($productId);
+                $product = Product::find($productId);
                 if ($product) {
                     $existingVariantIds = $product->variants()->pluck('id')->toArray();
                 }
@@ -99,19 +99,18 @@ class ProductService
 
             foreach ($data['variants'] as $index => $variantData) {
                 $sku = trim($variantData['sku'] ?? '');
-                if (empty($sku)) continue;
+                if (empty($sku)) {
+                    continue;
+                }
 
                 // Exclude ALL existing variants of this product from the check
                 // so that unchanged variants don't trigger false conflicts
-                $conflict = \Modules\Catalog\Models\ProductVariant::where('sku', $sku)
+                $conflict = ProductVariant::where('sku', $sku)
                     ->whereNotIn('id', $existingVariantIds)
                     ->exists();
 
                 if ($conflict) {
-                    return [
-                        'status' => 'error',
-                        'message' => "SKU '{$sku}' at variant #" . ($index + 1) . ' already exists in the database.',
-                    ];
+                    return ApiResponse::error("SKU '{$sku}' at variant #".($index + 1).' already exists in the database.', 422);
                 }
             }
         }
@@ -150,7 +149,7 @@ class ProductService
                     if (is_string($mainImageId) && str_starts_with($mainImageId, 'new_')) {
                         $imageIndex = (int) substr($mainImageId, 4);
                         $uploadedImages = $data['images'] ?? [];
-                        if (isset($uploadedImages[$imageIndex]) && $uploadedImages[$imageIndex] instanceof \Illuminate\Http\UploadedFile) {
+                        if (isset($uploadedImages[$imageIndex]) && $uploadedImages[$imageIndex] instanceof UploadedFile) {
                             $allImages = ProductImage::where('product_id', $product->id)
                                 ->orderBy('id')
                                 ->get();
@@ -168,7 +167,7 @@ class ProductService
                     }
                 }
 
-                if (!ProductImage::where('product_id', $product->id)->where('is_main', true)->exists()) {
+                if (! ProductImage::where('product_id', $product->id)->where('is_main', true)->exists()) {
                     $firstImage = ProductImage::where('product_id', $product->id)->orderBy('sort_order')->first();
                     if ($firstImage) {
                         $firstImage->update(['is_main' => true]);
@@ -182,24 +181,24 @@ class ProductService
 
                 if (isset($data['variants']) && is_array($data['variants'])) {
                     $keepVariantIds = [];
-                    
+
                     foreach ($data['variants'] as $variantData) {
                         // Handle default values for checkboxes if missing
                         $variantData['track_inventory'] = $variantData['track_inventory'] ?? false;
                         $variantData['allow_backorder'] = $variantData['allow_backorder'] ?? false;
-                        
+
                         // Extract options before saving variant
                         $optionsData = $variantData['options'] ?? [];
                         unset($variantData['options']);
-                        
+
                         $variant = $product->variants()->updateOrCreate(
-                            ['id' => $variantData['id'] ?? null], 
+                            ['id' => $variantData['id'] ?? null],
                             $variantData
                         );
                         $keepVariantIds[] = $variant->id;
 
                         // Handle variant_options (color variants for this size)
-                        if (!empty($optionsData) && is_array($optionsData)) {
+                        if (! empty($optionsData) && is_array($optionsData)) {
                             $keepOptionIds = [];
                             foreach ($optionsData as $optData) {
                                 // Normalize numeric option fields: blank string -> null so pricing
@@ -214,7 +213,7 @@ class ProductService
                                 $optData['sort_order'] = $optData['sort_order'] ?? 0;
                                 $optData['price_adjustment'] = $optData['price_adjustment'] ?? 0;
                                 // Option discount falls back to the parent variant discount when empty
-                                $optData['discount_percent'] = (!isset($optData['discount_percent']) || $optData['discount_percent'] === '')
+                                $optData['discount_percent'] = (! isset($optData['discount_percent']) || $optData['discount_percent'] === '')
                                     ? ($variant->discount_percent ?? 0)
                                     : $optData['discount_percent'];
                                 // Inherit pricing from the parent variant when left blank,
@@ -234,7 +233,7 @@ class ProductService
                                     $optData['id'] ?? null
                                 );
                                 $optData['barcode'] = $optData['barcode'] ?: (string) Str::uuid();
-                                
+
                                 $option = VariantOption::updateOrCreate(
                                     ['id' => $optData['id'] ?? null],
                                     $optData
@@ -252,39 +251,34 @@ class ProductService
                     $product->variants()->whereNotIn('id', $keepVariantIds)->get()->each->delete();
                 }
 
-                return [
-                    'status' => 'success',
-                    'message' => $message,
-                    'product' => $product->fresh()->load(['categories', 'variants', 'images', 'brand']),
-                ];
+                if ($productId) {
+                    return ApiResponse::success($product->fresh()->load(['categories', 'variants', 'images', 'brand']), $message);
+                }
+
+                return ApiResponse::created($product->fresh()->load(['categories', 'variants', 'images', 'brand']), $message);
             });
         } catch (\Exception $e) {
-            return [
-                'status' => 'error',
-                'message' => 'Error saving product: ' . $e->getMessage(),
-                'product' => null,
-            ];
+            return ApiResponse::error('Error saving product: '.$e->getMessage(), 500);
         }
     }
 
-    public function getProductById(int $id): array
+    public function getProductById(int $id): JsonResponse
     {
         try {
-            $product = Product::with(['brand', 'categories', 'variants.options', 'images'])->findOrFail($id);
-            return [
-                'status' => 'success',
-                'product' => $product,
-            ];
-        } catch (\Exception $e) {
-            return [
-                'status' => 'error',
-                'message' => 'Product not found.',
-                'product' => null,
-            ];
+            return ApiResponse::success(
+                Product::with(['brand', 'categories', 'variants.options', 'images'])->findOrFail($id)
+            );
+        } catch (\Exception) {
+            return ApiResponse::notFound('Product not found.');
         }
     }
 
-    public function deleteProduct(int $id): array
+    public function getProductModel(int $id): Product
+    {
+        return Product::with(['brand', 'categories', 'variants.options', 'images'])->findOrFail($id);
+    }
+
+    public function deleteProduct(int $id): JsonResponse
     {
         try {
             return DB::transaction(function () use ($id) {
@@ -297,16 +291,10 @@ class ProductService
                 $product->images()->get()->each->delete();
                 $product->delete();
 
-                return [
-                    'status' => 'success',
-                    'message' => 'Product deleted successfully.',
-                ];
+                return ApiResponse::success(null, 'Product deleted successfully.');
             });
         } catch (\Exception $e) {
-            return [
-                'status' => 'error',
-                'message' => 'Error deleting product: ' . $e->getMessage(),
-            ];
+            return ApiResponse::error('Error deleting product: '.$e->getMessage(), 500);
         }
     }
 
@@ -315,7 +303,7 @@ class ProductService
      * New unique slug/SKU/barcode are generated and image files are physically copied,
      * so the duplicate is fully independent from the source product.
      */
-    public function duplicateProduct(int $id, array $data): array
+    public function duplicateProduct(int $id, array $data): JsonResponse
     {
         try {
             return DB::transaction(function () use ($id, $data) {
@@ -323,11 +311,7 @@ class ProductService
 
                 $name = trim((string) ($data['name'] ?? ''));
                 if ($name === '') {
-                    return [
-                        'status' => 'error',
-                        'message' => 'Product name is required.',
-                        'product' => null,
-                    ];
+                    return ApiResponse::error('Product name is required.', 422);
                 }
 
                 // Optional price override (applied to every variant's sale price)
@@ -336,66 +320,66 @@ class ProductService
                     : null;
 
                 $duplicate = Product::create([
-                    'brand_id'          => $source->brand_id ?? $data['brand_id'] ?? null,
-                    'category_id'       => $source->category_id ?? $data['category_id'] ?? null,
-                    'navbar_item_id'    => $source->navbar_item_id,
+                    'brand_id' => $source->brand_id ?? $data['brand_id'] ?? null,
+                    'category_id' => $source->category_id ?? $data['category_id'] ?? null,
+                    'navbar_item_id' => $source->navbar_item_id,
                     'subnavbar_item_id' => $source->subnavbar_item_id,
-                    'unit_id'           => $source->unit_id,
-                    'size_id'           => $source->size_id,
-                    'tax_rate_id'       => $source->tax_rate_id,
-                    'name'              => $name,
-                    'slug'              => $this->generateUniqueProductSlug($name),
+                    'unit_id' => $source->unit_id,
+                    'size_id' => $source->size_id,
+                    'tax_rate_id' => $source->tax_rate_id,
+                    'name' => $name,
+                    'slug' => $this->generateUniqueProductSlug($name),
                     'short_description' => $source->short_description,
-                    'description'       => $source->description,
-                    'product_type'      => $source->product_type,
-                    'status'            => $source->status,
-                    'visibility'        => $source->visibility,
-                    'seo_title'         => $source->seo_title,
-                    'seo_description'   => $source->seo_description,
-                    'published_at'      => $source->published_at,
-                    'is_homepage'       => false,
+                    'description' => $source->description,
+                    'product_type' => $source->product_type,
+                    'status' => $source->status,
+                    'visibility' => $source->visibility,
+                    'seo_title' => $source->seo_title,
+                    'seo_description' => $source->seo_description,
+                    'published_at' => $source->published_at,
+                    'is_homepage' => false,
                 ]);
 
-// Categories (pivot table)
+                // Categories (pivot table)
                 $duplicate->categories()->sync($source->categories->pluck('id'));
 
                 // Variants (+ their color/size options)
                 $variantMap = [];
                 foreach ($source->variants as $variant) {
                     $newVariant = $duplicate->variants()->create([
-                        'sku'              => $this->generateUniqueVariantSku($variant->sku),
-                        'barcode'          => (string) Str::uuid(),
-                        'name'             => $variant->name,
-                        'attributes'       => $variant->attributes,
-                        'cost_price'       => $variant->cost_price,
-                        'sale_price'       => $price !== null ? $price : $variant->sale_price,
+                        'sku' => $this->generateUniqueVariantSku($variant->sku),
+                        'barcode' => (string) Str::uuid(),
+                        'name' => $variant->name,
+                        'attributes' => $variant->attributes,
+                        'cost_price' => $variant->cost_price,
+                        'sale_price' => $price !== null ? $price : $variant->sale_price,
                         'discount_percent' => $variant->discount_percent ?? 0,
                         'compare_at_price' => $variant->compare_at_price,
-                        'weight_grams'     => $variant->weight_grams,
-                        'length_mm'        => $variant->length_mm,
-                        'width_mm'         => $variant->width_mm,
-                        'height_mm'        => $variant->height_mm,
-                        'track_inventory'  => $variant->track_inventory,
-                        'allow_backorder'  => $variant->allow_backorder,
-                        'status'           => $variant->status,
+                        'weight_grams' => $variant->weight_grams,
+                        'length_mm' => $variant->length_mm,
+                        'width_mm' => $variant->width_mm,
+                        'height_mm' => $variant->height_mm,
+                        'track_inventory' => $variant->track_inventory,
+                        'allow_backorder' => $variant->allow_backorder,
+                        'status' => $variant->status,
                     ]);
                     $variantMap[$variant->id] = $newVariant->id;
 
                     foreach ($variant->options as $option) {
                         VariantOption::create([
                             'product_variant_id' => $newVariant->id,
-                            'color_name'         => $option->color_name,
-                            'color_code'         => $option->color_code,
-                            'sku'                => $option->sku ? $this->generateUniqueVariantSku($option->sku) : null,
-                            'barcode'            => $option->barcode ? (string) Str::uuid() : null,
-                            'image_url'          => $option->image_url ? $this->copyImageFile($option->image_url) : null,
-                            'price_adjustment'   => $option->price_adjustment,
-                            'sale_price'        => $price !== null ? $price : $option->sale_price,
-                            'compare_at_price'  => $option->compare_at_price,
-                            'cost_price'        => $option->cost_price,
-                            'discount_percent'  => $option->discount_percent,
-                            'sort_order'         => $option->sort_order,
-                            'status'             => $option->status,
+                            'color_name' => $option->color_name,
+                            'color_code' => $option->color_code,
+                            'sku' => $option->sku ? $this->generateUniqueVariantSku($option->sku) : null,
+                            'barcode' => $option->barcode ? (string) Str::uuid() : null,
+                            'image_url' => $option->image_url ? $this->copyImageFile($option->image_url) : null,
+                            'price_adjustment' => $option->price_adjustment,
+                            'sale_price' => $price !== null ? $price : $option->sale_price,
+                            'compare_at_price' => $option->compare_at_price,
+                            'cost_price' => $option->cost_price,
+                            'discount_percent' => $option->discount_percent,
+                            'sort_order' => $option->sort_order,
+                            'status' => $option->status,
                         ]);
                     }
                 }
@@ -405,25 +389,20 @@ class ProductService
                     ProductImage::create([
                         'product_id' => $duplicate->id,
                         'variant_id' => $image->variant_id ? ($variantMap[$image->variant_id] ?? null) : null,
-                        'image_url'  => $this->copyImageFile($image->image_url),
-                        'alt_text'   => $image->alt_text ?? $name,
+                        'image_url' => $this->copyImageFile($image->image_url),
+                        'alt_text' => $image->alt_text ?? $name,
                         'sort_order' => $image->sort_order,
-                        'is_main'    => $image->is_main,
+                        'is_main' => $image->is_main,
                     ]);
                 }
 
-                return [
-                    'status' => 'success',
-                    'message' => 'Product duplicated successfully.',
-                    'product' => $duplicate->fresh()->load(['brand', 'categories', 'variants.options', 'images']),
-                ];
+                return ApiResponse::created(
+                    $duplicate->fresh()->load(['brand', 'categories', 'variants.options', 'images']),
+                    'Product duplicated successfully.'
+                );
             });
         } catch (\Exception $e) {
-            return [
-                'status' => 'error',
-                'message' => 'Error duplicating product: ' . $e->getMessage(),
-                'product' => null,
-            ];
+            return ApiResponse::error('Error duplicating product: '.$e->getMessage(), 500);
         }
     }
 
@@ -434,13 +413,13 @@ class ProductService
     {
         $base = Str::slug($name);
         if ($base === '') {
-            $base = 'product-' . Str::lower(Str::random(6));
+            $base = 'product-'.Str::lower(Str::random(6));
         }
 
         $slug = $base;
         $counter = 2;
         while (Product::withTrashed()->where('slug', $slug)->exists()) {
-            $slug = $base . '-' . $counter++;
+            $slug = $base.'-'.$counter++;
         }
 
         return $slug;
@@ -451,12 +430,12 @@ class ProductService
      */
     private function generateUniqueVariantSku(?string $sku): string
     {
-        $base = $sku && trim($sku) !== '' ? trim($sku) : ('PROD-' . Str::upper(Str::random(8)));
+        $base = $sku && trim($sku) !== '' ? trim($sku) : ('PROD-'.Str::upper(Str::random(8)));
 
-        $candidate = $base . '-COPY';
+        $candidate = $base.'-COPY';
         $counter = 2;
         while (ProductVariant::withTrashed()->where('sku', $candidate)->exists()) {
-            $candidate = $base . '-COPY-' . $counter++;
+            $candidate = $base.'-COPY-'.$counter++;
         }
 
         return Str::upper($candidate);
@@ -480,16 +459,16 @@ class ProductService
         if ($provided === '' || ($parentSku !== '' && strcasecmp($provided, $parentSku) === 0)) {
             $suffix = Str::upper(Str::limit(Str::slug($colorName ?? ''), 40, ''));
             $suffix = $suffix !== '' ? $suffix : 'OPTION';
-            $provided = $parentSku !== '' ? $parentSku . '-' . $suffix : $suffix;
+            $provided = $parentSku !== '' ? $parentSku.'-'.$suffix : $suffix;
         }
 
         $provided = Str::upper($provided);
 
         if ($this->optionSkuExists($provided, $ignoreOptionId)) {
-            $candidate = $provided . '-1';
+            $candidate = $provided.'-1';
             $counter = 2;
             while ($this->optionSkuExists($candidate, $ignoreOptionId)) {
-                $candidate = $provided . '-' . $counter++;
+                $candidate = $provided.'-'.$counter++;
             }
             $provided = $candidate;
         }
@@ -518,7 +497,7 @@ class ProductService
      */
     private function copyImageFile(?string $imageUrl): ?string
     {
-        if (!$imageUrl) {
+        if (! $imageUrl) {
             return null;
         }
 
@@ -526,7 +505,7 @@ class ProductService
 
         // External URLs that are not on local /storage are kept as-is
         if (str_starts_with($path, 'http://') || str_starts_with($path, 'https://')) {
-            if (!str_contains($path, '/storage/')) {
+            if (! str_contains($path, '/storage/')) {
                 return $path;
             }
             $parsed = parse_url($path, PHP_URL_PATH) ?? '';
@@ -542,16 +521,16 @@ class ProductService
         }
 
         // Only uploaded files under products/ or categories/ are copied
-        if (!str_starts_with($path, 'products/') && !str_starts_with($path, 'categories/')) {
+        if (! str_starts_with($path, 'products/') && ! str_starts_with($path, 'categories/')) {
             return $path;
         }
 
         $disk = Storage::disk('public');
-        if (!$disk->exists($path)) {
+        if (! $disk->exists($path)) {
             return $path;
         }
 
-        $newPath = 'products/' . Str::random(24) . '-' . basename($path);
+        $newPath = 'products/'.Str::random(24).'-'.basename($path);
         $disk->copy($path, $newPath);
 
         return $newPath;
@@ -567,8 +546,16 @@ class ProductService
         return Category::where('status', 'active')->orderBy('name')->get();
     }
 
-    public function searchProducts(string $query, ?int $categoryId = null): array
+    public function searchProducts(string $query, ?int $categoryId = null): JsonResponse
     {
+        if (trim($query) === '') {
+            return ApiResponse::fromResult([
+                'success' => false,
+                'message' => 'Search query is required',
+                'data' => [],
+            ]);
+        }
+
         try {
             $queryBuilder = Product::with(['brand', 'categories', 'images'])
                 ->where('status', 'active')
@@ -589,7 +576,7 @@ class ProductService
 
             $formattedProducts = $products->map(function ($product) {
                 $mainImage = $product->images->where('is_main', true)->first();
-                $thumbnail = $mainImage ? asset('storage/' . $mainImage->image_url) : null;
+                $thumbnail = $mainImage ? asset('storage/'.$mainImage->image_url) : null;
                 $category = $product->categories->first()?->name;
 
                 return [
@@ -603,17 +590,17 @@ class ProductService
                 ];
             })->toArray();
 
-            return [
-                'status' => 'success',
+            return ApiResponse::fromResult([
+                'success' => true,
                 'message' => 'Products found',
                 'data' => $formattedProducts,
-            ];
+            ]);
         } catch (\Exception $e) {
-            return [
-                'status' => 'error',
-                'message' => 'Error searching products: ' . $e->getMessage(),
+            return ApiResponse::fromResult([
+                'success' => false,
+                'message' => 'Error searching products: '.$e->getMessage(),
                 'data' => [],
-            ];
+            ]);
         }
     }
 
@@ -621,11 +608,11 @@ class ProductService
     {
         foreach ($images as $index => $image) {
             if ($image instanceof UploadedFile) {
-                $fileName = Str::slug($product->name) . '-' . now()->format('YmdHis') . '-' . $index . '.' . $image->getClientOriginalExtension();
+                $fileName = Str::slug($product->name).'-'.now()->format('YmdHis').'-'.$index.'.'.$image->getClientOriginalExtension();
                 $path = $image->storeAs('products', $fileName, 'public');
 
                 // First image is automatically set as main
-                $isMain = !ProductImage::where('product_id', $product->id)->where('is_main', true)->exists() && $index === 0;
+                $isMain = ! ProductImage::where('product_id', $product->id)->where('is_main', true)->exists() && $index === 0;
 
                 ProductImage::create([
                     'product_id' => $product->id,
@@ -652,7 +639,7 @@ class ProductService
         }
 
         // If the main image was deleted, assign main to the first remaining image
-        if (!ProductImage::where('product_id', $product->id)->where('is_main', true)->exists()) {
+        if (! ProductImage::where('product_id', $product->id)->where('is_main', true)->exists()) {
             $firstImage = ProductImage::where('product_id', $product->id)->orderBy('sort_order')->first();
             if ($firstImage) {
                 $firstImage->update(['is_main' => true]);
@@ -662,7 +649,7 @@ class ProductService
 
     private function deleteImage(?string $imageUrl): void
     {
-        if (!$imageUrl) {
+        if (! $imageUrl) {
             return;
         }
 
@@ -675,7 +662,7 @@ class ProductService
         }
 
         // Only delete if it's an uploaded file (no external URLs like https://via.placeholder.com)
-        if (!str_starts_with($path, 'products/') && !str_starts_with($path, 'categories/')) {
+        if (! str_starts_with($path, 'products/') && ! str_starts_with($path, 'categories/')) {
             return;
         }
 
@@ -686,7 +673,7 @@ class ProductService
      * Reorder products based on the provided array of product IDs.
      * Each product's order_column is updated sequentially.
      */
-    public function reorderProducts(array $productIds): array
+    public function reorderProducts(array $productIds): JsonResponse
     {
         try {
             return DB::transaction(function () use ($productIds) {
@@ -694,17 +681,10 @@ class ProductService
                     Product::where('id', $productId)->update(['order_column' => $index + 1]);
                 }
 
-                return [
-                    'status' => 'success',
-                    'message' => 'Products reordered successfully.',
-                ];
+                return ApiResponse::success(null, 'Products reordered successfully.');
             });
         } catch (\Exception $e) {
-            return [
-                'status' => 'error',
-                'message' => 'Error reordering products: ' . $e->getMessage(),
-            ];
+            return ApiResponse::error('Error reordering products: '.$e->getMessage(), 500);
         }
     }
 }
-

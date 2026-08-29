@@ -18,7 +18,7 @@
         showUrl="{{ route('categories.show', ':id') }}"
         destroyUrl="{{ route('categories.destroy', ':id') }}"
         drawerTitle="Category"
-        dataKey="category"
+        dataKey="data"
         idField="category_id"
     >
         <div class="mb-4">

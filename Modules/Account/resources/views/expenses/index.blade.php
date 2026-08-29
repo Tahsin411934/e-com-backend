@@ -20,7 +20,7 @@
         showUrl="{{ route('account-expenses.show', ':id') }}"
         destroyUrl="{{ route('account-expenses.destroy', ':id') }}"
         drawerTitle="Expense"
-        dataKey="expense"
+        dataKey="data"
         idField="expense_id"
     >
         <div class="mb-4">

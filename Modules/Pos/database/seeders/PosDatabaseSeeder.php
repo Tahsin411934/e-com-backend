@@ -3,11 +3,11 @@
 namespace Modules\Pos\Database\Seeders;
 
 use Illuminate\Database\Seeder;
-use Modules\Pos\Models\PosRegister;
-use Modules\Pos\Models\PosShift;
-use Modules\Pos\Models\PosSale;
-use Modules\Store\Models\Store;
 use Modules\Identity\Models\User;
+use Modules\Pos\Models\PosRegister;
+use Modules\Pos\Models\PosSale;
+use Modules\Pos\Models\PosShift;
+use Modules\Store\Models\Store;
 
 class PosDatabaseSeeder extends Seeder
 {
@@ -15,8 +15,9 @@ class PosDatabaseSeeder extends Seeder
     {
         $mainStore = Store::where('slug', 'main-store-dhaka')->first();
 
-        if (!$mainStore) {
+        if (! $mainStore) {
             $this->command->warn('No stores found. Skipping POS seeding.');
+
             return;
         }
 
@@ -39,7 +40,7 @@ class PosDatabaseSeeder extends Seeder
         }
 
         // ===== POS Shifts =====
-        if ($adminUser && !empty($createdRegisters)) {
+        if ($adminUser && ! empty($createdRegisters)) {
             $register = $createdRegisters[0];
             $shift = PosShift::firstOrCreate(
                 ['register_id' => $register->id, 'user_id' => $adminUser->id, 'status' => 'open'],

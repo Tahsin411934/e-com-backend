@@ -3,11 +3,11 @@
 namespace Modules\Store\Database\Seeders;
 
 use Illuminate\Database\Seeder;
+use Modules\Identity\Models\User;
+use Modules\Store\Models\Address;
+use Modules\Store\Models\Country;
 use Modules\Store\Models\Store;
 use Modules\Store\Models\StoreStaff;
-use Modules\Store\Models\Country;
-use Modules\Store\Models\Address;
-use Modules\Identity\Models\User;
 
 class StoreDatabaseSeeder extends Seeder
 {

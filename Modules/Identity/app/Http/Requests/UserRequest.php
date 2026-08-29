@@ -14,20 +14,20 @@ class UserRequest extends FormRequest
     public function rules(): array
     {
         $userId = $this->route('user') ?? $this->input('user_id');
-        $uniqueEmail = 'unique:users,email' . ($userId ? ',' . $userId : '');
-        $uniquePhone = 'unique:users,phone' . ($userId ? ',' . $userId : '');
+        $uniqueEmail = 'unique:users,email'.($userId ? ','.$userId : '');
+        $uniquePhone = 'unique:users,phone'.($userId ? ','.$userId : '');
 
         $rules = [
             'first_name' => 'nullable|string|max:100',
             'last_name' => 'nullable|string|max:100',
-            'email' => 'required|email|max:255|' . $uniqueEmail,
-            'phone' => 'nullable|string|max:32|' . $uniquePhone,
+            'email' => 'required|email|max:255|'.$uniqueEmail,
+            'phone' => 'nullable|string|max:32|'.$uniquePhone,
             'status' => 'required|in:active,inactive,blocked,deleted',
             'role_id' => 'required|exists:roles,id',
         ];
 
         // Password is only required on create, optional on update
-        if (!$userId) {
+        if (! $userId) {
             $rules['password_hash'] = 'required|string|max:255';
         } else {
             $rules['password_hash'] = 'nullable|string|max:255';

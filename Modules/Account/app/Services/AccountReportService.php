@@ -55,9 +55,10 @@ class AccountReportService
             ->editColumn('cost_total', fn ($row) => number_format((float) $row->cost_total, 2))
             ->editColumn('gross_profit', function ($row) {
                 $class = (float) $row->gross_profit < 0 ? 'text-red-600' : 'text-green-600';
-                return '<span class="' . $class . ' font-semibold">' . number_format((float) $row->gross_profit, 2) . '</span>';
+
+                return '<span class="'.$class.' font-semibold">'.number_format((float) $row->gross_profit, 2).'</span>';
             })
-            ->editColumn('profit_margin', fn ($row) => number_format((float) $row->profit_margin, 2) . '%')
+            ->editColumn('profit_margin', fn ($row) => number_format((float) $row->profit_margin, 2).'%')
             ->rawColumns(['gross_profit'])
             ->make(true);
     }

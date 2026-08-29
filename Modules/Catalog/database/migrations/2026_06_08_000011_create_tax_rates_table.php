@@ -8,7 +8,7 @@ return new class extends Migration
 {
     public function up()
     {
-        if (!Schema::hasTable('tax_rates')) {
+        if (! Schema::hasTable('tax_rates')) {
             Schema::create('tax_rates', function (Blueprint $table) {
                 $table->bigIncrements('id');
                 $table->string('name', 220);

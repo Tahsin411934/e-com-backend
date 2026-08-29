@@ -17,7 +17,7 @@
         showUrl="{{ route('wishlists.show', ':id') }}"
         destroyUrl="{{ route('wishlists.destroy', ':id') }}"
         drawerTitle="Wishlist"
-        dataKey="wishlist"
+        dataKey="data"
         idField="wishlist_id"
         :order="[[0, 'desc']]"
     >

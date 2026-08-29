@@ -127,8 +127,8 @@ class AccountDatabaseSeeder extends Seeder
                 'reference_no' => 'MKT-2026-08',
                 'note' => 'Marketing campaign spend for product launch.',
             ],
-            ] as $expenseData) {
-            if (!$expenseData['account_id'] || !$expenseData['category_id']) {
+        ] as $expenseData) {
+            if (! $expenseData['account_id'] || ! $expenseData['category_id']) {
                 continue;
             }
 
@@ -145,7 +145,7 @@ class AccountDatabaseSeeder extends Seeder
         // Posting one automatically increases the selected account's balance.
         if ($bankAccount && $creator) {
             $investmentCategory = $investmentCategory
-                ?? (new AccountTransactionService())->ensureCategory('investment', 'Investment', 'asset');
+                ?? (new AccountTransactionService)->ensureCategory('investment', 'Investment', 'asset');
 
             $demoInvestment = AccountInvestment::updateOrCreate(
                 ['investment_no' => 'INV-SEED-0001'],
@@ -166,7 +166,7 @@ class AccountDatabaseSeeder extends Seeder
             );
 
             if ($demoInvestment->wasRecentlyCreated) {
-                $transaction = (new AccountTransactionService())->postInvestment(
+                $transaction = (new AccountTransactionService)->postInvestment(
                     $demoInvestment,
                     $bankAccount,
                     $investmentCategory,
@@ -198,7 +198,7 @@ class AccountDatabaseSeeder extends Seeder
                 'note' => 'Mobile wallet top-up for payments.',
             ],
         ] as $transferData) {
-            if (!$transferData['from_account_id'] || !$transferData['to_account_id']) {
+            if (! $transferData['from_account_id'] || ! $transferData['to_account_id']) {
                 continue;
             }
 

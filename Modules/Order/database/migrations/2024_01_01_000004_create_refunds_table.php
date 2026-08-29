@@ -14,7 +14,7 @@ return new class extends Migration
             $table->foreignId('order_id')->constrained('orders')->cascadeOnDelete();
             $table->decimal('amount', 19, 4);
             $table->string('reason', 500)->nullable();
-            $table->enum('status', ['pending','processed','failed'])->default('pending');
+            $table->enum('status', ['pending', 'processed', 'failed'])->default('pending');
             $table->dateTime('processed_at')->nullable();
             $table->timestamps();
             $table->softDeletes();

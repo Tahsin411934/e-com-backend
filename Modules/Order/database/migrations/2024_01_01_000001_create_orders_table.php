@@ -13,10 +13,10 @@ return new class extends Migration
             $table->string('order_number', 40)->unique();
             $table->foreignId('user_id')->nullable()->constrained('users')->nullOnDelete();
             $table->foreignId('store_id')->nullable()->constrained('stores')->nullOnDelete();
-            $table->enum('source', ['web','mobile','pos','admin','marketplace'])->default('web');
-            $table->enum('status', ['pending','confirmed','processing','ready','completed','cancelled','refunded'])->default('pending');
-            $table->enum('payment_status', ['unpaid','authorized','paid','partially_refunded','refunded','failed'])->default('unpaid');
-            $table->enum('fulfillment_status', ['unfulfilled','partial','fulfilled','returned'])->default('unfulfilled');
+            $table->enum('source', ['web', 'mobile', 'pos', 'admin', 'marketplace'])->default('web');
+            $table->enum('status', ['pending', 'confirmed', 'processing', 'ready', 'completed', 'cancelled', 'refunded'])->default('pending');
+            $table->enum('payment_status', ['unpaid', 'authorized', 'paid', 'partially_refunded', 'refunded', 'failed'])->default('unpaid');
+            $table->enum('fulfillment_status', ['unfulfilled', 'partial', 'fulfilled', 'returned'])->default('unfulfilled');
             $table->char('currency_code', 3)->default('USD');
             $table->decimal('subtotal', 19, 4)->default(0);
             $table->decimal('discount_total', 19, 4)->default(0);

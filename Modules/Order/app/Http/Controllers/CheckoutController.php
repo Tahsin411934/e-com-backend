@@ -6,32 +6,28 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Modules\Cart\Models\Cart;
-use Modules\Cart\Models\CartItem;
+use Modules\Cart\Services\CampaignPricingService;
+use Modules\Order\Models\Delivery;
 use Modules\Order\Models\Order;
 use Modules\Order\Models\OrderItem;
-use Modules\Catalog\Models\ProductVariant;
-use Modules\Catalog\Models\VariantOption;
-use Modules\Cart\Services\CampaignPricingService;
 
 class CheckoutController extends Controller
 {
-    public function __construct(private CampaignPricingService $campaignPricing)
-    {
-    }
+    public function __construct(private CampaignPricingService $campaignPricing) {}
 
     public function checkout(Request $request)
     {
         try {
             return DB::transaction(function () use ($request) {
                 $userId = auth()->id();
-                
+
                 // Get user's active cart
                 $cart = Cart::where('user_id', $userId)
                     ->where('status', 'active')
                     ->with('items.variant', 'items.variantOption')
                     ->first();
 
-                if (!$cart || $cart->items->isEmpty()) {
+                if (! $cart || $cart->items->isEmpty()) {
                     return [
                         'status' => 'error',
                         'message' => 'Cart is empty.',
@@ -43,7 +39,7 @@ class CheckoutController extends Controller
                 // variant/option discount applies) so an expired campaign or a
                 // stale cart price can never be used for an order.
                 foreach ($cart->items as $cartItem) {
-                    if (!$cartItem->variant) {
+                    if (! $cartItem->variant) {
                         continue;
                     }
 
@@ -57,7 +53,7 @@ class CheckoutController extends Controller
                 $cart->load('items.variant', 'items.variantOption');
 
                 // Calculate totals
-                $subtotal = $cart->items->sum(fn($item) => $item->unit_price * $item->quantity);
+                $subtotal = $cart->items->sum(fn ($item) => $item->unit_price * $item->quantity);
                 $discountTotal = 0; // TODO: Apply coupon logic if needed
                 $taxTotal = 0; // TODO: Calculate tax if needed
                 $shippingTotal = $subtotal >= 99 ? 0 : 10; // Free shipping over ৳99
@@ -65,7 +61,7 @@ class CheckoutController extends Controller
 
                 // Create order
                 $order = Order::create([
-                    'order_number' => 'ORD-' . strtoupper(uniqid()),
+                    'order_number' => 'ORD-'.strtoupper(uniqid()),
                     'user_id' => $userId,
                     'store_id' => $cart->store_id,
                     'source' => 'web',
@@ -85,7 +81,7 @@ class CheckoutController extends Controller
                 ]);
 
                 // Create delivery record
-                \Modules\Order\Models\Delivery::create([
+                Delivery::create([
                     'order_id' => $order->id,
                     'user_id' => $userId,
                     'status' => 'pending',
@@ -99,14 +95,14 @@ class CheckoutController extends Controller
                 foreach ($cart->items as $cartItem) {
                     $variant = $cartItem->variant;
                     $variantOption = $cartItem->variantOption;
-                    
+
                     $productName = $variant->product->name ?? 'Unknown Product';
                     $variantName = $variant->name ?? 'Default';
-                    
+
                     // Build variant description with color if available
                     $variantDescription = $variantName;
                     if ($variantOption && $variantOption->color_name) {
-                        $variantDescription .= ' - ' . $variantOption->color_name;
+                        $variantDescription .= ' - '.$variantOption->color_name;
                     }
 
                     OrderItem::create([
@@ -137,7 +133,7 @@ class CheckoutController extends Controller
         } catch (\Exception $e) {
             return [
                 'status' => 'error',
-                'message' => 'Error placing order: ' . $e->getMessage(),
+                'message' => 'Error placing order: '.$e->getMessage(),
             ];
         }
     }

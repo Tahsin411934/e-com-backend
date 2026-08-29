@@ -2,37 +2,41 @@
 
 namespace Modules\Cart\Http\Controllers;
 
+use App\Helpers\ApiResponse;
 use App\Http\Controllers\Controller;
 use Modules\Cart\Models\Campaign;
+use Modules\Cart\Services\CampaignPricingService;
 
 class CampaignApiController extends Controller
 {
     public function index()
     {
         $campaigns = Campaign::live()->with(['products.product.images', 'products.product.variants'])->orderByDesc('is_featured')->orderByDesc('priority')->get();
-        return response()->json(['success' => true, 'data' => $campaigns->map(fn (Campaign $campaign) => $this->serialize($campaign))->values()]);
+
+        return ApiResponse::fromResult(['success' => true, 'data' => $campaigns->map(fn (Campaign $campaign) => $this->serialize($campaign))->values()]);
     }
 
     public function show(string $slug)
     {
         $campaign = Campaign::live()->where('slug', $slug)->with(['products.product.images', 'products.product.variants'])->firstOrFail();
-        return response()->json(['success' => true, 'data' => $this->serialize($campaign)]);
+
+        return ApiResponse::fromResult(['success' => true, 'data' => $this->serialize($campaign)]);
     }
 
     private function serialize(Campaign $campaign): array
     {
-        $campaignPricing = app(\Modules\Cart\Services\CampaignPricingService::class);
+        $campaignPricing = app(CampaignPricingService::class);
 
         return [
-            'id'           => $campaign->id,
-            'name'         => $this->cleanText($campaign->name),
-            'slug'         => $campaign->slug,
-            'description'  => $this->cleanText($campaign->description),
+            'id' => $campaign->id,
+            'name' => $this->cleanText($campaign->name),
+            'slug' => $campaign->slug,
+            'description' => $this->cleanText($campaign->description),
             'banner_image' => $this->absoluteUrl($campaign->banner_image),
-            'button_text'  => $campaign->button_text ?: 'Shop offer',
-            'starts_at'    => $campaign->starts_at?->toIso8601String(),
-            'ends_at'      => $campaign->ends_at?->toIso8601String(),
-            'products'     => $campaign->products
+            'button_text' => $campaign->button_text ?: 'Shop offer',
+            'starts_at' => $campaign->starts_at?->toIso8601String(),
+            'ends_at' => $campaign->ends_at?->toIso8601String(),
+            'products' => $campaign->products
                 ->map(function ($entry) use ($campaignPricing) {
                     $product = $entry->product;
                     $variant = $entry->variant ?? $product?->variants->firstWhere('status', 'active');
@@ -43,23 +47,23 @@ class CampaignApiController extends Controller
                     // Campaign discount is the ONLY discount here.
                     // regular_price = sale price; price = after campaign discount.
                     $campaignPrice = $campaignPricing->priceFor($variant, 0);
-                    $price         = round(max(0, (float) $campaignPrice['price']), 0);
-                    $regular       = round(max(0, (float) $campaignPrice['original_price']), 0);
-                    $hasDiscount   = $price < $regular && $regular > 0;
-                    $discountAmt   = round($regular - $price, 0);
-                    $mainImage     = $product->images->firstWhere('is_main', true) ?? $product->images->first();
+                    $price = round(max(0, (float) $campaignPrice['price']), 0);
+                    $regular = round(max(0, (float) $campaignPrice['original_price']), 0);
+                    $hasDiscount = $price < $regular && $regular > 0;
+                    $discountAmt = round($regular - $price, 0);
+                    $mainImage = $product->images->firstWhere('is_main', true) ?? $product->images->first();
 
                     return [
-                        'id'               => $product->id,
-                        'name'             => $this->cleanText($product->name),
-                        'slug'             => $product->slug,
-                        'main_image'       => $this->absoluteUrl($mainImage?->image_url),
-                        'price'            => $price,
-                        'regular_price'    => $regular,
-                        'original_price'   => $regular,
+                        'id' => $product->id,
+                        'name' => $this->cleanText($product->name),
+                        'slug' => $product->slug,
+                        'main_image' => $this->absoluteUrl($mainImage?->image_url),
+                        'price' => $price,
+                        'regular_price' => $regular,
+                        'original_price' => $regular,
                         'discount_percent' => $hasDiscount ? (float) round(($discountAmt / $regular) * 100, 0) : 0,
-                        'discount_amount'  => $hasDiscount ? $discountAmt : 0,
-                        'has_discount'     => $hasDiscount,
+                        'discount_amount' => $hasDiscount ? $discountAmt : 0,
+                        'has_discount' => $hasDiscount,
                     ];
                 })
                 ->filter()
@@ -86,7 +90,7 @@ class CampaignApiController extends Controller
             $clean = substr($clean, 8);
         }
 
-        return $clean ? asset('storage/' . $clean) : null;
+        return $clean ? asset('storage/'.$clean) : null;
     }
 
     /**

@@ -4,22 +4,18 @@ namespace Modules\Catalog\Http\Controllers;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
-use Modules\Catalog\Models\Size;
-use Modules\Catalog\Models\Unit;
-use Modules\Catalog\Services\ProductService;
 use Modules\Catalog\Http\Requests\StoreProductRequest;
 use Modules\Catalog\Http\Requests\UpdateProductRequest;
+use Modules\Catalog\Models\Size;
+use Modules\Catalog\Models\TaxRate;
+use Modules\Catalog\Models\Unit;
+use Modules\Catalog\Services\ProductService;
 use Modules\Frontend\Models\NavbarItem;
 use Modules\Frontend\Models\SubnavbarItem;
 
 class ProductController extends Controller
 {
-    protected ProductService $productService;
-
-    public function __construct(ProductService $productService)
-    {
-        $this->productService = $productService;
-    }
+    public function __construct(private ProductService $productService) {}
 
     /**
      * Parse a JSON string input into an array. If already an array, return as-is.
@@ -31,8 +27,10 @@ class ProductController extends Controller
         }
         if (is_string($value)) {
             $decoded = json_decode($value, true);
+
             return is_array($decoded) ? $decoded : [];
         }
+
         return [];
     }
 
@@ -40,6 +38,7 @@ class ProductController extends Controller
     {
         $brands = $this->productService->getBrands();
         $categories = $this->productService->getCategories();
+
         return view('catalog::index', compact('brands', 'categories'));
     }
 
@@ -57,9 +56,10 @@ class ProductController extends Controller
         $categories = $this->productService->getCategories();
         $units = Unit::where('status', 'active')->orderBy('name')->get();
         $sizes = Size::where('status', 'active')->orderBy('group_name')->get();
-        $taxRates = \Modules\Catalog\Models\TaxRate::where('status', 'active')->orderBy('name')->get();
+        $taxRates = TaxRate::where('status', 'active')->orderBy('name')->get();
         $navbarItems = NavbarItem::where('status', 'active')->orderBy('sort_order')->orderBy('name')->get();
         $subnavbarItems = collect();
+
         return view('catalog::products.create', compact('brands', 'categories', 'units', 'sizes', 'taxRates', 'navbarItems', 'subnavbarItems'));
     }
 
@@ -69,21 +69,25 @@ class ProductController extends Controller
         $data['images'] = $request->file('images', []);
         $data['deleted_image_ids'] = $this->parseJsonArray($request->input('deleted_image_ids', []));
         $data['deleted_variant_ids'] = $this->parseJsonArray($request->input('deleted_variant_ids', []));
-        $result = $this->productService->saveProduct($data);
+
+        $response = $this->productService->saveProduct($data);
+
         if ($request->ajax() || $request->wantsJson()) {
-            return response()->json($result);
+            return $response;
         }
-        if ($result['status'] === 'success') {
-            return redirect()->route('products.index')
-                ->with('success', $result['message']);
+
+        $payload = $response->getData(true);
+
+        if (($payload['status'] ?? '') === 'success') {
+            return redirect()->route('products.index')->with('success', $payload['message']);
         }
-        return redirect()->back()->withInput()->with('error', $result['message']);
+
+        return redirect()->back()->withInput()->with('error', $payload['message'] ?? 'Failed to save product.');
     }
 
     public function show($id)
     {
-        $result = $this->productService->getProductById($id);
-        return response()->json($result);
+        return $this->productService->getProductById((int) $id);
     }
 
     /**
@@ -91,21 +95,17 @@ class ProductController extends Controller
      */
     public function edit($id)
     {
-        $result = $this->productService->getProductById($id);
-        if ($result['status'] === 'error') {
-            abort(404, $result['message']);
-        }
-        $product = $result['product'];
+        $product = $this->productService->getProductModel((int) $id);
         $brands = $this->productService->getBrands();
         $categories = $this->productService->getCategories();
         $units = Unit::where('status', 'active')->orderBy('name')->get();
         $sizes = Size::where('status', 'active')->orderBy('group_name')->get();
-        $taxRates = \Modules\Catalog\Models\TaxRate::where('status', 'active')->orderBy('name')->get();
+        $taxRates = TaxRate::where('status', 'active')->orderBy('name')->get();
         $navbarItems = NavbarItem::where('status', 'active')->orderBy('sort_order')->orderBy('name')->get();
         $subnavbarItems = $product->navbar_item_id
             ? SubnavbarItem::where('navbar_item_id', $product->navbar_item_id)->where('status', 'active')->orderBy('sort_order')->orderBy('name')->get()
             : collect();
-       
+
         return view('catalog::products.edit', compact('product', 'brands', 'categories', 'units', 'sizes', 'taxRates', 'navbarItems', 'subnavbarItems'));
     }
 
@@ -116,21 +116,25 @@ class ProductController extends Controller
         $data['images'] = $request->file('images', []);
         $data['deleted_image_ids'] = $this->parseJsonArray($request->input('deleted_image_ids', []));
         $data['deleted_variant_ids'] = $this->parseJsonArray($request->input('deleted_variant_ids', []));
-        $result = $this->productService->saveProduct($data);
+
+        $response = $this->productService->saveProduct($data);
+
         if ($request->ajax() || $request->wantsJson()) {
-            return response()->json($result);
+            return $response;
         }
-        if ($result['status'] === 'success') {
-            return redirect()->route('products.index')
-                ->with('success', $result['message']);
+
+        $payload = $response->getData(true);
+
+        if (($payload['status'] ?? '') === 'success') {
+            return redirect()->route('products.index')->with('success', $payload['message']);
         }
-        return redirect()->back()->withInput()->with('error', $result['message']);
+
+        return redirect()->back()->withInput()->with('error', $payload['message'] ?? 'Failed to update product.');
     }
 
     public function destroy($id)
     {
-        $result = $this->productService->deleteProduct($id);
-        return response()->json($result);
+        return $this->productService->deleteProduct((int) $id);
     }
 
     /**
@@ -143,31 +147,14 @@ class ProductController extends Controller
             'price' => ['nullable', 'numeric', 'min:0'],
         ]);
 
-        $result = $this->productService->duplicateProduct($id, $validated);
-
-        return response()->json($result, $result['status'] === 'success' ? 200 : 500);
+        return $this->productService->duplicateProduct((int) $id, $validated);
     }
 
     public function search(Request $request)
     {
-        $query = $request->input('q', '');
-        $categoryId = $request->input('category_id');
+        $categoryId = $request->filled('category_id') ? (int) $request->input('category_id') : null;
 
-        if (empty($query)) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Search query is required',
-                'data' => [],
-            ]);
-        }
-
-        $result = $this->productService->searchProducts($query, $categoryId);
-        
-        return response()->json([
-            'success' => $result['status'] === 'success',
-            'message' => $result['message'],
-            'data' => $result['data'],
-        ]);
+        return $this->productService->searchProducts((string) $request->input('q', ''), $categoryId);
     }
 
     /**
@@ -180,9 +167,6 @@ class ProductController extends Controller
             'product_ids.*' => 'required|integer|exists:products,id',
         ]);
 
-        $result = $this->productService->reorderProducts($validated['product_ids']);
-
-        return response()->json($result, $result['status'] === 'success' ? 200 : 500);
+        return $this->productService->reorderProducts($validated['product_ids']);
     }
 }
-

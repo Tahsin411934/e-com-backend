@@ -46,7 +46,7 @@
             showUrl="{{ route('addresses.show', ':id') }}"
             destroyUrl="{{ route('addresses.destroy', ':id') }}"
             drawerTitle="Address"
-            dataKey="address"
+            dataKey="data"
             idField="address_id"
             :order="[[6, 'desc']]"
         >

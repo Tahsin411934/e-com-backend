@@ -4,17 +4,12 @@ namespace Modules\Catalog\Http\Controllers;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
-use Modules\Catalog\Services\TaxRateService;
 use Modules\Catalog\Http\Requests\StoreTaxRateRequest;
+use Modules\Catalog\Services\TaxRateService;
 
 class TaxRateController extends Controller
 {
-    protected TaxRateService $taxRateService;
-
-    public function __construct(TaxRateService $taxRateService)
-    {
-        $this->taxRateService = $taxRateService;
-    }
+    public function __construct(private TaxRateService $taxRateService) {}
 
     public function index(Request $request)
     {
@@ -28,27 +23,21 @@ class TaxRateController extends Controller
 
     public function store(StoreTaxRateRequest $request)
     {
-        $result = $this->taxRateService->saveTaxRate($request->validated());
-        return response()->json($result, $result['status'] === 'success' ? 200 : 500);
+        return $this->taxRateService->saveTaxRate($request->validated());
     }
 
     public function show($id)
     {
-        $result = $this->taxRateService->getTaxRateById($id);
-        return response()->json($result);
+        return $this->taxRateService->getTaxRateById((int) $id);
     }
 
     public function update(StoreTaxRateRequest $request, $id)
     {
-        $data = $request->validated();
-        $data['tax_rate_id'] = $id;
-        $result = $this->taxRateService->saveTaxRate($data);
-        return response()->json($result, $result['status'] === 'success' ? 200 : 500);
+        return $this->taxRateService->saveTaxRate($request->validated() + ['tax_rate_id' => $id]);
     }
 
     public function destroy($id)
     {
-        $result = $this->taxRateService->deleteTaxRate($id);
-        return response()->json($result, $result['status'] === 'success' ? 200 : 500);
+        return $this->taxRateService->deleteTaxRate((int) $id);
     }
 }

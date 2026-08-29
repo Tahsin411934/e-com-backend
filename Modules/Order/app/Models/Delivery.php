@@ -2,13 +2,14 @@
 
 namespace Modules\Order\Models;
 
+use App\Traits\CustomSoftDeletes;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use App\Traits\CustomSoftDeletes;
+use Modules\Identity\Models\User;
 
 class Delivery extends Model
 {
-    use HasFactory, CustomSoftDeletes;
+    use CustomSoftDeletes, HasFactory;
 
     protected $table = 'deliveries';
 
@@ -41,11 +42,11 @@ class Delivery extends Model
 
     public function user()
     {
-        return $this->belongsTo(\Modules\Identity\Models\User::class);
+        return $this->belongsTo(User::class);
     }
 
     public function deliveryBoy()
     {
-        return $this->belongsTo(\Modules\Identity\Models\User::class, 'delivery_boy_id');
+        return $this->belongsTo(User::class, 'delivery_boy_id');
     }
 }

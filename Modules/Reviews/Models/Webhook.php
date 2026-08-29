@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class Webhook extends Model
 {
-    use HasFactory, CustomSoftDeletes;
+    use CustomSoftDeletes, HasFactory;
 
     protected $table = 'webhooks';
 
@@ -20,5 +20,8 @@ class Webhook extends Model
         'events' => 'json',
     ];
 
-    public function deliveries() { return $this->hasMany(WebhookDelivery::class, 'webhook_id'); }
+    public function deliveries()
+    {
+        return $this->hasMany(WebhookDelivery::class, 'webhook_id');
+    }
 }

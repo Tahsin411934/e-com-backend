@@ -2,9 +2,9 @@
 
 use Illuminate\Support\Facades\Route;
 use Modules\Pos\Http\Controllers\PosRegisterController;
-use Modules\Pos\Http\Controllers\PosShiftController;
 use Modules\Pos\Http\Controllers\PosSaleController;
 use Modules\Pos\Http\Controllers\PosSellController;
+use Modules\Pos\Http\Controllers\PosShiftController;
 
 Route::middleware(['auth', 'verified'])->group(function () {
     // POS Registers

@@ -8,7 +8,7 @@ return new class extends Migration
 {
     public function up()
     {
-        if (!Schema::hasTable('homepage_ctas')) {
+        if (! Schema::hasTable('homepage_ctas')) {
             Schema::create('homepage_ctas', function (Blueprint $table) {
                 $table->bigIncrements('id');
                 $table->string('title', 255);

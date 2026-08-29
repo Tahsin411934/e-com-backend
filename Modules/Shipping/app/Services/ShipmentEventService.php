@@ -2,6 +2,8 @@
 
 namespace Modules\Shipping\Services;
 
+use App\Helpers\ApiResponse;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Modules\Shipping\Models\Shipment;
@@ -32,7 +34,7 @@ class ShipmentEventService
             ->make(true);
     }
 
-    public function saveEvent(array $data): array
+    public function saveEvent(array $data): JsonResponse
     {
         try {
             return DB::transaction(function () use ($data) {
@@ -48,40 +50,40 @@ class ShipmentEventService
                     $message = 'Shipment event created successfully.';
                 }
 
-                if (!empty($data['status'])) {
+                if (! empty($data['status'])) {
                     Shipment::whereKey($data['shipment_id'])->update(['status' => $data['status']]);
                 }
 
-                return [
-                    'status' => 'success',
-                    'message' => $message,
-                    'event' => $event->fresh()->load(['shipment', 'driver', 'createdBy']),
-                ];
+                if ($eventId) {
+                    return ApiResponse::success($event->fresh()->load(['shipment', 'driver', 'createdBy']), $message);
+                }
+
+                return ApiResponse::created($event->fresh()->load(['shipment', 'driver', 'createdBy']), $message);
             });
         } catch (\Exception $e) {
-            return ['status' => 'error', 'message' => 'Error saving shipment event: ' . $e->getMessage()];
+            return ApiResponse::error('Error saving shipment event: '.$e->getMessage(), 500);
         }
     }
 
-    public function getEventById(int $id): array
+    public function getEventById(int $id): JsonResponse
     {
         try {
-            $event = ShipmentEvent::with(['shipment', 'driver', 'createdBy'])->findOrFail($id);
-            return ['status' => 'success', 'event' => $event];
-        } catch (\Exception $e) {
-            return ['status' => 'error', 'message' => 'Shipment event not found.'];
+            return ApiResponse::success(ShipmentEvent::with(['shipment', 'driver', 'createdBy'])->findOrFail($id));
+        } catch (\Exception) {
+            return ApiResponse::notFound('Shipment event not found.');
         }
     }
 
-    public function deleteEvent(int $id): array
+    public function deleteEvent(int $id): JsonResponse
     {
         try {
             return DB::transaction(function () use ($id) {
                 ShipmentEvent::findOrFail($id)->delete();
-                return ['status' => 'success', 'message' => 'Shipment event deleted successfully.'];
+
+                return ApiResponse::success(null, 'Shipment event deleted successfully.');
             });
         } catch (\Exception $e) {
-            return ['status' => 'error', 'message' => 'Error deleting shipment event: ' . $e->getMessage()];
+            return ApiResponse::error('Error deleting shipment event: '.$e->getMessage(), 500);
         }
     }
 }

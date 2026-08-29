@@ -183,4 +183,3 @@ class ReportController extends Controller
         ]);
     }
 }
-

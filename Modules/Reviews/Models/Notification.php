@@ -9,7 +9,7 @@ use Modules\Identity\Models\User;
 
 class Notification extends Model
 {
-    use HasFactory, CustomSoftDeletes;
+    use CustomSoftDeletes, HasFactory;
 
     protected $table = 'notifications';
 
@@ -23,7 +23,13 @@ class Notification extends Model
         'sent_at' => 'datetime',
     ];
 
-    public function user() { return $this->belongsTo(User::class); }
+    public function user()
+    {
+        return $this->belongsTo(User::class);
+    }
 
-    public function scopeUnread($q) { return $q->whereNull('read_at'); }
+    public function scopeUnread($q)
+    {
+        return $q->whereNull('read_at');
+    }
 }

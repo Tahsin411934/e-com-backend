@@ -2,6 +2,8 @@
 
 namespace Modules\Identity\Services;
 
+use App\Helpers\ApiResponse;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Modules\Identity\Models\Role;
@@ -18,7 +20,7 @@ class RoleService
                 return $role->created_at->format('d M Y H:i');
             })
             ->editColumn('permissions_count', function (Role $role) {
-                return '<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800">' . $role->permissions_count . ' permissions</span>';
+                return '<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800">'.$role->permissions_count.' permissions</span>';
             })
             ->addColumn('action', function (Role $role) {
                 return view('components.action-buttons', [
@@ -31,7 +33,7 @@ class RoleService
             ->make(true);
     }
 
-    public function saveRole(array $data): array
+    public function saveRole(array $data): JsonResponse
     {
         try {
             return DB::transaction(function () use ($data) {
@@ -53,37 +55,25 @@ class RoleService
                     $role->permissions()->sync($data['permissions']);
                 }
 
-                return [
-                    'status' => 'success',
-                    'message' => $message,
-                    'role' => $role->fresh()->load('permissions'),
-                ];
+                return ApiResponse::success($role->fresh()->load('permissions'), $message);
             });
         } catch (\Exception $e) {
-            return [
-                'status' => 'error',
-                'message' => 'Error saving role: ' . $e->getMessage(),
-            ];
+            return ApiResponse::error('Error saving role: '.$e->getMessage(), 500);
         }
     }
 
-    public function getRoleById(int $id): array
+    public function getRoleById(int $id): JsonResponse
     {
         try {
             $role = Role::with('permissions')->findOrFail($id);
-            return [
-                'status' => 'success',
-                'role' => $role,
-            ];
+
+            return ApiResponse::success($role);
         } catch (\Exception $e) {
-            return [
-                'status' => 'error',
-                'message' => 'Role not found.',
-            ];
+            return ApiResponse::notFound('Role not found.');
         }
     }
 
-    public function deleteRole(int $id): array
+    public function deleteRole(int $id): JsonResponse
     {
         try {
             return DB::transaction(function () use ($id) {
@@ -92,16 +82,10 @@ class RoleService
                 $role->users()->detach();
                 $role->delete();
 
-                return [
-                    'status' => 'success',
-                    'message' => 'Role deleted successfully.',
-                ];
+                return ApiResponse::success(null, 'Role deleted successfully.');
             });
         } catch (\Exception $e) {
-            return [
-                'status' => 'error',
-                'message' => 'Error deleting role: ' . $e->getMessage(),
-            ];
+            return ApiResponse::error('Error deleting role: '.$e->getMessage(), 500);
         }
     }
 

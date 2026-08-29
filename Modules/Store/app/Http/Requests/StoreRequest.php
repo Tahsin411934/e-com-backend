@@ -14,11 +14,11 @@ class StoreRequest extends FormRequest
     public function rules(): array
     {
         $storeId = $this->route('store') ?? $this->input('store_id');
-        $uniqueSlug = 'unique:stores,slug' . ($storeId ? ',' . $storeId : '');
+        $uniqueSlug = 'unique:stores,slug'.($storeId ? ','.$storeId : '');
 
         return [
             'name' => 'required|string|max:160',
-            'slug' => 'required|string|max:180|' . $uniqueSlug,
+            'slug' => 'required|string|max:180|'.$uniqueSlug,
             'email' => 'nullable|email|max:255',
             'phone' => 'nullable|string|max:32',
             'status' => 'required|in:active,inactive,maintenance',

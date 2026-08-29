@@ -2,6 +2,8 @@
 
 namespace Modules\Inventory\Services;
 
+use App\Helpers\ApiResponse;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -9,9 +11,9 @@ use Modules\Account\Models\AccountAccount;
 use Modules\Account\Models\AccountCategory;
 use Modules\Account\Services\AccountTransactionService;
 use Modules\Inventory\Models\PurchaseOrder;
+use Modules\Inventory\Models\Supplier;
 use Modules\Inventory\Models\SupplierPayment;
 use Modules\Store\Models\Store;
-use Modules\Inventory\Models\Supplier;
 use Yajra\DataTables\DataTables;
 
 class SupplierPaymentService
@@ -41,7 +43,7 @@ class SupplierPaymentService
             ->make(true);
     }
 
-    public function save(array $data): array
+    public function save(array $data): JsonResponse
     {
         try {
             return DB::transaction(function () use ($data) {
@@ -49,20 +51,20 @@ class SupplierPaymentService
                 $amount = (float) $data['amount'];
 
                 if ((float) $account->current_balance < $amount) {
-                    return [
-                        'status' => 'error',
-                        'message' => 'Insufficient balance in "' . $account->name . '". Available: ৳' . number_format((float) $account->current_balance, 2),
-                    ];
+                    return ApiResponse::error(
+                        'Insufficient balance in "'.$account->name.'". Available: ৳'.number_format((float) $account->current_balance, 2),
+                        500
+                    );
                 }
 
-                if (!empty($data['purchase_order_id'])) {
+                if (! empty($data['purchase_order_id'])) {
                     $po = PurchaseOrder::find($data['purchase_order_id']);
-                    if (!$po) {
-                        return ['status' => 'error', 'message' => 'Purchase order not found.'];
+                    if (! $po) {
+                        return ApiResponse::notFound('Purchase order not found.');
                     }
                     $due = max(0, (float) $po->total_amount - (float) $po->paid_amount);
                     if ($amount > $due) {
-                        return ['status' => 'error', 'message' => 'Amount exceeds the due balance (৳' . number_format($due, 2) . ') for this purchase order.'];
+                        return ApiResponse::error('Amount exceeds the due balance (৳'.number_format($due, 2).') for this purchase order.', 500);
                     }
                 }
 
@@ -70,7 +72,7 @@ class SupplierPaymentService
                 $data['payment_method'] = $data['payment_method'] ?? $account->type;
                 $data['created_by'] = Auth::id();
 
-                if (empty($data['store_id']) && !empty($data['purchase_order_id'])) {
+                if (empty($data['store_id']) && ! empty($data['purchase_order_id'])) {
                     $po = PurchaseOrder::find($data['purchase_order_id']);
                     $data['store_id'] = $po?->store_id;
                 }
@@ -87,27 +89,23 @@ class SupplierPaymentService
                     $this->updatePurchasePaymentStatus($payment->purchase_order_id);
                 }
 
-                return [
-                    'status' => 'success',
-                    'message' => 'Supplier payment recorded. Balance updated for "' . $account->name . '".',
-                    'payment' => $payment->fresh(['supplier', 'purchaseOrder', 'account']),
-                ];
+                return ApiResponse::created($payment->fresh(['supplier', 'purchaseOrder', 'account']), 'Supplier payment recorded. Balance updated for "'.$account->name.'".');
             });
         } catch (\Exception $e) {
-            return ['status' => 'error', 'message' => 'Error saving supplier payment: ' . $e->getMessage()];
+            return ApiResponse::error('Error saving supplier payment: '.$e->getMessage(), 500);
         }
     }
 
-    public function find(int $id): array
+    public function find(int $id): JsonResponse
     {
         try {
-            return ['status' => 'success', 'payment' => SupplierPayment::with(['supplier', 'purchaseOrder', 'account'])->findOrFail($id)];
+            return ApiResponse::success(SupplierPayment::with(['supplier', 'purchaseOrder', 'account'])->findOrFail($id));
         } catch (\Exception) {
-            return ['status' => 'error', 'message' => 'Supplier payment not found.'];
+            return ApiResponse::notFound('Supplier payment not found.');
         }
     }
 
-    public function delete(int $id): array
+    public function delete(int $id): JsonResponse
     {
         try {
             return DB::transaction(function () use ($id) {
@@ -127,10 +125,10 @@ class SupplierPaymentService
                     $this->updatePurchasePaymentStatus($poId);
                 }
 
-                return ['status' => 'success', 'message' => 'Supplier payment deleted and account impact reversed.'];
+                return ApiResponse::success(null, 'Supplier payment deleted and account impact reversed.');
             });
         } catch (\Exception $e) {
-            return ['status' => 'error', 'message' => 'Error deleting supplier payment: ' . $e->getMessage()];
+            return ApiResponse::error('Error deleting supplier payment: '.$e->getMessage(), 500);
         }
     }
 
@@ -160,7 +158,7 @@ class SupplierPaymentService
     public function updatePurchasePaymentStatus(int $purchaseOrderId): void
     {
         $po = PurchaseOrder::find($purchaseOrderId);
-        if (!$po) {
+        if (! $po) {
             return;
         }
 

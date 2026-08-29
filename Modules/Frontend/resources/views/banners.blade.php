@@ -26,7 +26,7 @@
         showUrl="{{ route('frontend.banners.show', ':id') }}"
         destroyUrl="{{ route('frontend.banners.destroy', ':id') }}"
         drawerTitle="Banner"
-        dataKey="banner"
+        dataKey="data"
         idField="banner_id"
         :order="[[6, 'desc']]"
     >

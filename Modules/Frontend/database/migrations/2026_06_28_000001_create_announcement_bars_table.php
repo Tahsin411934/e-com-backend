@@ -8,7 +8,7 @@ return new class extends Migration
 {
     public function up()
     {
-        if (!Schema::hasTable('announcement_bars')) {
+        if (! Schema::hasTable('announcement_bars')) {
             Schema::create('announcement_bars', function (Blueprint $table) {
                 $table->bigIncrements('id');
                 $table->string('left_text', 500)->nullable();

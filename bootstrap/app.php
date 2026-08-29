@@ -1,8 +1,11 @@
 <?php
 
+use App\Http\Middleware\ConvertAuthTokenCookieToBearerHeader;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
+use Modules\Identity\Http\Middleware\CheckPermission;
+use Modules\Identity\Http\Middleware\CheckRole;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -13,9 +16,9 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->alias([
-            'role' => \Modules\Identity\Http\Middleware\CheckRole::class,
-            'permission' => \Modules\Identity\Http\Middleware\CheckPermission::class,
-            'convert.auth.cookie' => \App\Http\Middleware\ConvertAuthTokenCookieToBearerHeader::class,
+            'role' => CheckRole::class,
+            'permission' => CheckPermission::class,
+            'convert.auth.cookie' => ConvertAuthTokenCookieToBearerHeader::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

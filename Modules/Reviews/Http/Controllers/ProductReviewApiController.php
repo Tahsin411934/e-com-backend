@@ -2,6 +2,7 @@
 
 namespace Modules\Reviews\Http\Controllers;
 
+use App\Helpers\ApiResponse;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -37,7 +38,7 @@ class ProductReviewApiController extends Controller
             ];
         });
 
-        return response()->json([
+        return ApiResponse::fromResult([
             'success' => true,
             'data' => $formattedReviews,
             'average_rating' => round($reviews->avg('rating') ?? 0, 1),
@@ -64,10 +65,10 @@ class ProductReviewApiController extends Controller
             ->first();
 
         if ($existingReview) {
-            return response()->json([
+            return ApiResponse::fromResult([
                 'success' => false,
                 'message' => 'You have already reviewed this product.',
-            ], 422);
+            ], 200, 422);
         }
 
         $review = ProductReview::create([
@@ -89,13 +90,13 @@ class ProductReviewApiController extends Controller
                 '%s left a %d★ review on %s: %s',
                 $request->user()->name ?? 'A customer',
                 $review->rating,
-                Product::find($productId)?->name ?? ('Product #' . $productId),
+                Product::find($productId)?->name ?? ('Product #'.$productId),
                 $review->title
             ),
             ['review_id' => $review->id, 'product_id' => $productId, 'url' => '/product-reviews'],
         );
 
-        return response()->json([
+        return ApiResponse::fromResult([
             'success' => true,
             'message' => 'Review submitted successfully. It will be published after approval.',
             'data' => [
@@ -107,6 +108,6 @@ class ProductReviewApiController extends Controller
                 'is_verified_purchase' => $review->is_verified_purchase,
                 'created_at' => $review->created_at->diffForHumans(),
             ],
-        ], 201);
+        ], 201, 500);
     }
 }

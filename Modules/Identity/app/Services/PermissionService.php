@@ -2,6 +2,8 @@
 
 namespace Modules\Identity\Services;
 
+use App\Helpers\ApiResponse;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Modules\Identity\Models\Permission;
@@ -28,7 +30,7 @@ class PermissionService
             ->make(true);
     }
 
-    public function savePermission(array $data): array
+    public function savePermission(array $data): JsonResponse
     {
         try {
             return DB::transaction(function () use ($data) {
@@ -45,37 +47,25 @@ class PermissionService
                     $message = 'Permission created successfully.';
                 }
 
-                return [
-                    'status' => 'success',
-                    'message' => $message,
-                    'permission' => $permission->fresh(),
-                ];
+                return ApiResponse::success($permission->fresh(), $message);
             });
         } catch (\Exception $e) {
-            return [
-                'status' => 'error',
-                'message' => 'Error saving permission: ' . $e->getMessage(),
-            ];
+            return ApiResponse::error('Error saving permission: '.$e->getMessage(), 500);
         }
     }
 
-    public function getPermissionById(int $id): array
+    public function getPermissionById(int $id): JsonResponse
     {
         try {
             $permission = Permission::findOrFail($id);
-            return [
-                'status' => 'success',
-                'permission' => $permission,
-            ];
+
+            return ApiResponse::success($permission);
         } catch (\Exception $e) {
-            return [
-                'status' => 'error',
-                'message' => 'Permission not found.',
-            ];
+            return ApiResponse::notFound('Permission not found.');
         }
     }
 
-    public function deletePermission(int $id): array
+    public function deletePermission(int $id): JsonResponse
     {
         try {
             return DB::transaction(function () use ($id) {
@@ -83,16 +73,10 @@ class PermissionService
                 $permission->roles()->detach();
                 $permission->delete();
 
-                return [
-                    'status' => 'success',
-                    'message' => 'Permission deleted successfully.',
-                ];
+                return ApiResponse::success(null, 'Permission deleted successfully.');
             });
         } catch (\Exception $e) {
-            return [
-                'status' => 'error',
-                'message' => 'Error deleting permission: ' . $e->getMessage(),
-            ];
+            return ApiResponse::error('Error deleting permission: '.$e->getMessage(), 500);
         }
     }
 

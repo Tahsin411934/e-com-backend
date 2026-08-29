@@ -2,6 +2,8 @@
 
 namespace Modules\Pos\Services;
 
+use App\Helpers\ApiResponse;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Modules\Pos\Models\PosRegister;
@@ -37,7 +39,7 @@ class PosRegisterService
             ->make(true);
     }
 
-    public function saveRegister(array $data): array
+    public function saveRegister(array $data): JsonResponse
     {
         try {
             return DB::transaction(function () use ($data) {
@@ -53,56 +55,39 @@ class PosRegisterService
                     $message = 'Register created successfully.';
                 }
 
-                return [
-                    'status' => 'success',
-                    'message' => $message,
-                    'register' => $register->fresh()->load('store'),
-                ];
+                return ApiResponse::success($register->fresh()->load('store'), $message);
             });
         } catch (\Exception $e) {
-            return [
-                'status' => 'error',
-                'message' => 'Error saving register: ' . $e->getMessage(),
-            ];
+            return ApiResponse::error('Error saving register: '.$e->getMessage(), 500);
         }
     }
 
-    public function getRegisterById(int $id): array
+    public function getRegisterById(int $id): JsonResponse
     {
         try {
             $register = PosRegister::with('store')->findOrFail($id);
-            return [
-                'status' => 'success',
-                'register' => $register,
-            ];
+
+            return ApiResponse::success($register);
         } catch (\Exception $e) {
-            return [
-                'status' => 'error',
-                'message' => 'Register not found.',
-            ];
+            return ApiResponse::notFound('Register not found.');
         }
     }
 
-    public function deleteRegister(int $id): array
+    public function deleteRegister(int $id): JsonResponse
     {
         try {
             return DB::transaction(function () use ($id) {
                 $register = PosRegister::findOrFail($id);
                 $register->delete();
-                return [
-                    'status' => 'success',
-                    'message' => 'Register deleted successfully.',
-                ];
+
+                return ApiResponse::success(null, 'Register deleted successfully.');
             });
         } catch (\Exception $e) {
-            return [
-                'status' => 'error',
-                'message' => 'Error deleting register: ' . $e->getMessage(),
-            ];
+            return ApiResponse::error('Error deleting register: '.$e->getMessage(), 500);
         }
     }
 
-    public function getAllActiveRegisters(): array
+    public function getAllActiveRegisters(): JsonResponse
     {
         return PosRegister::where('status', 'active')
             ->with('store')

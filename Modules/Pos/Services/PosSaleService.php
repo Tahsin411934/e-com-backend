@@ -2,6 +2,8 @@
 
 namespace Modules\Pos\Services;
 
+use App\Helpers\ApiResponse;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
@@ -51,15 +53,15 @@ class PosSaleService
             ->make(true);
     }
 
-    public function saveSale(array $data): array
+    public function saveSale(array $data): JsonResponse
     {
         try {
             return DB::transaction(function () use ($data) {
                 $saleId = $data['sale_id'] ?? null;
                 unset($data['sale_id']);
 
-                if (!isset($data['receipt_number'])) {
-                    $data['receipt_number'] = 'POS-' . strtoupper(uniqid());
+                if (! isset($data['receipt_number'])) {
+                    $data['receipt_number'] = 'POS-'.strtoupper(uniqid());
                 }
 
                 if ($saleId) {
@@ -75,71 +77,49 @@ class PosSaleService
                     app(AccountTransactionService::class)->postPosSale($sale->fresh(['items.product.variants', 'register.store']));
                 }
 
-                return [
-                    'status' => 'success',
-                    'message' => $message,
-                    'sale' => $sale->fresh()->load(['register.store', 'shift', 'user']),
-                ];
+                return ApiResponse::success($sale->fresh()->load(['register.store', 'shift', 'user']), $message);
             });
         } catch (\Exception $e) {
-            return [
-                'status' => 'error',
-                'message' => 'Error saving sale: ' . $e->getMessage(),
-            ];
+            return ApiResponse::error('Error saving sale: '.$e->getMessage(), 500);
         }
     }
 
-    public function getSaleById(int $id): array
+    public function getSaleById(int $id): JsonResponse
     {
         try {
             $sale = PosSale::with(['register.store', 'shift', 'user'])->findOrFail($id);
-            return [
-                'status' => 'success',
-                'sale' => $sale,
-            ];
+
+            return ApiResponse::success($sale);
         } catch (\Exception $e) {
-            return [
-                'status' => 'error',
-                'message' => 'Sale not found.',
-            ];
+            return ApiResponse::notFound('Sale not found.');
         }
     }
 
-    public function deleteSale(int $id): array
+    public function deleteSale(int $id): JsonResponse
     {
         try {
             return DB::transaction(function () use ($id) {
                 $sale = PosSale::findOrFail($id);
                 $sale->delete();
-                return [
-                    'status' => 'success',
-                    'message' => 'Sale deleted successfully.',
-                ];
+
+                return ApiResponse::success(null, 'Sale deleted successfully.');
             });
         } catch (\Exception $e) {
-            return [
-                'status' => 'error',
-                'message' => 'Error deleting sale: ' . $e->getMessage(),
-            ];
+            return ApiResponse::error('Error deleting sale: '.$e->getMessage(), 500);
         }
     }
 
-    public function voidSale(int $id): array
+    public function voidSale(int $id): JsonResponse
     {
         try {
             return DB::transaction(function () use ($id) {
                 $sale = PosSale::findOrFail($id);
                 $sale->update(['status' => 'voided']);
-                return [
-                    'status' => 'success',
-                    'message' => 'Sale voided successfully.',
-                ];
+
+                return ApiResponse::success(null, 'Sale voided successfully.');
             });
         } catch (\Exception $e) {
-            return [
-                'status' => 'error',
-                'message' => 'Error voiding sale: ' . $e->getMessage(),
-            ];
+            return ApiResponse::error('Error voiding sale: '.$e->getMessage(), 500);
         }
     }
 }

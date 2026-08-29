@@ -1,9 +1,9 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
-use Modules\Identity\Http\Controllers\UserController;
-use Modules\Identity\Http\Controllers\RoleController;
 use Modules\Identity\Http\Controllers\PermissionController;
+use Modules\Identity\Http\Controllers\RoleController;
+use Modules\Identity\Http\Controllers\UserController;
 
 Route::middleware(['auth', 'verified'])->group(function () {
     // Users - requires Super Admin or Admin role

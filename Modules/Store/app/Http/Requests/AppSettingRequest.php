@@ -14,12 +14,12 @@ class AppSettingRequest extends FormRequest
     public function rules(): array
     {
         $settingId = $this->route('app_setting') ?? $this->input('setting_id');
-        $uniqueKey = 'unique:app_settings,setting_key' . ($settingId ? ',' . $settingId : '');
+        $uniqueKey = 'unique:app_settings,setting_key'.($settingId ? ','.$settingId : '');
 
         return [
             'scope_type' => 'required|in:global,store,user',
             'scope_id' => 'required|integer|min:0',
-            'setting_key' => 'required|string|max:120|' . $uniqueKey,
+            'setting_key' => 'required|string|max:120|'.$uniqueKey,
             'setting_value' => 'required',
             'is_public' => 'nullable|boolean',
         ];

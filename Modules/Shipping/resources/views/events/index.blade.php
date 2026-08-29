@@ -20,7 +20,7 @@
         showUrl="{{ route('shipment-events.show', ':id') }}"
         destroyUrl="{{ route('shipment-events.destroy', ':id') }}"
         drawerTitle="Shipment Event"
-        dataKey="event"
+        dataKey="data"
         idField="event_id"
         :order="[[6, 'desc']]"
     >

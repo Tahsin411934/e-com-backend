@@ -16,7 +16,7 @@
         showUrl="{{ route('permissions.show', ':id') }}"
         destroyUrl="{{ route('permissions.destroy', ':id') }}"
         drawerTitle="Permission"
-        dataKey="permission"
+        dataKey="data"
         idField="permission_id"
         :order="[[2, 'desc']]"
     >

@@ -2,10 +2,10 @@
 
 namespace Modules\Store\Services;
 
+use App\Helpers\ApiResponse;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Schema;
 use Modules\Store\Models\AppSetting;
 use Yajra\DataTables\DataTables;
 
@@ -22,8 +22,9 @@ class AppSettingService
             ->editColumn('setting_value', function (AppSetting $setting) {
                 $val = $setting->setting_value;
                 if (is_array($val)) {
-                    return substr(json_encode($val), 0, 80) . (strlen(json_encode($val)) > 80 ? '...' : '');
+                    return substr(json_encode($val), 0, 80).(strlen(json_encode($val)) > 80 ? '...' : '');
                 }
+
                 return substr((string) $val, 0, 80);
             })
             ->editColumn('is_public', function (AppSetting $setting) {
@@ -43,7 +44,7 @@ class AppSettingService
             ->make(true);
     }
 
-    public function saveAppSetting(array $data): array
+    public function saveAppSetting(array $data): JsonResponse
     {
         try {
             return DB::transaction(function () use ($data) {
@@ -67,52 +68,35 @@ class AppSettingService
                     $message = 'Setting created successfully.';
                 }
 
-                return [
-                    'status' => 'success',
-                    'message' => $message,
-                    'setting' => $setting->fresh(),
-                ];
+                return ApiResponse::success($setting->fresh(), $message);
             });
         } catch (\Exception $e) {
-            return [
-                'status' => 'error',
-                'message' => 'Error saving setting: ' . $e->getMessage(),
-            ];
+            return ApiResponse::error('Error saving setting: '.$e->getMessage(), 500);
         }
     }
 
-    public function getAppSettingById(int $id): array
+    public function getAppSettingById(int $id): JsonResponse
     {
         try {
             $setting = AppSetting::findOrFail($id);
-            return [
-                'status' => 'success',
-                'setting' => $setting,
-            ];
+
+            return ApiResponse::success($setting);
         } catch (\Exception $e) {
-            return [
-                'status' => 'error',
-                'message' => 'Setting not found.',
-            ];
+            return ApiResponse::notFound('Setting not found.');
         }
     }
 
-    public function deleteAppSetting(int $id): array
+    public function deleteAppSetting(int $id): JsonResponse
     {
         try {
             return DB::transaction(function () use ($id) {
                 $setting = AppSetting::findOrFail($id);
                 $setting->delete();
-                return [
-                    'status' => 'success',
-                    'message' => 'Setting deleted successfully.',
-                ];
+
+                return ApiResponse::success(null, 'Setting deleted successfully.');
             });
         } catch (\Exception $e) {
-            return [
-                'status' => 'error',
-                'message' => 'Error deleting setting: ' . $e->getMessage(),
-            ];
+            return ApiResponse::error('Error deleting setting: '.$e->getMessage(), 500);
         }
     }
 }

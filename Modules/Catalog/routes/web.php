@@ -1,14 +1,14 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use Modules\Catalog\Http\Controllers\BarcodePrintController;
 use Modules\Catalog\Http\Controllers\BrandController;
 use Modules\Catalog\Http\Controllers\CategoryController;
 use Modules\Catalog\Http\Controllers\ProductController;
-use Modules\Catalog\Http\Controllers\UnitController;
-use Modules\Catalog\Http\Controllers\SizeController;
-use Modules\Catalog\Http\Controllers\BarcodePrintController;
-use Modules\Catalog\Http\Controllers\TaxRateController;
 use Modules\Catalog\Http\Controllers\ProductRequestController;
+use Modules\Catalog\Http\Controllers\SizeController;
+use Modules\Catalog\Http\Controllers\TaxRateController;
+use Modules\Catalog\Http\Controllers\UnitController;
 
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/barcode-print', [BarcodePrintController::class, 'index'])->name('barcode-print.index');
@@ -16,12 +16,12 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/barcode-print/autocomplete', [BarcodePrintController::class, 'autocomplete'])->name('barcode-print.autocomplete');
     Route::get('/barcode-print/variants/{product}', [BarcodePrintController::class, 'variants'])->name('barcode-print.variants');
     Route::post('/barcode-print/print', [BarcodePrintController::class, 'print'])->name('barcode-print.print');
-    
+
     Route::post('/products/reorder', [ProductController::class, 'reorder'])->name('products.reorder');
     Route::post('/products/{id}/duplicate', [ProductController::class, 'duplicate'])->name('products.duplicate');
     Route::resource('products', ProductController::class)->names('products');
     Route::get('/dataTable/products', [ProductController::class, 'dataTable'])->name('products.dataTable');
-    
+
     Route::resource('brands', BrandController::class)->except(['create', 'edit'])->names('brands');
     Route::get('/dataTable/brands', [BrandController::class, 'dataTable'])->name('brands.dataTable');
 

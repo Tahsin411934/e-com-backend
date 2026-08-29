@@ -33,7 +33,7 @@
         showUrl="{{ route('frontend.nav-items.subnavbar.show', ':id') }}"
         destroyUrl="{{ route('frontend.nav-items.subnavbar.destroy', ':id') }}"
         drawerTitle="Subnavbar Item"
-        dataKey="subnavbar_item"
+        dataKey="data"
         idField="subnavbar_item_id"
         :order="[[7, 'desc']]"
     >

@@ -2,6 +2,8 @@
 
 namespace Modules\Inventory\Services;
 
+use App\Helpers\ApiResponse;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Modules\Inventory\Models\InventoryMovement;
@@ -24,8 +26,8 @@ class InventoryMovementService
             })
             ->editColumn('quantity', function (InventoryMovement $movement) {
                 return $movement->quantity > 0
-                    ? '<span class="text-green-600">+' . number_format($movement->quantity) . '</span>'
-                    : '<span class="text-red-600">' . number_format($movement->quantity) . '</span>';
+                    ? '<span class="text-green-600">+'.number_format($movement->quantity).'</span>'
+                    : '<span class="text-red-600">'.number_format($movement->quantity).'</span>';
             })
             ->addColumn('created_by_name', function (InventoryMovement $movement) {
                 return $movement->createdBy ? $movement->createdBy->name : 'System';
@@ -44,14 +46,14 @@ class InventoryMovementService
             ->make(true);
     }
 
-    public function saveMovement(array $data): array
+    public function saveMovement(array $data): JsonResponse
     {
         try {
             return DB::transaction(function () use ($data) {
                 $movementId = $data['movement_id'] ?? null;
                 unset($data['movement_id']);
 
-                if (!isset($data['created_by'])) {
+                if (! isset($data['created_by'])) {
                     $data['created_by'] = auth()->id();
                 }
 
@@ -64,52 +66,35 @@ class InventoryMovementService
                     $message = 'Movement created successfully.';
                 }
 
-                return [
-                    'status' => 'success',
-                    'message' => $message,
-                    'movement' => $movement->fresh()->load(['location', 'createdBy']),
-                ];
+                return ApiResponse::success($movement->fresh()->load(['location', 'createdBy']), $message);
             });
         } catch (\Exception $e) {
-            return [
-                'status' => 'error',
-                'message' => 'Error saving movement: ' . $e->getMessage(),
-            ];
+            return ApiResponse::error('Error saving movement: '.$e->getMessage(), 500);
         }
     }
 
-    public function getMovementById(int $id): array
+    public function getMovementById(int $id): JsonResponse
     {
         try {
             $movement = InventoryMovement::with(['location', 'createdBy'])->findOrFail($id);
-            return [
-                'status' => 'success',
-                'movement' => $movement,
-            ];
+
+            return ApiResponse::success($movement);
         } catch (\Exception $e) {
-            return [
-                'status' => 'error',
-                'message' => 'Movement not found.',
-            ];
+            return ApiResponse::notFound('Movement not found.');
         }
     }
 
-    public function deleteMovement(int $id): array
+    public function deleteMovement(int $id): JsonResponse
     {
         try {
             return DB::transaction(function () use ($id) {
                 $movement = InventoryMovement::findOrFail($id);
                 $movement->delete();
-                return [
-                    'status' => 'success',
-                    'message' => 'Movement deleted successfully.',
-                ];
+
+                return ApiResponse::success(null, 'Movement deleted successfully.');
             });
         } catch (\Exception $e) {
-            return [
-                'status' => 'error',
-                'message' => 'Error deleting movement: ' . $e->getMessage(),
-            ];
+            return ApiResponse::error('Error deleting movement: '.$e->getMessage(), 500);
         }
     }
 }

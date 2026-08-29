@@ -2,6 +2,8 @@
 
 namespace Modules\Catalog\Services;
 
+use App\Helpers\ApiResponse;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Modules\Catalog\Models\TaxRate;
@@ -16,13 +18,15 @@ class TaxRateService
         return DataTables::of($query)
             ->editColumn('rate', function (TaxRate $tax) {
                 if ($tax->type === 'percentage') {
-                    return $tax->rate . '%';
+                    return $tax->rate.'%';
                 }
-                return '৳' . number_format($tax->rate, 2);
+
+                return '৳'.number_format($tax->rate, 2);
             })
             ->editColumn('type', function (TaxRate $tax) {
                 $badge = $tax->type === 'percentage' ? 'bg-blue-100 text-blue-800' : 'bg-purple-100 text-purple-800';
-                return '<span class="inline-block ' . $badge . ' text-xs font-medium px-2.5 py-1 rounded-full">' . ucfirst($tax->type) . '</span>';
+
+                return '<span class="inline-block '.$badge.' text-xs font-medium px-2.5 py-1 rounded-full">'.ucfirst($tax->type).'</span>';
             })
             ->editColumn('is_default', function (TaxRate $tax) {
                 return $tax->is_default
@@ -31,7 +35,8 @@ class TaxRateService
             })
             ->editColumn('status', function (TaxRate $tax) {
                 $badge = $tax->status === 'active' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800';
-                return '<span class="inline-block ' . $badge . ' text-xs font-medium px-2.5 py-1 rounded-full">' . ucfirst($tax->status) . '</span>';
+
+                return '<span class="inline-block '.$badge.' text-xs font-medium px-2.5 py-1 rounded-full">'.ucfirst($tax->status).'</span>';
             })
             ->editColumn('created_at', function (TaxRate $tax) {
                 return $tax->created_at->format('d M Y H:i');
@@ -47,7 +52,7 @@ class TaxRateService
             ->make(true);
     }
 
-    public function saveTaxRate(array $data): array
+    public function saveTaxRate(array $data): JsonResponse
     {
         try {
             return DB::transaction(function () use ($data) {
@@ -64,44 +69,41 @@ class TaxRateService
                 }
 
                 // If set as default, unset others
-                if (!empty($data['is_default'])) {
+                if (! empty($data['is_default'])) {
                     TaxRate::where('id', '!=', $tax->id)->update(['is_default' => false]);
                 }
 
-                return [
-                    'status' => 'success',
-                    'message' => $message,
-                    'tax_rate' => $tax->fresh(),
-                ];
+                if ($taxId) {
+                    return ApiResponse::success($tax->fresh(), $message);
+                }
+
+                return ApiResponse::created($tax->fresh(), $message);
             });
         } catch (\Exception $e) {
-            return [
-                'status' => 'error',
-                'message' => 'Error saving tax rate: ' . $e->getMessage(),
-            ];
+            return ApiResponse::error('Error saving tax rate: '.$e->getMessage(), 500);
         }
     }
 
-    public function getTaxRateById(int $id): array
+    public function getTaxRateById(int $id): JsonResponse
     {
         try {
-            $tax = TaxRate::findOrFail($id);
-            return ['status' => 'success', 'tax_rate' => $tax];
-        } catch (\Exception $e) {
-            return ['status' => 'error', 'message' => 'Tax rate not found.'];
+            return ApiResponse::success(TaxRate::findOrFail($id));
+        } catch (\Exception) {
+            return ApiResponse::notFound('Tax rate not found.');
         }
     }
 
-    public function deleteTaxRate(int $id): array
+    public function deleteTaxRate(int $id): JsonResponse
     {
         try {
             return DB::transaction(function () use ($id) {
                 $tax = TaxRate::findOrFail($id);
                 $tax->delete();
-                return ['status' => 'success', 'message' => 'Tax rate deleted successfully.'];
+
+                return ApiResponse::success(null, 'Tax rate deleted successfully.');
             });
         } catch (\Exception $e) {
-            return ['status' => 'error', 'message' => 'Error deleting tax rate: ' . $e->getMessage()];
+            return ApiResponse::error('Error deleting tax rate: '.$e->getMessage(), 500);
         }
     }
 

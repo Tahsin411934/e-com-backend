@@ -2,14 +2,16 @@
 
 namespace Modules\Cart\Models;
 
+use App\Traits\CustomSoftDeletes;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use App\Traits\CustomSoftDeletes;
+use Modules\Catalog\Models\Product;
+use Modules\Identity\Models\User;
 
 class Wishlist extends Model
 {
-    use HasFactory;
     use CustomSoftDeletes;
+    use HasFactory;
 
     protected $table = 'wishlists';
 
@@ -20,11 +22,11 @@ class Wishlist extends Model
 
     public function user()
     {
-        return $this->belongsTo(\Modules\Identity\Models\User::class);
+        return $this->belongsTo(User::class);
     }
 
     public function product()
     {
-        return $this->belongsTo(\Modules\Catalog\Models\Product::class);
+        return $this->belongsTo(Product::class);
     }
 }

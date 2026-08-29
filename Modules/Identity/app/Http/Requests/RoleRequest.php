@@ -14,10 +14,10 @@ class RoleRequest extends FormRequest
     public function rules(): array
     {
         $roleId = $this->route('role') ?? $this->input('role_id');
-        $uniqueName = 'unique:roles,name' . ($roleId ? ',' . $roleId : '');
+        $uniqueName = 'unique:roles,name'.($roleId ? ','.$roleId : '');
 
         return [
-            'name' => 'required|string|max:80|' . $uniqueName,
+            'name' => 'required|string|max:80|'.$uniqueName,
             'description' => 'nullable|string|max:255',
             'permissions' => 'nullable|array',
             'permissions.*' => 'integer|exists:permissions,id',

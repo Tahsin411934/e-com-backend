@@ -4,18 +4,13 @@ namespace Modules\Catalog\Http\Controllers;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
-use Modules\Catalog\Services\BrandService;
 use Modules\Catalog\Http\Requests\StoreBrandRequest;
 use Modules\Catalog\Http\Requests\UpdateBrandRequest;
+use Modules\Catalog\Services\BrandService;
 
 class BrandController extends Controller
 {
-    protected BrandService $brandService;
-
-    public function __construct(BrandService $brandService)
-    {
-        $this->brandService = $brandService;
-    }
+    public function __construct(private BrandService $brandService) {}
 
     public function index(Request $request)
     {
@@ -29,27 +24,21 @@ class BrandController extends Controller
 
     public function store(StoreBrandRequest $request)
     {
-        $result = $this->brandService->saveBrand($request->validated());
-        return response()->json($result, $result['status'] === 'success' ? 200 : 500);
+        return $this->brandService->saveBrand($request->validated());
     }
 
     public function show($id)
     {
-        $result = $this->brandService->getBrandById($id);
-        return response()->json($result);
+        return $this->brandService->getBrandById((int) $id);
     }
 
     public function update(UpdateBrandRequest $request, $id)
     {
-        $data = $request->validated();
-        $data['brand_id'] = $id;
-        $result = $this->brandService->saveBrand($data);
-        return response()->json($result, $result['status'] === 'success' ? 200 : 500);
+        return $this->brandService->saveBrand($request->validated() + ['brand_id' => $id]);
     }
 
     public function destroy($id)
     {
-        $result = $this->brandService->deleteBrand($id);
-        return response()->json($result, $result['status'] === 'success' ? 200 : 500);
+        return $this->brandService->deleteBrand((int) $id);
     }
 }

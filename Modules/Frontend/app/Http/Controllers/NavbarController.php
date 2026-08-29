@@ -2,22 +2,18 @@
 
 namespace Modules\Frontend\Http\Controllers;
 
+use App\Helpers\ApiResponse;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
-use Modules\Frontend\Services\NavbarService;
 use Modules\Frontend\Http\Requests\StoreNavbarItemRequest;
-use Modules\Frontend\Http\Requests\UpdateNavbarItemRequest;
 use Modules\Frontend\Http\Requests\StoreSubnavbarItemRequest;
+use Modules\Frontend\Http\Requests\UpdateNavbarItemRequest;
 use Modules\Frontend\Http\Requests\UpdateSubnavbarItemRequest;
+use Modules\Frontend\Services\NavbarService;
 
 class NavbarController extends Controller
 {
-    protected NavbarService $navbarService;
-
-    public function __construct(NavbarService $navbarService)
-    {
-        $this->navbarService = $navbarService;
-    }
+    public function __construct(private NavbarService $navbarService) {}
 
     /**
      * Display the navbar items management page.
@@ -44,28 +40,25 @@ class NavbarController extends Controller
 
     public function storeNavbarItem(StoreNavbarItemRequest $request)
     {
-        $result = $this->navbarService->saveNavbarItem($request->validated());
-        return response()->json($result, $result['status'] === 'success' ? 200 : 500);
+        return $this->navbarService->saveNavbarItem($request->validated());
     }
 
     public function showNavbarItem($id)
     {
-        $result = $this->navbarService->getNavbarItemById($id);
-        return response()->json($result);
+        return $this->navbarService->getNavbarItemById($id);
     }
 
     public function updateNavbarItem(UpdateNavbarItemRequest $request, $id)
     {
         $data = $request->validated();
         $data['navbar_item_id'] = $id;
-        $result = $this->navbarService->saveNavbarItem($data);
-        return response()->json($result, $result['status'] === 'success' ? 200 : 500);
+
+        return $this->navbarService->saveNavbarItem($data);
     }
 
     public function destroyNavbarItem($id)
     {
-        $result = $this->navbarService->deleteNavbarItem($id);
-        return response()->json($result, $result['status'] === 'success' ? 200 : 500);
+        return $this->navbarService->deleteNavbarItem($id);
     }
 
     // ===== Subnavbar Items =====
@@ -77,28 +70,25 @@ class NavbarController extends Controller
 
     public function storeSubnavbarItem(StoreSubnavbarItemRequest $request)
     {
-        $result = $this->navbarService->saveSubnavbarItem($request->validated());
-        return response()->json($result, $result['status'] === 'success' ? 200 : 500);
+        return $this->navbarService->saveSubnavbarItem($request->validated());
     }
 
     public function showSubnavbarItem($id)
     {
-        $result = $this->navbarService->getSubnavbarItemById($id);
-        return response()->json($result);
+        return $this->navbarService->getSubnavbarItemById($id);
     }
 
     public function updateSubnavbarItem(UpdateSubnavbarItemRequest $request, $id)
     {
         $data = $request->validated();
         $data['subnavbar_item_id'] = $id;
-        $result = $this->navbarService->saveSubnavbarItem($data);
-        return response()->json($result, $result['status'] === 'success' ? 200 : 500);
+
+        return $this->navbarService->saveSubnavbarItem($data);
     }
 
     public function destroySubnavbarItem($id)
     {
-        $result = $this->navbarService->deleteSubnavbarItem($id);
-        return response()->json($result, $result['status'] === 'success' ? 200 : 500);
+        return $this->navbarService->deleteSubnavbarItem($id);
     }
 
     /**
@@ -107,7 +97,8 @@ class NavbarController extends Controller
     public function getNavbarItemsList()
     {
         $items = $this->navbarService->getAllNavbarItems();
-        return response()->json([
+
+        return ApiResponse::fromResult([
             'status' => 'success',
             'navbar_items' => $items,
         ]);

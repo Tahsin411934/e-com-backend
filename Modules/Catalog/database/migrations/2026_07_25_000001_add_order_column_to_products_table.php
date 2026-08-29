@@ -8,7 +8,7 @@ return new class extends Migration
 {
     public function up()
     {
-        if (Schema::hasTable('products') && !Schema::hasColumn('products', 'order_column')) {
+        if (Schema::hasTable('products') && ! Schema::hasColumn('products', 'order_column')) {
             Schema::table('products', function (Blueprint $table) {
                 $table->integer('order_column')->default(0)->after('is_homepage');
                 $table->index('order_column');

@@ -2,14 +2,15 @@
 
 namespace Modules\Catalog\Models;
 
+use App\Traits\CustomSoftDeletes;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use App\Traits\CustomSoftDeletes;
+use Modules\Identity\Models\User;
 
 class ProductRequest extends Model
 {
-    use HasFactory;
     use CustomSoftDeletes;
+    use HasFactory;
 
     protected $table = 'product_requests';
 
@@ -35,7 +36,7 @@ class ProductRequest extends Model
 
     public function user()
     {
-        return $this->belongsTo(\Modules\Identity\Models\User::class, 'user_id');
+        return $this->belongsTo(User::class, 'user_id');
     }
 
     public function product()

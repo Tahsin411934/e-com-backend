@@ -2,6 +2,8 @@
 
 namespace Modules\Order\Services;
 
+use App\Helpers\ApiResponse;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
@@ -45,7 +47,7 @@ class PaymentService
             ->make(true);
     }
 
-    public function savePayment(array $data): array
+    public function savePayment(array $data): JsonResponse
     {
         try {
             return DB::transaction(function () use ($data) {
@@ -65,52 +67,35 @@ class PaymentService
                     app(AccountTransactionService::class)->postPayment($payment->fresh('order.items.variant'));
                 }
 
-                return [
-                    'status' => 'success',
-                    'message' => $message,
-                    'payment' => $payment->fresh(),
-                ];
+                return ApiResponse::success($payment->fresh(), $message);
             });
         } catch (\Exception $e) {
-            return [
-                'status' => 'error',
-                'message' => 'Error saving payment: ' . $e->getMessage(),
-            ];
+            return ApiResponse::error('Error saving payment: '.$e->getMessage(), 500);
         }
     }
 
-    public function getPaymentById(int $id): array
+    public function getPaymentById(int $id): JsonResponse
     {
         try {
             $payment = Payment::with('order')->findOrFail($id);
-            return [
-                'status' => 'success',
-                'payment' => $payment,
-            ];
+
+            return ApiResponse::success($payment);
         } catch (\Exception $e) {
-            return [
-                'status' => 'error',
-                'message' => 'Payment not found.',
-            ];
+            return ApiResponse::notFound('Payment not found.');
         }
     }
 
-    public function deletePayment(int $id): array
+    public function deletePayment(int $id): JsonResponse
     {
         try {
             return DB::transaction(function () use ($id) {
                 $payment = Payment::findOrFail($id);
                 $payment->delete();
-                return [
-                    'status' => 'success',
-                    'message' => 'Payment deleted successfully.',
-                ];
+
+                return ApiResponse::success(null, 'Payment deleted successfully.');
             });
         } catch (\Exception $e) {
-            return [
-                'status' => 'error',
-                'message' => 'Error deleting payment: ' . $e->getMessage(),
-            ];
+            return ApiResponse::error('Error deleting payment: '.$e->getMessage(), 500);
         }
     }
 }

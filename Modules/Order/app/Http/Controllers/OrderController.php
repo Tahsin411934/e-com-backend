@@ -8,12 +8,7 @@ use Modules\Order\Services\OrderService;
 
 class OrderController extends Controller
 {
-    protected OrderService $orderService;
-
-    public function __construct(OrderService $orderService)
-    {
-        $this->orderService = $orderService;
-    }
+    public function __construct(private OrderService $orderService) {}
 
     public function index()
     {
@@ -27,27 +22,21 @@ class OrderController extends Controller
 
     public function store(Request $request)
     {
-        $result = $this->orderService->saveOrder($request->all());
-        return response()->json($result);
+        return $this->orderService->saveOrder($request->all());
     }
 
-    public function show(int $id)
+    public function show($id)
     {
-        $result = $this->orderService->getOrderById($id);
-        return response()->json($result);
+        return $this->orderService->getOrderById((int) $id);
     }
 
     public function update(Request $request, int $id)
     {
-        $data = $request->all();
-        $data['order_id'] = $id;
-        $result = $this->orderService->saveOrder($data);
-        return response()->json($result);
+        return $this->orderService->saveOrder($request->all() + ['order_id' => $id]);
     }
 
-    public function destroy(int $id)
+    public function destroy($id)
     {
-        $result = $this->orderService->deleteOrder($id);
-        return response()->json($result);
+        return $this->orderService->deleteOrder((int) $id);
     }
 }

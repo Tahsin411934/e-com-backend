@@ -2,8 +2,8 @@
 
 namespace Modules\Catalog\Models;
 
-use Illuminate\Database\Eloquent\Model;
 use App\Traits\CustomSoftDeletes;
+use Illuminate\Database\Eloquent\Model;
 
 class ProductCategory extends Model
 {

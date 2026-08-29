@@ -22,7 +22,7 @@
             showUrl="{{ route('tax-rates.show', ':id') }}"
             destroyUrl="{{ route('tax-rates.destroy', ':id') }}"
             drawerTitle="Tax Rate"
-            dataKey="tax_rate"
+            dataKey="data"
             idField="tax_rate_id"
             :order="[[5, 'desc']]"
         >

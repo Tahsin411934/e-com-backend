@@ -2,6 +2,8 @@
 
 namespace Modules\Account\Services;
 
+use App\Helpers\ApiResponse;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -36,7 +38,7 @@ class AccountInvestmentService
             ->make(true);
     }
 
-    public function save(array $data): array
+    public function save(array $data): JsonResponse
     {
         try {
             return DB::transaction(function () use ($data) {
@@ -46,7 +48,7 @@ class AccountInvestmentService
                 $data['investment_no'] = $this->generateInvestmentNo();
 
                 if ($id) {
-                    return ['status' => 'error', 'message' => 'Posted investments cannot be edited yet. Please delete and recreate with an adjustment.'];
+                    return ApiResponse::error('Posted investments cannot be edited yet. Please delete and recreate with an adjustment.', 500);
                 }
 
                 $data['created_by'] = auth()->id();
@@ -64,27 +66,26 @@ class AccountInvestmentService
                 );
                 $investment->update(['transaction_id' => $transaction->id]);
 
-                return [
-                    'status' => 'success',
-                    'message' => 'Investment posted successfully. Money was added to the "' . $account->name . '" balance.',
-                    'investment' => $investment->fresh(['account', 'transaction']),
-                ];
+                return ApiResponse::created(
+                    $investment->fresh(['account', 'transaction']),
+                    'Investment posted successfully. Money was added to the "'.$account->name.'" balance.'
+                );
             });
         } catch (\Exception $e) {
-            return ['status' => 'error', 'message' => 'Error saving investment: ' . $e->getMessage()];
+            return ApiResponse::error('Error saving investment: '.$e->getMessage(), 500);
         }
     }
 
-    public function find(int $id): array
+    public function find(int $id): JsonResponse
     {
         try {
-            return ['status' => 'success', 'investment' => AccountInvestment::with(['account', 'transaction'])->findOrFail($id)];
+            return ApiResponse::success(AccountInvestment::with(['account', 'transaction'])->findOrFail($id));
         } catch (\Exception) {
-            return ['status' => 'error', 'message' => 'Investment not found.'];
+            return ApiResponse::notFound('Investment not found.');
         }
     }
 
-    public function delete(int $id): array
+    public function delete(int $id): JsonResponse
     {
         try {
             return DB::transaction(function () use ($id) {
@@ -102,17 +103,17 @@ class AccountInvestmentService
 
                 $investment->delete();
 
-                return ['status' => 'success', 'message' => 'Investment deleted and its account impact was reversed.'];
+                return ApiResponse::success(null, 'Investment deleted and its account impact was reversed.');
             });
         } catch (\Exception $e) {
-            return ['status' => 'error', 'message' => 'Error deleting investment: ' . $e->getMessage()];
+            return ApiResponse::error('Error deleting investment: '.$e->getMessage(), 500);
         }
     }
 
     private function generateInvestmentNo(): string
     {
         do {
-            $number = 'INV-' . now()->format('YmdHis') . '-' . strtoupper(Str::random(4));
+            $number = 'INV-'.now()->format('YmdHis').'-'.strtoupper(Str::random(4));
         } while (AccountInvestment::where('investment_no', $number)->exists());
 
         return $number;

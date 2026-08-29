@@ -12,9 +12,7 @@ use Modules\Shipping\Services\ShipmentEventService;
 
 class ShipmentEventController extends Controller
 {
-    public function __construct(protected ShipmentEventService $eventService)
-    {
-    }
+    public function __construct(protected ShipmentEventService $eventService) {}
 
     public function index()
     {
@@ -32,26 +30,21 @@ class ShipmentEventController extends Controller
 
     public function store(ShipmentEventRequest $request)
     {
-        $result = $this->eventService->saveEvent($request->validated());
-        return response()->json($result, $result['status'] === 'success' ? 200 : 500);
+        return $this->eventService->saveEvent($request->validated());
     }
 
-    public function show(int $id)
+    public function show($id)
     {
-        return response()->json($this->eventService->getEventById($id));
+        return $this->eventService->getEventById((int) $id);
     }
 
     public function update(ShipmentEventRequest $request, int $id)
     {
-        $data = $request->validated();
-        $data['event_id'] = $id;
-        $result = $this->eventService->saveEvent($data);
-        return response()->json($result, $result['status'] === 'success' ? 200 : 500);
+        return $this->eventService->saveEvent($request->validated() + ['event_id' => $id]);
     }
 
-    public function destroy(int $id)
+    public function destroy($id)
     {
-        $result = $this->eventService->deleteEvent($id);
-        return response()->json($result, $result['status'] === 'success' ? 200 : 500);
+        return $this->eventService->deleteEvent((int) $id);
     }
 }

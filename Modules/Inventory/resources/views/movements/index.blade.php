@@ -20,7 +20,7 @@
         showUrl="{{ route('inventory-movements.show', ':id') }}"
         destroyUrl="{{ route('inventory-movements.destroy', ':id') }}"
         drawerTitle="Inventory Movement"
-        dataKey="movement"
+        dataKey="data"
         idField="movement_id"
         :order="[[6, 'desc']]"
     >

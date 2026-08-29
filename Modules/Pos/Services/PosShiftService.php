@@ -2,6 +2,8 @@
 
 namespace Modules\Pos\Services;
 
+use App\Helpers\ApiResponse;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Modules\Pos\Models\PosShift;
@@ -49,7 +51,7 @@ class PosShiftService
             ->make(true);
     }
 
-    public function saveShift(array $data): array
+    public function saveShift(array $data): JsonResponse
     {
         try {
             return DB::transaction(function () use ($data) {
@@ -61,63 +63,46 @@ class PosShiftService
                     $shift->update($data);
                     $message = 'Shift updated successfully.';
                 } else {
-                    if (!isset($data['opened_at'])) {
+                    if (! isset($data['opened_at'])) {
                         $data['opened_at'] = now();
                     }
                     $shift = PosShift::create($data);
                     $message = 'Shift created successfully.';
                 }
 
-                return [
-                    'status' => 'success',
-                    'message' => $message,
-                    'shift' => $shift->fresh()->load(['register.store', 'user']),
-                ];
+                return ApiResponse::success($shift->fresh()->load(['register.store', 'user']), $message);
             });
         } catch (\Exception $e) {
-            return [
-                'status' => 'error',
-                'message' => 'Error saving shift: ' . $e->getMessage(),
-            ];
+            return ApiResponse::error('Error saving shift: '.$e->getMessage(), 500);
         }
     }
 
-    public function getShiftById(int $id): array
+    public function getShiftById(int $id): JsonResponse
     {
         try {
             $shift = PosShift::with(['register.store', 'user'])->findOrFail($id);
-            return [
-                'status' => 'success',
-                'shift' => $shift,
-            ];
+
+            return ApiResponse::success($shift);
         } catch (\Exception $e) {
-            return [
-                'status' => 'error',
-                'message' => 'Shift not found.',
-            ];
+            return ApiResponse::notFound('Shift not found.');
         }
     }
 
-    public function deleteShift(int $id): array
+    public function deleteShift(int $id): JsonResponse
     {
         try {
             return DB::transaction(function () use ($id) {
                 $shift = PosShift::findOrFail($id);
                 $shift->delete();
-                return [
-                    'status' => 'success',
-                    'message' => 'Shift deleted successfully.',
-                ];
+
+                return ApiResponse::success(null, 'Shift deleted successfully.');
             });
         } catch (\Exception $e) {
-            return [
-                'status' => 'error',
-                'message' => 'Error deleting shift: ' . $e->getMessage(),
-            ];
+            return ApiResponse::error('Error deleting shift: '.$e->getMessage(), 500);
         }
     }
 
-    public function getOpenShifts(): array
+    public function getOpenShifts(): JsonResponse
     {
         return PosShift::where('status', 'open')
             ->with(['register.store', 'user'])
@@ -126,12 +111,12 @@ class PosShiftService
             ->toArray();
     }
 
-    public function closeShift(int $id, array $data): array
+    public function closeShift(int $id, array $data): JsonResponse
     {
         try {
             return DB::transaction(function () use ($id, $data) {
                 $shift = PosShift::findOrFail($id);
-                
+
                 $totalSales = $shift->cash_sales + $shift->card_sales + $shift->other_sales;
                 $expectedBalance = $shift->opening_balance + $totalSales;
                 $discrepancy = ($data['declared_cash'] ?? 0) - $expectedBalance;
@@ -146,17 +131,10 @@ class PosShiftService
                     'status' => 'closed',
                 ]);
 
-                return [
-                    'status' => 'success',
-                    'message' => 'Shift closed successfully.',
-                    'shift' => $shift->fresh()->load(['register.store', 'user']),
-                ];
+                return ApiResponse::success($shift->fresh()->load(['register.store', 'user']), 'Shift closed successfully.');
             });
         } catch (\Exception $e) {
-            return [
-                'status' => 'error',
-                'message' => 'Error closing shift: ' . $e->getMessage(),
-            ];
+            return ApiResponse::error('Error closing shift: '.$e->getMessage(), 500);
         }
     }
 }

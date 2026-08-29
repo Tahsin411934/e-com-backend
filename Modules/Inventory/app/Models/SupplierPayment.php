@@ -2,9 +2,9 @@
 
 namespace Modules\Inventory\Models;
 
+use App\Traits\CustomSoftDeletes;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use App\Traits\CustomSoftDeletes;
 use Modules\Account\Models\AccountAccount;
 use Modules\Account\Models\AccountTransaction;
 use Modules\Identity\Models\User;
@@ -12,8 +12,8 @@ use Modules\Store\Models\Store;
 
 class SupplierPayment extends Model
 {
-    use HasFactory;
     use CustomSoftDeletes;
+    use HasFactory;
 
     protected $table = 'supplier_payments';
 
@@ -78,7 +78,7 @@ class SupplierPayment extends Model
 
         do {
             $maxSequence++;
-            $number = 'PPM-' . $year . '-' . str_pad($maxSequence, 4, '0', STR_PAD_LEFT);
+            $number = 'PPM-'.$year.'-'.str_pad($maxSequence, 4, '0', STR_PAD_LEFT);
         } while (static::withTrashed()->where('payment_no', $number)->exists());
 
         return $number;

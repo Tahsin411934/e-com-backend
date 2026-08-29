@@ -19,7 +19,7 @@
         showUrl="{{ route('pos-registers.show', ':id') }}"
         destroyUrl="{{ route('pos-registers.destroy', ':id') }}"
         drawerTitle="POS Register"
-        dataKey="register"
+        dataKey="data"
         idField="register_id"
         :order="[[5, 'desc']]"
     >

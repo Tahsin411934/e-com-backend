@@ -9,18 +9,10 @@ use Modules\Catalog\Services\ProductRequestService;
 
 class ProductRequestApiController extends Controller
 {
-    protected ProductRequestService $productRequestService;
-
-    public function __construct(ProductRequestService $productRequestService)
-    {
-        $this->productRequestService = $productRequestService;
-    }
+    public function __construct(private ProductRequestService $productRequestService) {}
 
     /**
      * Store a product request from the frontend.
-     *
-     * @param Request $request
-     * @return JsonResponse
      */
     public function store(Request $request): JsonResponse
     {
@@ -48,8 +40,6 @@ class ProductRequestApiController extends Controller
             $validated['product_image'] = $request->file('product_image');
         }
 
-        $result = $this->productRequestService->storeFromFrontend($validated);
-
-        return response()->json($result, $result['status'] === 'success' ? 201 : 500);
+        return $this->productRequestService->storeFromFrontend($validated);
     }
 }

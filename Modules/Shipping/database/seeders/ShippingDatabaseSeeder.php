@@ -19,8 +19,9 @@ class ShippingDatabaseSeeder extends Seeder
     {
         $store = Store::where('slug', 'main-store-dhaka')->first() ?? Store::first();
 
-        if (!$store) {
+        if (! $store) {
             $this->command->warn('No stores found. Skipping shipping seeding.');
+
             return;
         }
 
@@ -123,6 +124,7 @@ class ShippingDatabaseSeeder extends Seeder
         $orders = Order::orderByDesc('created_at')->limit(5)->get();
         if ($orders->isEmpty()) {
             $this->command->warn('No orders found. Seed orders before creating shipments.');
+
             return;
         }
 
@@ -135,7 +137,7 @@ class ShippingDatabaseSeeder extends Seeder
             $status = $statuses[$index % count($statuses)];
 
             $shipment = Shipment::updateOrCreate(
-                ['tracking_number' => 'SHP-SEED-' . str_pad((string) $order->id, 5, '0', STR_PAD_LEFT)],
+                ['tracking_number' => 'SHP-SEED-'.str_pad((string) $order->id, 5, '0', STR_PAD_LEFT)],
                 [
                     'order_id' => $order->id,
                     'store_id' => $order->store_id ?? $store->id,
@@ -163,7 +165,7 @@ class ShippingDatabaseSeeder extends Seeder
                 [
                     'shipment_id' => $shipment->id,
                     'event_type' => 'status_update',
-                    'title' => 'Seeded status: ' . str_replace('_', ' ', $status),
+                    'title' => 'Seeded status: '.str_replace('_', ' ', $status),
                 ],
                 [
                     'driver_id' => $driver->id,

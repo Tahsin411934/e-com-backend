@@ -25,9 +25,9 @@ return new class extends Migration
             $table->softDeletes();
 
             $table->foreign('product_variant_id')
-                  ->references('id')
-                  ->on('product_variants')
-                  ->onDelete('cascade');
+                ->references('id')
+                ->on('product_variants')
+                ->onDelete('cascade');
 
             $table->index(['product_variant_id', 'color_name']);
             $table->index('status');

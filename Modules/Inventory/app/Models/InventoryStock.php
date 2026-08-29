@@ -2,14 +2,16 @@
 
 namespace Modules\Inventory\Models;
 
+use App\Traits\CustomSoftDeletes;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use App\Traits\CustomSoftDeletes;
+use Modules\Catalog\Models\ProductVariant;
+use Modules\Catalog\Models\VariantOption;
 
 class InventoryStock extends Model
 {
-    use HasFactory;
     use CustomSoftDeletes;
+    use HasFactory;
 
     protected $table = 'inventory_stock';
 
@@ -29,11 +31,11 @@ class InventoryStock extends Model
 
     public function variant()
     {
-        return $this->belongsTo(\Modules\Catalog\Models\ProductVariant::class, 'variant_id');
+        return $this->belongsTo(ProductVariant::class, 'variant_id');
     }
 
     public function variantOption()
     {
-        return $this->belongsTo(\Modules\Catalog\Models\VariantOption::class, 'variant_option_id');
+        return $this->belongsTo(VariantOption::class, 'variant_option_id');
     }
 }

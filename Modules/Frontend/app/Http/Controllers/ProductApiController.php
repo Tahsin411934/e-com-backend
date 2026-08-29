@@ -2,9 +2,11 @@
 
 namespace Modules\Frontend\Http\Controllers;
 
+use App\Helpers\ApiResponse;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Modules\Catalog\Models\Product;
 use Modules\Frontend\Http\Resources\ProductDetailResource;
 
@@ -22,9 +24,6 @@ class ProductApiController extends Controller
      * - Reviews (approved only) with user info, average rating, distribution
      * - Related products (same categories)
      *
-     * @param string $slug
-     * @param Request $request
-     * @return JsonResponse
      *
      * @urlParam slug string required The product slug (e.g. "iphone-15-pro-max")
      */
@@ -49,19 +48,19 @@ class ProductApiController extends Controller
             ])
             ->first();
 
-        if (!$product) {
-            return response()->json([
+        if (! $product) {
+            return ApiResponse::fromResult([
                 'success' => false,
                 'message' => 'Product not found.',
-            ], 404);
+            ], 200, 404);
         }
 
         // Fetch related products separately (same categories, excluding current)
         $categoryIds = $product->categories->pluck('id')->toArray();
         $relatedIds = [];
 
-        if (!empty($categoryIds)) {
-            $relatedIds = \Illuminate\Support\Facades\DB::table('product_categories')
+        if (! empty($categoryIds)) {
+            $relatedIds = DB::table('product_categories')
                 ->whereIn('category_id', $categoryIds)
                 ->where('product_id', '!=', $product->id)
                 ->pluck('product_id')
@@ -72,11 +71,11 @@ class ProductApiController extends Controller
         }
 
         $relatedProducts = collect();
-        if (!empty($relatedIds)) {
+        if (! empty($relatedIds)) {
             $relatedProducts = Product::whereIn('id', $relatedIds)
                 ->where('status', 'active')
                 ->where('visibility', 'public')
-                ->with(['images', 'variants' => fn($q) => $q->whereNull('deleted_at')->where('status', 'active')])
+                ->with(['images', 'variants' => fn ($q) => $q->whereNull('deleted_at')->where('status', 'active')])
                 ->orderBy('order_column')
                 ->get();
         }
@@ -84,10 +83,10 @@ class ProductApiController extends Controller
         // Manually set relatedProducts for the resource
         $product->setRelation('relatedProducts', $relatedProducts);
 
-        return response()->json([
+        return ApiResponse::fromResult([
             'success' => true,
             'message' => 'Product retrieved successfully.',
-            'data'    => new ProductDetailResource($product),
+            'data' => new ProductDetailResource($product),
         ]);
     }
 }

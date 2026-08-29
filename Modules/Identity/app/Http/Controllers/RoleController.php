@@ -4,28 +4,22 @@ namespace Modules\Identity\Http\Controllers;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
-use Modules\Identity\Services\RoleService;
-use Modules\Identity\Services\PermissionService;
 use Modules\Identity\Http\Requests\RoleRequest;
+use Modules\Identity\Services\PermissionService;
+use Modules\Identity\Services\RoleService;
 
 class RoleController extends Controller
 {
-    protected RoleService $roleService;
-    protected PermissionService $permissionService;
-
-    public function __construct(RoleService $roleService, PermissionService $permissionService)
-    {
-        $this->roleService = $roleService;
-        $this->permissionService = $permissionService;
-    }
+    public function __construct(private RoleService $roleService, private PermissionService $permissionService) {}
 
     public function index()
     {
         $permissions = $this->permissionService->getAllPermissions();
-        
+
         // Group permissions by module (e.g., "users.view" -> "users")
         $groupedPermissions = $permissions->groupBy(function ($permission) {
             $parts = explode('.', $permission->name);
+
             return ucfirst($parts[0]);
         })->map(function ($group) {
             return $group->sortBy('name')->values();
@@ -41,27 +35,21 @@ class RoleController extends Controller
 
     public function store(RoleRequest $request)
     {
-        $result = $this->roleService->saveRole($request->validated());
-        return response()->json($result, $result['status'] === 'success' ? 200 : 500);
+        return $this->roleService->saveRole($request->validated());
     }
 
     public function show($id)
     {
-        $result = $this->roleService->getRoleById($id);
-        return response()->json($result);
+        return $this->roleService->getRoleById((int) $id);
     }
 
     public function update(RoleRequest $request, $id)
     {
-        $data = $request->validated();
-        $data['role_id'] = $id;
-        $result = $this->roleService->saveRole($data);
-        return response()->json($result, $result['status'] === 'success' ? 200 : 500);
+        return $this->roleService->saveRole($request->validated() + ['role_id' => $id]);
     }
 
     public function destroy($id)
     {
-        $result = $this->roleService->deleteRole($id);
-        return response()->json($result, $result['status'] === 'success' ? 200 : 500);
+        return $this->roleService->deleteRole((int) $id);
     }
 }

@@ -25,7 +25,7 @@
             showUrl="{{ route('countries.show', ':id') }}"
             destroyUrl="{{ route('countries.destroy', ':id') }}"
             drawerTitle="Country"
-            dataKey="country"
+            dataKey="data"
             idField="country_id"
             :order="[[1, 'asc']]"
         >

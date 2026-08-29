@@ -8,9 +8,7 @@ use Modules\Catalog\Models\ProductVariant;
 
 class ProductPricingService
 {
-    public function __construct(private readonly CampaignPricingService $campaignPricing)
-    {
-    }
+    public function __construct(private readonly CampaignPricingService $campaignPricing) {}
 
     /**
      * Compute discount-aware price info for a product based on its active variants.
@@ -49,11 +47,11 @@ class ProductPricingService
         }
 
         return $best ?? [
-            'price'            => null,
-            'regular_price'    => null,
+            'price' => null,
+            'regular_price' => null,
             'discount_percent' => 0,
-            'discount_amount'  => 0,
-            'has_discount'     => false,
+            'discount_amount' => 0,
+            'has_discount' => false,
         ];
     }
 
@@ -78,7 +76,7 @@ class ProductPricingService
      */
     private function variantPriceInfo(ProductVariant $variant): array
     {
-        $salePrice   = round(max(0, (float) $variant->sale_price), 0);
+        $salePrice = round(max(0, (float) $variant->sale_price), 0);
         $discountPct = max(0, min(100, (float) ($variant->discount_percent ?? 0)));
 
         // Campaign pricing takes precedence over the variant's own discount:
@@ -101,11 +99,11 @@ class ProductPricingService
         $discountAmt = round($regular - $final, 0);
 
         return [
-            'price'            => $final,
-            'regular_price'    => $regular,
+            'price' => $final,
+            'regular_price' => $regular,
             'discount_percent' => $hasDiscount ? (float) round(($discountAmt / $regular) * 100, 0) : 0,
-            'discount_amount'  => $hasDiscount ? $discountAmt : 0,
-            'has_discount'     => $hasDiscount,
+            'discount_amount' => $hasDiscount ? $discountAmt : 0,
+            'has_discount' => $hasDiscount,
         ];
     }
 }

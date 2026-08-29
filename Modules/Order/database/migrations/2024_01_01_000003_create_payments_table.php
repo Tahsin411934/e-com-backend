@@ -13,8 +13,8 @@ return new class extends Migration
             $table->foreignId('order_id')->constrained('orders')->cascadeOnDelete();
             $table->string('provider', 80);
             $table->string('provider_payment_id', 180)->nullable();
-            $table->enum('method', ['card','cash','bank_transfer','wallet','cod','gift_card','other']);
-            $table->enum('status', ['pending','authorized','captured','failed','cancelled','refunded'])->default('pending');
+            $table->enum('method', ['card', 'cash', 'bank_transfer', 'wallet', 'cod', 'gift_card', 'other']);
+            $table->enum('status', ['pending', 'authorized', 'captured', 'failed', 'cancelled', 'refunded'])->default('pending');
             $table->decimal('amount', 19, 4);
             $table->char('currency_code', 3)->default('USD');
             $table->dateTime('paid_at')->nullable();

@@ -43,17 +43,16 @@ class ProductSearchService
      * Fallback - Interleaved LIKE:
      *   If FULLTEXT returns nothing, insert '%' between each query character.
      *
-     * @param string $query       User's search term.
-     * @param int    $limit       Max results (default 20).
-     * @param int|null $categoryId Optional category ID to filter by.
-     *
-     * @return array  ['products' => Collection, 'suggestion' => string|null]
+     * @param  string  $query  User's search term.
+     * @param  int  $limit  Max results (default 20).
+     * @param  int|null  $categoryId  Optional category ID to filter by.
+     * @return array ['products' => Collection, 'suggestion' => string|null]
      */
     public function search(string $query, int $limit = 20, ?int $categoryId = null): array
     {
-        $query   = trim($query);
-        $limit   = min($limit, $this->maxResults);
-        $results = new Collection();
+        $query = trim($query);
+        $limit = min($limit, $this->maxResults);
+        $results = new Collection;
         $suggestion = null;
 
         if (strlen($query) < 1) {
@@ -71,26 +70,26 @@ class ProductSearchService
         // ── Layer 2: Word-level Levenshtein scoring & ranking ──
         if ($candidates->isNotEmpty()) {
             $scored = $this->scoreByWordLevelLevenshtein($candidates, $query);
-            $filtered = array_filter($scored, fn($item) => $item['distance'] <= $this->fuzzyThreshold);
+            $filtered = array_filter($scored, fn ($item) => $item['distance'] <= $this->fuzzyThreshold);
 
             // Sort by score descending
-            usort($filtered, fn($a, $b) => $b['score'] <=> $a['score']);
+            usort($filtered, fn ($a, $b) => $b['score'] <=> $a['score']);
 
             // Take top results
             $topIds = array_slice(array_column($filtered, 'id'), 0, $limit);
 
-            if (!empty($topIds)) {
+            if (! empty($topIds)) {
                 // Preserve the scored order
                 $idOrder = array_flip($topIds);
                 $results = Product::with(['images', 'variants' => function ($q) {
-                        $q->where('status', 'active');
-                    }])
+                    $q->where('status', 'active');
+                }])
                     ->whereIn('id', $topIds)
                     ->where('status', 'active')
                     ->where('visibility', 'public')
                     ->orderBy('order_column')
                     ->get()
-                    ->sortBy(fn($p) => $idOrder[$p->id] ?? PHP_INT_MAX);
+                    ->sortBy(fn ($p) => $idOrder[$p->id] ?? PHP_INT_MAX);
 
                 // Assign relevance scores
                 $count = count($results);
@@ -102,34 +101,30 @@ class ProductSearchService
             }
 
             // If the best match has distance > 0, provide a suggestion
-            if (!empty($filtered[0]) && $filtered[0]['distance'] > 0 && $filtered[0]['distance'] <= 2) {
+            if (! empty($filtered[0]) && $filtered[0]['distance'] > 0 && $filtered[0]['distance'] <= 2) {
                 $suggestion = $filtered[0]['closest_name'];
             }
         }
 
         return [
-            'products'   => $results,
+            'products' => $results,
             'suggestion' => $suggestion,
         ];
     }
 
     /**
      * FULLTEXT search in BOOLEAN MODE.
-     *
-     * @param string     $query
-     * @param int|null   $categoryId
-     * @return Collection
      */
     protected function fulltextSearch(string $query, ?int $categoryId = null): Collection
     {
-        $words = array_filter(explode(' ', $query), fn($w) => strlen($w) >= $this->minFulltextLength);
+        $words = array_filter(explode(' ', $query), fn ($w) => strlen($w) >= $this->minFulltextLength);
 
         if (empty($words)) {
-            return new Collection();
+            return new Collection;
         }
 
         // Build BOOLEAN MODE query: "+word* +word2*"
-        $booleanQuery = '+' . implode('* +', $words) . '*';
+        $booleanQuery = '+'.implode('* +', $words).'*';
 
         $queryBuilder = Product::where('status', 'active')
             ->where('visibility', 'public')
@@ -139,7 +134,7 @@ class ProductSearchService
             );
 
         if ($categoryId) {
-            $queryBuilder->whereHas('categories', fn($q) => $q->where('categories.id', $categoryId));
+            $queryBuilder->whereHas('categories', fn ($q) => $q->where('categories.id', $categoryId));
         }
 
         return $queryBuilder
@@ -149,21 +144,17 @@ class ProductSearchService
 
     /**
      * Fallback: interleaved LIKE search.
-     *
-     * @param string     $query
-     * @param int|null   $categoryId
-     * @return Collection
      */
     protected function fallbackLikeSearch(string $query, ?int $categoryId = null): Collection
     {
-        $pattern = '%' . implode('%', str_split($query)) . '%';
+        $pattern = '%'.implode('%', str_split($query)).'%';
 
         $queryBuilder = Product::where('status', 'active')
             ->where('visibility', 'public')
             ->where('name', 'LIKE', $pattern);
 
         if ($categoryId) {
-            $queryBuilder->whereHas('categories', fn($q) => $q->where('categories.id', $categoryId));
+            $queryBuilder->whereHas('categories', fn ($q) => $q->where('categories.id', $categoryId));
         }
 
         return $queryBuilder
@@ -180,10 +171,8 @@ class ProductSearchService
      *
      * Also gives a bonus for prefix/substring matches within any word.
      *
-     * @param Collection $candidates
-     * @param string     $query
      *
-     * @return array  [['id' => int, 'name' => string, 'distance' => int, 'score' => float, 'closest_name' => string], ...]
+     * @return array [['id' => int, 'name' => string, 'distance' => int, 'score' => float, 'closest_name' => string], ...]
      */
     protected function scoreByWordLevelLevenshtein(Collection $candidates, string $query): array
     {
@@ -191,8 +180,8 @@ class ProductSearchService
         $scored = [];
 
         foreach ($candidates as $product) {
-            $lowerName  = mb_strtolower($product->name);
-            $nameWords  = explode(' ', $lowerName);
+            $lowerName = mb_strtolower($product->name);
+            $nameWords = explode(' ', $lowerName);
 
             // Find the best (minimum) distance against ANY word in the product name
             $bestDistance = PHP_INT_MAX;
@@ -221,10 +210,10 @@ class ProductSearchService
             }
 
             $scored[] = [
-                'id'           => $product->id,
-                'name'         => $product->name,
-                'distance'     => $finalDistance,
-                'score'        => round($score, 4),
+                'id' => $product->id,
+                'name' => $product->name,
+                'distance' => $finalDistance,
+                'score' => round($score, 4),
                 'closest_name' => $product->name,
             ];
         }

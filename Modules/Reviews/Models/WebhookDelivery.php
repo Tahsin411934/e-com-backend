@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class WebhookDelivery extends Model
 {
-    use HasFactory, CustomSoftDeletes;
+    use CustomSoftDeletes, HasFactory;
 
     protected $table = 'webhook_deliveries';
 
@@ -23,5 +23,8 @@ class WebhookDelivery extends Model
         'delivered_at' => 'datetime',
     ];
 
-    public function webhook() { return $this->belongsTo(Webhook::class, 'webhook_id'); }
+    public function webhook()
+    {
+        return $this->belongsTo(Webhook::class, 'webhook_id');
+    }
 }

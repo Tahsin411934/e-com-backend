@@ -1,19 +1,19 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
-use Modules\Frontend\Http\Controllers\FrontendController;
-use Modules\Frontend\Http\Controllers\NavbarApiController;
+use Modules\Frontend\Http\Controllers\AnnouncementBarApiController;
 use Modules\Frontend\Http\Controllers\BannerApiController;
 use Modules\Frontend\Http\Controllers\BrandApiController;
 use Modules\Frontend\Http\Controllers\CategoryApiController;
-use Modules\Frontend\Http\Controllers\ProductSearchApiController;
-use Modules\Frontend\Http\Controllers\HomeApiController;
-use Modules\Frontend\Http\Controllers\ProductApiController;
-use Modules\Frontend\Http\Controllers\SubnavbarApiController;
-use Modules\Frontend\Http\Controllers\ProductRequestApiController;
-use Modules\Frontend\Http\Controllers\AnnouncementBarApiController;
-use Modules\Frontend\Http\Controllers\SettingsApiController;
 use Modules\Frontend\Http\Controllers\CustomerOrderApiController;
+use Modules\Frontend\Http\Controllers\FrontendController;
+use Modules\Frontend\Http\Controllers\HomeApiController;
+use Modules\Frontend\Http\Controllers\NavbarApiController;
+use Modules\Frontend\Http\Controllers\ProductApiController;
+use Modules\Frontend\Http\Controllers\ProductRequestApiController;
+use Modules\Frontend\Http\Controllers\ProductSearchApiController;
+use Modules\Frontend\Http\Controllers\SettingsApiController;
+use Modules\Frontend\Http\Controllers\SubnavbarApiController;
 
 /*
 |--------------------------------------------------------------------------

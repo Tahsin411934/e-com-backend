@@ -20,7 +20,7 @@
         showUrl="#"
         destroyUrl="#"
         drawerTitle="Transfer"
-        dataKey="transfer"
+        dataKey="data"
         idField="transfer_id"
     >
         <div class="mb-4">

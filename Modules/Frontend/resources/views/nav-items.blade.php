@@ -26,7 +26,7 @@
         showUrl="{{ route('frontend.nav-items.navbar.show', ':id') }}"
         destroyUrl="{{ route('frontend.nav-items.navbar.destroy', ':id') }}"
         drawerTitle="Navbar Item"
-        dataKey="navbar_item"
+        dataKey="data"
         idField="navbar_item_id"
         :order="[[6, 'desc']]"
     >

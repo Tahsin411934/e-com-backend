@@ -8,7 +8,7 @@ return new class extends Migration
 {
     public function up()
     {
-        if (!Schema::hasTable('categories')) {
+        if (! Schema::hasTable('categories')) {
             Schema::create('categories', function (Blueprint $table) {
                 $table->bigIncrements('id');
                 $table->unsignedBigInteger('parent_id')->nullable();
@@ -17,7 +17,7 @@ return new class extends Migration
                 $table->text('description')->nullable();
                 $table->string('image_url', 500)->nullable();
                 $table->integer('sort_order')->default(0);
-                $table->enum('status', ['active','inactive'])->default('active');
+                $table->enum('status', ['active', 'inactive'])->default('active');
                 $table->timestamps();
                 $table->softDeletes();
 

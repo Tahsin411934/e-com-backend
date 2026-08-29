@@ -30,14 +30,14 @@ return new class extends Migration
 
             // Foreign keys
             $table->foreign('user_id')
-                  ->references('id')
-                  ->on('users')
-                  ->onDelete('set null');
+                ->references('id')
+                ->on('users')
+                ->onDelete('set null');
 
             $table->foreign('product_id')
-                  ->references('id')
-                  ->on('products')
-                  ->onDelete('set null');
+                ->references('id')
+                ->on('products')
+                ->onDelete('set null');
 
             // Indexes
             $table->index('status');

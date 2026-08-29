@@ -8,7 +8,7 @@ return new class extends Migration
 {
     public function up(): void
     {
-        if (!Schema::hasColumn('product_variants', 'discount_percent')) {
+        if (! Schema::hasColumn('product_variants', 'discount_percent')) {
             Schema::table('product_variants', function (Blueprint $table) {
                 $table->decimal('discount_percent', 5, 2)->default(0)->after('sale_price');
             });

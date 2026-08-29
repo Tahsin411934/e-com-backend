@@ -1,9 +1,9 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
-use Modules\Reviews\Http\Controllers\ProductReviewController;
-use Modules\Reviews\Http\Controllers\NotificationController;
 use Modules\Reviews\Http\Controllers\AuditLogController;
+use Modules\Reviews\Http\Controllers\NotificationController;
+use Modules\Reviews\Http\Controllers\ProductReviewController;
 use Modules\Reviews\Http\Controllers\WebhookController;
 use Modules\Reviews\Http\Controllers\WebhookDeliveryController;
 

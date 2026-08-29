@@ -11,7 +11,7 @@ return new class extends Migration
         Schema::table('cart_items', function (Blueprint $table) {
             $table->unsignedBigInteger('variant_option_id')->nullable()->after('variant_id');
             $table->index('variant_option_id');
-            
+
             $table->foreign('variant_option_id')
                 ->references('id')->on('variant_options')
                 ->onDelete('set null');

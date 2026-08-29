@@ -21,7 +21,7 @@
         showUrl="{{ route('cart.show', ':id') }}"
         destroyUrl="{{ route('cart.destroy', ':id') }}"
         drawerTitle="Cart"
-        dataKey="cart"
+        dataKey="data"
         idField="cart_id"
         :order="[[0, 'desc']]"
     >

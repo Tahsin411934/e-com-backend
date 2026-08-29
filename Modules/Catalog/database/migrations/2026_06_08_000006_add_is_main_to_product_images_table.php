@@ -9,7 +9,7 @@ return new class extends Migration
     public function up()
     {
         Schema::table('product_images', function (Blueprint $table) {
-            if (!Schema::hasColumn('product_images', 'is_main')) {
+            if (! Schema::hasColumn('product_images', 'is_main')) {
                 $table->boolean('is_main')->default(false)->after('sort_order');
             }
         });

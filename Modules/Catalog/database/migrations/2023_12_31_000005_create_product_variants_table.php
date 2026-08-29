@@ -8,7 +8,7 @@ return new class extends Migration
 {
     public function up()
     {
-        if (!Schema::hasTable('product_variants')) {
+        if (! Schema::hasTable('product_variants')) {
             Schema::create('product_variants', function (Blueprint $table) {
                 $table->bigIncrements('id');
                 $table->unsignedBigInteger('product_id');
@@ -25,7 +25,7 @@ return new class extends Migration
                 $table->unsignedInteger('height_mm')->nullable();
                 $table->boolean('track_inventory')->default(true);
                 $table->boolean('allow_backorder')->default(false);
-                $table->enum('status', ['active','inactive'])->default('active');
+                $table->enum('status', ['active', 'inactive'])->default('active');
                 $table->timestamps();
                 $table->softDeletes();
 

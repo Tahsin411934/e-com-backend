@@ -11,16 +11,14 @@ class CheckRole
     /**
      * Handle an incoming request.
      *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  \Closure(\Illuminate\Http\Request): (\Symfony\Component\HttpFoundation\Response)  $next
+     * @param  Closure(Request): (Response)  $next
      * @param  string  ...$roles  One or more role names
-     * @return \Symfony\Component\HttpFoundation\Response
      */
     public function handle(Request $request, Closure $next, string ...$roles): Response
     {
         $user = $request->user();
 
-        if (!$user) {
+        if (! $user) {
             return redirect()->route('login');
         }
 
@@ -29,7 +27,7 @@ class CheckRole
             return in_array($role->name, $roles);
         });
 
-        if (!$hasRole) {
+        if (! $hasRole) {
             abort(403, 'Unauthorized. You do not have the required role to access this resource.');
         }
 

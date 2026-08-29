@@ -2,6 +2,8 @@
 
 namespace Modules\Catalog\Services;
 
+use App\Helpers\ApiResponse;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
@@ -18,11 +20,11 @@ class BrandService
 
         return DataTables::of($query)
             ->addColumn('logo', function (Brand $brand) {
-                if (!$brand->logo_url) {
+                if (! $brand->logo_url) {
                     return '-';
                 }
 
-                return '<img src="' . e($this->logoUrl($brand->logo_url)) . '" alt="' . e($brand->name) . '" class="h-10 w-10 rounded-lg border border-gray-200 object-contain bg-white">';
+                return '<img src="'.e($this->logoUrl($brand->logo_url)).'" alt="'.e($brand->name).'" class="h-10 w-10 rounded-lg border border-gray-200 object-contain bg-white">';
             })
             ->editColumn('status', function (Brand $brand) {
                 return ucfirst($brand->status);
@@ -41,7 +43,7 @@ class BrandService
             ->make(true);
     }
 
-    public function saveBrand(array $data): array
+    public function saveBrand(array $data): JsonResponse
     {
         $newLogoUrl = null;
 
@@ -79,43 +81,34 @@ class BrandService
                     $this->deleteLogo($oldLogoUrl);
                 }
 
-                return [
-                    'status' => 'success',
-                    'message' => $message,
-                    'brand' => $brand->fresh(),
-                ];
+                if ($brandId) {
+                    return ApiResponse::success($brand->fresh(), $message);
+                }
+
+                return ApiResponse::created($brand->fresh(), $message);
             });
         } catch (\Exception $e) {
             if ($newLogoUrl) {
                 $this->deleteLogo($newLogoUrl);
             }
 
-            return [
-                'status' => 'error',
-                'message' => 'Error saving brand: ' . $e->getMessage(),
-            ];
+            return ApiResponse::error('Error saving brand: '.$e->getMessage(), 500);
         }
     }
 
-    public function getBrandById(int $id): array
+    public function getBrandById(int $id): JsonResponse
     {
         try {
             $brand = Brand::findOrFail($id);
             $brand->logo_url = $brand->logo_url ? $this->logoUrl($brand->logo_url) : null;
 
-            return [
-                'status' => 'success',
-                'brand' => $brand,
-            ];
-        } catch (\Exception $e) {
-            return [
-                'status' => 'error',
-                'message' => 'Brand not found.',
-            ];
+            return ApiResponse::success($brand);
+        } catch (\Exception) {
+            return ApiResponse::notFound('Brand not found.');
         }
     }
 
-    public function deleteBrand(int $id): array
+    public function deleteBrand(int $id): JsonResponse
     {
         try {
             return DB::transaction(function () use ($id) {
@@ -123,16 +116,10 @@ class BrandService
                 $this->deleteLogo($brand->logo_url);
                 $brand->delete();
 
-                return [
-                    'status' => 'success',
-                    'message' => 'Brand deleted successfully.',
-                ];
+                return ApiResponse::success(null, 'Brand deleted successfully.');
             });
         } catch (\Exception $e) {
-            return [
-                'status' => 'error',
-                'message' => 'Error deleting brand: ' . $e->getMessage(),
-            ];
+            return ApiResponse::error('Error deleting brand: '.$e->getMessage(), 500);
         }
     }
 
@@ -140,21 +127,21 @@ class BrandService
     {
         $name = Str::slug($name) ?: 'brand';
         $extension = $logo->getClientOriginalExtension();
-        $fileName = $name . '-logo-' . now()->format('YmdHis') . '.' . $extension;
+        $fileName = $name.'-logo-'.now()->format('YmdHis').'.'.$extension;
         $path = $logo->storeAs('brands', $fileName, 'public');
 
-        return '/storage/' . $path;
+        return '/storage/'.$path;
     }
 
     private function deleteLogo(?string $logoUrl): void
     {
-        if (!$logoUrl) {
+        if (! $logoUrl) {
             return;
         }
 
         $path = parse_url($logoUrl, PHP_URL_PATH) ?: $logoUrl;
 
-        if (!str_starts_with($path, '/storage/')) {
+        if (! str_starts_with($path, '/storage/')) {
             return;
         }
 

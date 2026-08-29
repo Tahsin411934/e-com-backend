@@ -2,6 +2,8 @@
 
 namespace Modules\Order\Services;
 
+use App\Helpers\ApiResponse;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Modules\Order\Models\Order;
@@ -43,7 +45,7 @@ class OrderService
             ->make(true);
     }
 
-    public function saveOrder(array $data): array
+    public function saveOrder(array $data): JsonResponse
     {
         try {
             return DB::transaction(function () use ($data) {
@@ -55,59 +57,42 @@ class OrderService
                     $order->update($data);
                     $message = 'Order updated successfully.';
                 } else {
-                    if (!isset($data['order_number'])) {
-                        $data['order_number'] = 'ORD-' . strtoupper(uniqid());
+                    if (! isset($data['order_number'])) {
+                        $data['order_number'] = 'ORD-'.strtoupper(uniqid());
                     }
                     $order = Order::create($data);
                     $message = 'Order created successfully.';
                 }
 
-                return [
-                    'status' => 'success',
-                    'message' => $message,
-                    'order' => $order->fresh(),
-                ];
+                return ApiResponse::success($order->fresh(), $message);
             });
         } catch (\Exception $e) {
-            return [
-                'status' => 'error',
-                'message' => 'Error saving order: ' . $e->getMessage(),
-            ];
+            return ApiResponse::error('Error saving order: '.$e->getMessage(), 500);
         }
     }
 
-    public function getOrderById(int $id): array
+    public function getOrderById(int $id): JsonResponse
     {
         try {
             $order = Order::with(['user', 'store', 'items', 'payments', 'refunds'])->findOrFail($id);
-            return [
-                'status' => 'success',
-                'order' => $order,
-            ];
+
+            return ApiResponse::success($order);
         } catch (\Exception $e) {
-            return [
-                'status' => 'error',
-                'message' => 'Order not found.',
-            ];
+            return ApiResponse::notFound('Order not found.');
         }
     }
 
-    public function deleteOrder(int $id): array
+    public function deleteOrder(int $id): JsonResponse
     {
         try {
             return DB::transaction(function () use ($id) {
                 $order = Order::findOrFail($id);
                 $order->delete();
-                return [
-                    'status' => 'success',
-                    'message' => 'Order deleted successfully.',
-                ];
+
+                return ApiResponse::success(null, 'Order deleted successfully.');
             });
         } catch (\Exception $e) {
-            return [
-                'status' => 'error',
-                'message' => 'Error deleting order: ' . $e->getMessage(),
-            ];
+            return ApiResponse::error('Error deleting order: '.$e->getMessage(), 500);
         }
     }
 }

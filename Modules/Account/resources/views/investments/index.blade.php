@@ -22,7 +22,7 @@
         showUrl="{{ route('account-investments.show', ':id') }}"
         destroyUrl="{{ route('account-investments.destroy', ':id') }}"
         drawerTitle="Investment"
-        dataKey="investment"
+        dataKey="data"
         idField="investment_id"
     >
         <div class="mb-4">

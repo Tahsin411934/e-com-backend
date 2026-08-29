@@ -39,18 +39,16 @@ class SupplierPaymentController extends Controller
             'note' => 'nullable|string',
         ]);
 
-        $result = $this->service->save($validated);
-        return response()->json($result, $result['status'] === 'success' ? 200 : 500);
+        return $this->service->save($validated);
     }
 
     public function show($id)
     {
-        return response()->json($this->service->find((int) $id));
+        return $this->service->find((int) $id);
     }
 
     public function destroy($id)
     {
-        $result = $this->service->delete((int) $id);
-        return response()->json($result, $result['status'] === 'success' ? 200 : 500);
+        return $this->service->delete((int) $id);
     }
 }

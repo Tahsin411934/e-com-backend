@@ -2,6 +2,8 @@
 
 namespace Modules\Identity\Services;
 
+use App\Helpers\ApiResponse;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -22,7 +24,7 @@ class UserService
                 return $user->created_at->format('d M Y H:i');
             })
             ->addColumn('full_name', function (User $user) {
-                return trim($user->first_name . ' ' . $user->last_name);
+                return trim($user->first_name.' '.$user->last_name);
             })
             ->addColumn('role_name', function (User $user) {
                 return $user->roles->pluck('name')->implode(', ') ?? 'No Role';
@@ -38,7 +40,7 @@ class UserService
             ->make(true);
     }
 
-    public function saveUser(array $data): array
+    public function saveUser(array $data): JsonResponse
     {
         try {
             return DB::transaction(function () use ($data) {
@@ -47,7 +49,7 @@ class UserService
 
                 unset($data['user_id'], $data['role_id']);
 
-                if (!isset($data['public_id'])) {
+                if (! isset($data['public_id'])) {
                     $data['public_id'] = (string) Str::uuid();
                 }
 
@@ -69,37 +71,25 @@ class UserService
                     $user->roles()->sync([$roleId]);
                 }
 
-                return [
-                    'status' => 'success',
-                    'message' => $message,
-                    'user' => $user->fresh()->load('roles'),
-                ];
+                return ApiResponse::success($user->fresh()->load('roles'), $message);
             });
         } catch (\Exception $e) {
-            return [
-                'status' => 'error',
-                'message' => 'Error saving user: ' . $e->getMessage(),
-            ];
+            return ApiResponse::error('Error saving user: '.$e->getMessage(), 500);
         }
     }
 
-    public function getUserById(int $id): array
+    public function getUserById(int $id): JsonResponse
     {
         try {
             $user = User::with('roles')->findOrFail($id);
-            return [
-                'status' => 'success',
-                'user' => $user,
-            ];
+
+            return ApiResponse::success($user);
         } catch (\Exception $e) {
-            return [
-                'status' => 'error',
-                'message' => 'User not found.',
-            ];
+            return ApiResponse::notFound('User not found.');
         }
     }
 
-    public function deleteUser(int $id): array
+    public function deleteUser(int $id): JsonResponse
     {
         try {
             return DB::transaction(function () use ($id) {
@@ -107,20 +97,14 @@ class UserService
                 $user->roles()->detach();
                 $user->delete();
 
-                return [
-                    'status' => 'success',
-                    'message' => 'User deleted successfully.',
-                ];
+                return ApiResponse::success(null, 'User deleted successfully.');
             });
         } catch (\Exception $e) {
-            return [
-                'status' => 'error',
-                'message' => 'Error deleting user: ' . $e->getMessage(),
-            ];
+            return ApiResponse::error('Error deleting user: '.$e->getMessage(), 500);
         }
     }
 
-    public function getAllActiveUsers(): array
+    public function getAllActiveUsers(): JsonResponse
     {
         return User::where('status', 'active')->orderBy('first_name')->get()->toArray();
     }

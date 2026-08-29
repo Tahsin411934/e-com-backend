@@ -26,7 +26,7 @@
         showUrl="{{ route('frontend.ctas.show', ':id') }}"
         destroyUrl="{{ route('frontend.ctas.destroy', ':id') }}"
         drawerTitle="CTA"
-        dataKey="cta"
+        dataKey="data"
         idField="cta_id"
         :order="[[5, 'asc']]"
     >

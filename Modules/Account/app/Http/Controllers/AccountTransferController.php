@@ -29,7 +29,6 @@ class AccountTransferController extends Controller
 
     public function store(AccountTransferRequest $request)
     {
-        $result = $this->service->save($request->validated());
-        return response()->json($result, $result['status'] === 'success' ? 200 : 500);
+        return $this->service->save($request->validated());
     }
 }

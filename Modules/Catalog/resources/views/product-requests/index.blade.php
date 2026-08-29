@@ -229,7 +229,7 @@
         function viewProductRequest(id) {
             $.get("{{ route('product-requests.show', ':id') }}".replace(':id', id), function(res) {
                 if (res.status === 'success') {
-                    const pr = res.product_request;
+                    const pr = res.data;
                     $('#view_name').text(pr.customer_name || '-');
                     $('#view_email').text(pr.customer_email || '-');
                     $('#view_phone').text(pr.customer_phone || '-');
@@ -350,7 +350,7 @@
             $.get("{{ route('product-requests.show', ':id') }}".replace(':id', id), function(res) {
                 Swal.close();
                 if (res.status === 'success') {
-                    fillProductRequestForm(res.product_request);
+                    fillProductRequestForm(res.data);
                     openProductRequestDrawer('edit');
                 } else {
                     Swal.fire('Error', res.message || 'Failed to fetch data.', 'error');

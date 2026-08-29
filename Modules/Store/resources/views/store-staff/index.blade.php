@@ -25,7 +25,7 @@
         showUrl="{{ route('store-staff.show', ':id') }}"
         destroyUrl="{{ route('store-staff.destroy', ':id') }}"
         drawerTitle="Staff"
-        dataKey="staff"
+        dataKey="data"
         idField="staff_id"
         :filters="[
             'Store' => $storeFilterOptions

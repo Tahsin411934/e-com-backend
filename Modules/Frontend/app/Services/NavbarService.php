@@ -2,6 +2,8 @@
 
 namespace Modules\Frontend\Services;
 
+use App\Helpers\ApiResponse;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Modules\Frontend\Models\NavbarItem;
@@ -23,10 +25,11 @@ class NavbarService
             })
             ->addColumn('action', function (NavbarItem $item) {
                 $subnavbarUrl = route('frontend.nav-items.subnavbar.index', ['navbar_item_id' => $item->id]);
-                $subBtn = '<a href="' . $subnavbarUrl . '" class="bg-green-600 text-white px-2 py-1 rounded text-sm hover:bg-green-500 mr-2" title="Manage Subnavbars"><i class="fa fa-list"></i></a>';
-                $editBtn = '<button onclick="navbar_itemEdit(' . $item->id . ')" class="bg-blue-900 text-white px-2 py-1 rounded text-sm hover:bg-blue-600 mr-2"><i class="fa fa-pencil"></i></button>';
-                $deleteBtn = '<button onclick="navbar_itemDelete(' . $item->id . ')" class="bg-red-500 text-white px-2 py-1 rounded text-sm hover:bg-red-600"><i class="fa fa-trash"></i></button>';
-                return '<div class="flex space-x-2 justify-center">' . $subBtn . $editBtn . $deleteBtn . '</div>';
+                $subBtn = '<a href="'.$subnavbarUrl.'" class="bg-green-600 text-white px-2 py-1 rounded text-sm hover:bg-green-500 mr-2" title="Manage Subnavbars"><i class="fa fa-list"></i></a>';
+                $editBtn = '<button onclick="navbar_itemEdit('.$item->id.')" class="bg-blue-900 text-white px-2 py-1 rounded text-sm hover:bg-blue-600 mr-2"><i class="fa fa-pencil"></i></button>';
+                $deleteBtn = '<button onclick="navbar_itemDelete('.$item->id.')" class="bg-red-500 text-white px-2 py-1 rounded text-sm hover:bg-red-600"><i class="fa fa-trash"></i></button>';
+
+                return '<div class="flex space-x-2 justify-center">'.$subBtn.$editBtn.$deleteBtn.'</div>';
             })
             ->rawColumns(['action'])
             ->make(true);
@@ -64,7 +67,7 @@ class NavbarService
             ->make(true);
     }
 
-    public function saveNavbarItem(array $data): array
+    public function saveNavbarItem(array $data): JsonResponse
     {
         try {
             return DB::transaction(function () use ($data) {
@@ -82,21 +85,14 @@ class NavbarService
                     $message = 'Navbar item created successfully.';
                 }
 
-                return [
-                    'status' => 'success',
-                    'message' => $message,
-                    'navbar_item' => $item->fresh(),
-                ];
+                return ApiResponse::success($item->fresh(), $message);
             });
         } catch (\Exception $e) {
-            return [
-                'status' => 'error',
-                'message' => 'Error saving navbar item: ' . $e->getMessage(),
-            ];
+            return ApiResponse::error('Error saving navbar item: '.$e->getMessage(), 500);
         }
     }
 
-    public function saveSubnavbarItem(array $data): array
+    public function saveSubnavbarItem(array $data): JsonResponse
     {
         try {
             return DB::transaction(function () use ($data) {
@@ -114,95 +110,64 @@ class NavbarService
                     $message = 'Subnavbar item created successfully.';
                 }
 
-                return [
-                    'status' => 'success',
-                    'message' => $message,
-                    'subnavbar_item' => $item->fresh(),
-                ];
+                return ApiResponse::success($item->fresh(), $message);
             });
         } catch (\Exception $e) {
-            return [
-                'status' => 'error',
-                'message' => 'Error saving subnavbar item: ' . $e->getMessage(),
-            ];
+            return ApiResponse::error('Error saving subnavbar item: '.$e->getMessage(), 500);
         }
     }
 
-    public function getNavbarItemById(int $id): array
+    public function getNavbarItemById(int $id): JsonResponse
     {
         try {
             $item = NavbarItem::findOrFail($id);
 
-            return [
-                'status' => 'success',
-                'navbar_item' => $item,
-            ];
+            return ApiResponse::success($item);
         } catch (\Exception $e) {
-            return [
-                'status' => 'error',
-                'message' => 'Navbar item not found.',
-            ];
+            return ApiResponse::notFound('Navbar item not found.');
         }
     }
 
-    public function getSubnavbarItemById(int $id): array
+    public function getSubnavbarItemById(int $id): JsonResponse
     {
         try {
             $item = SubnavbarItem::with('navbarItem')->findOrFail($id);
 
-            return [
-                'status' => 'success',
-                'subnavbar_item' => $item,
-            ];
+            return ApiResponse::success($item);
         } catch (\Exception $e) {
-            return [
-                'status' => 'error',
-                'message' => 'Subnavbar item not found.',
-            ];
+            return ApiResponse::notFound('Subnavbar item not found.');
         }
     }
 
-    public function deleteNavbarItem(int $id): array
+    public function deleteNavbarItem(int $id): JsonResponse
     {
         try {
             return DB::transaction(function () use ($id) {
                 $item = NavbarItem::findOrFail($id);
                 $item->delete();
 
-                return [
-                    'status' => 'success',
-                    'message' => 'Navbar item deleted successfully.',
-                ];
+                return ApiResponse::success(null, 'Navbar item deleted successfully.');
             });
         } catch (\Exception $e) {
-            return [
-                'status' => 'error',
-                'message' => 'Error deleting navbar item: ' . $e->getMessage(),
-            ];
+            return ApiResponse::error('Error deleting navbar item: '.$e->getMessage(), 500);
         }
     }
 
-    public function deleteSubnavbarItem(int $id): array
+    public function deleteSubnavbarItem(int $id): JsonResponse
     {
         try {
             return DB::transaction(function () use ($id) {
                 $item = SubnavbarItem::findOrFail($id);
                 $item->delete();
 
-                return [
-                    'status' => 'success',
-                    'message' => 'Subnavbar item deleted successfully.',
-                ];
+                return ApiResponse::success(null, 'Subnavbar item deleted successfully.');
             });
         } catch (\Exception $e) {
-            return [
-                'status' => 'error',
-                'message' => 'Error deleting subnavbar item: ' . $e->getMessage(),
-            ];
+            return ApiResponse::error('Error deleting subnavbar item: '.$e->getMessage(), 500);
         }
     }
 
-    public function getAllNavbarItems(): array
+    public function getAllNavbarItems(): JsonResponse
     {
         return NavbarItem::where('status', 'active')
             ->orderBy('sort_order')
@@ -210,5 +175,4 @@ class NavbarService
             ->get()
             ->toArray();
     }
-
 }

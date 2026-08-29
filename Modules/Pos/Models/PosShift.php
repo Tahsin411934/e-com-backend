@@ -9,8 +9,8 @@ use Modules\Identity\Models\User;
 
 class PosShift extends Model
 {
-    use HasFactory;
     use CustomSoftDeletes;
+    use HasFactory;
 
     protected $table = 'pos_shifts';
 

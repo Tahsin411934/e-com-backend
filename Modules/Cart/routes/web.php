@@ -1,10 +1,10 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
-use Modules\Cart\Http\Controllers\CouponController;
-use Modules\Cart\Http\Controllers\CartController;
-use Modules\Cart\Http\Controllers\WishlistController;
 use Modules\Cart\Http\Controllers\CampaignController;
+use Modules\Cart\Http\Controllers\CartController;
+use Modules\Cart\Http\Controllers\CouponController;
+use Modules\Cart\Http\Controllers\WishlistController;
 
 Route::middleware(['auth', 'verified'])->group(function () {
     // Cart routes

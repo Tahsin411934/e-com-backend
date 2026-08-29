@@ -8,7 +8,7 @@ return new class extends Migration
 {
     public function up()
     {
-        if (!Schema::hasTable('subnavbar_items')) {
+        if (! Schema::hasTable('subnavbar_items')) {
             Schema::create('subnavbar_items', function (Blueprint $table) {
                 $table->bigIncrements('id');
                 $table->unsignedBigInteger('navbar_item_id');
@@ -17,14 +17,14 @@ return new class extends Migration
                 $table->string('url', 500)->nullable();
                 $table->string('icon', 255)->nullable();
                 $table->integer('sort_order')->default(0);
-                $table->enum('status', ['active','inactive'])->default('active');
+                $table->enum('status', ['active', 'inactive'])->default('active');
                 $table->timestamps();
                 $table->softDeletes();
 
                 $table->foreign('navbar_item_id')
-                      ->references('id')
-                      ->on('navbar_items')
-                      ->onDelete('cascade');
+                    ->references('id')
+                    ->on('navbar_items')
+                    ->onDelete('cascade');
 
                 $table->index(['status', 'deleted_at']);
                 $table->index('navbar_item_id');

@@ -1,11 +1,10 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
-use Modules\Frontend\Http\Controllers\NavbarController;
-
+use Modules\Frontend\Http\Controllers\AnnouncementBarController;
 use Modules\Frontend\Http\Controllers\BannerController;
 use Modules\Frontend\Http\Controllers\HomepageCtaController;
-use Modules\Frontend\Http\Controllers\AnnouncementBarController;
+use Modules\Frontend\Http\Controllers\NavbarController;
 use Modules\Frontend\Http\Controllers\SiteSettingController;
 
 Route::middleware(['auth', 'verified'])->group(function () {

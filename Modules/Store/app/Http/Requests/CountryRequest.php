@@ -16,7 +16,7 @@ class CountryRequest extends FormRequest
         $countryId = $this->route('country') ?? $this->input('country_id');
 
         return [
-            'iso2' => 'required|string|size:2|unique:countries,iso2' . ($countryId ? ',' . $countryId : ''),
+            'iso2' => 'required|string|size:2|unique:countries,iso2'.($countryId ? ','.$countryId : ''),
             'name' => 'required|string|max:100',
         ];
     }

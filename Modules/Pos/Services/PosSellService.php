@@ -2,6 +2,8 @@
 
 namespace Modules\Pos\Services;
 
+use App\Helpers\ApiResponse;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
@@ -16,21 +18,21 @@ class PosSellService
     /**
      * Search customers by phone number or name
      */
-    public function searchCustomers(Request $request): array
+    public function searchCustomers(Request $request): JsonResponse
     {
         try {
             $term = $request->get('term', '');
-            
+
             $query = User::query()
                 ->select('id', 'first_name', 'last_name', 'phone', 'email')
                 ->where('status', 'active');
-            
-            if (!empty($term)) {
+
+            if (! empty($term)) {
                 $query->where(function ($q) use ($term) {
                     $q->where('phone', 'LIKE', "%{$term}%")
-                      ->orWhere('first_name', 'LIKE', "%{$term}%")
-                      ->orWhere('last_name', 'LIKE', "%{$term}%")
-                      ->orWhere('email', 'LIKE', "%{$term}%");
+                        ->orWhere('first_name', 'LIKE', "%{$term}%")
+                        ->orWhere('last_name', 'LIKE', "%{$term}%")
+                        ->orWhere('email', 'LIKE', "%{$term}%");
                 });
             }
 
@@ -46,37 +48,30 @@ class PosSellService
                     ];
                 });
 
-            return [
-                'status' => 'success',
-                'customers' => $customers,
-            ];
+            return ApiResponse::success($customers);
         } catch (\Exception $e) {
-            return [
-                'status' => 'error',
-                'message' => 'Error searching customers: ' . $e->getMessage(),
-                'customers' => [],
-            ];
+            return ApiResponse::error('Error searching customers: '.$e->getMessage(), 500);
         }
     }
 
     /**
      * Search products by name, SKU or barcode
      */
-    public function searchProducts(Request $request): array
+    public function searchProducts(Request $request): JsonResponse
     {
         try {
             $term = $request->get('term', '');
-            
+
             $query = Product::query()
                 ->with(['variants', 'brand', 'unit'])
                 ->where('status', 'active');
-            
-            if (!empty($term)) {
+
+            if (! empty($term)) {
                 $query->where(function ($q) use ($term) {
                     $q->where('name', 'LIKE', "%{$term}%")
-                      ->orWhereHas('variants', function ($vq) use ($term) {
-                          $vq->where('sku', 'LIKE', "%{$term}%");
-                      });
+                        ->orWhereHas('variants', function ($vq) use ($term) {
+                            $vq->where('sku', 'LIKE', "%{$term}%");
+                        });
                 });
             }
 
@@ -85,6 +80,7 @@ class PosSellService
                 ->get()
                 ->map(function ($product) {
                     $variant = $product->variants->first();
+
                     return [
                         'id' => $product->id,
                         'name' => $product->name,
@@ -98,23 +94,16 @@ class PosSellService
                     ];
                 });
 
-            return [
-                'status' => 'success',
-                'products' => $products,
-            ];
+            return ApiResponse::success($products);
         } catch (\Exception $e) {
-            return [
-                'status' => 'error',
-                'message' => 'Error searching products: ' . $e->getMessage(),
-                'products' => [],
-            ];
+            return ApiResponse::error('Error searching products: '.$e->getMessage(), 500);
         }
     }
 
     /**
      * Process the POS sale and save it
      */
-    public function processSale(Request $request): array
+    public function processSale(Request $request): JsonResponse
     {
         try {
             return DB::transaction(function () use ($request) {
@@ -142,7 +131,7 @@ class PosSellService
                     'notes' => 'nullable|string|max:500',
                 ]);
 
-                $receiptNumber = 'POS-' . strtoupper(uniqid());
+                $receiptNumber = 'POS-'.strtoupper(uniqid());
 
                 // Create the sale
                 $sale = PosSale::create([
@@ -184,29 +173,24 @@ class PosSellService
                     app(AccountTransactionService::class)->postPosSale($sale->fresh(['items.product.variants', 'register.store']));
                 }
 
-                return [
-                    'status' => 'success',
-                    'message' => 'Sale completed successfully!',
+                return ApiResponse::success([
                     'sale' => $sale->fresh()->load(['items', 'register', 'shift']),
                     'receipt' => [
                         'receipt_number' => $receiptNumber,
                         'total' => $data['total'],
                         'items_count' => count($data['items']),
                     ],
-                ];
+                ], 'Sale completed successfully!');
             });
         } catch (\Exception $e) {
-            return [
-                'status' => 'error',
-                'message' => 'Error processing sale: ' . $e->getMessage(),
-            ];
+            return ApiResponse::error('Error processing sale: '.$e->getMessage(), 500);
         }
     }
 
     /**
      * Get last few sales for the current register/shift
      */
-    public function getRecentSales(Request $request): array
+    public function getRecentSales(Request $request): JsonResponse
     {
         try {
             $registerId = $request->get('register_id');
@@ -230,16 +214,9 @@ class PosSellService
                 ];
             });
 
-            return [
-                'status' => 'success',
-                'sales' => $sales,
-            ];
+            return ApiResponse::success($sales);
         } catch (\Exception $e) {
-            return [
-                'status' => 'error',
-                'message' => 'Error fetching recent sales: ' . $e->getMessage(),
-                'sales' => [],
-            ];
+            return ApiResponse::error('Error fetching recent sales: '.$e->getMessage(), 500);
         }
     }
 }

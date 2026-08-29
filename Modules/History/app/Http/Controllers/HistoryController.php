@@ -2,6 +2,7 @@
 
 namespace Modules\History\Http\Controllers;
 
+use App\Helpers\ApiResponse;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Modules\History\Models\History;
@@ -10,9 +11,7 @@ use Yajra\DataTables\DataTables;
 
 class HistoryController extends Controller
 {
-    public function __construct(private readonly HistoryService $historyService)
-    {
-    }
+    public function __construct(private readonly HistoryService $historyService) {}
 
     public function page()
     {
@@ -97,27 +96,27 @@ class HistoryController extends Controller
 
     public function index(Request $request)
     {
-        return response()->json($this->historyService->list($request));
+        return $this->historyService->list($request);
     }
 
-    public function show(int $id)
+    public function show($id)
     {
-        return response()->json($this->historyService->show($id));
+        return $this->historyService->show((int) $id);
     }
 
-    public function restore(int $id)
+    public function restore($id)
     {
         try {
-            return response()->json([
+            return ApiResponse::fromResult([
                 'status' => 'success',
                 'message' => 'Record restored successfully.',
-                'history' => $this->historyService->restore($id),
+                'history' => $this->historyService->restore((int) $id),
             ]);
         } catch (\Throwable $exception) {
-            return response()->json([
+            return ApiResponse::fromResult([
                 'status' => 'error',
                 'message' => $exception->getMessage(),
-            ], 422);
+            ], 200, 422);
         }
     }
 }

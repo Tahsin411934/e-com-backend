@@ -8,12 +8,7 @@ use Modules\Cart\Services\CouponService;
 
 class CouponController extends Controller
 {
-    protected CouponService $couponService;
-
-    public function __construct(CouponService $couponService)
-    {
-        $this->couponService = $couponService;
-    }
+    public function __construct(private CouponService $couponService) {}
 
     public function index()
     {
@@ -27,27 +22,21 @@ class CouponController extends Controller
 
     public function store(Request $request)
     {
-        $result = $this->couponService->saveCoupon($request->all());
-        return response()->json($result);
+        return $this->couponService->saveCoupon($request->all());
     }
 
-    public function show(int $id)
+    public function show($id)
     {
-        $result = $this->couponService->getCouponById($id);
-        return response()->json($result);
+        return $this->couponService->getCouponById((int) $id);
     }
 
     public function update(Request $request, int $id)
     {
-        $data = $request->all();
-        $data['coupon_id'] = $id;
-        $result = $this->couponService->saveCoupon($data);
-        return response()->json($result);
+        return $this->couponService->saveCoupon($request->all() + ['coupon_id' => $id]);
     }
 
-    public function destroy(int $id)
+    public function destroy($id)
     {
-        $result = $this->couponService->deleteCoupon($id);
-        return response()->json($result);
+        return $this->couponService->deleteCoupon((int) $id);
     }
 }

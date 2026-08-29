@@ -2,12 +2,13 @@
 
 namespace Modules\Frontend\Http\Controllers;
 
+use App\Helpers\ApiResponse;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Modules\Frontend\Models\SubnavbarItem;
 use Modules\Catalog\Models\Product;
 use Modules\Catalog\Models\ProductVariant;
+use Modules\Frontend\Models\SubnavbarItem;
 use Modules\Frontend\Services\ProductPricingService;
 
 class SubnavbarApiController extends Controller
@@ -15,9 +16,6 @@ class SubnavbarApiController extends Controller
     /**
      * Get products by subnavbar slug.
      *
-     * @param string $slug
-     * @param Request $request
-     * @return JsonResponse
      *
      * @queryParam page int Page number. Default: 1
      * @queryParam per_page int Items per page. Default: 20
@@ -26,16 +24,16 @@ class SubnavbarApiController extends Controller
     public function products(string $slug, Request $request): JsonResponse
     {
         $perPage = min((int) $request->query('per_page', 20), 40);
-        $page    = (int) $request->query('page', 1);
-        $sort    = $request->query('sort', 'latest');
+        $page = (int) $request->query('page', 1);
+        $sort = $request->query('sort', 'latest');
 
         $subnavbarItem = SubnavbarItem::where('slug', $slug)->where('status', 'active')->first();
 
-        if (!$subnavbarItem) {
-            return response()->json([
+        if (! $subnavbarItem) {
+            return ApiResponse::fromResult([
                 'success' => false,
                 'message' => 'Subnavbar item not found.',
-            ], 404);
+            ], 200, 404);
         }
 
         $query = Product::where('status', 'active')
@@ -89,40 +87,40 @@ class SubnavbarApiController extends Controller
             $mainImage = $product->images->first();
 
             return [
-                'id'                => $product->id,
-                'name'              => $product->name,
-                'slug'              => $product->slug,
+                'id' => $product->id,
+                'name' => $product->name,
+                'slug' => $product->slug,
                 'short_description' => $product->short_description,
-                'main_image'        => $mainImage?->image_url,
+                'main_image' => $mainImage?->image_url,
                 // Price after discount
-                'price'             => $priceInfo['price'],
-                'regular_price'     => $priceInfo['regular_price'],
-                'discount_percent'  => $priceInfo['discount_percent'],
-                'discount_amount'   => $priceInfo['discount_amount'],
-                'has_discount'      => $priceInfo['has_discount'],
-                'product_type'      => $product->product_type,
-                'stock_status'      => 'in_stock',
+                'price' => $priceInfo['price'],
+                'regular_price' => $priceInfo['regular_price'],
+                'discount_percent' => $priceInfo['discount_percent'],
+                'discount_amount' => $priceInfo['discount_amount'],
+                'has_discount' => $priceInfo['has_discount'],
+                'product_type' => $product->product_type,
+                'stock_status' => 'in_stock',
             ];
         });
 
-        return response()->json([
+        return ApiResponse::fromResult([
             'success' => true,
             'message' => 'Products retrieved successfully.',
-            'data'    => [
+            'data' => [
                 'subnavbar' => [
-                    'id'             => $subnavbarItem->id,
+                    'id' => $subnavbarItem->id,
                     'navbar_item_id' => $subnavbarItem->navbar_item_id,
-                    'name'           => $subnavbarItem->name,
-                    'slug'           => $subnavbarItem->slug,
-                    'description'    => null,
-                    'image'          => null,
+                    'name' => $subnavbarItem->name,
+                    'slug' => $subnavbarItem->slug,
+                    'description' => null,
+                    'image' => null,
                 ],
-                'products'  => $formatted,
-                'meta'      => [
+                'products' => $formatted,
+                'meta' => [
                     'current_page' => $products->currentPage(),
-                    'last_page'    => $products->lastPage(),
-                    'per_page'     => $products->perPage(),
-                    'total'        => $products->total(),
+                    'last_page' => $products->lastPage(),
+                    'per_page' => $products->perPage(),
+                    'total' => $products->total(),
                 ],
             ],
         ]);

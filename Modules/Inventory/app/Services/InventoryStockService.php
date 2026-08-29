@@ -2,10 +2,12 @@
 
 namespace Modules\Inventory\Services;
 
+use App\Helpers\ApiResponse;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Modules\Inventory\Models\InventoryStock;
 use Modules\Inventory\Models\InventoryMovement;
+use Modules\Inventory\Models\InventoryStock;
 use Yajra\DataTables\DataTables;
 
 class InventoryStockService
@@ -28,8 +30,9 @@ class InventoryStockService
             })
             ->addColumn('variant_name', function (InventoryStock $stock) {
                 $variantName = $stock->variant?->name ?? '-';
+
                 return $stock->variantOption?->color_name
-                    ? $variantName . ' / ' . $stock->variantOption->color_name
+                    ? $variantName.' / '.$stock->variantOption->color_name
                     : $variantName;
             })
             ->addColumn('available_quantity', function (InventoryStock $stock) {
@@ -49,6 +52,7 @@ class InventoryStockService
                 if ($available <= $stock->reorder_point) {
                     return '<span class="text-red-600 font-medium">Yes</span>';
                 }
+
                 return '<span class="text-green-600">No</span>';
             })
             ->editColumn('updated_at', function (InventoryStock $stock) {
@@ -65,7 +69,7 @@ class InventoryStockService
             ->make(true);
     }
 
-    public function saveStock(array $data): array
+    public function saveStock(array $data): JsonResponse
     {
         try {
             return DB::transaction(function () use ($data) {
@@ -104,52 +108,35 @@ class InventoryStockService
                     $message = 'Stock record created successfully.';
                 }
 
-                return [
-                    'status' => 'success',
-                    'message' => $message,
-                    'stock' => $stock->fresh()->load('location.store'),
-                ];
+                return ApiResponse::success($stock->fresh()->load('location.store'), $message);
             });
         } catch (\Exception $e) {
-            return [
-                'status' => 'error',
-                'message' => 'Error saving stock: ' . $e->getMessage(),
-            ];
+            return ApiResponse::error('Error saving stock: '.$e->getMessage(), 500);
         }
     }
 
-    public function getStockById(int $id): array
+    public function getStockById(int $id): JsonResponse
     {
         try {
             $stock = InventoryStock::with('location.store')->findOrFail($id);
-            return [
-                'status' => 'success',
-                'stock' => $stock,
-            ];
+
+            return ApiResponse::success($stock);
         } catch (\Exception $e) {
-            return [
-                'status' => 'error',
-                'message' => 'Stock record not found.',
-            ];
+            return ApiResponse::notFound('Stock record not found.');
         }
     }
 
-    public function deleteStock(int $id): array
+    public function deleteStock(int $id): JsonResponse
     {
         try {
             return DB::transaction(function () use ($id) {
                 $stock = InventoryStock::findOrFail($id);
                 $stock->delete();
-                return [
-                    'status' => 'success',
-                    'message' => 'Stock record deleted successfully.',
-                ];
+
+                return ApiResponse::success(null, 'Stock record deleted successfully.');
             });
         } catch (\Exception $e) {
-            return [
-                'status' => 'error',
-                'message' => 'Error deleting stock: ' . $e->getMessage(),
-            ];
+            return ApiResponse::error('Error deleting stock: '.$e->getMessage(), 500);
         }
     }
 
@@ -165,7 +152,7 @@ class InventoryStockService
         ]);
     }
 
-    public function getLowStockItems(): array
+    public function getLowStockItems(): JsonResponse
     {
         return InventoryStock::query()
             ->select('inventory_stock.*')

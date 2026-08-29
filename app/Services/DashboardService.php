@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Modules\Catalog\Models\Product;
@@ -122,8 +123,8 @@ class DashboardService
             'labels' => $months,
             'currentYear' => $revenueCurrentYear,
             'lastYear' => $revenueLastYear,
-            'currentYearLabel' => 'Revenue ' . $currentYear,
-            'lastYearLabel' => 'Revenue ' . $lastYear,
+            'currentYearLabel' => 'Revenue '.$currentYear,
+            'lastYearLabel' => 'Revenue '.$lastYear,
         ];
     }
 
@@ -202,11 +203,11 @@ class DashboardService
     public function getTopSellingProducts(int $limit = 5): array
     {
         return OrderItem::select(
-                'product_id', 'product_name',
-                DB::raw('SUM(quantity) as total_quantity'),
-                DB::raw('SUM(line_total) as total_revenue')
-            )
-            ->whereHas('order', fn($q) => $q->whereNotIn('status', ['cancelled', 'refunded']))
+            'product_id', 'product_name',
+            DB::raw('SUM(quantity) as total_quantity'),
+            DB::raw('SUM(line_total) as total_revenue')
+        )
+            ->whereHas('order', fn ($q) => $q->whereNotIn('status', ['cancelled', 'refunded']))
             ->groupBy('product_id', 'product_name')
             ->orderByDesc('total_quantity')
             ->limit($limit)
@@ -261,7 +262,7 @@ class DashboardService
      * stock row whose product or variant is missing/soft-deleted is excluded
      * (a WHERE EXISTS can silently miss orphaned/hard-deleted references).
      */
-    private function activeStockQuery(): \Illuminate\Database\Eloquent\Builder
+    private function activeStockQuery(): Builder
     {
         return InventoryStock::query()
             ->select('inventory_stock.*')
@@ -290,7 +291,7 @@ class DashboardService
         foreach ($recentOrders as $order) {
             $activities[] = [
                 'type' => 'order',
-                'description' => 'Order #' . $order->order_number . ' placed',
+                'description' => 'Order #'.$order->order_number.' placed',
                 'user' => $order->user?->name ?: 'Guest',
                 'created_at' => $order->created_at?->diffForHumans(),
                 'sort_at' => $order->created_at,
@@ -317,6 +318,7 @@ class DashboardService
             ->take($limit)
             ->map(function (array $activity): array {
                 unset($activity['sort_at']);
+
                 return $activity;
             })
             ->values()

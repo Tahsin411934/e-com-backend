@@ -2,15 +2,18 @@
 
 namespace Modules\Catalog\Models;
 
+use App\Traits\CustomSoftDeletes;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use App\Traits\CustomSoftDeletes;
+use Modules\Frontend\Models\NavbarItem;
+use Modules\Frontend\Models\SubnavbarItem;
+use Modules\Reviews\Models\ProductReview;
 
 class Product extends Model
 {
-    use HasFactory;
     use CustomSoftDeletes;
+    use HasFactory;
 
     protected $table = 'products';
 
@@ -58,17 +61,17 @@ class Product extends Model
 
     public function reviews()
     {
-        return $this->hasMany(\Modules\Reviews\Models\ProductReview::class, 'product_id');
+        return $this->hasMany(ProductReview::class, 'product_id');
     }
 
     public function navbarItem()
     {
-        return $this->belongsTo(\Modules\Frontend\Models\NavbarItem::class, 'navbar_item_id');
+        return $this->belongsTo(NavbarItem::class, 'navbar_item_id');
     }
 
     public function subnavbarItem()
     {
-        return $this->belongsTo(\Modules\Frontend\Models\SubnavbarItem::class, 'subnavbar_item_id');
+        return $this->belongsTo(SubnavbarItem::class, 'subnavbar_item_id');
     }
 
     /**

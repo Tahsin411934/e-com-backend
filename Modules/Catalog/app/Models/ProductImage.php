@@ -2,14 +2,14 @@
 
 namespace Modules\Catalog\Models;
 
+use App\Traits\CustomSoftDeletes;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use App\Traits\CustomSoftDeletes;
 
 class ProductImage extends Model
 {
-    use HasFactory;
     use CustomSoftDeletes;
+    use HasFactory;
 
     protected $table = 'product_images';
 
@@ -27,7 +27,7 @@ class ProductImage extends Model
 
     public function getImageUrlAttribute(?string $value): ?string
     {
-        if (!$value) {
+        if (! $value) {
             return null;
         }
 
@@ -39,6 +39,6 @@ class ProductImage extends Model
             return asset($value);
         }
 
-        return asset('storage/' . ltrim($value, '/'));
+        return asset('storage/'.ltrim($value, '/'));
     }
 }

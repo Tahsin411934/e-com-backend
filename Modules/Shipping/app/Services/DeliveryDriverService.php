@@ -2,6 +2,8 @@
 
 namespace Modules\Shipping\Services;
 
+use App\Helpers\ApiResponse;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Modules\Shipping\Models\DeliveryDriver;
@@ -31,7 +33,7 @@ class DeliveryDriverService
             ->make(true);
     }
 
-    public function saveDriver(array $data): array
+    public function saveDriver(array $data): JsonResponse
     {
         try {
             return DB::transaction(function () use ($data) {
@@ -47,36 +49,36 @@ class DeliveryDriverService
                     $message = 'Delivery driver created successfully.';
                 }
 
-                return [
-                    'status' => 'success',
-                    'message' => $message,
-                    'driver' => $driver->fresh()->load(['store', 'zone']),
-                ];
+                if ($driverId) {
+                    return ApiResponse::success($driver->fresh()->load(['store', 'zone']), $message);
+                }
+
+                return ApiResponse::created($driver->fresh()->load(['store', 'zone']), $message);
             });
         } catch (\Exception $e) {
-            return ['status' => 'error', 'message' => 'Error saving delivery driver: ' . $e->getMessage()];
+            return ApiResponse::error('Error saving delivery driver: '.$e->getMessage(), 500);
         }
     }
 
-    public function getDriverById(int $id): array
+    public function getDriverById(int $id): JsonResponse
     {
         try {
-            $driver = DeliveryDriver::with(['store', 'zone'])->findOrFail($id);
-            return ['status' => 'success', 'driver' => $driver];
-        } catch (\Exception $e) {
-            return ['status' => 'error', 'message' => 'Delivery driver not found.'];
+            return ApiResponse::success(DeliveryDriver::with(['store', 'zone'])->findOrFail($id));
+        } catch (\Exception) {
+            return ApiResponse::notFound('Delivery driver not found.');
         }
     }
 
-    public function deleteDriver(int $id): array
+    public function deleteDriver(int $id): JsonResponse
     {
         try {
             return DB::transaction(function () use ($id) {
                 DeliveryDriver::findOrFail($id)->delete();
-                return ['status' => 'success', 'message' => 'Delivery driver deleted successfully.'];
+
+                return ApiResponse::success(null, 'Delivery driver deleted successfully.');
             });
         } catch (\Exception $e) {
-            return ['status' => 'error', 'message' => 'Error deleting delivery driver: ' . $e->getMessage()];
+            return ApiResponse::error('Error deleting delivery driver: '.$e->getMessage(), 500);
         }
     }
 }

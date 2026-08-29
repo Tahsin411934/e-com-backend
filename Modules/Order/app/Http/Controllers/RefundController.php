@@ -8,12 +8,7 @@ use Modules\Order\Services\RefundService;
 
 class RefundController extends Controller
 {
-    protected RefundService $refundService;
-
-    public function __construct(RefundService $refundService)
-    {
-        $this->refundService = $refundService;
-    }
+    public function __construct(private RefundService $refundService) {}
 
     public function index()
     {
@@ -27,27 +22,21 @@ class RefundController extends Controller
 
     public function store(Request $request)
     {
-        $result = $this->refundService->saveRefund($request->all());
-        return response()->json($result);
+        return $this->refundService->saveRefund($request->all());
     }
 
-    public function show(int $id)
+    public function show($id)
     {
-        $result = $this->refundService->getRefundById($id);
-        return response()->json($result);
+        return $this->refundService->getRefundById((int) $id);
     }
 
     public function update(Request $request, int $id)
     {
-        $data = $request->all();
-        $data['refund_id'] = $id;
-        $result = $this->refundService->saveRefund($data);
-        return response()->json($result);
+        return $this->refundService->saveRefund($request->all() + ['refund_id' => $id]);
     }
 
-    public function destroy(int $id)
+    public function destroy($id)
     {
-        $result = $this->refundService->deleteRefund($id);
-        return response()->json($result);
+        return $this->refundService->deleteRefund((int) $id);
     }
 }

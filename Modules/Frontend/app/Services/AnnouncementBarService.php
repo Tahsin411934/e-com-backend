@@ -2,6 +2,8 @@
 
 namespace Modules\Frontend\Services;
 
+use App\Helpers\ApiResponse;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Modules\Frontend\Models\AnnouncementBar;
@@ -24,8 +26,8 @@ class AnnouncementBarService
                 return $bar->right_text ?? '-';
             })
             ->editColumn('background_color', function (AnnouncementBar $bar) {
-                return '<span class="inline-block w-6 h-6 rounded border" style="background-color: ' . e($bar->background_color) . '"></span> '
-                    . e($bar->background_color);
+                return '<span class="inline-block w-6 h-6 rounded border" style="background-color: '.e($bar->background_color).'"></span> '
+                    .e($bar->background_color);
             })
             ->editColumn('status', function (AnnouncementBar $bar) {
                 return ucfirst($bar->status);
@@ -34,15 +36,16 @@ class AnnouncementBarService
                 return $bar->created_at->format('d M Y H:i');
             })
             ->addColumn('action', function (AnnouncementBar $bar) {
-                $editBtn = '<button onclick="announcement_barEdit(' . $bar->id . ')" class="bg-blue-900 text-white px-2 py-1 rounded text-sm hover:bg-blue-600 mr-2"><i class="fa fa-pencil"></i></button>';
-                $deleteBtn = '<button onclick="announcement_barDelete(' . $bar->id . ')" class="bg-red-500 text-white px-2 py-1 rounded text-sm hover:bg-red-600"><i class="fa fa-trash"></i></button>';
-                return '<div class="flex space-x-2 justify-center">' . $editBtn . $deleteBtn . '</div>';
+                $editBtn = '<button onclick="announcement_barEdit('.$bar->id.')" class="bg-blue-900 text-white px-2 py-1 rounded text-sm hover:bg-blue-600 mr-2"><i class="fa fa-pencil"></i></button>';
+                $deleteBtn = '<button onclick="announcement_barDelete('.$bar->id.')" class="bg-red-500 text-white px-2 py-1 rounded text-sm hover:bg-red-600"><i class="fa fa-trash"></i></button>';
+
+                return '<div class="flex space-x-2 justify-center">'.$editBtn.$deleteBtn.'</div>';
             })
             ->rawColumns(['background_color', 'action'])
             ->make(true);
     }
 
-    public function saveAnnouncementBar(array $data): array
+    public function saveAnnouncementBar(array $data): JsonResponse
     {
         try {
             return DB::transaction(function () use ($data) {
@@ -60,54 +63,35 @@ class AnnouncementBarService
                     $message = 'Announcement bar created successfully.';
                 }
 
-                return [
-                    'status' => 'success',
-                    'message' => $message,
-                    'announcement_bar' => $bar->fresh(),
-                ];
+                return ApiResponse::success($bar->fresh(), $message);
             });
         } catch (\Exception $e) {
-            return [
-                'status' => 'error',
-                'message' => 'Error saving announcement bar: ' . $e->getMessage(),
-            ];
+            return ApiResponse::error('Error saving announcement bar: '.$e->getMessage(), 500);
         }
     }
 
-    public function getAnnouncementBarById(int $id): array
+    public function getAnnouncementBarById(int $id): JsonResponse
     {
         try {
             $bar = AnnouncementBar::findOrFail($id);
 
-            return [
-                'status' => 'success',
-                'announcement_bar' => $bar->toArray(),
-            ];
+            return ApiResponse::success($bar->toArray());
         } catch (\Exception $e) {
-            return [
-                'status' => 'error',
-                'message' => 'Announcement bar not found.',
-            ];
+            return ApiResponse::notFound('Announcement bar not found.');
         }
     }
 
-    public function deleteAnnouncementBar(int $id): array
+    public function deleteAnnouncementBar(int $id): JsonResponse
     {
         try {
             return DB::transaction(function () use ($id) {
                 $bar = AnnouncementBar::findOrFail($id);
                 $bar->delete();
 
-                return [
-                    'status' => 'success',
-                    'message' => 'Announcement bar deleted successfully.',
-                ];
+                return ApiResponse::success(null, 'Announcement bar deleted successfully.');
             });
         } catch (\Exception $e) {
-            return [
-                'status' => 'error',
-                'message' => 'Error deleting announcement bar: ' . $e->getMessage(),
-            ];
+            return ApiResponse::error('Error deleting announcement bar: '.$e->getMessage(), 500);
         }
     }
 }

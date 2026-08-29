@@ -2,6 +2,8 @@
 
 namespace Modules\Store\Services;
 
+use App\Helpers\ApiResponse;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Modules\Store\Models\Country;
@@ -25,7 +27,7 @@ class CountryService
             ->make(true);
     }
 
-    public function saveCountry(array $data): array
+    public function saveCountry(array $data): JsonResponse
     {
         try {
             return DB::transaction(function () use ($data) {
@@ -41,56 +43,39 @@ class CountryService
                     $message = 'Country created successfully.';
                 }
 
-                return [
-                    'status' => 'success',
-                    'message' => $message,
-                    'country' => $country->fresh(),
-                ];
+                return ApiResponse::success($country->fresh(), $message);
             });
         } catch (\Exception $e) {
-            return [
-                'status' => 'error',
-                'message' => 'Error saving country: ' . $e->getMessage(),
-            ];
+            return ApiResponse::error('Error saving country: '.$e->getMessage(), 500);
         }
     }
 
-    public function getCountryById(int $id): array
+    public function getCountryById(int $id): JsonResponse
     {
         try {
             $country = Country::findOrFail($id);
-            return [
-                'status' => 'success',
-                'country' => $country,
-            ];
+
+            return ApiResponse::success($country);
         } catch (\Exception $e) {
-            return [
-                'status' => 'error',
-                'message' => 'Country not found.',
-            ];
+            return ApiResponse::notFound('Country not found.');
         }
     }
 
-    public function deleteCountry(int $id): array
+    public function deleteCountry(int $id): JsonResponse
     {
         try {
             return DB::transaction(function () use ($id) {
                 $country = Country::findOrFail($id);
                 $country->delete();
-                return [
-                    'status' => 'success',
-                    'message' => 'Country deleted successfully.',
-                ];
+
+                return ApiResponse::success(null, 'Country deleted successfully.');
             });
         } catch (\Exception $e) {
-            return [
-                'status' => 'error',
-                'message' => 'Error deleting country: ' . $e->getMessage(),
-            ];
+            return ApiResponse::error('Error deleting country: '.$e->getMessage(), 500);
         }
     }
 
-    public function getAllCountries(): array
+    public function getAllCountries(): JsonResponse
     {
         return Country::orderBy('name')->get()->toArray();
     }

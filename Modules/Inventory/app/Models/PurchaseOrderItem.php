@@ -5,10 +5,11 @@ namespace Modules\Inventory\Models;
 use App\Traits\CustomSoftDeletes;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Modules\Catalog\Models\ProductVariant;
 
 class PurchaseOrderItem extends Model
 {
-    use HasFactory, CustomSoftDeletes;
+    use CustomSoftDeletes, HasFactory;
 
     protected $table = 'purchase_order_items';
 
@@ -38,6 +39,6 @@ class PurchaseOrderItem extends Model
 
     public function variant()
     {
-        return $this->belongsTo(\Modules\Catalog\Models\ProductVariant::class, 'variant_id');
+        return $this->belongsTo(ProductVariant::class, 'variant_id');
     }
 }

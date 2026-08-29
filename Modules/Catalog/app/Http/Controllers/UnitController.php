@@ -4,18 +4,13 @@ namespace Modules\Catalog\Http\Controllers;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
-use Modules\Catalog\Services\UnitService;
 use Modules\Catalog\Http\Requests\StoreUnitRequest;
 use Modules\Catalog\Http\Requests\UpdateUnitRequest;
+use Modules\Catalog\Services\UnitService;
 
 class UnitController extends Controller
 {
-    protected UnitService $unitService;
-
-    public function __construct(UnitService $unitService)
-    {
-        $this->unitService = $unitService;
-    }
+    public function __construct(private UnitService $unitService) {}
 
     public function index(Request $request)
     {
@@ -29,27 +24,21 @@ class UnitController extends Controller
 
     public function store(StoreUnitRequest $request)
     {
-        $result = $this->unitService->saveUnit($request->validated());
-        return response()->json($result, $result['status'] === 'success' ? 200 : 500);
+        return $this->unitService->saveUnit($request->validated());
     }
 
     public function show($id)
     {
-        $result = $this->unitService->getUnitById($id);
-        return response()->json($result);
+        return $this->unitService->getUnitById((int) $id);
     }
 
     public function update(UpdateUnitRequest $request, $id)
     {
-        $data = $request->validated();
-        $data['unit_id'] = $id;
-        $result = $this->unitService->saveUnit($data);
-        return response()->json($result, $result['status'] === 'success' ? 200 : 500);
+        return $this->unitService->saveUnit($request->validated() + ['unit_id' => $id]);
     }
 
     public function destroy($id)
     {
-        $result = $this->unitService->deleteUnit($id);
-        return response()->json($result, $result['status'] === 'success' ? 200 : 500);
+        return $this->unitService->deleteUnit((int) $id);
     }
 }

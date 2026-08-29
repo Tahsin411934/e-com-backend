@@ -2,6 +2,8 @@
 
 namespace Modules\Catalog\Services;
 
+use App\Helpers\ApiResponse;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Modules\Catalog\Models\ProductVariant;
@@ -9,7 +11,6 @@ use Yajra\DataTables\DataTables;
 
 class ProductVariantService
 {
-
     public function getVariantDataTable(Request $request)
     {
         $query = ProductVariant::with('product')->orderByDesc('created_at');
@@ -38,7 +39,7 @@ class ProductVariantService
             ->make(true);
     }
 
-    public function saveVariant(array $data): array
+    public function saveVariant(array $data): JsonResponse
     {
         try {
             return DB::transaction(function () use ($data) {
@@ -49,60 +50,39 @@ class ProductVariantService
                 if ($variantId) {
                     $variant = ProductVariant::findOrFail($variantId);
                     $variant->update($data);
-                    $message = 'Product variant updated successfully.';
-                } else {
-                    $variant = ProductVariant::create($data);
-                    $message = 'Product variant created successfully.';
+
+                    return ApiResponse::success($variant->fresh()->load('product'), 'Product variant updated successfully.');
                 }
 
-                return [
-                    'status' => 'success',
-                    'message' => $message,
-                    'variant' => $variant->fresh()->load('product'),
-                ];
+                $variant = ProductVariant::create($data);
+
+                return ApiResponse::created($variant->fresh()->load('product'), 'Product variant created successfully.');
             });
         } catch (\Exception $e) {
-            return [
-                'status' => 'error',
-                'message' => 'Error saving variant: ' . $e->getMessage(),
-            ];
+            return ApiResponse::error('Error saving variant: '.$e->getMessage(), 500);
         }
     }
 
-    public function getVariantById(int $id): array
+    public function getVariantById(int $id): JsonResponse
     {
         try {
-            $variant = ProductVariant::with('product')->findOrFail($id);
-            return [
-                'status' => 'success',
-                'variant' => $variant,
-            ];
-        } catch (\Exception $e) {
-            return [
-                'status' => 'error',
-                'message' => 'Variant not found.',
-                'variant' => null,
-            ];
+            return ApiResponse::success(ProductVariant::with('product')->findOrFail($id));
+        } catch (\Exception) {
+            return ApiResponse::notFound('Variant not found.');
         }
     }
 
-    public function deleteVariant(int $id): array
+    public function deleteVariant(int $id): JsonResponse
     {
         try {
             return DB::transaction(function () use ($id) {
                 $variant = ProductVariant::findOrFail($id);
                 $variant->delete();
 
-                return [
-                    'status' => 'success',
-                    'message' => 'Product variant deleted successfully.',
-                ];
+                return ApiResponse::success(null, 'Product variant deleted successfully.');
             });
         } catch (\Exception $e) {
-            return [
-                'status' => 'error',
-                'message' => 'Error deleting variant: ' . $e->getMessage(),
-            ];
+            return ApiResponse::error('Error deleting variant: '.$e->getMessage(), 500);
         }
     }
 }

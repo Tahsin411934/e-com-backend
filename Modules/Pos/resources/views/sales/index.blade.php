@@ -21,7 +21,7 @@
         showUrl="{{ route('pos-sales.show', ':id') }}"
         destroyUrl="{{ route('pos-sales.destroy', ':id') }}"
         drawerTitle="POS Sale"
-        dataKey="sale"
+        dataKey="data"
         idField="sale_id"
         :order="[[7, 'desc']]"
     >

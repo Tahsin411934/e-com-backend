@@ -5,9 +5,9 @@ namespace Modules\Account\Http\Controllers;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Modules\Account\Http\Requests\AccountInvestmentRequest;
-use Modules\Account\Services\AccountInvestmentService;
 use Modules\Account\Services\AccountAccountService;
 use Modules\Account\Services\AccountCategoryService;
+use Modules\Account\Services\AccountInvestmentService;
 
 class AccountInvestmentController extends Controller
 {
@@ -32,26 +32,21 @@ class AccountInvestmentController extends Controller
 
     public function store(AccountInvestmentRequest $request)
     {
-        $result = $this->service->save($request->validated());
-        return response()->json($result, $result['status'] === 'success' ? 200 : 500);
+        return $this->service->save($request->validated());
     }
 
     public function show($id)
     {
-        return response()->json($this->service->find((int) $id));
+        return $this->service->find((int) $id);
     }
 
     public function update(AccountInvestmentRequest $request, $id)
     {
-        $data = $request->validated();
-        $data['investment_id'] = $id;
-        $result = $this->service->save($data);
-        return response()->json($result, $result['status'] === 'success' ? 200 : 500);
+        return $this->service->save($request->validated() + ['investment_id' => $id]);
     }
 
     public function destroy($id)
     {
-        $result = $this->service->delete((int) $id);
-        return response()->json($result, $result['status'] === 'success' ? 200 : 500);
+        return $this->service->delete((int) $id);
     }
 }

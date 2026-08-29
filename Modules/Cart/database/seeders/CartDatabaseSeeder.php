@@ -3,14 +3,14 @@
 namespace Modules\Cart\Database\Seeders;
 
 use Illuminate\Database\Seeder;
-use Modules\Cart\Models\Coupon;
 use Modules\Cart\Models\Cart;
 use Modules\Cart\Models\CartItem;
+use Modules\Cart\Models\Coupon;
 use Modules\Cart\Models\Wishlist;
-use Modules\Identity\Models\User;
-use Modules\Store\Models\Store;
 use Modules\Catalog\Models\Product;
 use Modules\Catalog\Models\ProductVariant;
+use Modules\Identity\Models\User;
+use Modules\Store\Models\Store;
 
 class CartDatabaseSeeder extends Seeder
 {
@@ -146,7 +146,6 @@ class CartDatabaseSeeder extends Seeder
                 'quantity' => 1,
                 'unit_price' => $variants[3]->sale_price,
             ]);
- 
 
         }
 

@@ -2,8 +2,11 @@
 
 namespace Modules\Reviews\Services;
 
+use App\Helpers\ApiResponse;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 use Modules\Reviews\Models\Notification;
 use Yajra\DataTables\DataTables;
 
@@ -27,49 +30,74 @@ class NotificationService
                     $query->whereNull('read_at');
                 }
             })
-            ->editColumn('type', fn($n) => '<span class="px-2 py-0.5 rounded-full text-xs font-semibold bg-indigo-100 text-indigo-700">'.e($n->type).'</span>')
-            ->editColumn('channel', fn($n) => '<span class="px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-600">'.e(strtoupper($n->channel ?? 'in_app')).'</span>')
-            ->editColumn('body', fn($n) => e(\Illuminate\Support\Str::limit($n->body ?? '', 90)) ?: '<span class="text-gray-400">—</span>')
-            ->editColumn('read_at', fn($n) => $n->read_at
+            ->editColumn('type', fn ($n) => '<span class="px-2 py-0.5 rounded-full text-xs font-semibold bg-indigo-100 text-indigo-700">'.e($n->type).'</span>')
+            ->editColumn('channel', fn ($n) => '<span class="px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-600">'.e(strtoupper($n->channel ?? 'in_app')).'</span>')
+            ->editColumn('body', fn ($n) => e(Str::limit($n->body ?? '', 90)) ?: '<span class="text-gray-400">—</span>')
+            ->editColumn('read_at', fn ($n) => $n->read_at
                 ? '<span class="text-gray-400 text-xs">'.e($n->read_at->format('d M Y H:i')).'</span>'
                 : '<span class="px-2 py-0.5 rounded-full text-xs font-semibold bg-red-100 text-red-700">Unread</span>')
-            ->editColumn('sent_at', fn($n) => $n->sent_at ? $n->sent_at->format('d M Y H:i') : '-')
-            ->addColumn('user_name', fn($n) => $n->user ? $n->user->name : 'All Users')
-            ->editColumn('created_at', fn($n) => $n->created_at?->format('d M Y H:i'))
-            ->addColumn('action', fn($n) => view('components.action-buttons', [
+            ->editColumn('sent_at', fn ($n) => $n->sent_at ? $n->sent_at->format('d M Y H:i') : '-')
+            ->addColumn('user_name', fn ($n) => $n->user ? $n->user->name : 'All Users')
+            ->editColumn('created_at', fn ($n) => $n->created_at?->format('d M Y H:i'))
+            ->addColumn('action', fn ($n) => view('components.action-buttons', [
                 'id' => $n->id, 'edit' => 'notificationEdit', 'delete' => 'notificationDelete',
             ])->render())
             ->rawColumns(['action', 'type', 'channel', 'body', 'read_at'])->make(true);
     }
 
-    public function saveNotification(array $data): array
+    public function saveNotification(array $data): JsonResponse
     {
         try {
             return DB::transaction(function () use ($data) {
-                $id = $data['notification_id'] ?? null; unset($data['notification_id']);
-                if ($id) { $item = Notification::findOrFail($id); $item->update($data); $msg = 'Notification updated.'; }
-                else { $data['sent_at'] = $data['sent_at'] ?? now(); $item = Notification::create($data); $msg = 'Notification created.'; }
-                return ['status' => 'success', 'message' => $msg, 'notification' => $item->fresh()->load('user')];
+                $id = $data['notification_id'] ?? null;
+                unset($data['notification_id']);
+
+                if ($id) {
+                    $item = Notification::findOrFail($id);
+                    $item->update($data);
+
+                    return ApiResponse::success($item->fresh()->load('user'), 'Notification updated.');
+                }
+
+                $data['sent_at'] = $data['sent_at'] ?? now();
+                $item = Notification::create($data);
+
+                return ApiResponse::created($item->fresh()->load('user'), 'Notification created.');
             });
-        } catch (\Exception $e) { return ['status' => 'error', 'message' => 'Error: ' . $e->getMessage()]; }
+        } catch (\Exception $e) {
+            return ApiResponse::error('Error: '.$e->getMessage(), 500);
+        }
     }
 
-    public function getNotificationById(int $id): array
+    public function getNotificationById(int $id): JsonResponse
     {
-        try { $item = Notification::with('user')->findOrFail($id); return ['status' => 'success', 'notification' => $item]; }
-        catch (\Exception $e) { return ['status' => 'error', 'message' => 'Notification not found.']; }
+        try {
+            return ApiResponse::success(Notification::with('user')->findOrFail($id));
+        } catch (\Exception) {
+            return ApiResponse::notFound('Notification not found.');
+        }
     }
 
-    public function deleteNotification(int $id): array
+    public function deleteNotification(int $id): JsonResponse
     {
-        try { Notification::findOrFail($id)->delete(); return ['status' => 'success', 'message' => 'Notification deleted.']; }
-        catch (\Exception $e) { return ['status' => 'error', 'message' => 'Error: ' . $e->getMessage()]; }
+        try {
+            Notification::findOrFail($id)->delete();
+
+            return ApiResponse::success(null, 'Notification deleted.');
+        } catch (\Exception $e) {
+            return ApiResponse::error('Error: '.$e->getMessage(), 500);
+        }
     }
 
-    public function markAsRead(int $id): array
+    public function markAsRead(int $id): JsonResponse
     {
-        try { Notification::findOrFail($id)->update(['read_at' => now()]); return ['status' => 'success', 'message' => 'Marked as read.']; }
-        catch (\Exception $e) { return ['status' => 'error', 'message' => 'Error: ' . $e->getMessage()]; }
+        try {
+            Notification::findOrFail($id)->update(['read_at' => now()]);
+
+            return ApiResponse::success(null, 'Marked as read.');
+        } catch (\Exception $e) {
+            return ApiResponse::error('Error: '.$e->getMessage(), 500);
+        }
     }
 
     /**
@@ -107,7 +135,7 @@ class NotificationService
                 'id' => $n->id,
                 'type' => $n->type,
                 'subject' => $n->subject,
-                'body' => $n->body ? \Illuminate\Support\Str::limit($n->body, 120) : null,
+                'body' => $n->body ? Str::limit($n->body, 120) : null,
                 'is_read' => $n->read_at !== null,
                 'url' => $n->data['url'] ?? null,
                 'time' => $n->created_at?->diffForHumans(),
@@ -126,5 +154,16 @@ class NotificationService
             ->where(fn ($q) => $q->whereNull('user_id')->orWhere('user_id', $userId))
             ->unread()
             ->update(['read_at' => now()]);
+    }
+
+    /**
+     * Mark all visible notifications read for the authenticated user and
+     * return the standardized response.
+     */
+    public function markAllReadForUser(int $userId): JsonResponse
+    {
+        $count = $this->markAllRead($userId);
+
+        return ApiResponse::success(['count' => $count], 'All notifications marked as read.');
     }
 }

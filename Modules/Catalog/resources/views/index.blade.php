@@ -66,12 +66,12 @@
                 let duplicateUrl = "{{ route('products.duplicate', ':id') }}".replace(':id', id);
 
                 $.get(showUrl, function(res) {
-                    if (res.status !== 'success' || !res.product) {
+                    if (res.status !== 'success' || !res.data) {
                         Swal.fire('Error', res.message || 'Product not found.', 'error');
                         return;
                     }
 
-                    let p = res.product;
+                    let p = res.data;
                     let defaultPrice = (p.variants && p.variants.length > 0)
                         ? (parseFloat(p.variants[0].sale_price) || '')
                         : '';

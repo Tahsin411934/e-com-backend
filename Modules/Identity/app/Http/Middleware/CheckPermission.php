@@ -11,16 +11,14 @@ class CheckPermission
     /**
      * Handle an incoming request.
      *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  \Closure(\Illuminate\Http\Request): (\Symfony\Component\HttpFoundation\Response)  $next
+     * @param  Closure(Request): (Response)  $next
      * @param  string  ...$permissions  One or more permission names
-     * @return \Symfony\Component\HttpFoundation\Response
      */
     public function handle(Request $request, Closure $next, string ...$permissions): Response
     {
         $user = $request->user();
 
-        if (!$user) {
+        if (! $user) {
             return redirect()->route('login');
         }
 
@@ -40,7 +38,7 @@ class CheckPermission
             return $userPermissions->contains($permission);
         });
 
-        if (!$hasPermission) {
+        if (! $hasPermission) {
             abort(403, 'Unauthorized. You do not have the required permission to access this resource.');
         }
 

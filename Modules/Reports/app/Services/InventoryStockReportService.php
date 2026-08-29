@@ -13,7 +13,7 @@ use Modules\Reports\Support\ReportFilters;
  */
 class InventoryStockReportService extends BaseReportService
 {
-    const TYPES = ['purchase' => 'Purchase','sale' => 'Sale','adjustment' => 'Adjustment','return' => 'Return','transfer_in' => 'Transfer In','transfer_out' => 'Transfer Out','damaged' => 'Damaged','expired' => 'Expired','lost' => 'Lost'];
+    const TYPES = ['purchase' => 'Purchase', 'sale' => 'Sale', 'adjustment' => 'Adjustment', 'return' => 'Return', 'transfer_in' => 'Transfer In', 'transfer_out' => 'Transfer Out', 'damaged' => 'Damaged', 'expired' => 'Expired', 'lost' => 'Lost'];
 
     public function movements(ReportFilters $filters): array
     {
@@ -25,6 +25,7 @@ class InventoryStockReportService extends BaseReportService
             ->when($filters->to, fn ($q) => $q->whereDate('created_at', '<=', $filters->to))
             ->groupBy('movement_type')->get()
             ->map(fn ($r) => ['movement' => self::TYPES[$r->movement_type] ?? $r->movement_type, 'qty' => (int) $r->qty, 'occurrences' => (int) $r->occurrences]);
+
         return ['columns' => ['movement' => 'Type', 'qty' => 'Qty', 'occurrences' => 'Occurrences'], 'rows' => $rows->all()];
     }
 
@@ -37,6 +38,7 @@ class InventoryStockReportService extends BaseReportService
             ->when($filters->to, fn ($q) => $q->whereDate('created_at', '<=', $filters->to))
             ->groupBy('movement_type')->get()
             ->map(fn ($r) => ['movement' => self::TYPES[$r->movement_type] ?? $r->movement_type, 'type' => $r->movement_type, 'qty' => (int) $r->qty]);
+
         return ['columns' => ['movement' => 'Type', 'qty' => 'Qty'], 'rows' => $rows->all(), 'total' => $rows->sum('qty')];
     }
 
@@ -51,10 +53,11 @@ class InventoryStockReportService extends BaseReportService
             ->join('products', 'products.id', '=', 'product_variants.product_id')
             ->selectRaw('products.name as product_name, product_variants.name as variant_name, product_variants.sku')
             ->selectRaw('SUM(inventory_stock.quantity_on_hand) as on_hand')
-            ->when(!empty($soldRecently), fn ($q) => $q->whereNotIn('inventory_stock.variant_id', $soldRecently))
+            ->when(! empty($soldRecently), fn ($q) => $q->whereNotIn('inventory_stock.variant_id', $soldRecently))
             ->groupBy('products.id', 'product_variants.id')->havingRaw('SUM(inventory_stock.quantity_on_hand) > 0')
             ->orderByDesc('on_hand')->limit($limit)->get()
-            ->map(fn ($r) => ['product' => $r->product_name . ($r->variant_name ? ' / ' . $r->variant_name : ''), 'sku' => $r->sku, 'on_hand' => (int) $r->on_hand, 'days_without_sale' => $days]);
+            ->map(fn ($r) => ['product' => $r->product_name.($r->variant_name ? ' / '.$r->variant_name : ''), 'sku' => $r->sku, 'on_hand' => (int) $r->on_hand, 'days_without_sale' => $days]);
+
         return ['columns' => ['product' => 'Product', 'sku' => 'SKU', 'on_hand' => 'On Hand', 'days_without_sale' => 'Days w/o Sale'], 'rows' => $rows->all()];
     }
 
@@ -67,7 +70,8 @@ class InventoryStockReportService extends BaseReportService
             ->selectRaw('products.name as product_name, product_variants.name as variant_name, product_variants.sku')
             ->selectRaw('inventory_locations.name as location, inventory_stock.quantity_on_hand, inventory_stock.quantity_reserved, inventory_stock.reorder_point')
             ->whereRaw('inventory_stock.quantity_on_hand - inventory_stock.quantity_reserved <= inventory_stock.reorder_point')
-            ->get()->map(fn ($s) => ['product' => $s->product_name . ($s->variant_name ? ' / ' . $s->variant_name : ''), 'sku' => $s->sku, 'location' => $s->location, 'available' => max(0, (int) $s->quantity_on_hand - (int) $s->quantity_reserved), 'reorder_point' => (int) $s->reorder_point, 'suggested' => max(0, (int) $s->reorder_point - ((int) $s->quantity_on_hand - (int) $s->quantity_reserved))]);
+            ->get()->map(fn ($s) => ['product' => $s->product_name.($s->variant_name ? ' / '.$s->variant_name : ''), 'sku' => $s->sku, 'location' => $s->location, 'available' => max(0, (int) $s->quantity_on_hand - (int) $s->quantity_reserved), 'reorder_point' => (int) $s->reorder_point, 'suggested' => max(0, (int) $s->reorder_point - ((int) $s->quantity_on_hand - (int) $s->quantity_reserved))]);
+
         return ['columns' => ['product' => 'Product', 'sku' => 'SKU', 'location' => 'Location', 'available' => 'Available', 'reorder_point' => 'Reorder Pt', 'suggested' => 'Suggested'], 'rows' => $rows->values()->all()];
     }
 
@@ -80,6 +84,7 @@ class InventoryStockReportService extends BaseReportService
             ->when($f && $f->to, fn ($q) => $q->whereDate('created_at', '<=', $f->to))
             ->groupBy('movement_type')->get()
             ->map(fn ($r) => ['movement' => self::TYPES[$r->movement_type] ?? $r->movement_type, 'qty' => (int) $r->qty, 'occurrences' => (int) $r->occurrences]);
+
         return ['columns' => ['movement' => 'Transfer', 'qty' => 'Qty', 'occurrences' => 'Occurrences'], 'rows' => $rows->all()];
     }
 }

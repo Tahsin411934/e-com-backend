@@ -10,7 +10,7 @@ return new class extends Migration
     {
         Schema::table('account_categories', function (Blueprint $table) {
             $table->enum('type', [
-                'income', 'expense', 'asset', 'liability', 'equity', 'cost_of_goods_sold', 'investment'
+                'income', 'expense', 'asset', 'liability', 'equity', 'cost_of_goods_sold', 'investment',
             ])->default('expense')->change();
         });
     }
@@ -19,7 +19,7 @@ return new class extends Migration
     {
         Schema::table('account_categories', function (Blueprint $table) {
             $table->enum('type', [
-                'income', 'expense', 'asset', 'liability', 'equity', 'cost_of_goods_sold'
+                'income', 'expense', 'asset', 'liability', 'equity', 'cost_of_goods_sold',
             ])->default('expense')->change();
         });
     }

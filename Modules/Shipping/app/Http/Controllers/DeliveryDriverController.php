@@ -12,9 +12,7 @@ use Modules\Store\Models\Store;
 
 class DeliveryDriverController extends Controller
 {
-    public function __construct(protected DeliveryDriverService $driverService)
-    {
-    }
+    public function __construct(protected DeliveryDriverService $driverService) {}
 
     public function index()
     {
@@ -32,26 +30,21 @@ class DeliveryDriverController extends Controller
 
     public function store(DeliveryDriverRequest $request)
     {
-        $result = $this->driverService->saveDriver($request->validated());
-        return response()->json($result, $result['status'] === 'success' ? 200 : 500);
+        return $this->driverService->saveDriver($request->validated());
     }
 
-    public function show(int $id)
+    public function show($id)
     {
-        return response()->json($this->driverService->getDriverById($id));
+        return $this->driverService->getDriverById((int) $id);
     }
 
     public function update(DeliveryDriverRequest $request, int $id)
     {
-        $data = $request->validated();
-        $data['driver_id'] = $id;
-        $result = $this->driverService->saveDriver($data);
-        return response()->json($result, $result['status'] === 'success' ? 200 : 500);
+        return $this->driverService->saveDriver($request->validated() + ['driver_id' => $id]);
     }
 
-    public function destroy(int $id)
+    public function destroy($id)
     {
-        $result = $this->driverService->deleteDriver($id);
-        return response()->json($result, $result['status'] === 'success' ? 200 : 500);
+        return $this->driverService->deleteDriver((int) $id);
     }
 }

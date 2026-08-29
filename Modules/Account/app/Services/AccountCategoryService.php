@@ -2,6 +2,8 @@
 
 namespace Modules\Account\Services;
 
+use App\Helpers\ApiResponse;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -34,7 +36,7 @@ class AccountCategoryService
             ->make(true);
     }
 
-    public function save(array $data): array
+    public function save(array $data): JsonResponse
     {
         try {
             return DB::transaction(function () use ($data) {
@@ -46,38 +48,39 @@ class AccountCategoryService
                 if ($id) {
                     $category = AccountCategory::where('is_system', false)->findOrFail($id);
                     $category->update($data);
-                    $message = 'Category updated successfully.';
-                } else {
-                    $category = AccountCategory::create($data);
-                    $message = 'Category created successfully.';
+
+                    return ApiResponse::success($category->fresh('parent'), 'Category updated successfully.');
                 }
 
-                return ['status' => 'success', 'message' => $message, 'category' => $category->fresh('parent')];
+                $category = AccountCategory::create($data);
+
+                return ApiResponse::created($category->fresh('parent'), 'Category created successfully.');
             });
         } catch (\Exception $e) {
-            return ['status' => 'error', 'message' => 'Error saving category: ' . $e->getMessage()];
+            return ApiResponse::error('Error saving category: '.$e->getMessage(), 500);
         }
     }
 
-    public function find(int $id): array
+    public function find(int $id): JsonResponse
     {
         try {
-            return ['status' => 'success', 'category' => AccountCategory::findOrFail($id)];
+            return ApiResponse::success(AccountCategory::findOrFail($id));
         } catch (\Exception) {
-            return ['status' => 'error', 'message' => 'Category not found.'];
+            return ApiResponse::notFound('Category not found.');
         }
     }
 
-    public function delete(int $id): array
+    public function delete(int $id): JsonResponse
     {
         try {
             return DB::transaction(function () use ($id) {
                 $category = AccountCategory::where('is_system', false)->findOrFail($id);
                 $category->delete();
-                return ['status' => 'success', 'message' => 'Category deleted successfully.'];
+
+                return ApiResponse::success(null, 'Category deleted successfully.');
             });
         } catch (\Exception $e) {
-            return ['status' => 'error', 'message' => 'Error deleting category: ' . $e->getMessage()];
+            return ApiResponse::error('Error deleting category: '.$e->getMessage(), 500);
         }
     }
 

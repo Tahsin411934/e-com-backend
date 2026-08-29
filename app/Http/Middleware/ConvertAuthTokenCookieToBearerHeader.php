@@ -9,10 +9,10 @@ class ConvertAuthTokenCookieToBearerHeader
 {
     public function handle(Request $request, Closure $next)
     {
-        if (!$request->headers->has('Authorization')) {
+        if (! $request->headers->has('Authorization')) {
             $token = $request->cookie('auth_token');
             if ($token) {
-                $request->headers->set('Authorization', 'Bearer ' . $token);
+                $request->headers->set('Authorization', 'Bearer '.$token);
             }
         }
 

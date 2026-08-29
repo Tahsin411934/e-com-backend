@@ -21,7 +21,7 @@
         showUrl="{{ route('delivery-drivers.show', ':id') }}"
         destroyUrl="{{ route('delivery-drivers.destroy', ':id') }}"
         drawerTitle="Delivery Driver"
-        dataKey="driver"
+        dataKey="data"
         idField="driver_id"
         :order="[[1, 'asc']]"
     >

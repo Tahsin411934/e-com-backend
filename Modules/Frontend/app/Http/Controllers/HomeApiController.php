@@ -2,6 +2,7 @@
 
 namespace Modules\Frontend\Http\Controllers;
 
+use App\Helpers\ApiResponse;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -17,8 +18,6 @@ class HomeApiController extends Controller
      * Every 2 category sections, a CTA section is inserted (if available).
      * This provides a single API call for the entire home page content.
      *
-     * @param Request $request
-     * @return JsonResponse
      *
      * @queryParam limit_categories int Max categories to show. Default: 10
      * @queryParam limit_products int Max products per category. Default: 8
@@ -30,7 +29,7 @@ class HomeApiController extends Controller
 
         $data = $this->buildHomePageData($limitCategories, $limitProducts);
 
-        return response()->json([
+        return ApiResponse::fromResult([
             'success' => true,
             'message' => 'Home page data retrieved successfully.',
             'data' => $data,
@@ -45,10 +44,6 @@ class HomeApiController extends Controller
      * 2. Get active CTAs sorted by sort_order
      * 3. For each category, eager load the top N products with images and variants
      * 4. Interleave: every 2 category sections, insert a CTA section
-     *
-     * @param int $limitCategories
-     * @param int $limitProducts
-     * @return array
      */
     private function buildHomePageData(int $limitCategories, int $limitProducts): array
     {
@@ -108,19 +103,19 @@ class HomeApiController extends Controller
 
             $categoryImage = null;
             if ($category->image) {
-                $categoryImage = asset('storage/' . $category->image);
+                $categoryImage = asset('storage/'.$category->image);
             } elseif ($category->image_url) {
                 $categoryImage = $category->image_url;
             }
 
             $sections[] = [
-                'type'     => 'category_section',
+                'type' => 'category_section',
                 'category' => [
-                    'id'          => $category->id,
-                    'name'        => $category->name,
-                    'slug'        => $category->slug,
+                    'id' => $category->id,
+                    'name' => $category->name,
+                    'slug' => $category->slug,
                     'description' => $category->description,
-                    'image'       => $categoryImage,
+                    'image' => $categoryImage,
                 ],
                 'products' => HomeProductResource::collection($categoryProducts),
             ];
@@ -129,49 +124,49 @@ class HomeApiController extends Controller
             if (($i + 1) % 2 == 0 && isset($ctas[$ctaIndex])) {
                 $cta = $ctas[$ctaIndex];
                 $sections[] = [
-                    'type'                      => 'cta_section',
-                    'id'                        => $cta->id,
-                    'cta_style'                 => $cta->cta_style ?? 'style1',
-                    'title'                     => $cta->title,
-                    'subtitle'                  => $cta->subtitle,
-                    'description'               => $cta->description,
-                    'image'                     => $cta->image ? asset('storage/' . $cta->image) : null,
-                    'banner_image'              => $cta->banner_image ? asset('storage/' . $cta->banner_image) : null,
-                    'button_text'               => $cta->button_text,
-                    'button_link'               => $cta->button_link,
-                    'background_color'          => $cta->background_color,
-                    'text_color'                => $cta->text_color,
-                    'button_color'              => $cta->button_color,
-                    'button_text_color'         => $cta->button_text_color,
-                    'overlay_color'             => $cta->overlay_color,
-                    'badge_text'                => $cta->badge_text,
-                    'badge_color'               => $cta->badge_color,
-                    'secondary_button_text'     => $cta->secondary_button_text,
-                    'secondary_button_link'     => $cta->secondary_button_link,
-                    'secondary_button_color'    => $cta->secondary_button_color,
+                    'type' => 'cta_section',
+                    'id' => $cta->id,
+                    'cta_style' => $cta->cta_style ?? 'style1',
+                    'title' => $cta->title,
+                    'subtitle' => $cta->subtitle,
+                    'description' => $cta->description,
+                    'image' => $cta->image ? asset('storage/'.$cta->image) : null,
+                    'banner_image' => $cta->banner_image ? asset('storage/'.$cta->banner_image) : null,
+                    'button_text' => $cta->button_text,
+                    'button_link' => $cta->button_link,
+                    'background_color' => $cta->background_color,
+                    'text_color' => $cta->text_color,
+                    'button_color' => $cta->button_color,
+                    'button_text_color' => $cta->button_text_color,
+                    'overlay_color' => $cta->overlay_color,
+                    'badge_text' => $cta->badge_text,
+                    'badge_color' => $cta->badge_color,
+                    'secondary_button_text' => $cta->secondary_button_text,
+                    'secondary_button_link' => $cta->secondary_button_link,
+                    'secondary_button_color' => $cta->secondary_button_color,
                     'secondary_button_text_color' => $cta->secondary_button_text_color,
-                    'feature_icon_1'            => $cta->feature_icon_1,
-                    'feature_text_1'            => $cta->feature_text_1,
-                    'feature_icon_2'            => $cta->feature_icon_2,
-                    'feature_text_2'            => $cta->feature_text_2,
-                    'feature_icon_3'            => $cta->feature_icon_3,
-                    'feature_text_3'            => $cta->feature_text_3,
+                    'feature_icon_1' => $cta->feature_icon_1,
+                    'feature_text_1' => $cta->feature_text_1,
+                    'feature_icon_2' => $cta->feature_icon_2,
+                    'feature_text_2' => $cta->feature_text_2,
+                    'feature_icon_3' => $cta->feature_icon_3,
+                    'feature_text_3' => $cta->feature_text_3,
                     // Dynamic positioning & margin
-                    'button_position'             => $cta->button_position,
-                    'button_margin_top'           => $cta->button_margin_top,
-                    'button_margin_bottom'        => $cta->button_margin_bottom,
-                    'button_margin_left'          => $cta->button_margin_left,
-                    'button_margin_right'         => $cta->button_margin_right,
-                    'secondary_button_position'   => $cta->secondary_button_position,
+                    'button_position' => $cta->button_position,
+                    'button_margin_top' => $cta->button_margin_top,
+                    'button_margin_bottom' => $cta->button_margin_bottom,
+                    'button_margin_left' => $cta->button_margin_left,
+                    'button_margin_right' => $cta->button_margin_right,
+                    'secondary_button_position' => $cta->secondary_button_position,
                     'secondary_button_margin_top' => $cta->secondary_button_margin_top,
                     'secondary_button_margin_bottom' => $cta->secondary_button_margin_bottom,
-                    'secondary_button_margin_left'   => $cta->secondary_button_margin_left,
-                    'secondary_button_margin_right'  => $cta->secondary_button_margin_right,
-                    'content_alignment'           => $cta->content_alignment,
-                    'content_margin_top'          => $cta->content_margin_top,
-                    'content_margin_bottom'       => $cta->content_margin_bottom,
-                    'content_margin_left'         => $cta->content_margin_left,
-                    'content_margin_right'        => $cta->content_margin_right,
+                    'secondary_button_margin_left' => $cta->secondary_button_margin_left,
+                    'secondary_button_margin_right' => $cta->secondary_button_margin_right,
+                    'content_alignment' => $cta->content_alignment,
+                    'content_margin_top' => $cta->content_margin_top,
+                    'content_margin_bottom' => $cta->content_margin_bottom,
+                    'content_margin_left' => $cta->content_margin_left,
+                    'content_margin_right' => $cta->content_margin_right,
                 ];
                 $ctaIndex++;
             }

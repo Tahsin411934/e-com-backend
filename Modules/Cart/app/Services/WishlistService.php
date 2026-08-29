@@ -2,9 +2,12 @@
 
 namespace Modules\Cart\Services;
 
+use App\Helpers\ApiResponse;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Modules\Cart\Models\Wishlist;
+use Modules\Frontend\Services\ProductPricingService;
 use Yajra\DataTables\DataTables;
 
 class WishlistService
@@ -35,7 +38,7 @@ class WishlistService
             ->make(true);
     }
 
-    public function saveWishlist(array $data): array
+    public function saveWishlist(array $data): JsonResponse
     {
         try {
             return DB::transaction(function () use ($data) {
@@ -51,67 +54,46 @@ class WishlistService
                     $message = 'Wishlist created successfully.';
                 }
 
-                return [
-                    'status' => 'success',
-                    'message' => $message,
-                    'wishlist' => $wishlist->fresh(),
-                ];
+                return ApiResponse::success($wishlist->fresh(), $message);
             });
         } catch (\Exception $e) {
-            return [
-                'status' => 'error',
-                'message' => 'Error saving wishlist: ' . $e->getMessage(),
-            ];
+            return ApiResponse::error('Error saving wishlist: '.$e->getMessage(), 500);
         }
     }
 
-    public function getWishlistById(int $id): array
+    public function getWishlistById(int $id): JsonResponse
     {
         try {
             $wishlist = Wishlist::with('product')->findOrFail($id);
-            return [
-                'status' => 'success',
-                'wishlist' => $wishlist,
-            ];
+
+            return ApiResponse::success($wishlist);
         } catch (\Exception $e) {
-            return [
-                'status' => 'error',
-                'message' => 'Wishlist not found.',
-            ];
+            return ApiResponse::notFound('Wishlist not found.');
         }
     }
 
-    public function deleteWishlist(int $id): array
+    public function deleteWishlist(int $id): JsonResponse
     {
         try {
             return DB::transaction(function () use ($id) {
                 $wishlist = Wishlist::findOrFail($id);
                 $wishlist->delete();
 
-                return [
-                    'status' => 'success',
-                    'message' => 'Wishlist deleted successfully.',
-                ];
+                return ApiResponse::success(null, 'Wishlist deleted successfully.');
             });
         } catch (\Exception $e) {
-            return [
-                'status' => 'error',
-                'message' => 'Error deleting wishlist: ' . $e->getMessage(),
-            ];
+            return ApiResponse::error('Error deleting wishlist: '.$e->getMessage(), 500);
         }
     }
 
-    public function toggleWishlist(int $productId): array
+    public function toggleWishlist(int $productId): JsonResponse
     {
         try {
             return DB::transaction(function () use ($productId) {
                 $userId = auth()->id();
 
-                if (!$userId) {
-                    return [
-                        'status' => 'error',
-                        'message' => 'Please login to add to wishlist.',
-                    ];
+                if (! $userId) {
+                    return ApiResponse::error('Please login to add to wishlist.', 500);
                 }
 
                 $existing = Wishlist::withTrashed()
@@ -123,19 +105,12 @@ class WishlistService
                     if ($existing->trashed()) {
                         $existing->restore();
 
-                        return [
-                            'status' => 'success',
-                            'message' => 'Added to wishlist.',
-                            'action' => 'added',
-                        ];
+                        return ApiResponse::success('added', 'Added to wishlist.');
                     }
 
                     $existing->delete();
-                    return [
-                        'status' => 'success',
-                        'message' => 'Removed from wishlist.',
-                        'action' => 'removed',
-                    ];
+
+                    return ApiResponse::success('removed', 'Removed from wishlist.');
                 }
 
                 Wishlist::create([
@@ -143,26 +118,19 @@ class WishlistService
                     'product_id' => $productId,
                 ]);
 
-                return [
-                    'status' => 'success',
-                    'message' => 'Added to wishlist.',
-                    'action' => 'added',
-                ];
+                return ApiResponse::success('added', 'Added to wishlist.');
             });
         } catch (\Exception $e) {
-            return [
-                'status' => 'error',
-                'message' => 'Error toggling wishlist: ' . $e->getMessage(),
-            ];
+            return ApiResponse::error('Error toggling wishlist: '.$e->getMessage(), 500);
         }
     }
 
-    public function getCurrentUserWishlist(): array
+    public function getCurrentUserWishlist(): JsonResponse
     {
         try {
             $userId = auth()->id();
-            if (!$userId) {
-                return ['status' => 'error', 'message' => 'Unauthenticated'];
+            if (! $userId) {
+                return ApiResponse::error('Unauthenticated', 500);
             }
 
             $items = Wishlist::with(['product.images', 'product.variants' => fn ($q) => $q->where('status', 'active')])
@@ -170,44 +138,41 @@ class WishlistService
                 ->orderByDesc('created_at')
                 ->get();
 
-            $pricing = app(\Modules\Frontend\Services\ProductPricingService::class);
+            $pricing = app(ProductPricingService::class);
 
             $wishlist = $items->map(function (Wishlist $item) use ($pricing) {
-                $product  = $item->product;
+                $product = $item->product;
                 $priceInfo = $product ? $pricing->priceInfo($product) : null;
                 $mainImage = $product?->images->firstWhere('is_main', true) ?? $product?->images->first();
 
                 return [
-                    'id'         => $item->id,
+                    'id' => $item->id,
                     'product_id' => $item->product_id,
                     'created_at' => $item->created_at,
-                    'product'    => [
-                        'id'               => $product->id,
-                        'name'             => $product->name,
-                        'slug'             => $product->slug,
-                        'main_image'       => $mainImage?->image_url ? asset('storage/' . ltrim($mainImage->image_url, '/')) : null,
-                        'price'            => $priceInfo['price'],
-                        'regular_price'    => $priceInfo['regular_price'],
+                    'product' => [
+                        'id' => $product->id,
+                        'name' => $product->name,
+                        'slug' => $product->slug,
+                        'main_image' => $mainImage?->image_url ? asset('storage/'.ltrim($mainImage->image_url, '/')) : null,
+                        'price' => $priceInfo['price'],
+                        'regular_price' => $priceInfo['regular_price'],
                         'discount_percent' => $priceInfo['discount_percent'],
-                        'discount_amount'  => $priceInfo['discount_amount'],
-                        'has_discount'     => $priceInfo['has_discount'],
+                        'discount_amount' => $priceInfo['discount_amount'],
+                        'has_discount' => $priceInfo['has_discount'],
                     ],
                 ];
             });
 
             return [
-                'status'   => 'success',
+                'status' => 'success',
                 'wishlist' => $wishlist->values()->all(),
             ];
         } catch (\Exception $e) {
-            return [
-                'status' => 'error',
-                'message' => 'Error loading wishlist: ' . $e->getMessage(),
-            ];
+            return ApiResponse::error('Error loading wishlist: '.$e->getMessage(), 500);
         }
     }
 
-    public function removeWishlistItem(int $userId, int $productId): array
+    public function removeWishlistItem(int $userId, int $productId): JsonResponse
     {
         try {
             return DB::transaction(function () use ($userId, $productId) {
@@ -215,25 +180,16 @@ class WishlistService
                     ->where('product_id', $productId)
                     ->first();
 
-                if (!$item) {
-                    return [
-                        'status' => 'error',
-                        'message' => 'Wishlist item not found.',
-                    ];
+                if (! $item) {
+                    return ApiResponse::notFound('Wishlist item not found.');
                 }
 
                 $item->delete();
 
-                return [
-                    'status' => 'success',
-                    'message' => 'Wishlist item removed successfully.',
-                ];
+                return ApiResponse::success(null, 'Wishlist item removed successfully.');
             });
         } catch (\Exception $e) {
-            return [
-                'status' => 'error',
-                'message' => 'Error removing wishlist item: ' . $e->getMessage(),
-            ];
+            return ApiResponse::error('Error removing wishlist item: '.$e->getMessage(), 500);
         }
     }
 }

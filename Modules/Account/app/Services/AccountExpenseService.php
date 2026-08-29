@@ -2,6 +2,8 @@
 
 namespace Modules\Account\Services;
 
+use App\Helpers\ApiResponse;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -34,7 +36,7 @@ class AccountExpenseService
             ->make(true);
     }
 
-    public function save(array $data): array
+    public function save(array $data): JsonResponse
     {
         try {
             return DB::transaction(function () use ($data) {
@@ -43,7 +45,7 @@ class AccountExpenseService
                 $data['currency_code'] = strtoupper($data['currency_code'] ?? 'BDT');
 
                 if ($id) {
-                    return ['status' => 'error', 'message' => 'Posted expenses cannot be edited yet. Please delete and recreate with an adjustment.'];
+                    return ApiResponse::error('Posted expenses cannot be edited yet. Please delete and recreate with an adjustment.', 500);
                 }
 
                 $data['expense_no'] = $this->generateExpenseNo();
@@ -57,31 +59,31 @@ class AccountExpenseService
                 );
                 $expense->update(['transaction_id' => $transaction->id]);
 
-                return ['status' => 'success', 'message' => 'Expense posted successfully.', 'expense' => $expense->fresh(['account', 'category'])];
+                return ApiResponse::created($expense->fresh(['account', 'category']), 'Expense posted successfully.');
             });
         } catch (\Exception $e) {
-            return ['status' => 'error', 'message' => 'Error saving expense: ' . $e->getMessage()];
+            return ApiResponse::error('Error saving expense: '.$e->getMessage(), 500);
         }
     }
 
-    public function find(int $id): array
+    public function find(int $id): JsonResponse
     {
         try {
-            return ['status' => 'success', 'expense' => AccountExpense::findOrFail($id)];
+            return ApiResponse::success(AccountExpense::findOrFail($id));
         } catch (\Exception) {
-            return ['status' => 'error', 'message' => 'Expense not found.'];
+            return ApiResponse::notFound('Expense not found.');
         }
     }
 
-    public function delete(int $id): array
+    public function delete(int $id): JsonResponse
     {
-        return ['status' => 'error', 'message' => 'Posted expenses are locked. Create an adjustment entry instead.'];
+        return ApiResponse::error('Posted expenses are locked. Create an adjustment entry instead.', 500);
     }
 
     private function generateExpenseNo(): string
     {
         do {
-            $number = 'EXP-' . now()->format('YmdHis') . '-' . strtoupper(Str::random(4));
+            $number = 'EXP-'.now()->format('YmdHis').'-'.strtoupper(Str::random(4));
         } while (AccountExpense::where('expense_no', $number)->exists());
 
         return $number;

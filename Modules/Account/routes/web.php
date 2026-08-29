@@ -1,11 +1,11 @@
 <?php
 
-use Modules\Account\Http\Controllers\AccountInvestmentController;
 use Illuminate\Support\Facades\Route;
 use Modules\Account\Http\Controllers\AccountAccountController;
 use Modules\Account\Http\Controllers\AccountCategoryController;
 use Modules\Account\Http\Controllers\AccountController;
 use Modules\Account\Http\Controllers\AccountExpenseController;
+use Modules\Account\Http\Controllers\AccountInvestmentController;
 use Modules\Account\Http\Controllers\AccountReportController;
 use Modules\Account\Http\Controllers\AccountTransferController;
 

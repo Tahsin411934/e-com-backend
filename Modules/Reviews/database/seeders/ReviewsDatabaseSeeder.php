@@ -3,9 +3,9 @@
 namespace Modules\Reviews\Database\Seeders;
 
 use Illuminate\Database\Seeder;
-use Modules\Reviews\Models\ProductReview;
 use Modules\Catalog\Models\Product;
 use Modules\Identity\Models\User;
+use Modules\Reviews\Models\ProductReview;
 
 class ReviewsDatabaseSeeder extends Seeder
 {
@@ -14,8 +14,9 @@ class ReviewsDatabaseSeeder extends Seeder
         $product = Product::first();
         $user = User::where('email', 'admin@example.com')->first();
 
-        if (!$product || !$user) {
+        if (! $product || ! $user) {
             $this->command->warn('No products or users found. Skipping Reviews seeding.');
+
             return;
         }
 

@@ -20,7 +20,7 @@
         showUrl="{{ route('orders.show', ':id') }}"
         destroyUrl="{{ route('orders.destroy', ':id') }}"
         drawerTitle="Order"
-        dataKey="order"
+        dataKey="data"
         idField="order_id"
         :order="[[0, 'desc']]"
     >

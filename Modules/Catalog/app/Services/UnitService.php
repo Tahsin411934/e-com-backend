@@ -2,6 +2,8 @@
 
 namespace Modules\Catalog\Services;
 
+use App\Helpers\ApiResponse;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Modules\Catalog\Models\Unit;
@@ -34,7 +36,7 @@ class UnitService
             ->make(true);
     }
 
-    public function saveUnit(array $data): array
+    public function saveUnit(array $data): JsonResponse
     {
         try {
             return DB::transaction(function () use ($data) {
@@ -51,54 +53,37 @@ class UnitService
                     $message = 'Unit created successfully.';
                 }
 
-                return [
-                    'status' => 'success',
-                    'message' => $message,
-                    'unit' => $unit->fresh(),
-                ];
+                if ($unitId) {
+                    return ApiResponse::success($unit->fresh(), $message);
+                }
+
+                return ApiResponse::created($unit->fresh(), $message);
             });
         } catch (\Exception $e) {
-            return [
-                'status' => 'error',
-                'message' => 'Error saving unit: ' . $e->getMessage(),
-            ];
+            return ApiResponse::error('Error saving unit: '.$e->getMessage(), 500);
         }
     }
 
-    public function getUnitById(int $id): array
+    public function getUnitById(int $id): JsonResponse
     {
         try {
-            $unit = Unit::findOrFail($id);
-
-            return [
-                'status' => 'success',
-                'unit' => $unit,
-            ];
-        } catch (\Exception $e) {
-            return [
-                'status' => 'error',
-                'message' => 'Unit not found.',
-            ];
+            return ApiResponse::success(Unit::findOrFail($id));
+        } catch (\Exception) {
+            return ApiResponse::notFound('Unit not found.');
         }
     }
 
-    public function deleteUnit(int $id): array
+    public function deleteUnit(int $id): JsonResponse
     {
         try {
             return DB::transaction(function () use ($id) {
                 $unit = Unit::findOrFail($id);
                 $unit->delete();
 
-                return [
-                    'status' => 'success',
-                    'message' => 'Unit deleted successfully.',
-                ];
+                return ApiResponse::success(null, 'Unit deleted successfully.');
             });
         } catch (\Exception $e) {
-            return [
-                'status' => 'error',
-                'message' => 'Error deleting unit: ' . $e->getMessage(),
-            ];
+            return ApiResponse::error('Error deleting unit: '.$e->getMessage(), 500);
         }
     }
 }

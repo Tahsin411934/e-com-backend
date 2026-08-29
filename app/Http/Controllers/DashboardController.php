@@ -2,18 +2,12 @@
 
 namespace App\Http\Controllers;
 
+use App\Helpers\ApiResponse;
 use App\Services\DashboardService;
-use Carbon\Carbon;
-use Illuminate\Http\Request;
 
 class DashboardController extends Controller
 {
-    protected DashboardService $dashboardService;
-
-    public function __construct(DashboardService $dashboardService)
-    {
-        $this->dashboardService = $dashboardService;
-    }
+    public function __construct(private DashboardService $dashboardService) {}
 
     /**
      * Display the dashboard with real database data.
@@ -41,6 +35,7 @@ class DashboardController extends Controller
     public function apiData()
     {
         $data = $this->dashboardService->getDashboardData();
-        return response()->json($data);
+
+        return ApiResponse::fromResult($data);
     }
 }

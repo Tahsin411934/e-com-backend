@@ -16,7 +16,7 @@ class HomeProductResource extends JsonResource
      */
     private function imageUrl(?string $path): ?string
     {
-        if (!$path) {
+        if (! $path) {
             return null;
         }
 
@@ -29,10 +29,10 @@ class HomeProductResource extends JsonResource
             $clean = substr($clean, 8);
         }
 
-        $url = $clean ? asset('storage/' . $clean) : null;
+        $url = $clean ? asset('storage/'.$clean) : null;
 
         // Add cache-busting parameter so browser always fetches latest image
-        return $url ? $url . '?v=' . filemtime(storage_path('app/public/' . $clean)) : null;
+        return $url ? $url.'?v='.filemtime(storage_path('app/public/'.$clean)) : null;
     }
 
     public function toArray(Request $request): array

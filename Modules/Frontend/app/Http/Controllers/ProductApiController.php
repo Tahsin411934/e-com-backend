@@ -49,10 +49,7 @@ class ProductApiController extends Controller
             ->first();
 
         if (! $product) {
-            return ApiResponse::fromResult([
-                'success' => false,
-                'message' => 'Product not found.',
-            ], 200, 404);
+            return ApiResponse::notFound('Product not found.');
         }
 
         // Fetch related products separately (same categories, excluding current)
@@ -83,10 +80,6 @@ class ProductApiController extends Controller
         // Manually set relatedProducts for the resource
         $product->setRelation('relatedProducts', $relatedProducts);
 
-        return ApiResponse::fromResult([
-            'success' => true,
-            'message' => 'Product retrieved successfully.',
-            'data' => new ProductDetailResource($product),
-        ]);
+        return ApiResponse::success(new ProductDetailResource($product), 'Product retrieved successfully.');
     }
 }

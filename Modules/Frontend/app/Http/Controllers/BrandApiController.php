@@ -45,16 +45,14 @@ class BrandApiController extends Controller
             ];
         });
 
-        return ApiResponse::fromResult([
-            'success' => true,
-            'message' => 'Brands retrieved successfully.',
-            'data' => $data,
+        return ApiResponse::success([
+            'items' => $data,
             'meta' => [
                 'current_page' => $page,
                 'last_page' => (int) ceil($total / $limit),
                 'per_page' => $limit,
                 'total' => $total,
             ],
-        ]);
+        ], 'Brands retrieved successfully.');
     }
 }

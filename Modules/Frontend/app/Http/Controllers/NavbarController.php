@@ -98,9 +98,6 @@ class NavbarController extends Controller
     {
         $items = $this->navbarService->getAllNavbarItems();
 
-        return ApiResponse::fromResult([
-            'status' => 'success',
-            'navbar_items' => $items,
-        ]);
+        return ApiResponse::success($items, 'Navbar items retrieved successfully.');
     }
 }

@@ -29,11 +29,7 @@ class HomeApiController extends Controller
 
         $data = $this->buildHomePageData($limitCategories, $limitProducts);
 
-        return ApiResponse::fromResult([
-            'success' => true,
-            'message' => 'Home page data retrieved successfully.',
-            'data' => $data,
-        ]);
+        return ApiResponse::success($data, 'Home page data retrieved successfully.');
     }
 
     /**

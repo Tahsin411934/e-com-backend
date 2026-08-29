@@ -31,9 +31,6 @@ class SettingsApiController extends Controller
             }
         }
 
-        return ApiResponse::fromResult([
-            'success' => true,
-            'data' => $flat,
-        ]);
+        return ApiResponse::success($flat, 'Settings retrieved successfully.');
     }
 }

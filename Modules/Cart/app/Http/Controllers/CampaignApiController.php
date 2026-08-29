@@ -13,14 +13,14 @@ class CampaignApiController extends Controller
     {
         $campaigns = Campaign::live()->with(['products.product.images', 'products.product.variants'])->orderByDesc('is_featured')->orderByDesc('priority')->get();
 
-        return ApiResponse::fromResult(['success' => true, 'data' => $campaigns->map(fn (Campaign $campaign) => $this->serialize($campaign))->values()]);
+        return ApiResponse::success($campaigns->map(fn (Campaign $campaign) => $this->serialize($campaign))->values(), 'Campaigns retrieved successfully.');
     }
 
     public function show(string $slug)
     {
         $campaign = Campaign::live()->where('slug', $slug)->with(['products.product.images', 'products.product.variants'])->firstOrFail();
 
-        return ApiResponse::fromResult(['success' => true, 'data' => $this->serialize($campaign)]);
+        return ApiResponse::success($this->serialize($campaign), 'Campaign retrieved successfully.');
     }
 
     private function serialize(Campaign $campaign): array

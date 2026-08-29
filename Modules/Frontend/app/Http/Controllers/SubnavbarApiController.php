@@ -30,10 +30,7 @@ class SubnavbarApiController extends Controller
         $subnavbarItem = SubnavbarItem::where('slug', $slug)->where('status', 'active')->first();
 
         if (! $subnavbarItem) {
-            return ApiResponse::fromResult([
-                'success' => false,
-                'message' => 'Subnavbar item not found.',
-            ], 200, 404);
+            return ApiResponse::notFound('Subnavbar item not found.');
         }
 
         $query = Product::where('status', 'active')
@@ -103,26 +100,22 @@ class SubnavbarApiController extends Controller
             ];
         });
 
-        return ApiResponse::fromResult([
-            'success' => true,
-            'message' => 'Products retrieved successfully.',
-            'data' => [
-                'subnavbar' => [
-                    'id' => $subnavbarItem->id,
-                    'navbar_item_id' => $subnavbarItem->navbar_item_id,
-                    'name' => $subnavbarItem->name,
-                    'slug' => $subnavbarItem->slug,
-                    'description' => null,
-                    'image' => null,
-                ],
-                'products' => $formatted,
-                'meta' => [
-                    'current_page' => $products->currentPage(),
-                    'last_page' => $products->lastPage(),
-                    'per_page' => $products->perPage(),
-                    'total' => $products->total(),
-                ],
+        return ApiResponse::success([
+            'subnavbar' => [
+                'id' => $subnavbarItem->id,
+                'navbar_item_id' => $subnavbarItem->navbar_item_id,
+                'name' => $subnavbarItem->name,
+                'slug' => $subnavbarItem->slug,
+                'description' => null,
+                'image' => null,
             ],
-        ]);
+            'products' => $formatted,
+            'meta' => [
+                'current_page' => $products->currentPage(),
+                'last_page' => $products->lastPage(),
+                'per_page' => $products->perPage(),
+                'total' => $products->total(),
+            ],
+        ], 'Products retrieved successfully.');
     }
 }

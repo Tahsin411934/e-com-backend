@@ -36,6 +36,6 @@ class DashboardController extends Controller
     {
         $data = $this->dashboardService->getDashboardData();
 
-        return ApiResponse::fromResult($data);
+        return ApiResponse::success($data, 'Dashboard data retrieved successfully.');
     }
 }

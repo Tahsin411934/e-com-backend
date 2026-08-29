@@ -107,16 +107,9 @@ class HistoryController extends Controller
     public function restore($id)
     {
         try {
-            return ApiResponse::fromResult([
-                'status' => 'success',
-                'message' => 'Record restored successfully.',
-                'history' => $this->historyService->restore((int) $id),
-            ]);
+            return ApiResponse::success($this->historyService->restore((int) $id), 'Record restored successfully.');
         } catch (\Throwable $exception) {
-            return ApiResponse::fromResult([
-                'status' => 'error',
-                'message' => $exception->getMessage(),
-            ], 200, 422);
+            return ApiResponse::error($exception->getMessage(), 422);
         }
     }
 }

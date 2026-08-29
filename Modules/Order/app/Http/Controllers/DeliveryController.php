@@ -33,10 +33,7 @@ class DeliveryController extends Controller
 
         $deliveries = $query->paginate(20);
 
-        return ApiResponse::fromResult([
-            'status' => 'success',
-            'deliveries' => $deliveries,
-        ]);
+        return ApiResponse::success($deliveries, 'Deliveries retrieved successfully.');
     }
 
     public function show($id)
@@ -47,16 +44,10 @@ class DeliveryController extends Controller
         if (! auth()->user()->hasRole('admin') &&
             ! auth()->user()->hasRole('delivery_boy') &&
             $delivery->user_id !== auth()->id()) {
-            return ApiResponse::fromResult([
-                'status' => 'error',
-                'message' => 'Unauthorized.',
-            ], 200, 403);
+            return ApiResponse::error('Unauthorized.', 403);
         }
 
-        return ApiResponse::fromResult([
-            'status' => 'success',
-            'delivery' => $delivery,
-        ]);
+        return ApiResponse::success($delivery, 'Delivery retrieved successfully.');
     }
 
     public function assign(Request $request, int $id)
@@ -70,10 +61,7 @@ class DeliveryController extends Controller
         // Check if user is delivery boy
         $deliveryBoy = User::findOrFail($request->delivery_boy_id);
         if (! $deliveryBoy->hasRole('delivery_boy')) {
-            return ApiResponse::fromResult([
-                'status' => 'error',
-                'message' => 'Selected user is not a delivery boy.',
-            ], 200, 400);
+            return ApiResponse::error('Selected user is not a delivery boy.', 400);
         }
 
         $delivery->update([
@@ -82,11 +70,7 @@ class DeliveryController extends Controller
             'assigned_at' => now(),
         ]);
 
-        return ApiResponse::fromResult([
-            'status' => 'success',
-            'message' => 'Delivery boy assigned successfully.',
-            'delivery' => $delivery->load('deliveryBoy'),
-        ]);
+        return ApiResponse::success($delivery->load('deliveryBoy'), 'Delivery boy assigned successfully.');
     }
 
     public function updateStatus(Request $request, int $id)
@@ -116,11 +100,7 @@ class DeliveryController extends Controller
 
         $delivery->update($updateData);
 
-        return ApiResponse::fromResult([
-            'status' => 'success',
-            'message' => 'Delivery status updated successfully.',
-            'delivery' => $delivery->load('order'),
-        ]);
+        return ApiResponse::success($delivery->load('order'), 'Delivery status updated successfully.');
     }
 
     public function myDeliveries()
@@ -132,9 +112,6 @@ class DeliveryController extends Controller
             ->orderByDesc('created_at')
             ->paginate(20);
 
-        return ApiResponse::fromResult([
-            'status' => 'success',
-            'deliveries' => $deliveries,
-        ]);
+        return ApiResponse::success($deliveries, 'Deliveries retrieved successfully.');
     }
 }

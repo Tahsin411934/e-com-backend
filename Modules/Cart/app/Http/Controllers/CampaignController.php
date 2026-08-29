@@ -19,7 +19,7 @@ class CampaignController extends Controller
 
     public function list()
     {
-        return ApiResponse::fromResult(['status' => 'success', 'campaigns' => Campaign::withCount('products')->latest()->get()]);
+        return ApiResponse::success(Campaign::withCount('products')->latest()->get());
     }
 
     public function store(Request $request)
@@ -30,12 +30,12 @@ class CampaignController extends Controller
         }
         $data['slug'] = Str::slug($data['name']).'-'.Str::lower(Str::random(5));
 
-        return ApiResponse::fromResult(['status' => 'success', 'campaign' => Campaign::create($data)], 201, 500);
+        return ApiResponse::created(Campaign::create($data), 'Campaign created successfully.');
     }
 
     public function show(Campaign $campaign)
     {
-        return ApiResponse::fromResult(['status' => 'success', 'campaign' => $campaign->load('products.product')]);
+        return ApiResponse::success($campaign->load('products.product'));
     }
 
     public function update(Request $request, Campaign $campaign)
@@ -54,14 +54,14 @@ class CampaignController extends Controller
         }
         $campaign->update($data);
 
-        return ApiResponse::fromResult(['status' => 'success', 'campaign' => $campaign->fresh()]);
+        return ApiResponse::success($campaign->fresh(), 'Campaign updated successfully.');
     }
 
     public function destroy(Campaign $campaign)
     {
         $campaign->delete();
 
-        return ApiResponse::fromResult(['status' => 'success']);
+        return ApiResponse::success(null, 'Campaign deleted successfully.');
     }
 
     public function toggleActive(Campaign $campaign)
@@ -69,14 +69,14 @@ class CampaignController extends Controller
         $campaign->is_active = ! $campaign->is_active;
         $campaign->save();
 
-        return ApiResponse::fromResult(['status' => 'success', 'campaign' => $campaign->fresh()]);
+        return ApiResponse::success($campaign->fresh(), 'Campaign status updated.');
     }
 
     public function searchProducts(Request $request)
     {
         $q = $request->string('q')->trim();
 
-        return ApiResponse::fromResult(['products' => Product::where('status', 'active')->where(fn ($query) => $query->where('name', 'like', "%{$q}%")->orWhere('slug', 'like', "%{$q}%"))->with('variants:id,product_id,name,sku,sale_price')->limit(20)->get(['id', 'name', 'slug'])]);
+        return ApiResponse::success(Product::where('status', 'active')->where(fn ($query) => $query->where('name', 'like', "%{$q}%")->orWhere('slug', 'like', "%{$q}%"))->with('variants:id,product_id,name,sku,sale_price')->limit(20)->get(['id', 'name', 'slug']));
     }
 
     public function addProduct(Request $request, Campaign $campaign)
@@ -89,7 +89,7 @@ class CampaignController extends Controller
         $entry->fill($data);
         $entry->save();
 
-        return ApiResponse::fromResult(['status' => 'success', 'campaign_product' => $entry->load('product', 'variant')]);
+        return ApiResponse::success($entry->load('product', 'variant'), 'Product added to campaign.');
     }
 
     public function updateProduct(Request $request, Campaign $campaign, int $campaignProduct)
@@ -98,7 +98,7 @@ class CampaignController extends Controller
         $entry = $campaign->products()->whereKey($campaignProduct)->firstOrFail();
         $entry->update($data);
 
-        return ApiResponse::fromResult(['status' => 'success', 'campaign_product' => $entry->load('product', 'variant')]);
+        return ApiResponse::success($entry->load('product', 'variant'), 'Campaign product updated.');
     }
 
     public function reorderProducts(Request $request, Campaign $campaign)
@@ -109,7 +109,7 @@ class CampaignController extends Controller
         }
         $campaign->products()->whereNotIn('id', $data['ordered_ids'])->update(['sort_order' => 999999]);
 
-        return ApiResponse::fromResult(['status' => 'success']);
+        return ApiResponse::success(null, 'Product order updated.');
     }
 
     public function removeProduct(Campaign $campaign, int $campaignProduct)
@@ -117,6 +117,6 @@ class CampaignController extends Controller
         $entry = $campaign->products()->whereKey($campaignProduct)->firstOrFail();
         $entry->delete();
 
-        return ApiResponse::fromResult(['status' => 'success']);
+        return ApiResponse::success(null, 'Product removed from campaign.');
     }
 }

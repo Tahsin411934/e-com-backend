@@ -36,10 +36,8 @@ class ProductSearchApiController extends Controller
         $products = $searchResult['products'];
 
         $response = [
-            'success' => true,
-            'message' => $products->isEmpty() ? 'No products found.' : 'Products found.',
-            'data' => $products->isEmpty() ? [] : ProductSearchResource::collection($products),
             'query' => $query,
+            'items' => $products->isEmpty() ? [] : ProductSearchResource::collection($products),
         ];
 
         if ($categoryId) {
@@ -50,6 +48,6 @@ class ProductSearchApiController extends Controller
             $response['suggestion'] = $searchResult['suggestion'];
         }
 
-        return ApiResponse::fromResult($response);
+        return ApiResponse::success($response, $products->isEmpty() ? 'No products found.' : 'Products found.');
     }
 }

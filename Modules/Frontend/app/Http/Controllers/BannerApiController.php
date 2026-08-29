@@ -35,9 +35,7 @@ class BannerApiController extends Controller
         }
 
         $response = [
-            'success' => true,
-            'message' => 'Banners retrieved successfully.',
-            'data' => BannerResource::collection($data),
+            'items' => BannerResource::collection($data),
         ];
 
         if ($data instanceof LengthAwarePaginator) {
@@ -49,7 +47,7 @@ class BannerApiController extends Controller
             ];
         }
 
-        return ApiResponse::fromResult($response);
+        return ApiResponse::success($response, 'Banners retrieved successfully.');
     }
 
     /**
@@ -60,16 +58,9 @@ class BannerApiController extends Controller
         $banner = Banner::find($id);
 
         if (! $banner) {
-            return ApiResponse::fromResult([
-                'success' => false,
-                'message' => 'Banner not found.',
-            ], 200, 404);
+            return ApiResponse::notFound('Banner not found.');
         }
 
-        return ApiResponse::fromResult([
-            'success' => true,
-            'message' => 'Banner retrieved successfully.',
-            'data' => new BannerResource($banner),
-        ]);
+        return ApiResponse::success(new BannerResource($banner), 'Banner retrieved successfully.');
     }
 }

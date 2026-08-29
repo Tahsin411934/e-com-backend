@@ -40,9 +40,7 @@ class CategoryApiController extends Controller
         }
 
         $response = [
-            'success' => true,
-            'message' => 'Categories retrieved successfully.',
-            'data' => CategoryResource::collection($data),
+            'items' => CategoryResource::collection($data),
         ];
 
         if ($data instanceof LengthAwarePaginator) {
@@ -54,7 +52,7 @@ class CategoryApiController extends Controller
             ];
         }
 
-        return ApiResponse::fromResult($response);
+        return ApiResponse::success($response, 'Categories retrieved successfully.');
     }
 
     /**
@@ -74,17 +72,10 @@ class CategoryApiController extends Controller
             ->first();
 
         if (! $category) {
-            return ApiResponse::fromResult([
-                'success' => false,
-                'message' => 'Category not found.',
-            ], 200, 404);
+            return ApiResponse::notFound('Category not found.');
         }
 
-        return ApiResponse::fromResult([
-            'success' => true,
-            'message' => 'Category retrieved successfully.',
-            'data' => new CategoryResource($category),
-        ]);
+        return ApiResponse::success(new CategoryResource($category), 'Category retrieved successfully.');
     }
 
     /**
@@ -113,10 +104,7 @@ class CategoryApiController extends Controller
             ->first();
 
         if (! $category) {
-            return ApiResponse::fromResult([
-                'success' => false,
-                'message' => 'Category not found.',
-            ], 200, 404);
+            return ApiResponse::notFound('Category not found.');
         }
 
         // Get products for this category
@@ -178,10 +166,8 @@ class CategoryApiController extends Controller
             'products_count' => $category->products_count,
         ];
 
-        return ApiResponse::fromResult([
-            'success' => true,
-            'message' => 'Category products retrieved successfully.',
-            'data' => $categoryData,
+        return ApiResponse::success([
+            'category' => $categoryData,
             'products' => HomeProductResource::collection($products),
             'meta' => [
                 'current_page' => $products->currentPage(),
@@ -189,6 +175,6 @@ class CategoryApiController extends Controller
                 'per_page' => $products->perPage(),
                 'total' => $products->total(),
             ],
-        ]);
+        ], 'Category products retrieved successfully.');
     }
 }

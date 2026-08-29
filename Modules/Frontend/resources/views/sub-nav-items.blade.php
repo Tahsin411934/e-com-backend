@@ -81,11 +81,11 @@
         // ===== Load navbar items into select dropdown =====
         function loadNavbarItemsSelect() {
             $.get('{{ route("frontend.nav-items.navbar.list") }}', function(res) {
-                if (res.status === 'success' && res.navbar_items) {
+                if (res.status === 'success' && res.data) {
                     const $select = $('#subnavbar_item_navbar_item_id');
                     const currentVal = $select.val();
                     $select.find('option:not(:first)').remove();
-                    res.navbar_items.forEach(function(item) {
+                    res.data.forEach(function(item) {
                         $select.append(`<option value="${item.id}">${item.name}</option>`);
                     });
                     if (currentVal) $select.val(currentVal);
@@ -96,7 +96,7 @@
                     if (navbarItemId) {
                         $select.val(navbarItemId);
                         // Show parent name in header
-                        const selected = res.navbar_items.find(i => i.id == navbarItemId);
+                        const selected = res.data.find(i => i.id == navbarItemId);
                         if (selected) {
                             $('#parentNavName').text('(' + selected.name + ')');
                         }

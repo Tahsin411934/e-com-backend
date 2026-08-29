@@ -42,9 +42,7 @@ class NavbarApiController extends Controller
         }
 
         $response = [
-            'success' => true,
-            'message' => 'Navbar items retrieved successfully.',
-            'data' => NavbarItemResource::collection($data),
+            'items' => NavbarItemResource::collection($data),
         ];
 
         if ($data instanceof LengthAwarePaginator) {
@@ -56,7 +54,7 @@ class NavbarApiController extends Controller
             ];
         }
 
-        return ApiResponse::fromResult($response);
+        return ApiResponse::success($response, 'Navbar items retrieved successfully.');
     }
 
     /**
@@ -69,17 +67,10 @@ class NavbarApiController extends Controller
         }])->find((int) $id);
 
         if (! $navbarItem) {
-            return ApiResponse::fromResult([
-                'success' => false,
-                'message' => 'Navbar item not found.',
-            ], 200, 404);
+            return ApiResponse::notFound('Navbar item not found.');
         }
 
-        return ApiResponse::fromResult([
-            'success' => true,
-            'message' => 'Navbar item retrieved successfully.',
-            'data' => new NavbarItemResource($navbarItem),
-        ]);
+        return ApiResponse::success(new NavbarItemResource($navbarItem), 'Navbar item retrieved successfully.');
     }
 
     /**
@@ -90,10 +81,7 @@ class NavbarApiController extends Controller
         $navbarItem = NavbarItem::find($navbarItemId);
 
         if (! $navbarItem) {
-            return ApiResponse::fromResult([
-                'success' => false,
-                'message' => 'Navbar item not found.',
-            ], 200, 404);
+            return ApiResponse::notFound('Navbar item not found.');
         }
 
         $subnavbarItems = NavbarItem::find($navbarItemId)?->subnavbarItems()
@@ -102,10 +90,6 @@ class NavbarApiController extends Controller
             ->orderBy('name')
             ->get();
 
-        return ApiResponse::fromResult([
-            'success' => true,
-            'message' => 'Subnavbar items retrieved successfully.',
-            'data' => SubnavbarItemResource::collection($subnavbarItems),
-        ]);
+        return ApiResponse::success(SubnavbarItemResource::collection($subnavbarItems), 'Subnavbar items retrieved successfully.');
     }
 }

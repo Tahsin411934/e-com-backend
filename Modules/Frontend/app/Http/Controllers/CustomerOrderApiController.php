@@ -22,7 +22,7 @@ class CustomerOrderApiController extends Controller
             ->get()
             ->map(fn (Order $order) => $this->summary($order));
 
-        return ApiResponse::fromResult(['status' => 'success', 'orders' => $orders]);
+        return ApiResponse::success($orders, 'Orders retrieved successfully.');
     }
 
     public function show(Request $request, Order $order): JsonResponse
@@ -35,25 +35,22 @@ class CustomerOrderApiController extends Controller
             'shipments.events' => fn ($query) => $query->orderBy('occurred_at'),
         ]);
 
-        return ApiResponse::fromResult([
-            'status' => 'success',
-            'order' => array_merge($this->summary($order), [
-                'items' => $order->items->map(fn ($item) => [
-                    'id' => $item->id,
-                    'name' => $item->product_name,
-                    'variant_name' => $item->variant_name,
-                    'sku' => $item->sku,
-                    'quantity' => $item->quantity,
-                    'unit_price' => (float) $item->unit_price,
-                    'line_total' => (float) $item->line_total,
-                ]),
-                'delivery' => $order->deliveries->first()?->only([
-                    'status', 'delivery_address', 'delivery_city', 'delivery_phone', 'delivery_notes',
-                    'assigned_at', 'picked_at', 'delivered_at', 'cancelled_at',
-                ]),
-                'timeline' => $this->timeline($order),
+        return ApiResponse::success(array_merge($this->summary($order), [
+            'items' => $order->items->map(fn ($item) => [
+                'id' => $item->id,
+                'name' => $item->product_name,
+                'variant_name' => $item->variant_name,
+                'sku' => $item->sku,
+                'quantity' => $item->quantity,
+                'unit_price' => (float) $item->unit_price,
+                'line_total' => (float) $item->line_total,
             ]),
-        ]);
+            'delivery' => $order->deliveries->first()?->only([
+                'status', 'delivery_address', 'delivery_city', 'delivery_phone', 'delivery_notes',
+                'assigned_at', 'picked_at', 'delivered_at', 'cancelled_at',
+            ]),
+            'timeline' => $this->timeline($order),
+        ]), 'Order retrieved successfully.');
     }
 
     private function summary(Order $order): array

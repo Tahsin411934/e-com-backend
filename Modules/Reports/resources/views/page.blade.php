@@ -165,7 +165,7 @@
                         body.innerHTML = '<div class="text-sm text-red-600">' + esc(payload.error || payload.message || 'Failed to load this section.') + '</div>';
                         return;
                     }
-                    renderPayload(body, payload);
+                    renderPayload(body, payload.data ?? payload);
                 } catch (e) {
                     body.innerHTML = '<div class="text-sm text-red-600">Failed to load this section.</div>';
                 }

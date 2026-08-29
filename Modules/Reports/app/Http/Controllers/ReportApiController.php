@@ -55,7 +55,7 @@ class ReportApiController extends Controller
 
         $map = $this->dispatchMap[$category] ?? null;
         if (! $map) {
-            return ApiResponse::fromResult(['error' => 'Unknown report category.', 'code' => 404], 200, 404);
+            return ApiResponse::error('Unknown report category.', 404);
         }
 
         [$service, $prefix, $whitelist] = $map;
@@ -63,20 +63,20 @@ class ReportApiController extends Controller
 
         // Security check: validate method is in whitelist
         if (! in_array($methodName, $whitelist, true)) {
-            return ApiResponse::fromResult(['error' => "Report method '{$category}.{$methodName}' is not allowed.", 'code' => 403], 200, 403);
+            return ApiResponse::error("Report method '{$category}.{$methodName}' is not allowed.", 403);
         }
 
         if (! method_exists($service, $methodName)) {
-            return ApiResponse::fromResult(['error' => "Report method '{$category}.{$methodName}' not found.", 'code' => 404], 200, 404);
+            return ApiResponse::error("Report method '{$category}.{$methodName}' not found.", 404);
         }
 
         try {
             $result = $service->{$methodName}($filters);
         } catch (\Throwable $e) {
-            return ApiResponse::fromResult(['error' => $e->getMessage(), 'code' => 500], 200, 500);
+            return ApiResponse::error($e->getMessage(), 500);
         }
 
-        return ApiResponse::fromResult($result);
+        return ApiResponse::success($result, 'Report generated successfully.');
     }
 
     /**

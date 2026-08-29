@@ -148,10 +148,10 @@ $(document).ready(function() {
         const val = $(this).val();
         if (val.length < 1) { $('#autocompleteDropdown').addClass('hidden'); return; }
         autocompleteTimeout = setTimeout(() => {
-            $.get('{{ route("barcode-print.autocomplete") }}', { q: val }, function(data) {
+            $.get('{{ route("barcode-print.autocomplete") }}', { q: val }, function(res) {
                 const dd = $('#autocompleteDropdown'); dd.empty();
-                if (!data.length) { dd.addClass('hidden'); return; }
-                data.forEach(p => {
+                const items = res.data || []; if (!items.length) { dd.addClass('hidden'); return; }
+                items.forEach(p => {
                     dd.append(`<div class="px-4 py-2.5 hover:bg-primary-light cursor-pointer border-b border-gray-50 flex items-center gap-3 autocomplete-item" data-id="${p.id}">
                         <i class="fas fa-box text-gray-300 text-xs"></i>
                         <div><div class="text-sm font-medium text-gray-800">${p.name}</div>${p.brand ? `<div class="text-xs text-gray-400">${p.brand}</div>` : ''}</div>
@@ -179,8 +179,8 @@ $(document).ready(function() {
             url: '{{ route("barcode-print.search") }}',
             method: 'GET',
             data: { search: $('#searchInput').val(), brand_id: $('#brandFilter').val(), category_id: $('#categoryFilter').val() },
-            success: function(products) {
-                if (products.length) {
+            success: function(res) {
+                const products = (res.data || []); if (products.length) {
                     $('#emptyState').addClass('hidden'); $('#productsList').removeClass('hidden');
                     $('#selectedProductInfo').html(`<i class="fas fa-list text-primary"></i><span class="text-sm text-primary">Click a product below to see its variants</span>`);
                     $('#resultCount').text(`${products.length} product(s)`);
@@ -207,10 +207,10 @@ $(document).ready(function() {
 
     function loadProductVariants(productId) {
         selectedVariants.clear();
-        $.get(`/barcode-print/variants/${productId}`, function(data) {
+        $.get(`/barcode-print/variants/${productId}`, function(res) {
             $('#emptyState').addClass('hidden'); $('#productsList').removeClass('hidden');
-            $('#selectedProductInfo').html(`<i class="fas fa-box text-primary"></i><span class="text-sm font-semibold text-primary-hover">${data.name}</span>${data.brand ? `<span class="text-xs bg-primary-light text-primary px-2 py-0.5 rounded-full ml-2">${data.brand.name}</span>` : ''}<span class="text-xs bg-primary-light text-primary px-2 py-0.5 rounded-full ml-auto">${data.variants.length} variant(s)</span>`);
-            renderVariants(data.variants);
+            $('#selectedProductInfo').html(`<i class="fas fa-box text-primary"></i><span class="text-sm font-semibold text-primary-hover">${product.name}</span>${product.brand ? `<span class="text-xs bg-primary-light text-primary px-2 py-0.5 rounded-full ml-2">${product.brand.name}</span>` : ''}<span class="text-xs bg-primary-light text-primary px-2 py-0.5 rounded-full ml-auto">${product.variants.length} variant(s)</span>`);
+            const product = res.data || {}; renderVariants(product.variants);
         });
     }
 

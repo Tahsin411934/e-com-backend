@@ -549,11 +549,7 @@ class ProductService
     public function searchProducts(string $query, ?int $categoryId = null): JsonResponse
     {
         if (trim($query) === '') {
-            return ApiResponse::fromResult([
-                'success' => false,
-                'message' => 'Search query is required',
-                'data' => [],
-            ]);
+            return ApiResponse::error('Search query is required', 400);
         }
 
         try {
@@ -590,17 +586,9 @@ class ProductService
                 ];
             })->toArray();
 
-            return ApiResponse::fromResult([
-                'success' => true,
-                'message' => 'Products found',
-                'data' => $formattedProducts,
-            ]);
+            return ApiResponse::success($formattedProducts, 'Products found');
         } catch (\Exception $e) {
-            return ApiResponse::fromResult([
-                'success' => false,
-                'message' => 'Error searching products: '.$e->getMessage(),
-                'data' => [],
-            ]);
+            return ApiResponse::error('Error searching products: '.$e->getMessage(), 500);
         }
     }
 

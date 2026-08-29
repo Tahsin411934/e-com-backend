@@ -34,15 +34,16 @@ class BarcodePrintService
             });
         }
 
-        return ApiResponse::fromResult(
-            $query->where('status', 'active')->limit(50)->get()
+        return ApiResponse::success(
+            $query->where('status', 'active')->limit(50)->get(),
+            'Products retrieved successfully.'
         );
     }
 
     public function autocomplete(string $search): JsonResponse
     {
         if (strlen($search) < 1) {
-            return ApiResponse::fromResult([]);
+            return ApiResponse::success([], 'Products retrieved successfully.');
         }
 
         $products = Product::where('status', 'active')
@@ -59,15 +60,16 @@ class BarcodePrintService
                 ];
             });
 
-        return ApiResponse::fromResult($products);
+        return ApiResponse::success($products, 'Suggestions retrieved successfully.');
     }
 
     public function getProductVariants(int $productId): JsonResponse
     {
-        return ApiResponse::fromResult(
+        return ApiResponse::success(
             Product::with(['brand', 'variants' => function ($q) {
                 $q->where('status', 'active');
-            }])->findOrFail($productId)
+            }])->findOrFail($productId),
+            'Product variants retrieved successfully.'
         );
     }
 

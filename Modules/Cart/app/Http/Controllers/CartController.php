@@ -79,10 +79,7 @@ class CartController extends Controller
 
         // Prices are recalculated server-side (campaign > 0 wins, else
         // variant/option discount) so the cart never returns stale prices.
-        return ApiResponse::fromResult([
-            'status' => 'success',
-            'cart' => $this->cartService->freshPricedCart($userId),
-        ]);
+        return ApiResponse::success($this->cartService->freshPricedCart($userId), 'Cart retrieved successfully.');
     }
 
     public function syncCart(Request $request)

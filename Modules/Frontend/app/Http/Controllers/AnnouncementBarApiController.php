@@ -35,9 +35,7 @@ class AnnouncementBarApiController extends Controller
         }
 
         $response = [
-            'success' => true,
-            'message' => 'Announcement bars retrieved successfully.',
-            'data' => AnnouncementBarResource::collection($data),
+            'items' => AnnouncementBarResource::collection($data),
         ];
 
         if ($data instanceof LengthAwarePaginator) {
@@ -49,7 +47,7 @@ class AnnouncementBarApiController extends Controller
             ];
         }
 
-        return ApiResponse::fromResult($response);
+        return ApiResponse::success($response, 'Announcement bars retrieved successfully.');
     }
 
     /**
@@ -60,16 +58,9 @@ class AnnouncementBarApiController extends Controller
         $announcementBar = AnnouncementBar::find($id);
 
         if (! $announcementBar) {
-            return ApiResponse::fromResult([
-                'success' => false,
-                'message' => 'Announcement bar not found.',
-            ], 200, 404);
+            return ApiResponse::notFound('Announcement bar not found.');
         }
 
-        return ApiResponse::fromResult([
-            'success' => true,
-            'message' => 'Announcement bar retrieved successfully.',
-            'data' => new AnnouncementBarResource($announcementBar),
-        ]);
+        return ApiResponse::success(new AnnouncementBarResource($announcementBar), 'Announcement bar retrieved successfully.');
     }
 }

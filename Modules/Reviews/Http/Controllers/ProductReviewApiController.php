@@ -38,12 +38,11 @@ class ProductReviewApiController extends Controller
             ];
         });
 
-        return ApiResponse::fromResult([
-            'success' => true,
-            'data' => $formattedReviews,
+        return ApiResponse::success([
+            'reviews' => $formattedReviews,
             'average_rating' => round($reviews->avg('rating') ?? 0, 1),
             'total_reviews' => $reviews->count(),
-        ]);
+        ], 'Reviews retrieved successfully.');
     }
 
     /**
@@ -65,10 +64,7 @@ class ProductReviewApiController extends Controller
             ->first();
 
         if ($existingReview) {
-            return ApiResponse::fromResult([
-                'success' => false,
-                'message' => 'You have already reviewed this product.',
-            ], 200, 422);
+            return ApiResponse::error('You have already reviewed this product.', 422);
         }
 
         $review = ProductReview::create([
@@ -96,18 +92,14 @@ class ProductReviewApiController extends Controller
             ['review_id' => $review->id, 'product_id' => $productId, 'url' => '/product-reviews'],
         );
 
-        return ApiResponse::fromResult([
-            'success' => true,
-            'message' => 'Review submitted successfully. It will be published after approval.',
-            'data' => [
-                'id' => $review->id,
-                'user_name' => $request->user()->name ?? 'Anonymous',
-                'rating' => $review->rating,
-                'title' => $review->title,
-                'body' => $review->body,
-                'is_verified_purchase' => $review->is_verified_purchase,
-                'created_at' => $review->created_at->diffForHumans(),
-            ],
-        ], 201, 500);
+        return ApiResponse::created([
+            'id' => $review->id,
+            'user_name' => $request->user()->name ?? 'Anonymous',
+            'rating' => $review->rating,
+            'title' => $review->title,
+            'body' => $review->body,
+            'is_verified_purchase' => $review->is_verified_purchase,
+            'created_at' => $review->created_at->diffForHumans(),
+        ], 'Review submitted successfully. It will be published after approval.');
     }
 }

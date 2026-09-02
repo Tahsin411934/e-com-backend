@@ -75,7 +75,7 @@ class CountryService
         }
     }
 
-    public function getAllCountries(): JsonResponse
+    public function getAllCountries(): array
     {
         return Country::orderBy('name')->get()->toArray();
     }

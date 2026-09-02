@@ -2,16 +2,15 @@
 
 namespace Modules\Cart\Http\Controllers;
 
-use App\Helpers\ApiResponse;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Str;
 use Modules\Cart\Models\Campaign;
-use Modules\Catalog\Models\Product;
+use Modules\Cart\Services\CampaignService;
 
 class CampaignController extends Controller
 {
+    public function __construct(private CampaignService $campaignService) {}
+
     public function index()
     {
         return view('cart::campaigns.index');
@@ -19,104 +18,109 @@ class CampaignController extends Controller
 
     public function list()
     {
-        return ApiResponse::success(Campaign::withCount('products')->latest()->get());
+        return $this->campaignService->list();
     }
 
     public function store(Request $request)
     {
-        $data = $request->validate(['name' => 'required|string|max:160', 'description' => 'nullable|string', 'banner_image' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:5120', 'button_text' => 'nullable|string|max:60', 'priority' => 'nullable|integer|min:0', 'is_featured' => 'nullable|boolean', 'is_active' => 'nullable|boolean', 'status' => 'required|in:draft,active,paused', 'starts_at' => 'nullable|date', 'ends_at' => 'nullable|date|after:starts_at']);
-        if ($request->hasFile('banner_image')) {
-            $data['banner_image'] = $request->file('banner_image')->store('campaigns/banners', 'public');
-        }
-        $data['slug'] = Str::slug($data['name']).'-'.Str::lower(Str::random(5));
+        $data = $request->validate([
+            'name' => 'required|string|max:160',
+            'description' => 'nullable|string',
+            'banner_image' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:5120',
+            'button_text' => 'nullable|string|max:60',
+            'priority' => 'nullable|integer|min:0',
+            'is_featured' => 'nullable|boolean',
+            'is_active' => 'nullable|boolean',
+            'status' => 'required|in:draft,active,paused',
+            'starts_at' => 'nullable|date',
+            'ends_at' => 'nullable|date|after:starts_at',
+        ]);
 
-        return ApiResponse::created(Campaign::create($data), 'Campaign created successfully.');
+        if ($request->hasFile('banner_image')) {
+            $data['banner_image_file'] = $request->file('banner_image');
+        }
+        unset($data['banner_image']);
+
+        return $this->campaignService->store($data);
     }
 
     public function show(Campaign $campaign)
     {
-        return ApiResponse::success($campaign->load('products.product'));
+        return $this->campaignService->show($campaign);
     }
 
     public function update(Request $request, Campaign $campaign)
     {
-        $data = $request->validate(['name' => 'sometimes|required|string|max:160', 'description' => 'nullable|string', 'banner_image' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:5120', 'button_text' => 'nullable|string|max:60', 'priority' => 'nullable|integer|min:0', 'is_featured' => 'nullable|boolean', 'is_active' => 'sometimes|nullable|boolean', 'status' => 'sometimes|required|in:draft,active,paused', 'starts_at' => 'nullable|date', 'ends_at' => 'nullable|date|after:starts_at']);
-        if ($request->boolean('remove_banner')) {
-            if ($campaign->banner_image) {
-                Storage::disk('public')->delete($campaign->banner_image);
-            }
-            $data['banner_image'] = null;
-        } elseif ($request->hasFile('banner_image')) {
-            if ($campaign->banner_image) {
-                Storage::disk('public')->delete($campaign->banner_image);
-            }
-            $data['banner_image'] = $request->file('banner_image')->store('campaigns/banners', 'public');
-        }
-        $campaign->update($data);
+        $data = $request->validate([
+            'name' => 'sometimes|required|string|max:160',
+            'description' => 'nullable|string',
+            'banner_image' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:5120',
+            'button_text' => 'nullable|string|max:60',
+            'priority' => 'nullable|integer|min:0',
+            'is_featured' => 'nullable|boolean',
+            'is_active' => 'sometimes|nullable|boolean',
+            'status' => 'sometimes|required|in:draft,active,paused',
+            'starts_at' => 'nullable|date',
+            'ends_at' => 'nullable|date|after:starts_at',
+        ]);
 
-        return ApiResponse::success($campaign->fresh(), 'Campaign updated successfully.');
+        if ($request->hasFile('banner_image')) {
+            $data['banner_image_file'] = $request->file('banner_image');
+        }
+        unset($data['banner_image']);
+
+        return $this->campaignService->update($campaign, $data, $request->boolean('remove_banner'));
     }
 
     public function destroy(Campaign $campaign)
     {
-        $campaign->delete();
-
-        return ApiResponse::success(null, 'Campaign deleted successfully.');
+        return $this->campaignService->destroy($campaign);
     }
 
     public function toggleActive(Campaign $campaign)
     {
-        $campaign->is_active = ! $campaign->is_active;
-        $campaign->save();
-
-        return ApiResponse::success($campaign->fresh(), 'Campaign status updated.');
+        return $this->campaignService->toggleActive($campaign);
     }
 
     public function searchProducts(Request $request)
     {
-        $q = $request->string('q')->trim();
-
-        return ApiResponse::success(Product::where('status', 'active')->where(fn ($query) => $query->where('name', 'like', "%{$q}%")->orWhere('slug', 'like', "%{$q}%"))->with('variants:id,product_id,name,sku,sale_price')->limit(20)->get(['id', 'name', 'slug']));
+        return $this->campaignService->searchProducts((string) $request->string('q')->trim());
     }
 
     public function addProduct(Request $request, Campaign $campaign)
     {
-        $data = $request->validate(['product_id' => 'required|exists:products,id', 'variant_id' => 'nullable|exists:product_variants,id', 'discount_type' => 'required|in:percentage,fixed_amount,fixed_price', 'discount_value' => 'required|numeric|min:0']);
-        $entry = $campaign->products()->firstOrNew(['product_id' => $data['product_id'], 'variant_id' => $data['variant_id'] ?? null]);
-        if (! $entry->exists) {
-            $entry->sort_order = ((int) $campaign->products()->max('sort_order')) + 1;
-        }
-        $entry->fill($data);
-        $entry->save();
+        $data = $request->validate([
+            'product_id' => 'required|exists:products,id',
+            'variant_id' => 'nullable|exists:product_variants,id',
+            'discount_type' => 'required|in:percentage,fixed_amount,fixed_price',
+            'discount_value' => 'required|numeric|min:0',
+        ]);
 
-        return ApiResponse::success($entry->load('product', 'variant'), 'Product added to campaign.');
+        return $this->campaignService->addProduct($campaign, $data);
     }
 
     public function updateProduct(Request $request, Campaign $campaign, int $campaignProduct)
     {
-        $data = $request->validate(['discount_type' => 'sometimes|required|in:percentage,fixed_amount,fixed_price', 'discount_value' => 'sometimes|required|numeric|min:0']);
-        $entry = $campaign->products()->whereKey($campaignProduct)->firstOrFail();
-        $entry->update($data);
+        $data = $request->validate([
+            'discount_type' => 'sometimes|required|in:percentage,fixed_amount,fixed_price',
+            'discount_value' => 'sometimes|required|numeric|min:0',
+        ]);
 
-        return ApiResponse::success($entry->load('product', 'variant'), 'Campaign product updated.');
+        return $this->campaignService->updateProduct($campaign, $campaignProduct, $data);
     }
 
     public function reorderProducts(Request $request, Campaign $campaign)
     {
-        $data = $request->validate(['ordered_ids' => 'required|array', 'ordered_ids.*' => 'integer']);
-        foreach ((array) $data['ordered_ids'] as $i => $id) {
-            $campaign->products()->whereKey($id)->update(['sort_order' => $i + 1]);
-        }
-        $campaign->products()->whereNotIn('id', $data['ordered_ids'])->update(['sort_order' => 999999]);
+        $data = $request->validate([
+            'ordered_ids' => 'required|array',
+            'ordered_ids.*' => 'integer',
+        ]);
 
-        return ApiResponse::success(null, 'Product order updated.');
+        return $this->campaignService->reorderProducts($campaign, $data['ordered_ids']);
     }
 
     public function removeProduct(Campaign $campaign, int $campaignProduct)
     {
-        $entry = $campaign->products()->whereKey($campaignProduct)->firstOrFail();
-        $entry->delete();
-
-        return ApiResponse::success(null, 'Product removed from campaign.');
+        return $this->campaignService->removeProduct($campaign, $campaignProduct);
     }
 }

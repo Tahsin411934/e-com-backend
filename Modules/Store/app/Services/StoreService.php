@@ -87,7 +87,7 @@ class StoreService
         }
     }
 
-    public function getAllActiveStores(): JsonResponse
+    public function getAllActiveStores(): array
     {
         return Store::where('status', 'active')->orderBy('name')->get()->toArray();
     }

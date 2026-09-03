@@ -6,7 +6,7 @@ use Modules\Shipping\Http\Controllers\DeliveryZoneController;
 use Modules\Shipping\Http\Controllers\ShipmentController;
 use Modules\Shipping\Http\Controllers\ShipmentEventController;
 
-Route::middleware(['auth', 'verified'])->group(function () {
+Route::middleware(['auth', 'verified', 'admin'])->group(function () {
     Route::resource('delivery-zones', DeliveryZoneController::class)->except(['create', 'edit'])->names('delivery-zones');
     Route::get('/dataTable/delivery-zones', [DeliveryZoneController::class, 'dataTable'])->name('delivery-zones.dataTable');
 

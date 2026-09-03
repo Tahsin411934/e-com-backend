@@ -25,12 +25,14 @@ Route::middleware(['convert.auth.cookie', 'auth:sanctum'])->prefix('v1')->group(
     // Identity routes
     Route::apiResource('identities', IdentityController::class)->names('identity');
 
-    // User management routes
-    Route::apiResource('users', UserController::class)->names('users');
+    // User management routes - Super Admin or Admin only
+    Route::middleware('role:Super Admin,Admin')->group(function () {
+        Route::apiResource('users', UserController::class)->names('users');
+    });
 
-    // Role management routes
-    Route::apiResource('roles', RoleController::class)->names('roles');
-
-    // Permission management routes
-    Route::apiResource('permissions', PermissionController::class)->names('permissions');
+    // Role & permission management routes - Super Admin only
+    Route::middleware('role:Super Admin')->group(function () {
+        Route::apiResource('roles', RoleController::class)->names('roles');
+        Route::apiResource('permissions', PermissionController::class)->names('permissions');
+    });
 });

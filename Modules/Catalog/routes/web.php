@@ -10,7 +10,7 @@ use Modules\Catalog\Http\Controllers\SizeController;
 use Modules\Catalog\Http\Controllers\TaxRateController;
 use Modules\Catalog\Http\Controllers\UnitController;
 
-Route::middleware(['auth', 'verified'])->group(function () {
+Route::middleware(['auth', 'verified', 'admin'])->group(function () {
     Route::get('/barcode-print', [BarcodePrintController::class, 'index'])->name('barcode-print.index');
     Route::get('/barcode-print/search', [BarcodePrintController::class, 'search'])->name('barcode-print.search');
     Route::get('/barcode-print/autocomplete', [BarcodePrintController::class, 'autocomplete'])->name('barcode-print.autocomplete');

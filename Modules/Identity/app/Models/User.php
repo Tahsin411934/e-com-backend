@@ -73,6 +73,26 @@ class User extends Authenticatable
     }
 
     /**
+     * Role name reserved for frontend/shop customers
+     */
+    public const CUSTOMER_ROLE = 'Customer';
+
+    /**
+     * Determine whether the user may access the admin panel.
+     *
+     * Admin panel access requires at least one staff-side role
+     * (Super Admin, Admin, Manager, Staff, ...). Frontend-registered
+     * customers only carry the "Customer" role (or no role at all)
+     * and are denied access.
+     */
+    public function hasAdminAccess(): bool
+    {
+        return $this->roles->contains(function ($role) {
+            return $role->name !== self::CUSTOMER_ROLE;
+        });
+    }
+
+    /**
      * Check if user has a specific permission
      */
     public function hasPermission(string $permissionName): bool

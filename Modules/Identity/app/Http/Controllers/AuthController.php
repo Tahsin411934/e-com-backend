@@ -12,6 +12,7 @@ use Modules\Identity\Http\Requests\ForgotPasswordRequest;
 use Modules\Identity\Http\Requests\LoginRequest;
 use Modules\Identity\Http\Requests\RegisterRequest;
 use Modules\Identity\Http\Requests\ResetPasswordRequest;
+use Modules\Identity\Models\Role;
 use Modules\Identity\Models\User;
 
 class AuthController extends Controller
@@ -33,9 +34,10 @@ class AuthController extends Controller
             'status' => 'active',
         ]);
 
-        // Assign default role if provided
-        if (isset($data['role_id'])) {
-            $user->roles()->attach($data['role_id']);
+        // Assign the default customer role. Roles can never be set from
+        // public registration input (prevents privilege escalation).
+        if ($customerRole = Role::where('name', User::CUSTOMER_ROLE)->first()) {
+            $user->roles()->attach($customerRole->id);
         }
 
         // Create token

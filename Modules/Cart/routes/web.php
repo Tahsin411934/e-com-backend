@@ -6,7 +6,7 @@ use Modules\Cart\Http\Controllers\CartController;
 use Modules\Cart\Http\Controllers\CouponController;
 use Modules\Cart\Http\Controllers\WishlistController;
 
-Route::middleware(['auth', 'verified'])->group(function () {
+Route::middleware(['auth', 'verified', 'admin'])->group(function () {
     // Cart routes
     Route::resource('cart', CartController::class)->except(['create', 'edit'])->names('cart');
     Route::get('/dataTable/carts', [CartController::class, 'dataTable'])->name('cart.dataTable');

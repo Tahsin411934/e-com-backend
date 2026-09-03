@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Middleware\ConvertAuthTokenCookieToBearerHeader;
+use App\Http\Middleware\EnsureAdminUser;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -16,6 +17,7 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->alias([
+            'admin' => EnsureAdminUser::class,
             'role' => CheckRole::class,
             'permission' => CheckPermission::class,
             'convert.auth.cookie' => ConvertAuthTokenCookieToBearerHeader::class,

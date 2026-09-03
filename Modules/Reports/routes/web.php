@@ -13,7 +13,7 @@ use Modules\Reports\Http\Controllers\ReportController;
 |
 */
 
-Route::middleware(['auth', 'verified'])->group(function () {
+Route::middleware(['auth', 'verified', 'admin'])->group(function () {
     Route::get('/reports', [ReportController::class, 'dashboard'])->name('reports.dashboard');
     Route::get('/reports/sales', [ReportController::class, 'sales'])->name('reports.sales');
     Route::get('/reports/products', [ReportController::class, 'products'])->name('reports.products');

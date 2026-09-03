@@ -114,16 +114,6 @@
                     <!-- Google Sign In Button -->
 
 
-                    <!-- Create Account Link -->
-                    <div class="text-center">
-                        <p class="text-sm text-slate-600 dark:text-slate-400">
-                            Don't have an account?
-                            <a href="{{ route('register') }}"
-                                class="text-primary dark:text-primary-light hover:text-primary-hover dark:hover:text-primary-light font-semibold ml-1">
-                                Create one
-                            </a>
-                        </p>
-                    </div>
                 </form>
             </div>
 

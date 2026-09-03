@@ -7,7 +7,7 @@ use Modules\Frontend\Http\Controllers\HomepageCtaController;
 use Modules\Frontend\Http\Controllers\NavbarController;
 use Modules\Frontend\Http\Controllers\SiteSettingController;
 
-Route::middleware(['auth', 'verified'])->group(function () {
+Route::middleware(['auth', 'verified', 'admin'])->group(function () {
     // Navbar Items page
     Route::get('/nav-items', [NavbarController::class, 'index'])->name('frontend.nav-items.index');
 

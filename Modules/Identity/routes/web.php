@@ -5,7 +5,7 @@ use Modules\Identity\Http\Controllers\PermissionController;
 use Modules\Identity\Http\Controllers\RoleController;
 use Modules\Identity\Http\Controllers\UserController;
 
-Route::middleware(['auth', 'verified'])->group(function () {
+Route::middleware(['auth', 'verified', 'admin'])->group(function () {
     // Users - requires Super Admin or Admin role
     Route::middleware(['role:Super Admin,Admin'])->group(function () {
         Route::resource('users', UserController::class)->except(['create', 'edit'])->names('users');

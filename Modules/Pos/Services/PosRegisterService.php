@@ -87,7 +87,7 @@ class PosRegisterService
         }
     }
 
-    public function getAllActiveRegisters(): JsonResponse
+    public function getAllActiveRegisters(): array
     {
         return PosRegister::where('status', 'active')
             ->with('store')

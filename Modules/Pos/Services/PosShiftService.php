@@ -102,7 +102,7 @@ class PosShiftService
         }
     }
 
-    public function getOpenShifts(): JsonResponse
+    public function getOpenShifts(): array
     {
         return PosShift::where('status', 'open')
             ->with(['register.store', 'user'])

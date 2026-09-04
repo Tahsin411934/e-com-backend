@@ -4,6 +4,7 @@ namespace Database\Seeders;
 
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
+use Modules\Identity\Database\Seeders\AdditionalPermissionsSeeder;
 use Modules\Identity\Database\Seeders\IdentityDatabaseSeeder;
 
 class DatabaseSeeder extends Seeder
@@ -17,7 +18,8 @@ class DatabaseSeeder extends Seeder
         $this->command->info('====================================');
 
         // Order matters for foreign key dependencies
-        $this->call(IdentityDatabaseSeeder::class);
+        // $this->call(IdentityDatabaseSeeder::class);
+        $this->call(AdditionalPermissionsSeeder::class);
         // $this->call(\Modules\Account\Database\Seeders\AccountDatabaseSeeder::class);
         // $this->call(\Modules\Store\Database\Seeders\StoreDatabaseSeeder::class);
         // $this->call(\Modules\Catalog\Database\Seeders\CatalogDatabaseSeeder::class);

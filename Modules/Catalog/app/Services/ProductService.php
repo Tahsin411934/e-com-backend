@@ -22,7 +22,7 @@ class ProductService
 {
     public function getProductDataTable(Request $request)
     {
-        $query = Product::with(['brand'])
+        $query = Product::forCurrentStore()->with(['brand'])
             ->select([
                 'products.id',
                 'products.brand_id',
@@ -70,6 +70,14 @@ class ProductService
 
     public function saveProduct(array $data): JsonResponse
     {
+        // SaaS: store assignment is resolved server-side from the current
+        // store context. Only platform admins may set or move a product's
+        // store explicitly.
+        $actor = auth()->user();
+        if (! ($actor && ($actor->hasRole('Super Admin') || $actor->hasRole('Admin')))) {
+            unset($data['store_id']);
+        }
+
         // Validate SKU uniqueness across all variants (create + update)
         if (isset($data['variants']) && is_array($data['variants'])) {
             $allSkus = [];
@@ -121,7 +129,7 @@ class ProductService
                 $oldSlug = null;
 
                 if ($productId) {
-                    $product = Product::findOrFail($productId);
+                    $product = Product::forCurrentStore()->findOrFail($productId);
                     $oldSlug = $product->slug;
                     $product->update($data);
                     $message = 'Product updated successfully.';
@@ -266,7 +274,7 @@ class ProductService
     {
         try {
             return ApiResponse::success(
-                Product::with(['brand', 'categories', 'variants.options', 'images'])->findOrFail($id)
+                Product::forCurrentStore()->with(['brand', 'categories', 'variants.options', 'images'])->findOrFail($id)
             );
         } catch (\Exception) {
             return ApiResponse::notFound('Product not found.');
@@ -275,14 +283,14 @@ class ProductService
 
     public function getProductModel(int $id): Product
     {
-        return Product::with(['brand', 'categories', 'variants.options', 'images'])->findOrFail($id);
+        return Product::forCurrentStore()->with(['brand', 'categories', 'variants.options', 'images'])->findOrFail($id);
     }
 
     public function deleteProduct(int $id): JsonResponse
     {
         try {
             return DB::transaction(function () use ($id) {
-                $product = Product::findOrFail($id);
+                $product = Product::forCurrentStore()->findOrFail($id);
 
                 $product->variants()->get()->each(function (ProductVariant $variant) {
                     $variant->options()->get()->each->delete();
@@ -307,7 +315,7 @@ class ProductService
     {
         try {
             return DB::transaction(function () use ($id, $data) {
-                $source = Product::with(['categories', 'variants.options', 'images'])->findOrFail($id);
+                $source = Product::forCurrentStore()->with(['categories', 'variants.options', 'images'])->findOrFail($id);
 
                 $name = trim((string) ($data['name'] ?? ''));
                 if ($name === '') {
@@ -320,6 +328,7 @@ class ProductService
                     : null;
 
                 $duplicate = Product::create([
+                    'store_id' => $source->store_id,
                     'brand_id' => $source->brand_id ?? $data['brand_id'] ?? null,
                     'category_id' => $source->category_id ?? $data['category_id'] ?? null,
                     'navbar_item_id' => $source->navbar_item_id,
@@ -553,7 +562,7 @@ class ProductService
         }
 
         try {
-            $queryBuilder = Product::with(['brand', 'categories', 'images'])
+            $queryBuilder = Product::forCurrentStore()->with(['brand', 'categories', 'images'])
                 ->where('status', 'active')
                 ->where('visibility', 'visible')
                 ->where(function ($q) use ($query) {
@@ -666,7 +675,7 @@ class ProductService
         try {
             return DB::transaction(function () use ($productIds) {
                 foreach ($productIds as $index => $productId) {
-                    Product::where('id', $productId)->update(['order_column' => $index + 1]);
+                    Product::forCurrentStore()->where('id', $productId)->update(['order_column' => $index + 1]);
                 }
 
                 return ApiResponse::success(null, 'Products reordered successfully.');

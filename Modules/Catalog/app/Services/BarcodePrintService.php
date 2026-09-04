@@ -13,7 +13,7 @@ class BarcodePrintService
 {
     public function searchProducts(Request $request): JsonResponse
     {
-        $query = Product::query()->with(['brand', 'categories', 'variants' => function ($q) {
+        $query = Product::forCurrentStore()->with(['brand', 'categories', 'variants' => function ($q) {
             $q->where('status', 'active');
         }]);
 
@@ -46,7 +46,8 @@ class BarcodePrintService
             return ApiResponse::success([], 'Products retrieved successfully.');
         }
 
-        $products = Product::where('status', 'active')
+        $products = Product::forCurrentStore()
+            ->where('status', 'active')
             ->where('name', 'like', "%{$search}%")
             ->with('brand')
             ->limit(10)
@@ -66,7 +67,7 @@ class BarcodePrintService
     public function getProductVariants(int $productId): JsonResponse
     {
         return ApiResponse::success(
-            Product::with(['brand', 'variants' => function ($q) {
+            Product::forCurrentStore()->with(['brand', 'variants' => function ($q) {
                 $q->where('status', 'active');
             }])->findOrFail($productId),
             'Product variants retrieved successfully.'
@@ -79,7 +80,11 @@ class BarcodePrintService
     public function generateLabels(array $variantItems): array
     {
         $variantIds = collect($variantItems)->pluck('variant_id');
-        $variants = ProductVariant::whereIn('id', $variantIds)->with('product')->get()->keyBy('id');
+        $variants = ProductVariant::whereIn('id', $variantIds)
+            ->whereHas('product', fn ($q) => $q->forCurrentStore())
+            ->with('product')
+            ->get()
+            ->keyBy('id');
 
         $generator = new BarcodeGeneratorSVG;
         $barcodes = [];

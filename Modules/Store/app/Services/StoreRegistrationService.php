@@ -14,48 +14,60 @@ use Modules\Store\Models\Store;
 class StoreRegistrationService
 {
     /**
-     * Register a SaaS tenant in one transaction:
-     * user + "Store Owner" role + their store.
+     * Core tenant creation shared by the API and web registration flows:
+     * user + "Store Owner" role + their store, inside one transaction.
+     *
+     * @return array{user: User, store: Store}
+     */
+    public function createStoreOwner(array $data): array
+    {
+        return DB::transaction(function () use ($data) {
+            $user = User::create([
+                'public_id' => (string) Str::uuid(),
+                'first_name' => $data['first_name'],
+                'last_name' => $data['last_name'],
+                'email' => $data['email'],
+                'phone' => $data['phone'] ?? null,
+                'password_hash' => Hash::make($data['password']),
+                'status' => 'active',
+            ]);
+
+            // Roles can never be set from public registration input
+            // (prevents privilege escalation).
+            if ($role = Role::where('name', User::STORE_OWNER_ROLE)->first()) {
+                $user->roles()->attach($role->id);
+            }
+
+            $store = Store::create([
+                'owner_id' => $user->id,
+                'name' => $this->formatStoreName($data['store_name']),
+                'slug' => $this->generateUniqueSlug($data['store_slug'] ?? null, $data['store_name']),
+                'email' => $data['email'],
+                'phone' => $data['phone'] ?? null,
+                'status' => 'active',
+                'currency_code' => strtoupper($data['currency_code'] ?? 'USD'),
+                'timezone' => $data['timezone'] ?? 'UTC',
+            ]);
+
+            return ['user' => $user, 'store' => $store];
+        });
+    }
+
+    /**
+     * Register a SaaS tenant through the public JSON API.
      */
     public function registerStoreOwner(array $data): JsonResponse
     {
         try {
-            return DB::transaction(function () use ($data) {
-                $user = User::create([
-                    'public_id' => (string) Str::uuid(),
-                    'first_name' => $data['first_name'],
-                    'last_name' => $data['last_name'],
-                    'email' => $data['email'],
-                    'phone' => $data['phone'] ?? null,
-                    'password_hash' => Hash::make($data['password']),
-                    'status' => 'active',
-                ]);
+            ['user' => $user, 'store' => $store] = $this->createStoreOwner($data);
 
-                // Roles can never be set from public registration input
-                // (prevents privilege escalation).
-                if ($role = Role::where('name', User::STORE_OWNER_ROLE)->first()) {
-                    $user->roles()->attach($role->id);
-                }
+            $token = $user->createToken('auth_token')->plainTextToken;
 
-                $store = Store::create([
-                    'owner_id' => $user->id,
-                    'name' => $this->formatStoreName($data['store_name']),
-                    'slug' => $this->generateUniqueSlug($data['store_slug'] ?? null, $data['store_name']),
-                    'email' => $data['email'],
-                    'phone' => $data['phone'] ?? null,
-                    'status' => 'active',
-                    'currency_code' => strtoupper($data['currency_code'] ?? 'USD'),
-                    'timezone' => $data['timezone'] ?? 'UTC',
-                ]);
-
-                $token = $user->createToken('auth_token')->plainTextToken;
-
-                return ApiResponse::created([
-                    'user' => $user->load('roles'),
-                    'store' => $store->fresh(),
-                    'token' => $token,
-                ], 'Store owner registration successful.');
-            });
+            return ApiResponse::created([
+                'user' => $user->load('roles'),
+                'store' => $store->fresh(),
+                'token' => $token,
+            ], 'Store owner registration successful.');
         } catch (\Throwable $e) {
             report($e);
 

@@ -12,6 +12,7 @@ use Modules\Inventory\Models\InventoryStock;
 use Modules\Order\Models\Delivery;
 use Modules\Order\Models\Order;
 use Modules\Order\Models\OrderItem;
+use Modules\Store\Support\CurrentStore;
 
 class DashboardService
 {
@@ -22,16 +23,18 @@ class DashboardService
      */
     public function getKpiData(): array
     {
-        $totalRevenue = Order::whereNotIn('status', self::REVENUE_EXCLUDED_STATUSES)
-            ->sum('grand_total');
+        $totalRevenue = $this->scopeOrders(
+            Order::whereNotIn('status', self::REVENUE_EXCLUDED_STATUSES)
+        )->sum('grand_total');
 
-        $totalOrders = Order::count();
+        $totalOrders = $this->scopeOrders(Order::query())->count();
 
-        $totalCustomers = User::count();
+        $totalCustomers = $this->scopedCustomerCount();
 
-        $totalProducts = Product::count();
+        // Admin panel product totals use explicit store scoping.
+        $totalProducts = Product::forCurrentStore()->count();
 
-        $pendingOrders = Order::where('status', 'pending')->count();
+        $pendingOrders = $this->scopeOrders(Order::where('status', 'pending'))->count();
 
         $lowStockItems = $this->activeStockQuery()
             ->where(DB::raw('quantity_on_hand - quantity_reserved'), '<=', DB::raw('reorder_point'))
@@ -42,19 +45,21 @@ class DashboardService
         $lastMonthEnd = Carbon::now()->subMonth()->endOfMonth();
         $thisMonthStart = Carbon::now()->startOfMonth();
 
-        $lastMonthRevenue = Order::whereNotIn('status', self::REVENUE_EXCLUDED_STATUSES)
-            ->whereBetween('created_at', [$lastMonthStart, $lastMonthEnd])
-            ->sum('grand_total');
+        $lastMonthRevenue = $this->scopeOrders(
+            Order::whereNotIn('status', self::REVENUE_EXCLUDED_STATUSES)
+        )->whereBetween('created_at', [$lastMonthStart, $lastMonthEnd])->sum('grand_total');
 
-        $thisMonthRevenue = Order::whereNotIn('status', self::REVENUE_EXCLUDED_STATUSES)
-            ->where('created_at', '>=', $thisMonthStart)
-            ->sum('grand_total');
+        $thisMonthRevenue = $this->scopeOrders(
+            Order::whereNotIn('status', self::REVENUE_EXCLUDED_STATUSES)
+        )->where('created_at', '>=', $thisMonthStart)->sum('grand_total');
 
-        $lastMonthOrders = Order::whereBetween('created_at', [$lastMonthStart, $lastMonthEnd])->count();
-        $thisMonthOrders = Order::where('created_at', '>=', $thisMonthStart)->count();
+        $lastMonthOrders = $this->scopeOrders(Order::query())
+            ->whereBetween('created_at', [$lastMonthStart, $lastMonthEnd])->count();
+        $thisMonthOrders = $this->scopeOrders(Order::query())
+            ->where('created_at', '>=', $thisMonthStart)->count();
 
-        $lastMonthCustomers = User::whereBetween('created_at', [$lastMonthStart, $lastMonthEnd])->count();
-        $thisMonthCustomers = User::where('created_at', '>=', $thisMonthStart)->count();
+        $lastMonthCustomers = $this->scopedCustomerCountBetween($lastMonthStart, $lastMonthEnd);
+        $thisMonthCustomers = $this->scopedCustomerCountBetween($thisMonthStart);
 
         // Growth percentages
         $revenueGrowth = $lastMonthRevenue > 0
@@ -105,17 +110,15 @@ class DashboardService
             $month = $date->month;
             $months[] = $date->format('M');
 
-            $revenue = Order::whereNotIn('status', self::REVENUE_EXCLUDED_STATUSES)
-                ->whereYear('created_at', $year)
-                ->whereMonth('created_at', $month)
-                ->sum('grand_total');
+            $revenue = $this->scopeOrders(
+                Order::whereNotIn('status', self::REVENUE_EXCLUDED_STATUSES)
+            )->whereYear('created_at', $year)->whereMonth('created_at', $month)->sum('grand_total');
 
             $revenueCurrentYear[] = (float) $revenue;
 
-            $lastYearRevenue = Order::whereNotIn('status', self::REVENUE_EXCLUDED_STATUSES)
-                ->whereYear('created_at', $lastYear)
-                ->whereMonth('created_at', $month)
-                ->sum('grand_total');
+            $lastYearRevenue = $this->scopeOrders(
+                Order::whereNotIn('status', self::REVENUE_EXCLUDED_STATUSES)
+            )->whereYear('created_at', $lastYear)->whereMonth('created_at', $month)->sum('grand_total');
             $revenueLastYear[] = (float) $lastYearRevenue;
         }
 
@@ -133,7 +136,7 @@ class DashboardService
      */
     public function getRevenueBySource(): array
     {
-        $rows = Order::query()
+        $rows = $this->scopeOrders(Order::query())
             ->select('source', DB::raw('SUM(grand_total) as total_revenue'))
             ->whereNotIn('status', self::REVENUE_EXCLUDED_STATUSES)
             ->groupBy('source')
@@ -179,7 +182,7 @@ class DashboardService
      */
     public function getRecentOrders(int $limit = 5): array
     {
-        return Order::with(['user', 'items'])
+        return $this->scopeOrders(Order::with(['user', 'items']))
             ->orderByDesc('created_at')
             ->limit($limit)
             ->get()
@@ -202,12 +205,19 @@ class DashboardService
      */
     public function getTopSellingProducts(int $limit = 5): array
     {
+        $productIds = $this->scopedProductIds();
+
+        if ($productIds !== null && $productIds === []) {
+            return [];
+        }
+
         return OrderItem::select(
             'product_id', 'product_name',
             DB::raw('SUM(quantity) as total_quantity'),
             DB::raw('SUM(line_total) as total_revenue')
         )
             ->whereHas('order', fn ($q) => $q->whereNotIn('status', ['cancelled', 'refunded']))
+            ->when($productIds !== null, fn ($q) => $q->whereIn('product_id', $productIds))
             ->groupBy('product_id', 'product_name')
             ->orderByDesc('total_quantity')
             ->limit($limit)
@@ -264,7 +274,7 @@ class DashboardService
      */
     private function activeStockQuery(): Builder
     {
-        return InventoryStock::query()
+        $query = InventoryStock::query()
             ->select('inventory_stock.*')
             ->join('product_variants', 'inventory_stock.variant_id', '=', 'product_variants.id')
             ->join('products', 'product_variants.product_id', '=', 'products.id')
@@ -274,6 +284,13 @@ class DashboardService
                 $q->whereNull('inventory_stock.variant_option_id')
                     ->orWhereHas('variantOption', fn ($o) => $o->whereNull('deleted_at'));
             });
+
+        // SaaS: scope inventory KPIs to the current store when one is active.
+        if (($storeId = CurrentStore::id()) !== null) {
+            $query->where('products.store_id', $storeId);
+        }
+
+        return $query;
     }
 
     /**
@@ -282,7 +299,7 @@ class DashboardService
     public function getRecentActivities(int $limit = 10): array
     {
         $activities = [];
-        $recentOrders = Order::with('user')
+        $recentOrders = $this->scopeOrders(Order::with('user'))
             ->whereNotIn('status', self::REVENUE_EXCLUDED_STATUSES)
             ->orderByDesc('created_at')
             ->limit($limit)
@@ -349,6 +366,69 @@ class DashboardService
     private function formatLabel(?string $value): string
     {
         return str($value ?? 'unknown')->replace(['_', '-'], ' ')->title()->toString();
+    }
+
+    /**
+     * SaaS: product ids of the store the dashboard is scoped to
+     * (null = no store context → platform-wide dashboard).
+     */
+    private function scopedProductIds(): ?array
+    {
+        $storeId = CurrentStore::id();
+
+        if ($storeId === null) {
+            return null;
+        }
+
+        return Product::where('store_id', $storeId)
+            ->pluck('id')
+            ->all();
+    }
+
+    /**
+     * SaaS: restrict order queries to orders containing the current store's
+     * products. Mixed-store orders are attributed in full to each involved
+     * store until per-store order items are introduced.
+     */
+    private function scopeOrders($query)
+    {
+        $productIds = $this->scopedProductIds();
+
+        if ($productIds === null) {
+            return $query;
+        }
+
+        if ($productIds === []) {
+            return $query->whereRaw('1 = 0');
+        }
+
+        return $query->whereHas('items', fn ($q) => $q->whereIn('product_id', $productIds));
+    }
+
+    /**
+     * SaaS: customer totals — all users platform-wide, or distinct
+     * customers who ordered the current store's products.
+     */
+    private function scopedCustomerCount(): int
+    {
+        return $this->scopedCustomerCountBetween(Carbon::createFromTimestamp(0));
+    }
+
+    private function scopedCustomerCountBetween(Carbon $start, ?Carbon $end = null): int
+    {
+        $query = $this->scopedProductIds() === null
+            ? User::query()
+            : User::whereIn('id', $this->scopeOrders(Order::query())
+                ->whereNotNull('user_id')
+                ->select('user_id'));
+
+        $query->where('created_at', '>=', $start);
+
+        if ($end !== null) {
+            $query->where('created_at', '<=', $end);
+        }
+
+        return (int) $query->count();
     }
 
     /**

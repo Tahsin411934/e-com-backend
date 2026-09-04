@@ -14,6 +14,7 @@ class StoreProductRequest extends FormRequest
     public function rules(): array
     {
         return [
+            'store_id' => 'nullable|integer|exists:stores,id',
             'brand_id' => 'nullable|integer|exists:brands,id',
             'unit_id' => 'nullable|integer|exists:units,id',
             'size_id' => 'nullable|integer|exists:sizes,id',

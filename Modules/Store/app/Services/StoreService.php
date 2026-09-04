@@ -12,6 +12,8 @@ use Yajra\DataTables\DataTables;
 
 class StoreService
 {
+    public function __construct(private StoreRegistrationService $registrationService) {}
+
     public function getStoreDataTable(Request $request)
     {
         $query = Store::query()->orderByDesc('created_at');
@@ -47,12 +49,29 @@ class StoreService
                 unset($data['store_id']);
 
                 if ($storeId) {
+                    // Owner credentials are only set when the store is created.
+                    $this->forgetOwnerFields($data);
+
                     $store = Store::findOrFail($storeId);
                     $store->update($data);
                     $message = 'Store updated successfully.';
                 } else {
+                    // A new store always creates its owner's login credentials
+                    // (same as public registration) and links them as the owner.
+                    $owner = $this->registrationService->createOwnerUser([
+                        'first_name' => $data['owner_first_name'],
+                        'last_name' => $data['owner_last_name'],
+                        'email' => $data['email'],
+                        'phone' => $data['phone'] ?? null,
+                        'password' => $data['password'],
+                    ]);
+
+                    $this->forgetOwnerFields($data);
+
+                    $data['owner_id'] = $owner->id;
+
                     $store = Store::create($data);
-                    $message = 'Store created successfully.';
+                    $message = 'Store created successfully. Owner login: '.$owner->email;
                 }
 
                 return ApiResponse::success($store->fresh(), $message);
@@ -60,6 +79,14 @@ class StoreService
         } catch (\Exception $e) {
             return ApiResponse::error('Error saving store: '.$e->getMessage(), 500);
         }
+    }
+
+    /**
+     * Owner credential inputs are never stored on the store itself.
+     */
+    private function forgetOwnerFields(array &$data): void
+    {
+        unset($data['owner_first_name'], $data['owner_last_name'], $data['password'], $data['password_confirmation']);
     }
 
     public function getStoreById(int $id): JsonResponse

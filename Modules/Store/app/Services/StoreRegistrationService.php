@@ -14,6 +14,34 @@ use Modules\Store\Models\Store;
 class StoreRegistrationService
 {
     /**
+     * Create the owner's user account with the default "Store Owner" role.
+     * Used by both public registration and admin-side store creation.
+     */
+    public function createOwnerUser(array $data): User
+    {
+        $user = User::create([
+            'public_id' => (string) Str::uuid(),
+            'first_name' => $data['first_name'],
+            'last_name' => $data['last_name'],
+            'email' => $data['email'],
+            'phone' => $data['phone'] ?? null,
+            'password_hash' => Hash::make($data['password']),
+            'status' => 'active',
+        ]);
+
+        // By default every registered store owner receives the "Store Owner"
+        // role. The role is created automatically if it does not exist yet;
+        // permissions are configured separately by the admin from the backend.
+        $role = Role::firstOrCreate(
+            ['name' => User::STORE_OWNER_ROLE],
+            ['description' => 'SaaS tenant - owns a store and manages its products, catalog and dashboard']
+        );
+        $user->roles()->attach($role->id);
+
+        return $user;
+    }
+
+    /**
      * Core tenant creation shared by the API and web registration flows:
      * user + "Store Owner" role + their store, inside one transaction.
      *
@@ -25,24 +53,7 @@ class StoreRegistrationService
     public function createStoreOwner(array $data): array
     {
         return DB::transaction(function () use ($data) {
-            $user = User::create([
-                'public_id' => (string) Str::uuid(),
-                'first_name' => $data['first_name'],
-                'last_name' => $data['last_name'],
-                'email' => $data['email'],
-                'phone' => $data['phone'] ?? null,
-                'password_hash' => Hash::make($data['password']),
-                'status' => 'active',
-            ]);
-
-            // By default every registered store owner receives the "Store Owner"
-            // role. The role is created automatically if it does not exist yet;
-            // permissions are configured separately by the admin from the backend.
-            $role = Role::firstOrCreate(
-                ['name' => User::STORE_OWNER_ROLE],
-                ['description' => 'SaaS tenant - owns a store and manages its products, catalog and dashboard']
-            );
-            $user->roles()->attach($role->id);
+            $user = $this->createOwnerUser($data);
 
             $store = Store::create([
                 'owner_id' => $user->id,

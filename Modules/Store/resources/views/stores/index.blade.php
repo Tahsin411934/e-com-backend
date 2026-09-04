@@ -33,6 +33,23 @@
         <div class="mb-4">
             <x-form-input label="Email" name="email" id="store_email" placeholder="store@example.com" type="email" />
         </div>
+
+        <!-- Owner Login Credentials (created together with the store) -->
+        <div id="store_owner_section" class="border-t border-gray-200 dark:border-gray-700 my-4 pt-4">
+            <p class="text-sm font-semibold text-gray-700 dark:text-gray-200 mb-3">
+                <i class="fas fa-user-shield mr-1 text-primary"></i> Owner Login Credentials
+                <span class="block text-xs font-normal text-gray-400 mt-0.5">A user account with the Store Owner role is created automatically.</span>
+            </p>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+                <x-form-input label="Owner First Name" name="owner_first_name" id="store_owner_first_name" placeholder="First Name" required />
+                <x-form-input label="Owner Last Name" name="owner_last_name" id="store_owner_last_name" placeholder="Last Name" required />
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+                <x-form-input label="Password" name="password" id="store_owner_password" placeholder="Min 8 characters" type="password" required />
+                <x-form-input label="Confirm Password" name="password_confirmation" id="store_owner_password_confirmation" placeholder="Confirm password" type="password" required />
+            </div>
+        </div>
+
         <div class="mb-4">
             <x-form-input label="Phone" name="phone" id="store_phone" placeholder="+1234567890" />
         </div>
@@ -62,6 +79,19 @@
             $('#store_currency_code').val(data.currency_code);
             $('#store_timezone').val(data.timezone);
         };
+
+        // Owner credential fields are only used when ADDING a new store.
+        // They are hidden (and not required) while editing an existing store.
+        (function() {
+            var originalOpenStoreDrawer = window.openStoreDrawer;
+            window.openStoreDrawer = function(mode) {
+                originalOpenStoreDrawer(mode);
+                var isEdit = mode === 'edit';
+                $('#store_owner_section').toggleClass('hidden', isEdit);
+                $('#store_owner_first_name, #store_owner_last_name, #store_owner_password, #store_owner_password_confirmation')
+                    .prop('required', !isEdit);
+            };
+        })();
 
         $(document).ready(function() {
             $('#store_name').on('input', function() {

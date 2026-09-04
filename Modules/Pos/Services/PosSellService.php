@@ -63,14 +63,20 @@ class PosSellService
             $term = $request->get('term', '');
 
             $query = Product::query()
-                ->with(['variants', 'brand', 'unit'])
+                ->with([
+                    'variants' => fn ($q) => $q->with('options')->orderBy('id'),
+                    'brand',
+                    'unit',
+                    'images',
+                ])
                 ->where('status', 'active');
 
             if (! empty($term)) {
                 $query->where(function ($q) use ($term) {
                     $q->where('name', 'LIKE', "%{$term}%")
                         ->orWhereHas('variants', function ($vq) use ($term) {
-                            $vq->where('sku', 'LIKE', "%{$term}%");
+                            $vq->where('sku', 'LIKE', "%{$term}%")
+                                ->orWhereHas('options', fn ($oq) => $oq->where('sku', 'LIKE', "%{$term}%"));
                         });
                 });
             }
@@ -79,7 +85,12 @@ class PosSellService
                 ->limit(20)
                 ->get()
                 ->map(function ($product) {
-                    $variant = $product->variants->first();
+                    $variants = $product->variants
+                        ->filter(fn ($v) => (float) $v->sale_price > 0 || $v->options->isNotEmpty())
+                        ->values()
+                        ->map(fn ($variant) => $this->variantPayload($variant));
+
+                    $prices = $this->collectPrices($variants);
 
                     return [
                         'id' => $product->id,
@@ -87,10 +98,11 @@ class PosSellService
                         'product_type' => $product->product_type,
                         'brand' => $product->brand ? $this->normalizeText($product->brand->name) : '',
                         'unit' => $product->unit ? $product->unit->name : '',
-                        'sku' => $variant ? $variant->sku : '',
-                        'price' => $variant ? ($variant->sale_price ?? $variant->price ?? 0) : 0,
-                        'stock' => 0,
                         'image' => $product->images->first()?->image_url ?? '',
+                        'variants' => $variants,
+                        'min_price' => $prices['min'],
+                        'max_price' => $prices['max'],
+                        'has_discount' => $prices['discounted'],
                     ];
                 });
 
@@ -98,6 +110,115 @@ class PosSellService
         } catch (\Exception $e) {
             return ApiResponse::error('Error searching products: '.$e->getMessage(), 500);
         }
+    }
+
+    /**
+     * Build the POS-friendly payload for one product variant (with color
+     * options). Every price is the final price after the variant's or the
+     * color option's discount_percent is applied.
+     */
+    private function variantPayload($variant): array
+    {
+        $options = $variant->options
+            ->filter(fn ($option) => empty($option->status) || $option->status !== 'inactive')
+            ->values()
+            ->map(fn ($option) => $this->optionPayload($option, $variant));
+
+        return [
+            'id' => $variant->id,
+            'name' => $variant->name,
+            'sku' => $variant->sku,
+            'barcode' => $variant->barcode,
+            'sale_price' => (float) $variant->sale_price,
+            'discount_percent' => (float) $variant->discount_percent,
+            'compare_at_price' => (float) $variant->compare_at_price,
+            'price' => $this->finalPrice((float) $variant->sale_price, (float) $variant->discount_percent),
+            'original_price' => (float) $variant->sale_price,
+            'stock' => (int) $variant->stock,
+            'options' => $options,
+        ];
+    }
+
+    /**
+     * Build the payload for a color option of a variant. Final price:
+     * option sale_price if set, else variant sale_price + option price_adjustment.
+     * Discount uses the option's own discount_percent when set, else the
+     * variant's discount_percent.
+     */
+    private function optionPayload($option, $variant): array
+    {
+        $basePrice = (float) ($option->sale_price > 0
+            ? $option->sale_price
+            : (float) $variant->sale_price + (float) $option->price_adjustment);
+        $discount = (float) ($option->discount_percent > 0 ? $option->discount_percent : $variant->discount_percent);
+
+        return [
+            'id' => $option->id,
+            'variant_id' => $variant->id,
+            'color_name' => $option->color_name,
+            'color_code' => $option->color_code,
+            'sku' => $option->sku,
+            'barcode' => $option->barcode,
+            'sale_price' => (float) $option->sale_price,
+            'price_adjustment' => (float) $option->price_adjustment,
+            'discount_percent' => (float) $option->discount_percent,
+            'compare_at_price' => $option->compare_at_price > 0 ? (float) $option->compare_at_price : (float) $variant->compare_at_price,
+            'price' => $this->finalPrice($basePrice, $discount),
+            'original_price' => $basePrice,
+            'stock' => (int) $option->stock,
+        ];
+    }
+
+    /**
+     * Apply discount_percent to a price and round to 2 decimals.
+     */
+    private function finalPrice(float $price, float $discountPercent): float
+    {
+        if ($price <= 0) {
+            return 0;
+        }
+
+        if ($discountPercent > 0) {
+            return round($price * (1 - $discountPercent / 100), 2);
+        }
+
+        return round($price, 2);
+    }
+
+    /**
+     * Min/max price and whether any choice is discounted, used to show
+     * "৳X - ৳Y" and a discount badge on the search result row.
+     */
+    private function collectPrices($variants): array
+    {
+        $prices = [];
+        $discounted = false;
+
+        foreach ($variants as $variant) {
+            foreach ($variant['options'] as $option) {
+                $prices[] = $option['price'];
+                if ($option['discount_percent'] > 0) {
+                    $discounted = true;
+                }
+            }
+
+            if (empty($variant['options'])) {
+                $prices[] = $variant['price'];
+                if ($variant['discount_percent'] > 0) {
+                    $discounted = true;
+                }
+            }
+        }
+
+        if (empty($prices)) {
+            return ['min' => 0, 'max' => 0, 'discounted' => false];
+        }
+
+        return [
+            'min' => min($prices),
+            'max' => max($prices),
+            'discounted' => $discounted,
+        ];
     }
 
     /**
@@ -113,9 +234,15 @@ class PosSellService
                     'shift_id' => 'required|exists:pos_shifts,id',
                     'items' => 'required|array|min:1',
                     'items.*.product_id' => 'required|exists:products,id',
+                    'items.*.variant_id' => 'nullable|exists:product_variants,id',
+                    'items.*.option_id' => 'nullable|integer',
                     'items.*.product_name' => 'required|string|max:220',
+                    'items.*.variant_name' => 'nullable|string|max:220',
+                    'items.*.color_name' => 'nullable|string|max:100',
                     'items.*.sku' => 'nullable|string|max:100',
                     'items.*.unit_price' => 'required|numeric|min:0',
+                    'items.*.original_price' => 'nullable|numeric|min:0',
+                    'items.*.discount_amount' => 'nullable|numeric|min:0',
                     'items.*.quantity' => 'required|numeric|min:0.01',
                     'items.*.subtotal' => 'required|numeric|min:0',
                     'items.*.total' => 'required|numeric|min:0',
@@ -157,14 +284,15 @@ class PosSellService
                     PosSaleItem::create([
                         'pos_sale_id' => $sale->id,
                         'product_id' => $item['product_id'],
-                        'variant_id' => null,
+                        'variant_id' => $item['variant_id'] ?? null,
+                        'variant_option_id' => $item['option_id'] ?? null,
                         'product_name' => $this->normalizeText($item['product_name']),
                         'sku' => $item['sku'] ?? null,
                         'unit_price' => $item['unit_price'],
                         'quantity' => $item['quantity'],
                         'subtotal' => $item['subtotal'],
                         'tax_amount' => 0,
-                        'discount_amount' => 0,
+                        'discount_amount' => $item['discount_amount'] ?? 0,
                         'total' => $item['total'],
                     ]);
                 }

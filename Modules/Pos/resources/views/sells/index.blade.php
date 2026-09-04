@@ -305,6 +305,58 @@
         </div>
     </div>
 
+    <!-- Variant / Color Picker Modal -->
+    <div class="modal fade" id="variantPickerModal" tabindex="-1" data-bs-backdrop="static">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content" style="border-radius: 14px; overflow: hidden;">
+                <div class="modal-header" style="background: #1a1a2e; color: white; border: none; padding: 14px 18px;">
+                    <h5 class="modal-title" style="font-size: 15px;"><i class="fas fa-box-open me-2"></i>Select Variant / Color</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body" style="padding: 18px; max-height: 80vh; overflow-y: auto;">
+                    <div class="d-flex align-items-center mb-3">
+                        <div class="rounded bg-light d-flex align-items-center justify-content-center me-3 flex-shrink-0" style="width: 52px; height: 52px; overflow: hidden;">
+                            <img id="vpImage" src="" style="width: 100%; height: 100%; object-fit: cover; display: none;">
+                            <i id="vpImageFallback" class="fas fa-box text-muted" style="font-size: 22px;"></i>
+                        </div>
+                        <div style="min-width: 0;">
+                            <strong id="vpProductName" style="font-size: 14px; display: block;"></strong>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label style="font-size: 12px; font-weight: 600; color: #6c757d;">Variant</label>
+                        <div id="vpVariants" class="d-flex flex-wrap gap-2 mt-1"></div>
+                    </div>
+
+                    <div class="mb-3" id="vpColorSection" style="display: none;">
+                        <label style="font-size: 12px; font-weight: 600; color: #6c757d;">Color</label>
+                        <div id="vpColors" class="d-flex flex-wrap gap-2 mt-1"></div>
+                    </div>
+
+                    <div class="rounded p-3 mb-3" style="background: #f8fafc; border: 1px solid #eef2f7;">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <div id="vpSelectedLabel" style="font-size: 13px; color: #334155;">Select a variant</div>
+                                <div id="vpStock" style="font-size: 12px; color: #059669;">Stock: -</div>
+                            </div>
+                            <div class="text-end">
+                                <div id="vpOldPrice" style="font-size: 12px; color: #dc2626; text-decoration: line-through; display: none;"></div>
+                                <div id="vpFinalPrice" style="font-size: 20px; font-weight: 800; color: #2563eb;">0.00</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="d-grid">
+                        <button id="vpAddBtn" class="btn btn-primary" disabled style="border-radius: 10px; padding: 12px; font-weight: 700; font-size: 15px;">
+                            <i class="fas fa-cart-plus me-2"></i>Add To Cart
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     @push('scripts')
     <script>
     // Fix for double/multi-HTML-encoded product names ("&amp;amp;amp;").
@@ -437,15 +489,21 @@
             }
         });
 
+        let lastSearchResults = [];
+
         function searchProducts(term) {
             $.get('{{ route("pos.sell.search-products") }}', { term: term }, function(res) {
                 if (res.status === 'success' && res.data.length > 0) {
+                    lastSearchResults = res.data;
                     $productResults.empty().show();
-                    res.data.forEach(p => {
+                    res.data.forEach((p, idx) => {
+                        const vcount = p.variants.length;
+                        const priceStr = (p.min_price > 0)
+                            ? `৳${p.min_price.toFixed(2)}` + (p.max_price > p.min_price ? ` - ৳${p.max_price.toFixed(2)}` : '')
+                            : '—';
                         $productResults.append(`
-                            <a class="dropdown-item product-item" href="#" 
-                                data-id="${p.id}" data-name="${decodeEntities(p.name)}" data-price="${p.price}" data-sku="${p.sku}" 
-                                style="padding: 8px 12px; border-radius: 6px; font-size: 13px; border-bottom: 1px solid #f5f5f5;">
+                            <button type="button" class="dropdown-item product-item" data-idx="${idx}"
+                                style="padding: 8px 12px; border-radius: 6px; font-size: 13px; border-bottom: 1px solid #f5f5f5; text-align: left; width: 100%;">
                                 <div class="d-flex align-items-center">
                                     <div class="rounded bg-light d-flex align-items-center justify-content-center me-2 flex-shrink-0" style="width: 40px; height: 40px; overflow: hidden;">
                                         ${p.image ? `<img src="${p.image}" style="width: 100%; height: 100%; object-fit: cover;">` : `<i class="fas fa-box text-muted" style="font-size: 18px;"></i>`}
@@ -453,14 +511,16 @@
                                     <div class="flex-grow-1" style="min-width: 0;">
                                         <strong style="font-size: 13px; display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${decodeEntities(p.name)}</strong>
                                         <small class="text-muted" style="font-size: 11px;">
-                                            ${p.sku ? 'SKU: ' + p.sku : ''} ${p.brand ? '| ' + p.brand : ''} ${p.unit ? '| ' + p.unit : ''}
+                                            ${p.brand ? decodeEntities(p.brand) + ' ' : ''} ${p.unit ? '| ' + decodeEntities(p.unit) : ''}
+                                            ${vcount > 0 ? '<span class="badge bg-info text-white ms-1" style="font-size: 9px;">' + vcount + ' Variant' + (vcount > 1 ? 's' : '') + '</span>' : ''}
+                                            ${p.has_discount ? '<span class="badge bg-danger ms-1" style="font-size: 9px;">DISCOUNT</span>' : ''}
                                         </small>
                                     </div>
                                     <div class="text-end ms-2 flex-shrink-0">
-                                        <strong style="color: #2563eb; font-size: 14px;">৳${parseFloat(p.price).toFixed(2)}</strong>
+                                        <strong style="color: #2563eb; font-size: 14px;">${priceStr}</strong>
                                     </div>
                                 </div>
-                            </a>
+                            </button>
                         `);
                     });
                 } else {
@@ -476,33 +536,215 @@
 
         $(document).on('click', '.product-item', function(e) {
             e.preventDefault();
-            const product = {
-                id: $(this).data('id'),
-                name: decodeEntities($(this).data('name')),
-                price: parseFloat($(this).data('price')),
-                sku: $(this).data('sku') || ''
-            };
-            addToCart(product);
+            const idx = parseInt($(this).data('idx'));
+            const p = lastSearchResults[idx];
+            if (!p) return;
             $productResults.hide();
+            openProductPicker(p);
+        });
+
+        // ====== VARIANT / COLOR PICKER ======
+        let vpCurrentProduct = null;
+        let vpSelectedVariant = null;
+        let vpSelectedOption = null;
+
+        function openProductPicker(p) {
+            const variants = p.variants;
+            if (!variants || variants.length === 0) return;
+
+            // Fast path: only one priceable choice → add straight to cart.
+            if (variants.length === 1 && variants[0].options.length <= 1) {
+                const v = variants[0];
+                const opt = v.options[0] || null;
+                const price = opt ? opt.price : v.price;
+                if (price <= 0) return;
+
+                addToCart({
+                    product_id: p.id,
+                    variant_id: v.id,
+                    option_id: opt ? opt.id : null,
+                    product_name: decodeEntities(p.name),
+                    variant_name: decodeEntities(v.name),
+                    color_name: opt ? decodeEntities(opt.color_name) : '',
+                    sku: (opt ? opt.sku : v.sku) || '',
+                    unit_price: price,
+                    original_price: opt ? opt.original_price : v.original_price,
+                    discount_percent: opt ? opt.discount_percent : v.discount_percent,
+                    quantity: 1
+                });
+                $productSearch.val('').focus();
+                return;
+            }
+
+            vpCurrentProduct = p;
+            vpSelectedVariant = null;
+            vpSelectedOption = null;
+
+            $('#vpImage').hide();
+            $('#vpImageFallback').show();
+            if (p.image) { $('#vpImage').attr('src', p.image).show(); $('#vpImageFallback').hide(); }
+            $('#vpProductName').text(decodeEntities(p.name));
+
+            renderVariantButtons();
+            selectVariant(0);
+            $('#variantPickerModal').modal('show');
+        }
+
+        function renderVariantButtons() {
+            $('#vpVariants').empty();
+            vpCurrentProduct.variants.forEach((v, i) => {
+                $('#vpVariants').append(`
+                    <button type="button" class="vp-variant-btn btn btn-sm" data-vidx="${i}"
+                        style="border-radius: 8px; font-size: 12px; font-weight: 600; padding: 6px 12px;">
+                        ${decodeEntities(v.name)}
+                    </button>
+                `);
+            });
+        }
+
+        function selectVariant(vidx) {
+            const v = vpCurrentProduct.variants[vidx];
+            vpSelectedVariant = v;
+            vpSelectedOption = null;
+
+            $('.vp-variant-btn').each(function(i) {
+                const active = (i === vidx);
+                $(this).toggleClass('btn-primary', active)
+                    .toggleClass('btn-outline-primary', !active);
+            });
+
+            renderColorButtons();
+            updateVpSummary();
+        }
+
+        function renderColorButtons() {
+            const v = vpSelectedVariant;
+            $('#vpColors').empty();
+
+            if (!v.options || v.options.length === 0) {
+                $('#vpColorSection').hide();
+                return;
+            }
+
+            $('#vpColorSection').show();
+            v.options.forEach((o, i) => {
+                const swatch = o.color_code
+                    ? `<span class="d-inline-block rounded-circle me-1" style="width: 12px; height: 12px; background: ${o.color_code}; border: 1px solid #ddd;"></span>`
+                    : '';
+                $('#vpColors').append(`
+                    <button type="button" class="vp-color-btn btn btn-sm" data-oidx="${i}"
+                        style="border-radius: 8px; font-size: 12px; font-weight: 600; padding: 5px 10px;">
+                        ${swatch}${decodeEntities(o.color_name)}
+                    </button>
+                `);
+            });
+
+            selectColor(0);
+        }
+
+        function selectColor(oidx) {
+            const opt = vpSelectedVariant.options[oidx];
+            vpSelectedOption = opt;
+
+            $('.vp-color-btn').each(function(i) {
+                const active = (i === oidx);
+                $(this).toggleClass('btn-dark', active)
+                    .toggleClass('btn-outline-dark', !active);
+            });
+
+            updateVpSummary();
+        }
+
+        function updateVpSummary() {
+            if (!vpSelectedVariant) { return; }
+
+            const v = vpSelectedVariant;
+            const opt = vpSelectedOption;
+            const price = opt ? opt.price : v.price;
+            const original = opt ? opt.original_price : v.original_price;
+            const disc = opt ? opt.discount_percent : v.discount_percent;
+            const stock = opt ? opt.stock : v.stock;
+            const label = opt ? decodeEntities(v.name) + ' / ' + decodeEntities(opt.color_name) : decodeEntities(v.name);
+
+            $('#vpSelectedLabel').text(label);
+            $('#vpStock').text('Stock: ' + stock).css('color', stock > 0 ? '#059669' : '#dc2626');
+            $('#vpFinalPrice').text('৳' + Number(price || 0).toFixed(2));
+
+            if (disc > 0) {
+                $('#vpOldPrice').text('৳' + Number(original || 0).toFixed(2)).show();
+            } else {
+                $('#vpOldPrice').hide();
+            }
+
+            const canAdd = Number(stock) > 0;
+            $('#vpAddBtn').prop('disabled', !canAdd);
+            $('#vpAddBtn').html(canAdd
+                ? '<i class="fas fa-cart-plus me-2"></i>Add To Cart'
+                : '<i class="fas fa-ban me-2"></i>Out of Stock');
+        }
+
+        $(document).on('click', '.vp-variant-btn', function() {
+            selectVariant(parseInt($(this).data('vidx')));
+        });
+
+        $(document).on('click', '.vp-color-btn', function() {
+            selectColor(parseInt($(this).data('oidx')));
+        });
+
+        $('#vpAddBtn').on('click', function() {
+            if (!vpCurrentProduct || !vpSelectedVariant) return;
+
+            const p = vpCurrentProduct;
+            const v = vpSelectedVariant;
+            const opt = vpSelectedOption;
+            const price = opt ? opt.price : v.price;
+
+            if (price <= 0) return;
+
+            addToCart({
+                product_id: p.id,
+                variant_id: v.id,
+                option_id: opt ? opt.id : null,
+                product_name: decodeEntities(p.name),
+                variant_name: decodeEntities(v.name),
+                color_name: opt ? decodeEntities(opt.color_name) : '',
+                sku: (opt ? opt.sku : v.sku) || '',
+                unit_price: price,
+                original_price: opt ? opt.original_price : v.original_price,
+                discount_percent: opt ? opt.discount_percent : v.discount_percent,
+                quantity: 1
+            });
+
+            $('#variantPickerModal').modal('hide');
             $productSearch.val('').focus();
         });
 
         // ====== CART OPERATIONS ======
         function addToCart(product) {
-            const existing = cart.find(item => item.product_id === product.id);
+            const key = product.product_id + '|' + (product.variant_id || '') + '|' + (product.option_id || '');
+            const existing = cart.find(item => item.key === key);
             if (existing) {
                 existing.quantity += 1;
                 existing.subtotal = existing.unit_price * existing.quantity;
                 existing.total = existing.subtotal;
+                existing.discount_amount = (existing.original_price - existing.unit_price) * existing.quantity;
             } else {
                 cart.push({
-                    product_id: product.id,
-                    product_name: product.name,
-                    sku: product.sku,
-                    unit_price: product.price,
+                    key,
+                    product_id: product.product_id,
+                    variant_id: product.variant_id || null,
+                    option_id: product.option_id || null,
+                    product_name: product.product_name,
+                    variant_name: product.variant_name || '',
+                    color_name: product.color_name || '',
+                    sku: product.sku || '',
+                    unit_price: product.unit_price,
+                    original_price: product.original_price || product.unit_price,
+                    discount_percent: product.discount_percent || 0,
                     quantity: 1,
-                    subtotal: product.price,
-                    total: product.price
+                    subtotal: product.unit_price,
+                    discount_amount: (product.original_price || product.unit_price) - product.unit_price,
+                    total: product.unit_price
                 });
             }
             renderCart();
@@ -548,7 +790,9 @@
                     <tr>
                         <td style="padding: 10px 14px; vertical-align: middle;">
                             <strong style="font-size: 13px;">${decodeEntities(item.product_name)}</strong>
-                            <small class="d-block text-muted" style="font-size: 11px;">${item.sku ? 'SKU: ' + item.sku : ''}</small>
+                            ${(item.variant_name || item.color_name) ? `<small class="d-block" style="font-size: 11px; color: #2563eb; font-weight: 600;">${decodeEntities(item.variant_name)}${item.color_name ? ' / ' + decodeEntities(item.color_name) : ''}</small>` : ''}
+                            <small class="d-block text-muted" style="font-size: 11px;">${item.sku ? 'SKU: ' + decodeEntities(item.sku) : ''}</small>
+                            ${item.discount_percent > 0 ? `<small class="d-block" style="font-size: 10px; color: #dc2626; font-weight: 600;">-${item.discount_percent}% variant discount</small>` : ''}
                         </td>
                         <td style="padding: 10px 14px; vertical-align: middle; font-weight: 600;">৳${item.unit_price.toFixed(2)}</td>
                         <td style="padding: 6px 14px; vertical-align: middle;">
@@ -723,11 +967,27 @@
                 paymentStatus = (mixedCash + mixedCard) >= total ? 'paid' : 'partial';
             }
 
+            const items = cart.map(item => ({
+                product_id: item.product_id,
+                variant_id: item.variant_id,
+                option_id: item.option_id,
+                product_name: item.product_name,
+                variant_name: item.variant_name,
+                color_name: item.color_name,
+                sku: item.sku,
+                unit_price: item.unit_price,
+                original_price: item.original_price,
+                discount_amount: item.discount_amount,
+                quantity: item.quantity,
+                subtotal: item.subtotal,
+                total: item.total
+            }));
+
             const payload = {
                 customer_id: $('#customer_id').val() || null,
                 register_id: registerId,
                 shift_id: shiftId,
-                items: cart,
+                items: items,
                 subtotal: subtotal,
                 tax_amount: tax,
                 discount_amount: discount,

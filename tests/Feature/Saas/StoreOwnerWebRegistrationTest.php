@@ -11,13 +11,9 @@ class StoreOwnerWebRegistrationTest extends TestCase
 {
     use RefreshDatabase;
 
-    protected function setUp(): void
-    {
-        parent::setUp();
-
-        Role::firstOrCreate(['name' => 'Store Owner'], ['description' => 'SaaS tenant']);
-        Role::firstOrCreate(['name' => 'Customer'], ['description' => 'Frontend customer']);
-    }
+    // NOTE: no roles are seeded here on purpose. The registration service
+    // assigns the "Store Owner" role by default (auto-creating it when missing),
+    // while permissions are configured manually by the admin from the backend.
 
     public function test_store_owner_can_register_via_the_public_web_form(): void
     {
@@ -39,11 +35,16 @@ class StoreOwnerWebRegistrationTest extends TestCase
 
         $user = User::where('email', 'rahim@example.com')->first();
         $this->assertTrue($user->roles->pluck('name')->contains('Store Owner'));
+        $this->assertTrue($user->hasAdminAccess(), 'Store owner must be allowed into the admin panel');
         $this->assertNotNull($user->ownedStore);
         $this->assertSame('Rahim Electronics Bd', $user->ownedStore->name);
         $this->assertSame('rahim-electronics-bd', $user->ownedStore->slug);
         $this->assertSame('active', $user->ownedStore->status);
         $this->assertTrue($this->isAuthenticated());
+
+        // The role must have been auto-created and assigned by default.
+        $this->assertDatabaseHas('roles', ['name' => 'Store Owner']);
+        $this->assertTrue(Role::where('name', 'Store Owner')->first()->users->contains($user->id));
     }
 
     public function test_invalid_store_name_returns_validation_errors(): void

@@ -17,6 +17,9 @@ class StoreRegistrationService
      * Core tenant creation shared by the API and web registration flows:
      * user + "Store Owner" role + their store, inside one transaction.
      *
+     * NOTE: Only the default role is assigned here. Permissions are
+     * managed by the platform admin from the backend (Role/Permission UI).
+     *
      * @return array{user: User, store: Store}
      */
     public function createStoreOwner(array $data): array
@@ -32,11 +35,14 @@ class StoreRegistrationService
                 'status' => 'active',
             ]);
 
-            // Roles can never be set from public registration input
-            // (prevents privilege escalation).
-            if ($role = Role::where('name', User::STORE_OWNER_ROLE)->first()) {
-                $user->roles()->attach($role->id);
-            }
+            // By default every registered store owner receives the "Store Owner"
+            // role. The role is created automatically if it does not exist yet;
+            // permissions are configured separately by the admin from the backend.
+            $role = Role::firstOrCreate(
+                ['name' => User::STORE_OWNER_ROLE],
+                ['description' => 'SaaS tenant - owns a store and manages its products, catalog and dashboard']
+            );
+            $user->roles()->attach($role->id);
 
             $store = Store::create([
                 'owner_id' => $user->id,

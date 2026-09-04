@@ -72,6 +72,7 @@
         </div>
         @endif
 
+        @if(auth()->user()->hasAnyRole(['Super Admin','Admin','Manager','Staff']) || auth()->user()->hasAnyPermission(['products.view','categories.view','brands.view']))
         <!-- Catalog -->
         <div class="mb-0.5">
             <button
@@ -94,29 +95,40 @@
                         class="flex items-center gap-2.5 pl-9 pr-3 py-1.5 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-50 text-[13px] transition-colors {{ request()->routeIs('brands.*') ? 'text-primary bg-primary-light font-medium' : '' }}">
                         <i class="fas fa-star w-3.5 text-center"></i><span>Brands</span>
                     </a>
+                    @if(auth()->user()->hasAnyRole(['Super Admin','Admin']))
                     <a href="{{ route('units.index') }}"
                         class="flex items-center gap-2.5 pl-9 pr-3 py-1.5 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-50 text-[13px] transition-colors {{ request()->routeIs('units.*') ? 'text-primary bg-primary-light font-medium' : '' }}">
                         <i class="fas fa-ruler-combined w-3.5 text-center"></i><span>Units</span>
                     </a>
+                    @endif
+                    @if(auth()->user()->hasAnyRole(['Super Admin','Admin']))
                     <a href="{{ route('sizes.index') }}"
                         class="flex items-center gap-2.5 pl-9 pr-3 py-1.5 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-50 text-[13px] transition-colors {{ request()->routeIs('sizes.*') ? 'text-primary bg-primary-light font-medium' : '' }}">
                         <i class="fas fa-ruler w-3.5 text-center"></i><span>Sizes</span>
                     </a>
+                    @endif
                     <a href="{{ route('barcode-print.index') }}"
                         class="flex items-center gap-2.5 pl-9 pr-3 py-1.5 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-50 text-[13px] transition-colors {{ request()->routeIs('barcode-print.*') ? 'text-primary bg-primary-light font-medium' : '' }}">
                         <i class="fas fa-qrcode w-3.5 text-center"></i><span>Barcode Print</span>
                     </a>
+                    @if(auth()->user()->hasAnyRole(['Super Admin','Admin']))
                     <a href="{{ route('tax-rates.index') }}"
                         class="flex items-center gap-2.5 pl-9 pr-3 py-1.5 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-50 text-[13px] transition-colors {{ request()->routeIs('tax-rates.*') ? 'text-primary bg-primary-light font-medium' : '' }}">
                         <i class="fas fa-percent w-3.5 text-center"></i><span>Tax Rates</span>
                     </a>
+                    @endif
+                    @if(auth()->user()->hasAnyRole(['Super Admin','Admin']))
                     <a href="{{ route('product-requests.index') }}"
                         class="flex items-center gap-2.5 pl-9 pr-3 py-1.5 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-50 text-[13px] transition-colors {{ request()->routeIs('product-requests.*') ? 'text-primary bg-primary-light font-medium' : '' }}">
                         <i class="fas fa-clipboard-list w-3.5 text-center"></i><span>Product Requests</span>
                     </a>
+                    @endif
                 </div>
         </div>
 
+        @endif
+
+        @if(auth()->user()->hasAnyRole(['Super Admin','Admin']))
         <!-- Store & Location -->
         <div class="mb-0.5">
             <button
@@ -150,6 +162,9 @@
             </div>
         </div>
 
+        @endif
+
+        @if(auth()->user()->hasAnyRole(['Super Admin','Admin','Manager','Staff']) || auth()->user()->hasPermission('inventory.view'))
         <!-- Inventory -->
         <div class="mb-0.5">
             <button
@@ -175,6 +190,9 @@
             </div>
         </div>
 
+        @endif
+
+        @if(auth()->user()->hasAnyRole(['Super Admin','Admin']))
         <!-- Cart & Wishlist -->
         <div class="mb-0.5">
             <button
@@ -204,6 +222,9 @@
             </div>
         </div>
 
+        @endif
+
+        @if(auth()->user()->hasAnyRole(['Super Admin','Admin','Manager','Staff']))
         <!-- Purchases -->
         <div class="mb-0.5">
             <button
@@ -233,6 +254,9 @@
             </div>
         </div>
 
+        @endif
+
+        @if(auth()->user()->hasAnyRole(['Super Admin','Admin','Manager','Staff']) || auth()->user()->hasPermission('orders.view'))
         <!-- Orders -->
         <div class="mb-0.5">
             <button
@@ -258,6 +282,9 @@
             </div>
         </div>
 
+        @endif
+
+        @if(auth()->user()->hasAnyRole(['Super Admin','Admin']))
         <!-- Account -->
         <div class="mb-0.5">
             <button
@@ -298,7 +325,9 @@
                 </a>
             </div>
         </div>
+        @endif
 
+         @if(auth()->user()->hasAnyRole(['Super Admin','Admin']))
          <div class="mb-0.5">
             <button
                 class="nav-item has-sub w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-gray-500 hover:bg-gray-50 hover:text-gray-800 text-sm font-medium transition-colors duration-150"
@@ -322,8 +351,10 @@
                 </a>
             </div>
         </div>
+        @endif
 
 
+        @if(auth()->user()->hasAnyRole(['Super Admin','Admin','Manager','Staff']))
         <!-- Delivery -->
         <div class="mb-0.5">
             <button
@@ -353,6 +384,9 @@
             </div>
         </div>
 
+        @endif
+
+        @if(auth()->user()->hasAnyRole(['Super Admin','Admin','Manager','Staff']))
         <!-- POS -->
         <div class="mb-0.5">
             <button
@@ -382,6 +416,9 @@
             </div>
         </div>
 
+        @endif
+
+        @if(auth()->user()->hasAnyRole(['Super Admin','Admin','Manager','Staff']))
         <!-- Reviews & Notifications -->
         <div class="mb-0.5">
             <button
@@ -414,6 +451,7 @@
                 </a>
             </div>
         </div>
+        @endif
 
         <!-- History -->
         @if(auth()->check() && auth()->user()->hasAnyRole(['Super Admin', 'Admin']))
@@ -427,6 +465,7 @@
         </div>
         @endif
 
+        @if(auth()->user()->hasAnyRole(['Super Admin','Admin']))
         <!-- Frontend -->
         <div class="mb-0.5">
             <button
@@ -484,6 +523,9 @@
             </div>
         </div>
 
+        @endif
+
+        @if(auth()->user()->hasAnyRole(['Super Admin','Admin']))
         <!-- Marketing -->
         <div class="mb-0.5">
             <button
@@ -501,6 +543,9 @@
             </div>
         </div>
 
+        @endif
+
+        @if(auth()->user()->hasAnyRole(['Super Admin','Admin','Manager','Staff']))
         <!-- Reports -->
         <div class="mb-0.5">
             <button
@@ -562,6 +607,9 @@
             </div>
         </div>
 
+        @endif
+
+        @if(auth()->user()->hasAnyRole(['Super Admin','Admin']))
         <!-- Settings -->
         <a href="#"
             class="nav-item flex items-center gap-2.5 px-3 py-2 rounded-lg text-gray-500 hover:bg-gray-50 hover:text-gray-800 text-sm font-medium transition-colors duration-150 mb-0.5"
@@ -569,6 +617,7 @@
             <i class="fas fa-cog w-4 text-center flex-shrink-0 text-base"></i>
             <span class="nav-label">Settings</span>
         </a>
+        @endif
 
     </nav>
 </aside>

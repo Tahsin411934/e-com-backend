@@ -106,7 +106,7 @@
             </div>
 
             <!-- RIGHT SIDE: Search + Checkout -->
-            <div class="pos-right-panel" style="width: 400px; display: flex; flex-direction: column; margin: 12px; gap: 12px; overflow-y: auto;">
+            <div class="pos-right-panel" style="width: 400px; display: flex; flex-direction: column; margin: 12px; gap: 12px; overflow-y: auto; min-height: 0;">
                 
                 <!-- Customer Section -->
                 <div class="pos-section" style="background: white; border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.06); overflow: hidden; flex-shrink: 0;">
@@ -168,7 +168,7 @@
                 </div>
 
                 <!-- Payment Section -->
-                <div class="pos-section" style="background: white; border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.06); overflow: hidden; flex: 1;">
+                <div class="pos-section" style="background: white; border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.06); overflow: visible; flex-shrink: 0;">
                     <div class="section-header" style="padding: 12px 16px; border-bottom: 1px solid #f0f0f0; background: #fafbfc;">
                         <h6 class="mb-0 fw-bold" style="font-size: 13px; color: #1a1a2e;">
                             <i class="fas fa-credit-card me-2" style="color: #2563eb;"></i>Payment

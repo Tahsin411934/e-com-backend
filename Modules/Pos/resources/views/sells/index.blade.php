@@ -96,11 +96,17 @@
                             </div>
                         </div>
                     </div>
+
+                    <!-- Always-visible Complete Sale button (bottom of cart) -->
+                    <button id="processSaleBtnLeft" class="btn w-100 mt-3"
+                        style="border-radius: 10px; padding: 12px; font-size: 16px; font-weight: 700; background: linear-gradient(135deg, #2563eb, #1d4ed8); color: white; border: none; box-shadow: 0 4px 12px rgba(37,99,235,0.3); transition: all 0.2s;">
+                        <i class="fas fa-check-circle me-2"></i>Complete Sale
+                    </button>
                 </div>
             </div>
 
             <!-- RIGHT SIDE: Search + Checkout -->
-            <div class="pos-right-panel" style="width: 400px; display: flex; flex-direction: column; margin: 12px; gap: 12px;">
+            <div class="pos-right-panel" style="width: 400px; display: flex; flex-direction: column; margin: 12px; gap: 12px; overflow-y: auto;">
                 
                 <!-- Customer Section -->
                 <div class="pos-section" style="background: white; border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.06); overflow: hidden; flex-shrink: 0;">
@@ -655,6 +661,11 @@
         }
 
         // ====== PROCESS SALE ======
+        // The left cart-panel button triggers the same flow as the payment button.
+        $('#processSaleBtnLeft').on('click', function() {
+            $('#processSaleBtn').trigger('click');
+        });
+
         $('#processSaleBtn').on('click', function() {
             if (cart.length === 0) {
                 alert('Please add at least one item to the cart.');

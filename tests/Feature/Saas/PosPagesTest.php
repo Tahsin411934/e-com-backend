@@ -28,10 +28,19 @@ class PosPagesTest extends TestCase
         ]);
         $admin->roles()->attach($role->id);
 
-        foreach (['/pos-registers', '/pos-shifts', '/pos-sales', '/pos-sell'] as $url) {
+        foreach (['/pos-registers', '/pos-shifts', '/pos-sales'] as $url) {
             $response = $this->actingAs($admin)->get($url);
 
             $response->assertOk();
         }
+
+        // The POS sell page must render a "Complete Sale" button (both in the
+        // payment panel and the always-visible cart footer).
+        $sell = $this->actingAs($admin)->get('/pos-sell');
+
+        $sell->assertOk();
+        $sell->assertSee('Complete Sale');
+        $sell->assertSee('processSaleBtnLeft');
+        $sell->assertSee('processSaleBtn');
     }
 }

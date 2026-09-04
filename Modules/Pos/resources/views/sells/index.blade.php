@@ -1,29 +1,61 @@
 <x-app-layout>
+    @push('head')
+        <style>
+            /* Page-scoped styles (Tailwind-based look, no Bootstrap) */
+            .pos-select-input {
+                border-radius: 8px; border: 1.5px solid #e0e0e0; padding: 6px 12px;
+                font-size: 13px; background: #fff; color: #1a1a2e;
+            }
+            .pos-dropdown-results {
+                position: absolute; top: 100%; left: 0; right: 0; z-index: 50;
+                max-height: 260px; overflow-y: auto; background: #fff;
+                border: 1px solid #e5e7eb; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.10);
+                margin-top: 4px; padding: 4px;
+            }
+            /* Minimal modal (project-styled, no Bootstrap) */
+            .pos-modal {
+                position: fixed; inset: 0; z-index: 1055; display: none;
+                align-items: center; justify-content: center; padding: 16px;
+            }
+            .pos-modal.show { display: flex; }
+            .pos-modal-backdrop {
+                position: fixed; inset: 0; z-index: 1050; background: rgba(15,23,42,0.5);
+                transition: opacity .15s linear; opacity: 0; display: none;
+            }
+            .pos-modal-backdrop.show { opacity: 1; display: block; }
+            .pos-modal-dialog {
+                background: #fff; border-radius: 14px; width: 100%; max-width: 430px;
+                box-shadow: 0 20px 50px rgba(15,23,42,0.35); max-height: 90vh; display: flex; flex-direction: column;
+            }
+            .pos-modal-dialog.lg { max-width: 640px; }
+            body.modal-open { overflow: hidden; }
+        </style>
+    @endpush
     <div class="pos-container" style="height: calc(100vh - 64px); display: flex; flex-direction: column; background: #f0f2f5; overflow: hidden;">
         <!-- Top Toolbar -->
         <div class="pos-toolbar" style="background: white; padding: 10px 20px; border-bottom: 1px solid #e0e0e0; display: flex; align-items: center; gap: 12px; flex-shrink: 0;">
-            <div class="d-flex align-items-center gap-3" style="display: flex; align-items: center; gap: 16px; flex-wrap: wrap; width: 100%;">
-                <h5 class="mb-0 fw-bold" style="margin: 0; font-weight: 700; font-size: 18px; color: #1a1a2e; white-space: nowrap;">
-                    <i class="fas fa-cash-register me-2" style="color: #2563eb;"></i>New Sale
-                </h5>
-                <select id="pos_register_id" class="form-select form-select-sm" style="width: 180px; border-radius: 8px; border: 1.5px solid #e0e0e0; padding: 6px 12px; font-size: 13px;">
+            <div style="display: flex; align-items: center; gap: 16px; flex-wrap: wrap; width: 100%;">
+                <h4 style="margin: 0; font-weight: 700; font-size: 18px; color: #1a1a2e; white-space: nowrap;">
+                    <i class="fas fa-cash-register" style="margin-right: 8px; color: #2563eb;"></i>New Sale
+                </h4>
+                <select id="pos_register_id" class="pos-select-input" style="width: 180px;">
                     <option value="">Select Register</option>
                     @foreach($registers as $register)
                         <option value="{{ $register['id'] }}" {{ $loop->first ? 'selected' : '' }}>{{ $register['name'] }}</option>
                     @endforeach
                 </select>
-                <select id="pos_shift_id" class="form-select form-select-sm" style="width: 180px; border-radius: 8px; border: 1.5px solid #e0e0e0; padding: 6px 12px; font-size: 13px;">
+                <select id="pos_shift_id" class="pos-select-input" style="width: 180px;">
                     <option value="">Select Shift</option>
                     @foreach($openShifts as $shift)
                         <option value="{{ $shift['id'] }}" {{ $loop->first ? 'selected' : '' }}>{{ $shift['name'] ?? 'Shift #'.$shift['id'] }}</option>
                     @endforeach
                 </select>
-                <div class="ms-auto" style="margin-left: auto; display: flex; gap: 8px;">
-                    <button id="btnPosHistory" class="btn btn-sm btn-outline-secondary" style="border-radius: 8px; padding: 6px 14px; font-size: 13px;">
-                        <i class="fas fa-history me-1"></i>Recent Sales
+                <div style="margin-left: auto; display: flex; gap: 8px;">
+                    <button id="btnPosHistory" class="inline-flex items-center gap-1.5 rounded-lg border border-gray-300 px-3.5 py-1.5 text-[13px] font-medium text-gray-600 hover:bg-gray-50 transition-colors" style="background:#fff;">
+                        <i class="fas fa-history"></i>Recent Sales
                     </button>
-                    <button id="btnNewSale" class="btn btn-sm btn-outline-danger" style="border-radius: 8px; padding: 6px 14px; font-size: 13px; display: none;">
-                        <i class="fas fa-plus me-1"></i>New Sale
+                    <button id="btnNewSale" class="inline-flex items-center gap-1.5 rounded-lg border border-red-300 px-3.5 py-1.5 text-[13px] font-medium text-red-500 hover:bg-red-50 transition-colors" style="background:#fff; display: none;">
+                        <i class="fas fa-plus"></i>New Sale
                     </button>
                 </div>
             </div>
@@ -36,35 +68,35 @@
             <div class="pos-cart-panel" style="flex: 1; display: flex; flex-direction: column; background: white; margin: 12px; margin-right: 0; border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.06); overflow: hidden;">
                 
                 <!-- Cart Header -->
-                <div class="cart-header" style="padding: 14px 18px; border-bottom: 1px solid #f0f0f0; display: flex; justify-content: space-between; align-items: center; background: #fafbfc;">
+                <div style="padding: 14px 18px; border-bottom: 1px solid #f0f0f0; display: flex; justify-content: space-between; align-items: center; background: #fafbfc;">
                     <div>
-                        <h6 class="mb-0 fw-bold" style="font-size: 15px; color: #1a1a2e;">
-                            <i class="fas fa-shopping-cart me-2" style="color: #2563eb;"></i>
-                            Sale Items 
-                            <span id="cartCount" class="badge bg-primary rounded-pill ms-1" style="font-size: 11px;">0</span>
+                        <h6 style="margin:0; font-size: 15px; font-weight:700; color: #1a1a2e;">
+                            <i class="fas fa-shopping-cart" style="margin-right:8px; color: #2563eb;"></i>
+                            Sale Items
+                            <span id="cartCount" class="inline-flex items-center rounded-full bg-blue-600 px-2 py-0.5 text-[11px] font-semibold text-white align-middle ml-1.5" style="background:#2563eb;">0</span>
                         </h6>
                     </div>
-                    <button id="clearCartBtn" class="btn btn-sm btn-outline-danger" style="border-radius: 8px; padding: 4px 12px; font-size: 12px; display: none;">
-                        <i class="fas fa-trash-alt me-1"></i>Clear
+                    <button id="clearCartBtn" class="inline-flex items-center gap-1 rounded-lg border border-red-300 px-3 py-1 text-[12px] font-medium text-red-500 hover:bg-red-50 transition-colors" style="background:#fff; display: none;">
+                        <i class="fas fa-trash-alt"></i>Clear
                     </button>
                 </div>
 
                 <!-- Cart Items Table -->
-                <div class="cart-items" style="flex: 1; overflow-y: auto; padding: 0;">
-                    <table class="table table-hover mb-0" style="font-size: 13px;">
+                <div style="flex: 1; overflow-y: auto;">
+                    <table style="width:100%; border-collapse: collapse; font-size: 13px;">
                         <thead style="background: #f8f9fa; position: sticky; top: 0; z-index: 2;">
                             <tr>
-                                <th style="width: 40%; padding: 10px 14px; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; color: #6c757d;">Item</th>
-                                <th style="width: 15%; padding: 10px 14px; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; color: #6c757d;">Price</th>
-                                <th style="width: 18%; padding: 10px 14px; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; color: #6c757d;">Qty</th>
-                                <th style="width: 15%; padding: 10px 14px; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; color: #6c757d; text-align: right;">Total</th>
-                                <th style="width: 12%; padding: 10px 14px; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; color: #6c757d; text-align: center;">Action</th>
+                                <th style="text-align:left; width: 40%; padding: 10px 14px; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; color: #6c757d;">Item</th>
+                                <th style="text-align:left; width: 15%; padding: 10px 14px; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; color: #6c757d;">Price</th>
+                                <th style="text-align:left; width: 18%; padding: 10px 14px; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; color: #6c757d;">Qty</th>
+                                <th style="text-align:right; width: 15%; padding: 10px 14px; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; color: #6c757d;">Total</th>
+                                <th style="text-align:center; width: 12%; padding: 10px 14px; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; color: #6c757d;">Action</th>
                             </tr>
                         </thead>
                         <tbody id="cartItemsBody">
                             <tr id="emptyCartRow">
-                                <td colspan="5" class="text-center py-5" style="color: #adb5bd;">
-                                    <i class="fas fa-cart-plus mb-2" style="font-size: 40px; display: block; opacity: 0.3;"></i>
+                                <td colspan="5" style="text-align:center; padding: 24px 0; color: #adb5bd;">
+                                    <i class="fas fa-cart-plus" style="font-size: 40px; display: block; opacity: 0.3; margin-bottom:8px;"></i>
                                     <span style="font-size: 14px;">No items in cart. Search & add products.</span>
                                 </td>
                             </tr>
@@ -73,24 +105,24 @@
                 </div>
 
                 <!-- Cart Footer / Totals -->
-                <div class="cart-footer" style="border-top: 2px solid #e0e0e0; padding: 14px 18px; background: #f8f9fa;">
-                    <div class="row g-2">
-                        <div class="col-md-6">
-                            <div class="d-flex justify-content-between mb-1" style="font-size: 13px;">
+                <div style="border-top: 2px solid #e0e0e0; padding: 14px 18px; background: #f8f9fa;">
+                    <div style="display:flex; gap:8px;">
+                        <div style="flex:1;">
+                            <div style="display:flex; justify-content: space-between; margin-bottom:4px; font-size: 13px;">
                                 <span style="color: #6c757d;">Subtotal</span>
-                                <span id="cartSubtotal" class="fw-bold" style="color: #1a1a2e;">0.00</span>
+                                <span id="cartSubtotal" style="font-weight:700; color: #1a1a2e;">0.00</span>
                             </div>
-                            <div class="d-flex justify-content-between mb-1" style="font-size: 13px;">
+                            <div style="display:flex; justify-content: space-between; margin-bottom:4px; font-size: 13px;">
                                 <span style="color: #6c757d;">Discount</span>
                                 <span id="cartDiscount" style="color: #dc3545;">0.00</span>
                             </div>
                         </div>
-                        <div class="col-md-6">
-                            <div class="d-flex justify-content-between mb-1" style="font-size: 13px;">
+                        <div style="flex:1;">
+                            <div style="display:flex; justify-content: space-between; margin-bottom:4px; font-size: 13px;">
                                 <span style="color: #6c757d;">Tax</span>
                                 <span id="cartTax" style="color: #6c757d;">0.00</span>
                             </div>
-                            <div class="d-flex justify-content-between" style="font-size: 18px; font-weight: 700; border-top: 2px solid #1a1a2e; padding-top: 4px;">
+                            <div style="display:flex; justify-content: space-between; font-size: 18px; font-weight: 700; border-top: 2px solid #1a1a2e; padding-top: 4px;">
                                 <span style="color: #1a1a2e;">Total</span>
                                 <span id="cartTotal" style="color: #2563eb;">0.00</span>
                             </div>
@@ -98,9 +130,9 @@
                     </div>
 
                     <!-- Always-visible Complete Sale button (bottom of cart) -->
-                    <button id="processSaleBtnLeft" class="btn w-100 mt-3"
+                    <button id="processSaleBtnLeft" class="w-full mt-3 inline-flex items-center justify-center gap-2"
                         style="border-radius: 10px; padding: 12px; font-size: 16px; font-weight: 700; background: linear-gradient(135deg, #2563eb, #1d4ed8); color: white; border: none; box-shadow: 0 4px 12px rgba(37,99,235,0.3); transition: all 0.2s;">
-                        <i class="fas fa-check-circle me-2"></i>Complete Sale
+                        <i class="fas fa-check-circle"></i>Complete Sale
                     </button>
                 </div>
             </div>
@@ -109,140 +141,135 @@
             <div class="pos-right-panel" style="width: 400px; display: flex; flex-direction: column; margin: 12px; gap: 12px; overflow-y: auto; min-height: 0;">
                 
                 <!-- Customer Section -->
-                <div class="pos-section" style="background: white; border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.06); overflow: hidden; flex-shrink: 0;">
-                    <div class="section-header" style="padding: 12px 16px; border-bottom: 1px solid #f0f0f0; background: #fafbfc;">
-                        <h6 class="mb-0 fw-bold" style="font-size: 13px; color: #1a1a2e;">
-                            <i class="fas fa-user me-2" style="color: #2563eb;"></i>Customer
+                <div style="background: white; border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.06); overflow: visible; flex-shrink: 0;">
+                    <div style="padding: 12px 16px; border-bottom: 1px solid #f0f0f0; background: #fafbfc;">
+                        <h6 style="margin:0; font-size: 13px; font-weight:700; color: #1a1a2e;">
+                            <i class="fas fa-user" style="margin-right:8px; color: #2563eb;"></i>Customer
                         </h6>
                     </div>
-                    <div class="section-body" style="padding: 12px 16px;">
-                        <div class="position-relative">
-                            <div class="input-group" style="border-radius: 8px; overflow: hidden; border: 1.5px solid #e0e0e0;">
-                                <span class="input-group-text" style="background: white; border: none; padding: 0 10px;">
-                                    <i class="fas fa-search text-muted" style="font-size: 13px;"></i>
-                                </span>
-                                <input type="text" id="customerSearch" class="form-control" placeholder="Search by phone or name..." 
-                                    style="border: none; padding: 8px 4px; font-size: 13px; box-shadow: none;">
+                    <div style="padding: 12px 16px;">
+                        <div style="position: relative;">
+                            <div style="display: flex; align-items: center; border-radius: 8px; overflow: hidden; border: 1.5px solid #e0e0e0; background:#fff;">
+                                <span style="padding: 0 10px;"><i class="fas fa-search" style="font-size: 13px; color:#6c757d;"></i></span>
+                                <input type="text" id="customerSearch" placeholder="Search by phone or name..."
+                                    style="flex:1; border: none; outline: none; padding: 8px 4px; font-size: 13px; background: transparent;">
                             </div>
-                            <div id="customerResults" class="dropdown-menu w-100" style="display: none; max-height: 200px; overflow-y: auto; border-radius: 8px; margin-top: 4px; padding: 4px; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
-                            </div>
+                            <div id="customerResults" class="pos-dropdown-results" style="display: none;"></div>
                         </div>
-                        <div id="selectedCustomer" class="mt-2 p-2 bg-light rounded" style="display: none; border-radius: 8px; font-size: 13px;">
-                            <div class="d-flex align-items-center justify-content-between">
+                        <div id="selectedCustomer" style="display: none; margin-top:8px; padding: 8px; background:#f8f9fa; border-radius: 8px; font-size: 13px;">
+                            <div style="display: flex; align-items: center; justify-content: space-between;">
                                 <div>
                                     <strong id="custName" style="color: #1a1a2e;"></strong>
-                                    <small id="custPhone" class="d-block text-muted"></small>
+                                    <small id="custPhone" style="display:block; color:#6c757d;"></small>
                                 </div>
-                                <button id="removeCustomerBtn" class="btn btn-sm btn-link text-danger p-0">
+                                <button id="removeCustomerBtn" style="border:none; background:none; color:#dc2626; cursor:pointer;">
                                     <i class="fas fa-times"></i>
                                 </button>
                             </div>
                             <input type="hidden" id="customer_id" value="">
                         </div>
-                        <button id="walkinBtn" class="btn btn-sm btn-outline-secondary mt-2 w-100" style="border-radius: 8px; font-size: 12px; padding: 6px;">
-                            <i class="fas fa-person-walking me-1"></i>Walk-in Customer
+                        <button id="walkinBtn" class="w-full inline-flex items-center justify-center gap-1.5 rounded-lg border border-gray-300"
+                            style="margin-top:8px; background:#fff; font-size: 12px; padding: 6px; color:#4b5563; hover:bg:#f9fafb;">
+                            <i class="fas fa-person-walking"></i>Walk-in Customer
                         </button>
                     </div>
                 </div>
 
                 <!-- Product Search Section -->
-                <div class="pos-section" style="background: white; border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.06); overflow: hidden; flex-shrink: 0;">
-                    <div class="section-header" style="padding: 12px 16px; border-bottom: 1px solid #f0f0f0; background: #fafbfc;">
-                        <h6 class="mb-0 fw-bold" style="font-size: 13px; color: #1a1a2e;">
-                            <i class="fas fa-box me-2" style="color: #2563eb;"></i>Search Products
+                <div style="background: white; border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.06); overflow: visible; flex-shrink: 0;">
+                    <div style="padding: 12px 16px; border-bottom: 1px solid #f0f0f0; background: #fafbfc;">
+                        <h6 style="margin:0; font-size: 13px; font-weight:700; color: #1a1a2e;">
+                            <i class="fas fa-box" style="margin-right:8px; color: #2563eb;"></i>Search Products
                         </h6>
                     </div>
-                    <div class="section-body" style="padding: 12px 16px;">
-                        <div class="position-relative">
-                            <div class="input-group" style="border-radius: 8px; overflow: hidden; border: 1.5px solid #e0e0e0;">
-                                <span class="input-group-text" style="background: white; border: none; padding: 0 10px;">
-                                    <i class="fas fa-barcode text-muted" style="font-size: 13px;"></i>
-                                </span>
-                                <input type="text" id="productSearch" class="form-control" placeholder="Search by name or SKU..." 
-                                    style="border: none; padding: 8px 4px; font-size: 13px; box-shadow: none;" autofocus>
+                    <div style="padding: 12px 16px;">
+                        <div style="position: relative;">
+                            <div style="display: flex; align-items: center; border-radius: 8px; overflow: hidden; border: 1.5px solid #e0e0e0; background:#fff;">
+                                <span style="padding: 0 10px;"><i class="fas fa-barcode" style="font-size: 13px; color:#6c757d;"></i></span>
+                                <input type="text" id="productSearch" placeholder="Search by name or SKU..."
+                                    style="flex:1; border: none; outline: none; padding: 8px 4px; font-size: 13px; background: transparent;" autofocus>
                             </div>
-                            <div id="productResults" class="dropdown-menu w-100" style="display: none; max-height: 280px; overflow-y: auto; border-radius: 8px; margin-top: 4px; padding: 4px; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
-                            </div>
+                            <div id="productResults" class="pos-dropdown-results" style="display: none;"></div>
                         </div>
                     </div>
                 </div>
 
                 <!-- Payment Section -->
-                <div class="pos-section" style="background: white; border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.06); overflow: visible; flex-shrink: 0;">
-                    <div class="section-header" style="padding: 12px 16px; border-bottom: 1px solid #f0f0f0; background: #fafbfc;">
-                        <h6 class="mb-0 fw-bold" style="font-size: 13px; color: #1a1a2e;">
-                            <i class="fas fa-credit-card me-2" style="color: #2563eb;"></i>Payment
+                <div style="background: white; border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.06); overflow: visible; flex-shrink: 0;">
+                    <div style="padding: 12px 16px; border-bottom: 1px solid #f0f0f0; background: #fafbfc;">
+                        <h6 style="margin:0; font-size: 13px; font-weight:700; color: #1a1a2e;">
+                            <i class="fas fa-credit-card" style="margin-right:8px; color: #2563eb;"></i>Payment
                         </h6>
                     </div>
-                    <div class="section-body" style="padding: 12px 16px;">
-                        <div class="mb-2">
+                    <div style="padding: 12px 16px;">
+                        <div style="margin-bottom:8px;">
                             <label style="font-size: 12px; color: #6c757d; font-weight: 600;">Payment Method</label>
-                            <div class="d-flex gap-2 mt-1">
-                                <button class="pay-method-btn active btn btn-sm" data-method="cash" 
-                                    style="flex: 1; border-radius: 8px; padding: 8px; font-size: 12px; background: #2563eb; color: white; border: none; font-weight: 600;">
-                                    <i class="fas fa-money-bill-wave me-1"></i>Cash
+                            <div style="display: flex; gap: 8px; margin-top:4px;">
+                                <button class="pay-method-btn active" data-method="cash"
+                                    style="flex: 1; border-radius: 8px; padding: 8px; font-size: 12px; background: #2563eb; color: white; border: none; font-weight: 600; cursor:pointer;">
+                                    <i class="fas fa-money-bill-wave" style="margin-right:4px;"></i>Cash
                                 </button>
-                                <button class="pay-method-btn btn btn-sm" data-method="card"
-                                    style="flex: 1; border-radius: 8px; padding: 8px; font-size: 12px; background: #f0f0f0; color: #6c757d; border: none;">
-                                    <i class="fas fa-credit-card me-1"></i>Card
+                                <button class="pay-method-btn" data-method="card"
+                                    style="flex: 1; border-radius: 8px; padding: 8px; font-size: 12px; background: #f0f0f0; color: #6c757d; border: none; font-weight:600; cursor:pointer;">
+                                    <i class="fas fa-credit-card" style="margin-right:4px;"></i>Card
                                 </button>
-                                <button class="pay-method-btn btn btn-sm" data-method="mixed"
-                                    style="flex: 1; border-radius: 8px; padding: 8px; font-size: 12px; background: #f0f0f0; color: #6c757d; border: none;">
-                                    <i class="fas fa-layer-group me-1"></i>Mixed
+                                <button class="pay-method-btn" data-method="mixed"
+                                    style="flex: 1; border-radius: 8px; padding: 8px; font-size: 12px; background: #f0f0f0; color: #6c757d; border: none; font-weight:600; cursor:pointer;">
+                                    <i class="fas fa-layer-group" style="margin-right:4px;"></i>Mixed
                                 </button>
                             </div>
                         </div>
 
                         <!-- Cash Payment (default) -->
                         <div id="cashPaymentSection">
-                            <div class="mb-2">
+                            <div style="margin-bottom:8px;">
                                 <label style="font-size: 12px; color: #6c757d; font-weight: 600;">Amount Received</label>
-                                <input type="number" id="amountReceived" class="form-control" step="0.01" min="0" value="0"
-                                    style="border-radius: 8px; border: 1.5px solid #e0e0e0; padding: 8px 12px; font-size: 16px; font-weight: 700; text-align: center;">
+                                <input type="number" id="amountReceived" step="0.01" min="0" value="0"
+                                    style="width:100%; border-radius: 8px; border: 1.5px solid #e0e0e0; padding: 8px 12px; font-size: 16px; font-weight: 700; text-align: center; outline:none;">
                             </div>
-                            <div class="d-flex justify-content-between p-2 bg-light rounded" style="border-radius: 8px;">
+                            <div style="display: flex; justify-content: space-between; padding: 8px; background:#f8f9fa; border-radius: 8px;">
                                 <span style="font-size: 13px; color: #6c757d;">Change Due</span>
-                                <span id="changeDue" class="fw-bold" style="font-size: 18px; color: #059669;">0.00</span>
+                                <span id="changeDue" style="font-weight:700; font-size: 18px; color: #059669;">0.00</span>
                             </div>
                         </div>
 
                         <!-- Mixed Payment Section -->
                         <div id="mixedPaymentSection" style="display: none;">
-                            <div class="row g-1 mt-1">
-                                <div class="col-6">
+                            <div style="display:flex; gap:4px; margin-top:4px;">
+                                <div style="flex:1;">
                                     <label style="font-size: 11px; color: #6c757d;">Cash</label>
-                                    <input type="number" id="mixedCash" class="form-control form-control-sm" step="0.01" min="0" value="0"
-                                        style="border-radius: 6px; border: 1.5px solid #e0e0e0; padding: 6px 8px; font-size: 13px;">
+                                    <input type="number" id="mixedCash" step="0.01" min="0" value="0"
+                                        style="width:100%; border-radius: 6px; border: 1.5px solid #e0e0e0; padding: 6px 8px; font-size: 13px; outline:none;">
                                 </div>
-                                <div class="col-6">
+                                <div style="flex:1;">
                                     <label style="font-size: 11px; color: #6c757d;">Card</label>
-                                    <input type="number" id="mixedCard" class="form-control form-control-sm" step="0.01" min="0" value="0"
-                                        style="border-radius: 6px; border: 1.5px solid #e0e0e0; padding: 6px 8px; font-size: 13px;">
+                                    <input type="number" id="mixedCard" step="0.01" min="0" value="0"
+                                        style="width:100%; border-radius: 6px; border: 1.5px solid #e0e0e0; padding: 6px 8px; font-size: 13px; outline:none;">
                                 </div>
                             </div>
                         </div>
 
                         <!-- Discount & Notes -->
-                        <div class="row g-1 mt-2">
-                            <div class="col-6">
+                        <div style="display:flex; gap:4px; margin-top:8px;">
+                            <div style="flex:1;">
                                 <label style="font-size: 12px; color: #6c757d; font-weight: 600;">Discount (&#2547;)</label>
-                                <input type="number" id="inputDiscount" class="form-control form-control-sm" step="0.01" min="0" value="0"
-                                    style="border-radius: 6px; border: 1.5px solid #e0e0e0; padding: 6px 8px; font-size: 13px;">
+                                <input type="number" id="inputDiscount" step="0.01" min="0" value="0"
+                                    style="width:100%; border-radius: 6px; border: 1.5px solid #e0e0e0; padding: 6px 8px; font-size: 13px; outline:none;">
                             </div>
-                            <div class="col-6">
+                            <div style="flex:1;">
                                 <label style="font-size: 12px; color: #6c757d; font-weight: 600;">Tax (&#2547;)</label>
-                                <input type="number" id="inputTax" class="form-control form-control-sm" step="0.01" min="0" value="0"
-                                    style="border-radius: 6px; border: 1.5px solid #e0e0e0; padding: 6px 8px; font-size: 13px;">
+                                <input type="number" id="inputTax" step="0.01" min="0" value="0"
+                                    style="width:100%; border-radius: 6px; border: 1.5px solid #e0e0e0; padding: 6px 8px; font-size: 13px; outline:none;">
                             </div>
                         </div>
-                        <div class="mt-2">
-                            <input type="text" id="inputNotes" class="form-control form-control-sm" placeholder="Notes (optional)..."
-                                style="border-radius: 6px; border: 1.5px solid #e0e0e0; padding: 6px 8px; font-size: 12px;">
+                        <div style="margin-top:6px;">
+                            <input type="text" id="inputNotes" placeholder="Notes (optional)..."
+                                style="width:100%; border-radius: 6px; border: 1.5px solid #e0e0e0; padding: 6px 8px; font-size: 12px; outline:none;">
                         </div>
 
-                        <button id="processSaleBtn" class="btn w-100 mt-3" 
-                            style="border-radius: 10px; padding: 12px; font-size: 16px; font-weight: 700; background: linear-gradient(135deg, #2563eb, #1d4ed8); color: white; border: none; box-shadow: 0 4px 12px rgba(37,99,235,0.3); transition: all 0.2s;">
-                            <i class="fas fa-check-circle me-2"></i>Complete Sale
+                        <button id="processSaleBtn" class="w-full inline-flex items-center justify-center gap-2"
+                            style="margin-top:10px; border-radius: 10px; padding: 12px; font-size: 16px; font-weight: 700; background: linear-gradient(135deg, #2563eb, #1d4ed8); color: white; border: none; box-shadow: 0 4px 12px rgba(37,99,235,0.3); transition: all 0.2s; cursor:pointer;">
+                            <i class="fas fa-check-circle"></i>Complete Sale
                         </button>
                     </div>
                 </div>
@@ -251,114 +278,137 @@
     </div>
 
     <!-- Recent Sales Modal -->
-    <div class="modal fade" id="recentSalesModal" tabindex="-1">
-        <div class="modal-dialog modal-lg modal-dialog-scrollable">
-            <div class="modal-content" style="border-radius: 12px;">
-                <div class="modal-header" style="border-bottom: 1px solid #f0f0f0; padding: 16px 20px;">
-                    <h5 class="modal-title fw-bold" style="font-size: 16px;"><i class="fas fa-history me-2" style="color: #2563eb;"></i>Recent Sales</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body p-0" style="max-height: 400px; overflow-y: auto;">
-                    <table class="table table-hover mb-0" style="font-size: 13px;">
-                        <thead style="background: #f8f9fa;">
-                            <tr>
-                                <th style="padding: 10px 16px;">Receipt</th>
-                                <th style="padding: 10px 16px;">Customer</th>
-                                <th style="padding: 10px 16px;">Items</th>
-                                <th style="padding: 10px 16px;">Total</th>
-                                <th style="padding: 10px 16px;">Status</th>
-                                <th style="padding: 10px 16px;">Time</th>
-                            </tr>
-                        </thead>
-                        <tbody id="recentSalesBody">
-                            <tr>
-                                <td colspan="6" class="text-center py-4 text-muted">No recent sales found.</td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
+    <div class="pos-modal" id="recentSalesModal">
+        <div class="pos-modal-dialog lg">
+            <div style="padding: 16px 20px; border-bottom: 1px solid #f0f0f0; display: flex; justify-content: space-between; align-items: center;">
+                <h5 style="margin:0; font-size: 16px; font-weight:700; color:#1a1a2e;"><i class="fas fa-history" style="margin-right:8px; color:#2563eb;"></i>Recent Sales</h5>
+                <button type="button" data-modal-close aria-label="Close" style="border:none; background:none; font-size:20px; color:#6c757d; cursor:pointer;">&times;</button>
+            </div>
+            <div style="max-height: 400px; overflow-y: auto;">
+                <table style="width:100%; border-collapse: collapse; font-size: 13px;">
+                    <thead style="background: #f8f9fa; position: sticky; top: 0;">
+                        <tr>
+                            <th style="text-align:left; padding: 10px 16px;">Receipt</th>
+                            <th style="text-align:left; padding: 10px 16px;">Customer</th>
+                            <th style="text-align:left; padding: 10px 16px;">Items</th>
+                            <th style="text-align:right; padding: 10px 16px;">Total</th>
+                            <th style="text-align:left; padding: 10px 16px;">Status</th>
+                            <th style="text-align:left; padding: 10px 16px;">Time</th>
+                        </tr>
+                    </thead>
+                    <tbody id="recentSalesBody">
+                        <tr>
+                            <td colspan="6" style="text-align:center; padding:16px 0; color:#6c757d;">No recent sales found.</td>
+                        </tr>
+                    </tbody>
+                </table>
             </div>
         </div>
     </div>
 
     <!-- Success Toast / Modal -->
-    <div class="modal fade" id="saleSuccessModal" tabindex="-1" data-bs-backdrop="static">
-        <div class="modal-dialog modal-sm modal-dialog-centered">
-            <div class="modal-content text-center" style="border-radius: 16px; padding: 20px;">
-                <div class="modal-body">
-                    <div class="mb-3">
-                        <i class="fas fa-check-circle" style="font-size: 64px; color: #059669;"></i>
-                    </div>
-                    <h5 class="fw-bold" style="color: #1a1a2e;">Sale Completed!</h5>
-                    <p class="text-muted mb-1" style="font-size: 13px;">Receipt #: <strong id="receiptNumber" class="text-dark"></strong></p>
-                    <p class="text-muted mb-3" style="font-size: 13px;">Total: <strong id="saleTotalDisplay" class="text-primary" style="font-size: 20px;"></strong></p>
-                    <div class="d-grid gap-2">
-                        <button class="btn btn-primary" data-bs-dismiss="modal" style="border-radius: 10px; padding: 10px; font-weight: 600;">
-                            <i class="fas fa-plus me-1"></i>New Sale
-                        </button>
-                        <button class="btn btn-outline-secondary" data-bs-dismiss="modal" style="border-radius: 10px; padding: 10px; font-size: 13px;">
-                            <i class="fas fa-times me-1"></i>Close
-                        </button>
-                    </div>
-                </div>
+    <div class="pos-modal" id="saleSuccessModal">
+        <div class="pos-modal-dialog" style="max-width: 360px; text-align: center; padding: 20px;">
+            <div style="margin-bottom:12px;">
+                <i class="fas fa-check-circle" style="font-size: 64px; color: #059669;"></i>
+            </div>
+            <h5 style="margin:0 0 8px; color:#1a1a2e; font-weight:700;">Sale Completed!</h5>
+            <p style="margin:0 0 4px; color:#6c757d; font-size: 13px;">Receipt #: <strong id="receiptNumber" style="color:#1a1a2e;"></strong></p>
+            <p style="margin:0 0 12px; color:#6c757d; font-size: 13px;">Total: <strong id="saleTotalDisplay" style="color:#2563eb; font-size: 20px;"></strong></p>
+            <div style="display:flex; flex-direction: column; gap:8px;">
+                <button data-modal-close class="w-full inline-flex items-center justify-center gap-1" style="border-radius: 10px; padding: 10px; background: #2563eb; color:#fff; border:none; font-weight:600; cursor:pointer;">
+                    <i class="fas fa-plus"></i>New Sale
+                </button>
+                <button data-modal-close class="w-full inline-flex items-center justify-center gap-1" style="border-radius: 10px; padding: 10px; background:#fff; color:#4b5563; border:1px solid #e5e7eb; font-size:13px; cursor:pointer;">
+                    <i class="fas fa-times"></i>Close
+                </button>
             </div>
         </div>
     </div>
 
     <!-- Variant / Color Picker Modal -->
-    <div class="modal fade" id="variantPickerModal" tabindex="-1" data-bs-backdrop="static">
-        <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content" style="border-radius: 14px; overflow: hidden;">
-                <div class="modal-header" style="background: #1a1a2e; color: white; border: none; padding: 14px 18px;">
-                    <h5 class="modal-title" style="font-size: 15px;"><i class="fas fa-box-open me-2"></i>Select Variant / Color</h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body" style="padding: 18px; max-height: 80vh; overflow-y: auto;">
-                    <div class="d-flex align-items-center mb-3">
-                        <div class="rounded bg-light d-flex align-items-center justify-content-center me-3 flex-shrink-0" style="width: 52px; height: 52px; overflow: hidden;">
-                            <img id="vpImage" src="" style="width: 100%; height: 100%; object-fit: cover; display: none;">
-                            <i id="vpImageFallback" class="fas fa-box text-muted" style="font-size: 22px;"></i>
-                        </div>
-                        <div style="min-width: 0;">
-                            <strong id="vpProductName" style="font-size: 14px; display: block;"></strong>
-                        </div>
+    <div class="pos-modal" id="variantPickerModal">
+        <div class="pos-modal-dialog">
+            <div style="background: #1a1a2e; color: white; padding: 14px 18px; display: flex; justify-content: space-between; align-items: center;">
+                <h5 style="margin:0; font-size: 15px;"><i class="fas fa-box-open" style="margin-right:8px;"></i>Select Variant / Color</h5>
+                <button type="button" data-modal-close aria-label="Close" style="border:none; background:none; color:#fff; font-size:20px; cursor:pointer;">&times;</button>
+            </div>
+            <div style="padding: 18px; max-height: 80vh; overflow-y: auto;">
+                <div style="display: flex; align-items: center; margin-bottom:12px;">
+                    <div style="width: 52px; height: 52px; border-radius: 8px; background:#f8f9fa; display:flex; align-items:center; justify-content:center; overflow:hidden; margin-right:12px; flex-shrink:0;">
+                        <img id="vpImage" src="" style="width: 100%; height: 100%; object-fit: cover; display: none;">
+                        <i id="vpImageFallback" class="fas fa-box" style="font-size: 22px; color:#6c757d;"></i>
                     </div>
-
-                    <div class="mb-3">
-                        <label style="font-size: 12px; font-weight: 600; color: #6c757d;">Variant</label>
-                        <div id="vpVariants" class="d-flex flex-wrap gap-2 mt-1"></div>
-                    </div>
-
-                    <div class="mb-3" id="vpColorSection" style="display: none;">
-                        <label style="font-size: 12px; font-weight: 600; color: #6c757d;">Color</label>
-                        <div id="vpColors" class="d-flex flex-wrap gap-2 mt-1"></div>
-                    </div>
-
-                    <div class="rounded p-3 mb-3" style="background: #f8fafc; border: 1px solid #eef2f7;">
-                        <div class="d-flex justify-content-between align-items-center">
-                            <div>
-                                <div id="vpSelectedLabel" style="font-size: 13px; color: #334155;">Select a variant</div>
-                                <div id="vpStock" style="font-size: 12px; color: #059669;">Stock: -</div>
-                            </div>
-                            <div class="text-end">
-                                <div id="vpOldPrice" style="font-size: 12px; color: #dc2626; text-decoration: line-through; display: none;"></div>
-                                <div id="vpFinalPrice" style="font-size: 20px; font-weight: 800; color: #2563eb;">0.00</div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="d-grid">
-                        <button id="vpAddBtn" class="btn btn-primary" disabled style="border-radius: 10px; padding: 12px; font-weight: 700; font-size: 15px;">
-                            <i class="fas fa-cart-plus me-2"></i>Add To Cart
-                        </button>
+                    <div style="min-width: 0;">
+                        <strong id="vpProductName" style="font-size: 14px; display: block;"></strong>
                     </div>
                 </div>
+
+                <div style="margin-bottom:12px;">
+                    <label style="font-size: 12px; font-weight: 600; color: #6c757d;">Variant</label>
+                    <div id="vpVariants" style="display: flex; flex-wrap: wrap; gap:8px; margin-top:4px;"></div>
+                </div>
+
+                <div style="margin-bottom:12px; display: none;" id="vpColorSection">
+                    <label style="font-size: 12px; font-weight: 600; color: #6c757d;">Color</label>
+                    <div id="vpColors" style="display: flex; flex-wrap: wrap; gap:8px; margin-top:4px;"></div>
+                </div>
+
+                <div style="background: #f8fafc; border: 1px solid #eef2f7; border-radius: 8px; padding: 12px; margin-bottom:12px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <div>
+                            <div id="vpSelectedLabel" style="font-size: 13px; color: #334155;">Select a variant</div>
+                            <div id="vpStock" style="font-size: 12px; color: #059669;">Stock: -</div>
+                        </div>
+                        <div style="text-align:right;">
+                            <span id="vpDiscountBadge" style="font-size: 10px; background:#dc2626; color:#fff; padding:2px 6px; border-radius: 9999px; display: none;">-0%</span>
+                            <div id="vpOldPrice" style="font-size: 12px; color: #dc2626; text-decoration: line-through; display: none;"></div>
+                            <div id="vpFinalPrice" style="font-size: 20px; font-weight: 800; color: #2563eb;">0.00</div>
+                        </div>
+                    </div>
+                </div>
+
+                <button id="vpAddBtn" class="w-full inline-flex items-center justify-center gap-2" disabled style="border-radius: 10px; padding: 12px; background:#2563eb; color:#fff; border:none; font-weight:700; font-size: 15px; cursor:pointer;">
+                    <i class="fas fa-cart-plus"></i>Add To Cart
+                </button>
             </div>
         </div>
     </div>
 
     @push('scripts')
     <script>
+    // Custom modal helper (project-scoped, no Bootstrap).
+    function bsModal(action, selector) {
+        const el = document.querySelector(selector);
+        if (!el) return;
+
+        let backdrop = null;
+        document.querySelectorAll('.pos-modal-backdrop').forEach(b => b.remove());
+
+        if (action === 'show') {
+            el.classList.add('show');
+            document.body.classList.add('modal-open');
+            const bd = document.createElement('div');
+            bd.className = 'pos-modal-backdrop show';
+            bd.setAttribute('data-target', selector);
+            document.body.appendChild(bd);
+            backdrop = bd;
+            backdrop.addEventListener('click', function () { bsModal('hide', selector); });
+        } else {
+            el.classList.remove('show');
+            document.body.classList.remove('modal-open');
+            document.querySelectorAll('.pos-modal-backdrop').forEach(b => b.remove());
+            if (window.jQuery) { window.jQuery(el).trigger('posModalHidden'); }
+        }
+    }
+
+    // Close buttons inside modals use data-modal-close.
+    $(document).on('click', '[data-modal-close]', function(e) {
+        e.preventDefault();
+        const modal = $(this).closest('.pos-modal');
+        if (modal.length) bsModal('hide', '#' + modal.attr('id'));
+    });
+
     // Fix for double/multi-HTML-encoded product names ("&amp;amp;amp;").
     function decodeEntities(str) {
         if (typeof str !== 'string') return str;
@@ -416,15 +466,14 @@
                     $customerResults.empty().show();
                     res.data.forEach(c => {
                         $customerResults.append(`
-                            <a class="dropdown-item customer-item" href="#" data-id="${c.id}" data-name="${c.name}" data-phone="${c.phone}" style="padding: 8px 12px; border-radius: 6px; font-size: 13px;">
-                                <div class="d-flex align-items-center">
-                                    <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center me-2" style="width: 32px; height: 32px; font-size: 12px; font-weight: 600;">
-                                        ${c.name.charAt(0).toUpperCase()}
-                                    </div>
-                                    <div>
-                                        <strong style="font-size: 13px;">${c.name}</strong>
-                                        <small class="d-block text-muted" style="font-size: 11px;"><i class="fas fa-phone me-1"></i>${c.phone} ${c.email !== '-' ? '| ' + c.email : ''}</small>
-                                    </div>
+                            <a class="customer-item" href="#" data-id="${c.id}" data-name="${c.name}" data-phone="${c.phone}"
+                                style="display:flex; align-items:center; padding: 8px 12px; border-radius: 6px; font-size: 13px; text-decoration:none; color:#1a1a2e; border-bottom: 1px solid #f5f5f5; cursor:pointer;">
+                                <div class="inline-flex items-center justify-center rounded-full bg-blue-600 text-white" style="width: 32px; height: 32px; font-size: 12px; font-weight: 600; margin-right:8px; flex-shrink:0;">
+                                    ${c.name.charAt(0).toUpperCase()}
+                                </div>
+                                <div>
+                                    <strong style="font-size: 13px;">${c.name}</strong>
+                                    <small style="display:block; font-size: 11px; color: #6c757d;"><i class="fas fa-phone" style="margin-right:4px;"></i>${c.phone} ${c.email !== '-' ? '| ' + c.email : ''}</small>
                                 </div>
                             </a>
                         `);
@@ -502,31 +551,29 @@
                             ? `৳${p.min_price.toFixed(2)}` + (p.max_price > p.min_price ? ` - ৳${p.max_price.toFixed(2)}` : '')
                             : '—';
                         $productResults.append(`
-                            <button type="button" class="dropdown-item product-item" data-idx="${idx}"
-                                style="padding: 8px 12px; border-radius: 6px; font-size: 13px; border-bottom: 1px solid #f5f5f5; text-align: left; width: 100%;">
-                                <div class="d-flex align-items-center">
-                                    <div class="rounded bg-light d-flex align-items-center justify-content-center me-2 flex-shrink-0" style="width: 40px; height: 40px; overflow: hidden;">
-                                        ${p.image ? `<img src="${p.image}" style="width: 100%; height: 100%; object-fit: cover;">` : `<i class="fas fa-box text-muted" style="font-size: 18px;"></i>`}
-                                    </div>
-                                    <div class="flex-grow-1" style="min-width: 0;">
-                                        <strong style="font-size: 13px; display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${decodeEntities(p.name)}</strong>
-                                        <small class="text-muted" style="font-size: 11px;">
-                                            ${p.brand ? decodeEntities(p.brand) + ' ' : ''} ${p.unit ? '| ' + decodeEntities(p.unit) : ''}
-                                            ${vcount > 0 ? '<span class="badge bg-info text-white ms-1" style="font-size: 9px;">' + vcount + ' Variant' + (vcount > 1 ? 's' : '') + '</span>' : ''}
-                                            ${p.has_discount ? '<span class="badge bg-danger ms-1" style="font-size: 9px;">DISCOUNT</span>' : ''}
-                                        </small>
-                                    </div>
-                                    <div class="text-end ms-2 flex-shrink-0">
-                                        <strong style="color: #2563eb; font-size: 14px;">${priceStr}</strong>
-                                    </div>
+                            <button type="button" class="product-item" data-idx="${idx}"
+                                style="display:flex; align-items:center; width:100%; padding: 8px 12px; border-radius: 6px; font-size: 13px; border-bottom: 1px solid #f5f5f5; text-align: left; background:#fff; cursor:pointer;">
+                                <div class="flex items-center justify-center" style="width: 40px; height: 40px; overflow:hidden; margin-right:8px; flex-shrink:0; background:#f8f9fa; border-radius:6px;">
+                                    ${p.image ? `<img src="${p.image}" style="width: 100%; height: 100%; object-fit: cover;">` : `<i class="fas fa-box" style="font-size: 18px; color:#6c757d;"></i>`}
+                                </div>
+                                <div style="flex:1; min-width: 0;">
+                                    <strong style="font-size: 13px; display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${decodeEntities(p.name)}</strong>
+                                    <small style="font-size: 11px; color:#6c757d;">
+                                        ${p.brand ? decodeEntities(p.brand) + ' ' : ''} ${p.unit ? '| ' + decodeEntities(p.unit) : ''}
+                                        ${vcount > 0 ? '<span style="background:#0891b2; color:#fff; font-size:9px; padding:1px 6px; border-radius:9999px; margin-left:4px;">' + vcount + ' Variant' + (vcount > 1 ? 's' : '') + '</span>' : ''}
+                                        ${p.has_discount ? '<span style="background:#dc2626; color:#fff; font-size:9px; padding:1px 6px; border-radius:9999px; margin-left:4px;">DISCOUNT</span>' : ''}
+                                    </small>
+                                </div>
+                                <div style="text-align:right; margin-left:8px; flex-shrink:0;">
+                                    <strong style="color: #2563eb; font-size: 14px;">${priceStr}</strong>
                                 </div>
                             </button>
                         `);
                     });
                 } else {
                     $productResults.html(`
-                        <div class="text-center py-3 text-muted" style="font-size: 13px;">
-                            <i class="fas fa-search mb-1" style="font-size: 24px; display: block; opacity: 0.3;"></i>
+                        <div class="text-center" style="padding:12px 0; color:#6c757d; font-size: 13px;">
+                            <i class="fas fa-search" style="font-size: 24px; display: block; opacity: 0.3; margin-bottom:4px;"></i>
                             No products found for "<strong>${term}</strong>"
                         </div>
                     `).show();
@@ -587,16 +634,22 @@
 
             renderVariantButtons();
             selectVariant(0);
-            $('#variantPickerModal').modal('show');
+            bsModal('show', '#variantPickerModal');
         }
 
         function renderVariantButtons() {
             $('#vpVariants').empty();
             vpCurrentProduct.variants.forEach((v, i) => {
+                const out = Number(v.stock) <= 0;
                 $('#vpVariants').append(`
-                    <button type="button" class="vp-variant-btn btn btn-sm" data-vidx="${i}"
-                        style="border-radius: 8px; font-size: 12px; font-weight: 600; padding: 6px 12px;">
-                        ${decodeEntities(v.name)}
+                    <button type="button" class="vp-variant-btn" data-vidx="${i}"
+                        style="text-align:left; border-radius: 10px; padding: 8px 12px; min-width: 130px; border: 1.5px solid #e5e7eb; background: #fff; cursor:pointer;">
+                        <span style="display:block; font-size: 13px; font-weight: 700; color: #1a1a2e;">${decodeEntities(v.name)}</span>
+                        <span style="display:block; font-size: 12px; font-weight: 700; color: #2563eb;">
+                            ৳${Number(v.price).toFixed(2)}
+                            ${v.discount_percent > 0 ? `<span style="font-size: 10px; color: #dc2626; font-weight: 600;">-${v.discount_percent}%</span>` : ''}
+                        </span>
+                        <span style="display:block; font-size: 10px; color: ${out ? '#dc2626' : '#059669'};">${out ? 'Out of stock' : 'In stock'}</span>
                     </button>
                 `);
             });
@@ -609,8 +662,11 @@
 
             $('.vp-variant-btn').each(function(i) {
                 const active = (i === vidx);
-                $(this).toggleClass('btn-primary', active)
-                    .toggleClass('btn-outline-primary', !active);
+                $(this).css({
+                    borderColor: active ? '#2563eb' : '#e5e7eb',
+                    background: active ? '#eff6ff' : '#fff',
+                    boxShadow: active ? '0 0 0 2px rgba(37,99,235,0.15)' : 'none'
+                });
             });
 
             renderColorButtons();
@@ -629,12 +685,12 @@
             $('#vpColorSection').show();
             v.options.forEach((o, i) => {
                 const swatch = o.color_code
-                    ? `<span class="d-inline-block rounded-circle me-1" style="width: 12px; height: 12px; background: ${o.color_code}; border: 1px solid #ddd;"></span>`
-                    : '';
+                    ? `<span style="display:inline-block; border-radius:9999px; flex-shrink:0; width:14px; height:14px; background: ${o.color_code}; border: 1px solid #cbd5e1;"></span>`
+                    : `<i class="fas fa-palette" style="color:#6c757d;"></i>`;
                 $('#vpColors').append(`
-                    <button type="button" class="vp-color-btn btn btn-sm" data-oidx="${i}"
-                        style="border-radius: 8px; font-size: 12px; font-weight: 600; padding: 5px 10px;">
-                        ${swatch}${decodeEntities(o.color_name)}
+                    <button type="button" class="vp-color-btn" data-oidx="${i}"
+                        style="border-radius: 10px; padding: 6px 12px; display: flex; align-items: center; gap: 6px; border: 1.5px solid #e5e7eb; background: #fff; font-size: 12px; font-weight: 600; color: #1a1a2e; cursor:pointer;">
+                        ${swatch}<span>${decodeEntities(o.color_name)}</span>
                     </button>
                 `);
             });
@@ -648,8 +704,11 @@
 
             $('.vp-color-btn').each(function(i) {
                 const active = (i === oidx);
-                $(this).toggleClass('btn-dark', active)
-                    .toggleClass('btn-outline-dark', !active);
+                $(this).css({
+                    borderColor: active ? '#2563eb' : '#e5e7eb',
+                    background: active ? '#eff6ff' : '#fff',
+                    boxShadow: active ? '0 0 0 2px rgba(37,99,235,0.15)' : 'none'
+                });
             });
 
             updateVpSummary();
@@ -667,20 +726,22 @@
             const label = opt ? decodeEntities(v.name) + ' / ' + decodeEntities(opt.color_name) : decodeEntities(v.name);
 
             $('#vpSelectedLabel').text(label);
+
+            // Stock is informational only - POS sales stay allowed even when
+            // inventory is not tracked for the item.
             $('#vpStock').text('Stock: ' + stock).css('color', stock > 0 ? '#059669' : '#dc2626');
+
             $('#vpFinalPrice').text('৳' + Number(price || 0).toFixed(2));
 
             if (disc > 0) {
                 $('#vpOldPrice').text('৳' + Number(original || 0).toFixed(2)).show();
+                $('#vpDiscountBadge').text('-' + disc + '%').show();
             } else {
                 $('#vpOldPrice').hide();
+                $('#vpDiscountBadge').hide();
             }
 
-            const canAdd = Number(stock) > 0;
-            $('#vpAddBtn').prop('disabled', !canAdd);
-            $('#vpAddBtn').html(canAdd
-                ? '<i class="fas fa-cart-plus me-2"></i>Add To Cart'
-                : '<i class="fas fa-ban me-2"></i>Out of Stock');
+            $('#vpAddBtn').prop('disabled', false);
         }
 
         $(document).on('click', '.vp-variant-btn', function() {
@@ -715,7 +776,7 @@
                 quantity: 1
             });
 
-            $('#variantPickerModal').modal('hide');
+            bsModal('hide', '#variantPickerModal');
             $productSearch.val('').focus();
         });
 
@@ -774,8 +835,8 @@
             if (count === 0) {
                 $cartBody.html(`
                     <tr id="emptyCartRow">
-                        <td colspan="5" class="text-center py-5" style="color: #adb5bd;">
-                            <i class="fas fa-cart-plus mb-2" style="font-size: 40px; display: block; opacity: 0.3;"></i>
+                        <td colspan="5" style="text-align:center; padding:24px 0; color:#adb5bd;">
+                            <i class="fas fa-cart-plus" style="font-size: 40px; display: block; opacity: 0.3; margin-bottom:8px;"></i>
                             <span style="font-size: 14px;">No items in cart. Search & add products.</span>
                         </td>
                     </tr>
@@ -790,22 +851,22 @@
                     <tr>
                         <td style="padding: 10px 14px; vertical-align: middle;">
                             <strong style="font-size: 13px;">${decodeEntities(item.product_name)}</strong>
-                            ${(item.variant_name || item.color_name) ? `<small class="d-block" style="font-size: 11px; color: #2563eb; font-weight: 600;">${decodeEntities(item.variant_name)}${item.color_name ? ' / ' + decodeEntities(item.color_name) : ''}</small>` : ''}
-                            <small class="d-block text-muted" style="font-size: 11px;">${item.sku ? 'SKU: ' + decodeEntities(item.sku) : ''}</small>
-                            ${item.discount_percent > 0 ? `<small class="d-block" style="font-size: 10px; color: #dc2626; font-weight: 600;">-${item.discount_percent}% variant discount</small>` : ''}
+                            ${(item.variant_name || item.color_name) ? `<small style="display:block; font-size: 11px; color: #2563eb; font-weight: 600;">${decodeEntities(item.variant_name)}${item.color_name ? ' / ' + decodeEntities(item.color_name) : ''}</small>` : ''}
+                            <small style="display:block; font-size: 11px; color:#6c757d;">${item.sku ? 'SKU: ' + decodeEntities(item.sku) : ''}</small>
+                            ${item.discount_percent > 0 ? `<small style="display:block; font-size: 10px; color: #dc2626; font-weight: 600;">-${item.discount_percent}% variant discount</small>` : ''}
                         </td>
                         <td style="padding: 10px 14px; vertical-align: middle; font-weight: 600;">৳${item.unit_price.toFixed(2)}</td>
                         <td style="padding: 6px 14px; vertical-align: middle;">
-                            <div class="input-group input-group-sm" style="max-width: 110px;">
-                                <button class="btn btn-outline-secondary qty-minus" data-i="${i}" style="padding: 2px 8px; font-size: 11px; border-radius: 6px 0 0 6px;">-</button>
-                                <input type="number" class="form-control text-center qty-input" value="${item.quantity}" min="0.01" step="1" data-i="${i}" 
-                                    style="padding: 2px 4px; font-size: 13px; font-weight: 600; border-radius: 0; height: 30px;">
-                                <button class="btn btn-outline-secondary qty-plus" data-i="${i}" style="padding: 2px 8px; font-size: 11px; border-radius: 0 6px 6px 0;">+</button>
+                            <div style="display:flex; align-items:center; max-width:110px; border-radius:6px; overflow:hidden; border:1px solid #e5e7eb;">
+                                <button class="qty-minus" data-i="${i}" style="padding: 2px 8px; font-size: 11px; background:#fff; border:none; cursor:pointer; color:#4b5563;">-</button>
+                                <input type="number" class="qty-input" value="${item.quantity}" min="0.01" step="1" data-i="${i}"
+                                    style="padding: 2px 4px; font-size: 13px; font-weight: 600; border:none; text-align:center; width:100%; height: 30px; outline:none;">
+                                <button class="qty-plus" data-i="${i}" style="padding: 2px 8px; font-size: 11px; background:#fff; border:none; cursor:pointer; color:#4b5563;">+</button>
                             </div>
                         </td>
                         <td style="padding: 10px 14px; vertical-align: middle; text-align: right; font-weight: 700; color: #2563eb;">৳${item.total.toFixed(2)}</td>
                         <td style="padding: 10px 14px; vertical-align: middle; text-align: center;">
-                            <button class="btn btn-sm btn-link text-danger remove-item" data-i="${i}" style="padding: 4px; font-size: 14px;">
+                            <button class="remove-item" data-i="${i}" style="padding: 4px; font-size: 14px; background:none; border:none; color:#dc2626; cursor:pointer;">
                                 <i class="fas fa-trash-alt"></i>
                             </button>
                         </td>
@@ -1001,7 +1062,7 @@
             };
 
             const $btn = $(this);
-            $btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin me-2"></i>Processing...');
+            $btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin" style="margin-right:8px;"></i>Processing...');
 
             $.ajax({
                 url: '{{ route("pos.sell.process") }}',
@@ -1013,7 +1074,7 @@
                     if (res.status === 'success') {
                         $('#receiptNumber').text(res.data.receipt.receipt_number);
                         $('#saleTotalDisplay').text('৳' + parseFloat(res.data.receipt.total).toFixed(2));
-                        $('#saleSuccessModal').modal('show');
+                        bsModal('show', '#saleSuccessModal');
                         
                         // Reset cart
                         cart = [];
@@ -1032,13 +1093,13 @@
                     alert('Error: ' + (xhr.responseJSON?.message || 'Something went wrong'));
                 },
                 complete: function() {
-                    $btn.prop('disabled', false).html('<i class="fas fa-check-circle me-2"></i>Complete Sale');
+                    $btn.prop('disabled', false).html('<i class="fas fa-check-circle" style="margin-right:8px;"></i>Complete Sale');
                 }
             });
         });
 
-        // Reset on new sale modal close
-        $('#saleSuccessModal').on('hidden.bs.modal', function() {
+        // Reset on new sale modal close (custom modal event)
+        $('#saleSuccessModal').on('posModalHidden', function() {
             $productSearch.focus();
         });
 
@@ -1056,9 +1117,11 @@
                                 <td style="padding: 10px 16px;">${s.items_count}</td>
                                 <td style="padding: 10px 16px; font-weight: 700; color: #2563eb;">৳${s.total}</td>
                                 <td style="padding: 10px 16px;">
-                                    <span class="badge ${s.payment_status === 'paid' ? 'bg-success' : s.payment_status === 'partial' ? 'bg-warning' : 'bg-secondary'}">
-                                        ${s.payment_status.charAt(0).toUpperCase() + s.payment_status.slice(1)}
-                                    </span>
+                                    ${s.payment_status === 'paid'
+                                        ? '<span style="background:#059669; color:#fff; font-size:10px; font-weight:600; padding:2px 8px; border-radius:9999px;">Paid</span>'
+                                        : (s.payment_status === 'partial'
+                                            ? '<span style="background:#d97706; color:#fff; font-size:10px; font-weight:600; padding:2px 8px; border-radius:9999px;">Partial</span>'
+                                            : '<span style="background:#6b7280; color:#fff; font-size:10px; font-weight:600; padding:2px 8px; border-radius:9999px;">Pending</span>')}
                                 </td>
                                 <td style="padding: 10px 16px;">${s.created_at}</td>
                             </tr>
@@ -1066,9 +1129,9 @@
                     });
                     $('#recentSalesBody').html(html);
                 } else {
-                    $('#recentSalesBody').html('<tr><td colspan="6" class="text-center py-4 text-muted">No recent sales found.</td></tr>');
+                    $('#recentSalesBody').html('<tr><td colspan="6" style="text-align:center; padding:16px 0; color:#6c757d;">No recent sales found.</td></tr>');
                 }
-                $('#recentSalesModal').modal('show');
+                bsModal('show', '#recentSalesModal');
             });
         });
 

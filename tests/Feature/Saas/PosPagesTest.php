@@ -5,6 +5,7 @@ namespace Tests\Feature\Saas;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
+use Modules\Catalog\Models\Product;
 use Modules\Identity\Models\Role;
 use Modules\Identity\Models\User;
 use Tests\TestCase;
@@ -42,5 +43,40 @@ class PosPagesTest extends TestCase
         $sell->assertSee('Complete Sale');
         $sell->assertSee('processSaleBtnLeft');
         $sell->assertSee('processSaleBtn');
+    }
+
+    public function test_pos_search_returns_clean_product_names(): void
+    {
+        $role = Role::firstOrCreate(['name' => 'Super Admin'], ['description' => 'Full access']);
+
+        $admin = User::create([
+            'public_id' => (string) Str::uuid(),
+            'first_name' => 'Pos',
+            'last_name' => 'Admin',
+            'email' => 'pos-search-admin@example.com',
+            'password_hash' => Hash::make('secret1234'),
+            'status' => 'active',
+            'email_verified_at' => now(),
+        ]);
+        $admin->roles()->attach($role->id);
+
+        // Simulate a name that got saved through escaped form values several
+        // times ("&" became "&amp;amp;amp;"...).
+        Product::create([
+            'name' => 'P9 Wireless Bluetooth Headset with ANC &amp;amp;amp;amp;amp; Noise Cancelling Mic',
+            'slug' => 'p9-wireless-bt-headset',
+            'product_type' => 'physical',
+            'status' => 'active',
+            'visibility' => 'public',
+        ]);
+
+        $response = $this->actingAs($admin)->getJson('/pos-sell/search-products?term=P9');
+
+        $response->assertOk();
+
+        $names = collect($response->json('data'))->pluck('name');
+
+        $this->assertContains('P9 Wireless Bluetooth Headset with ANC & Noise Cancelling Mic', $names);
+        $this->assertStringNotContainsString('&amp;', $names->join(' '));
     }
 }

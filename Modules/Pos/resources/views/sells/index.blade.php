@@ -307,6 +307,19 @@
 
     @push('scripts')
     <script>
+    // Fix for double/multi-HTML-encoded product names ("&amp;amp;amp;").
+    function decodeEntities(str) {
+        if (typeof str !== 'string') return str;
+        for (let i = 0; i < 5 && str.indexOf('&') !== -1; i++) {
+            const txt = document.createElement('textarea');
+            txt.innerHTML = str;
+            const dec = txt.value;
+            if (dec === str) break;
+            str = dec;
+        }
+        return str;
+    }
+
     $(document).ready(function() {
         // ====== STATE ======
         let cart = [];
@@ -431,14 +444,14 @@
                     res.data.forEach(p => {
                         $productResults.append(`
                             <a class="dropdown-item product-item" href="#" 
-                                data-id="${p.id}" data-name="${p.name}" data-price="${p.price}" data-sku="${p.sku}" 
+                                data-id="${p.id}" data-name="${decodeEntities(p.name)}" data-price="${p.price}" data-sku="${p.sku}" 
                                 style="padding: 8px 12px; border-radius: 6px; font-size: 13px; border-bottom: 1px solid #f5f5f5;">
                                 <div class="d-flex align-items-center">
                                     <div class="rounded bg-light d-flex align-items-center justify-content-center me-2 flex-shrink-0" style="width: 40px; height: 40px; overflow: hidden;">
                                         ${p.image ? `<img src="${p.image}" style="width: 100%; height: 100%; object-fit: cover;">` : `<i class="fas fa-box text-muted" style="font-size: 18px;"></i>`}
                                     </div>
                                     <div class="flex-grow-1" style="min-width: 0;">
-                                        <strong style="font-size: 13px; display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${p.name}</strong>
+                                        <strong style="font-size: 13px; display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${decodeEntities(p.name)}</strong>
                                         <small class="text-muted" style="font-size: 11px;">
                                             ${p.sku ? 'SKU: ' + p.sku : ''} ${p.brand ? '| ' + p.brand : ''} ${p.unit ? '| ' + p.unit : ''}
                                         </small>
@@ -465,7 +478,7 @@
             e.preventDefault();
             const product = {
                 id: $(this).data('id'),
-                name: $(this).data('name'),
+                name: decodeEntities($(this).data('name')),
                 price: parseFloat($(this).data('price')),
                 sku: $(this).data('sku') || ''
             };
@@ -534,7 +547,7 @@
                 html += `
                     <tr>
                         <td style="padding: 10px 14px; vertical-align: middle;">
-                            <strong style="font-size: 13px;">${item.product_name}</strong>
+                            <strong style="font-size: 13px;">${decodeEntities(item.product_name)}</strong>
                             <small class="d-block text-muted" style="font-size: 11px;">${item.sku ? 'SKU: ' + item.sku : ''}</small>
                         </td>
                         <td style="padding: 10px 14px; vertical-align: middle; font-weight: 600;">৳${item.unit_price.toFixed(2)}</td>

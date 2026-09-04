@@ -83,9 +83,9 @@ class PosSellService
 
                     return [
                         'id' => $product->id,
-                        'name' => $product->name,
+                        'name' => $this->normalizeText($product->name),
                         'product_type' => $product->product_type,
-                        'brand' => $product->brand ? $product->brand->name : '',
+                        'brand' => $product->brand ? $this->normalizeText($product->brand->name) : '',
                         'unit' => $product->unit ? $product->unit->name : '',
                         'sku' => $variant ? $variant->sku : '',
                         'price' => $variant ? ($variant->sale_price ?? $variant->price ?? 0) : 0,
@@ -158,7 +158,7 @@ class PosSellService
                         'pos_sale_id' => $sale->id,
                         'product_id' => $item['product_id'],
                         'variant_id' => null,
-                        'product_name' => $item['product_name'],
+                        'product_name' => $this->normalizeText($item['product_name']),
                         'sku' => $item['sku'] ?? null,
                         'unit_price' => $item['unit_price'],
                         'quantity' => $item['quantity'],
@@ -185,6 +185,29 @@ class PosSellService
         } catch (\Exception $e) {
             return ApiResponse::error('Error processing sale: '.$e->getMessage(), 500);
         }
+    }
+
+    /**
+     * Decode HTML entities repeatedly until the string stops changing.
+     *
+     * Product names sometimes get saved multiple times through HTML-escaped
+     * form values ("&" -> "&amp;" -> "&amp;amp;" ...). This normalises any
+     * depth of encoding back to the real text, so the POS shows and stores
+     * clean names instead of "&amp;amp;amp;".
+     */
+    private function normalizeText(string $value): string
+    {
+        for ($i = 0; $i < 5 && str_contains($value, '&'); $i++) {
+            $decoded = html_entity_decode($value, ENT_QUOTES | ENT_HTML5, 'UTF-8');
+
+            if ($decoded === $value) {
+                break;
+            }
+
+            $value = $decoded;
+        }
+
+        return trim($value);
     }
 
     /**

@@ -10,7 +10,14 @@ use Modules\Catalog\Http\Controllers\SizeController;
 use Modules\Catalog\Http\Controllers\TaxRateController;
 use Modules\Catalog\Http\Controllers\UnitController;
 
-Route::middleware(['auth', 'verified', 'admin'])->group(function () {
+/*
+|--------------------------------------------------------------------------
+| Catalog - tenant accessible (platform staff + SaaS store owners)
+|--------------------------------------------------------------------------
+| Products, brands and categories are the store owner's working area.
+| Data is still global until per-store scoping lands (next phase).
+*/
+Route::middleware(['auth', 'verified', 'admin', 'role:Super Admin,Admin,Manager,Staff,Store Owner'])->group(function () {
     Route::get('/barcode-print', [BarcodePrintController::class, 'index'])->name('barcode-print.index');
     Route::get('/barcode-print/search', [BarcodePrintController::class, 'search'])->name('barcode-print.search');
     Route::get('/barcode-print/autocomplete', [BarcodePrintController::class, 'autocomplete'])->name('barcode-print.autocomplete');
@@ -27,7 +34,14 @@ Route::middleware(['auth', 'verified', 'admin'])->group(function () {
 
     Route::resource('categories', CategoryController::class)->except(['create', 'edit'])->names('categories');
     Route::get('/dataTable/categories', [CategoryController::class, 'dataTable'])->name('categories.dataTable');
+});
 
+/*
+|--------------------------------------------------------------------------
+| Catalog - platform only (reference data & moderation)
+|--------------------------------------------------------------------------
+*/
+Route::middleware(['auth', 'verified', 'admin', 'role:Super Admin,Admin'])->group(function () {
     Route::resource('units', UnitController::class)->except(['create', 'edit'])->names('units');
     Route::get('/dataTable/units', [UnitController::class, 'dataTable'])->name('units.dataTable');
 

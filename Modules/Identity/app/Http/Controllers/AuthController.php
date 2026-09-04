@@ -43,10 +43,7 @@ class AuthController extends Controller
         // Create token
         $token = $user->createToken('auth_token')->plainTextToken;
 
-        return ApiResponse::created([
-            'user' => $user->load('roles'),
-            'token' => $token,
-        ], 'Registration successful.');
+        return ApiResponse::created($this->userPayload($user) + ['token' => $token], 'Registration successful.');
     }
 
     /**
@@ -71,10 +68,7 @@ class AuthController extends Controller
         $token = $user->createToken('auth_token')->plainTextToken;
         $user->update(['last_login_at' => now()]);
 
-        return ApiResponse::success([
-            'user' => $user->load('roles'),
-            'token' => $token,
-        ], 'Login successful.');
+        return ApiResponse::success($this->userPayload($user) + ['token' => $token], 'Login successful.');
     }
 
     /**
@@ -102,7 +96,22 @@ class AuthController extends Controller
      */
     public function user(Request $request)
     {
-        return ApiResponse::success(['user' => $request->user()->load('roles')]);
+        return ApiResponse::success($this->userPayload($request->user()));
+    }
+
+    /**
+     * Build the standard auth payload: user + owned store when present.
+     * SaaS store owners always receive their store context alongside the user.
+     */
+    private function userPayload(User $user): array
+    {
+        $payload = ['user' => $user->load('roles')];
+
+        if ($store = $user->ownedStore) {
+            $payload['store'] = $store;
+        }
+
+        return $payload;
     }
 
     /**

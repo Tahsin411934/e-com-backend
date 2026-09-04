@@ -3,7 +3,7 @@
 use Illuminate\Support\Facades\Route;
 use Modules\History\Http\Controllers\HistoryController;
 
-Route::middleware(['auth', 'verified', 'admin'])->group(function () {
+Route::middleware(['auth', 'verified', 'admin', 'role:Super Admin,Admin'])->group(function () {
     Route::get('histories', [HistoryController::class, 'page'])->name('history.page');
 
     // DataTables endpoint for the /histories admin page (same convention as

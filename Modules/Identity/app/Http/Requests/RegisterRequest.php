@@ -3,6 +3,8 @@
 namespace Modules\Identity\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
+use Modules\Identity\Models\User;
 
 class RegisterRequest extends FormRequest
 {
@@ -23,7 +25,7 @@ class RegisterRequest extends FormRequest
             'first_name' => ['required', 'string', 'max:255'],
             'last_name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'email', 'max:255', 'unique:users,email'],
-            'phone' => ['nullable', 'string', 'max:20'],
+            'phone' => ['nullable', 'string', 'max:20', Rule::unique(User::class, 'phone')],
             'password' => ['required', 'string', 'min:8', 'confirmed'],
         ];
     }

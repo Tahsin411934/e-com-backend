@@ -7,7 +7,7 @@ use Modules\Reviews\Http\Controllers\ProductReviewController;
 use Modules\Reviews\Http\Controllers\WebhookController;
 use Modules\Reviews\Http\Controllers\WebhookDeliveryController;
 
-Route::middleware(['auth', 'verified', 'admin'])->group(function () {
+Route::middleware(['auth', 'verified', 'admin', 'role:Super Admin,Admin,Manager,Staff'])->group(function () {
     // Product Reviews
     Route::resource('product-reviews', ProductReviewController::class)->except(['create', 'edit'])->names('product-reviews');
     Route::get('/dataTable/product-reviews', [ProductReviewController::class, 'dataTable'])->name('product-reviews.dataTable');

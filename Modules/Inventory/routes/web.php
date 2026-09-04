@@ -9,7 +9,7 @@ use Modules\Inventory\Http\Controllers\PurchaseReturnController;
 use Modules\Inventory\Http\Controllers\SupplierController;
 use Modules\Inventory\Http\Controllers\SupplierPaymentController;
 
-Route::middleware(['auth', 'verified', 'admin'])->group(function () {
+Route::middleware(['auth', 'verified', 'admin', 'role:Super Admin,Admin,Manager,Staff'])->group(function () {
     // Inventory Locations
     Route::resource('inventory-locations', InventoryLocationController::class)->except(['create', 'edit'])->names('inventory-locations');
     Route::get('/dataTable/inventory-locations', [InventoryLocationController::class, 'dataTable'])->name('inventory-locations.dataTable');

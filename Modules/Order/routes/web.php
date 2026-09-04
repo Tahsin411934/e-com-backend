@@ -7,7 +7,7 @@ use Modules\Order\Http\Controllers\OrderController;
 use Modules\Order\Http\Controllers\PaymentController;
 use Modules\Order\Http\Controllers\RefundController;
 
-Route::middleware(['auth', 'verified', 'admin'])->group(function () {
+Route::middleware(['auth', 'verified', 'admin', 'role:Super Admin,Admin,Manager,Staff'])->group(function () {
     // Checkout - Convert cart to order
     Route::post('/checkout', [CheckoutController::class, 'checkout'])->name('checkout');
 

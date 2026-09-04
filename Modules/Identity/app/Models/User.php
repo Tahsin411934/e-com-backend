@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Support\Collection;
 use Laravel\Sanctum\HasApiTokens;
+use Modules\Store\Models\Store;
 
 class User extends Authenticatable
 {
@@ -55,6 +56,22 @@ class User extends Authenticatable
     }
 
     /**
+     * Store owned by this user (SaaS tenant relationship).
+     */
+    public function ownedStore()
+    {
+        return $this->hasOne(Store::class, 'owner_id');
+    }
+
+    /**
+     * Determine whether the user is a SaaS store owner (tenant).
+     */
+    public function isStoreOwner(): bool
+    {
+        return $this->hasRole(self::STORE_OWNER_ROLE);
+    }
+
+    /**
      * Check if user has a specific role
      */
     public function hasRole(string $roleName): bool
@@ -76,6 +93,16 @@ class User extends Authenticatable
      * Role name reserved for frontend/shop customers
      */
     public const CUSTOMER_ROLE = 'Customer';
+
+    /**
+     * Role name reserved for SaaS store owners (tenants)
+     */
+    public const STORE_OWNER_ROLE = 'Store Owner';
+
+    /**
+     * Role name reserved for SaaS store staff members
+     */
+    public const STORE_STAFF_ROLE = 'Store Staff';
 
     /**
      * Determine whether the user may access the admin panel.

@@ -8,12 +8,14 @@ use Illuminate\Support\Facades\Route;
 //     return view('welcome');
 // });
 
-Route::middleware(['auth', 'verified', 'admin'])->group(function () {
+// Dashboard: platform staff + SaaS store owners.
+// NOTE: store-scoped dashboard data lands in the next phase (Phase 3).
+Route::middleware(['auth', 'verified', 'admin', 'role:Super Admin,Admin,Store Owner'])->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
     Route::get('/api/dashboard/data', [DashboardController::class, 'apiData'])->name('dashboard.api');
 });
 
-Route::middleware(['auth', 'verified', 'admin'])->group(function () {
+Route::middleware(['auth', 'verified', 'admin', 'role:Super Admin,Admin,Manager,Staff,Store Owner,Store Staff'])->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');

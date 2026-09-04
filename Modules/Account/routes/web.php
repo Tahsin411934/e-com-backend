@@ -9,7 +9,7 @@ use Modules\Account\Http\Controllers\AccountInvestmentController;
 use Modules\Account\Http\Controllers\AccountReportController;
 use Modules\Account\Http\Controllers\AccountTransferController;
 
-Route::middleware(['auth', 'verified', 'admin'])->group(function () {
+Route::middleware(['auth', 'verified', 'admin', 'role:Super Admin,Admin'])->group(function () {
     Route::get('account', [AccountController::class, 'index'])->name('account.dashboard');
 
     Route::resource('account-accounts', AccountAccountController::class)->except(['create', 'edit'])->names('account-accounts');

@@ -5,6 +5,7 @@ namespace Modules\Store\Models;
 use App\Traits\CustomSoftDeletes;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Modules\Catalog\Models\Product;
 
 class Store extends Model
 {
@@ -14,6 +15,7 @@ class Store extends Model
     protected $table = 'stores';
 
     protected $fillable = [
+        'owner_id',
         'name',
         'slug',
         'email',
@@ -26,6 +28,16 @@ class Store extends Model
     public function staff()
     {
         return $this->hasMany(StoreStaff::class);
+    }
+
+    public function owner()
+    {
+        return $this->belongsTo(User::class, 'owner_id');
+    }
+
+    public function products()
+    {
+        return $this->hasMany(Product::class);
     }
 
     public function addresses()

@@ -91,6 +91,31 @@ class IdentityDatabaseSeeder extends Seeder
         ])->pluck('id');
         $staffRole->permissions()->sync($staffPermissionNames);
 
+        // ===== SaaS tenant roles =====
+        $storeOwnerRole = Role::firstOrCreate([
+            'name' => User::STORE_OWNER_ROLE,
+        ], ['description' => 'SaaS tenant - owns a store and manages its products, catalog and dashboard']);
+
+        $storeStaffRole = Role::firstOrCreate([
+            'name' => User::STORE_STAFF_ROLE,
+        ], ['description' => "SaaS store staff - limited access to the owner's store data"]);
+
+        // Store Owner: full control over their own store catalog & products
+        $storeOwnerPermissionNames = Permission::whereIn('name', [
+            'products.view', 'products.create', 'products.edit', 'products.delete',
+            'categories.view', 'categories.create', 'categories.edit',
+            'brands.view', 'brands.create', 'brands.edit',
+            'orders.view',
+            'stores.view',
+        ])->pluck('id');
+        $storeOwnerRole->permissions()->sync($storeOwnerPermissionNames);
+
+        // Store Staff: view-only inside the store
+        $storeStaffPermissionNames = Permission::whereIn('name', [
+            'products.view', 'categories.view', 'brands.view', 'orders.view',
+        ])->pluck('id');
+        $storeStaffRole->permissions()->sync($storeStaffPermissionNames);
+
         // ===== Users =====
         $passwordHash = Hash::make('password');
 

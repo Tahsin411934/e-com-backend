@@ -7,7 +7,7 @@ use Modules\Store\Http\Controllers\CountryController;
 use Modules\Store\Http\Controllers\StoreController;
 use Modules\Store\Http\Controllers\StoreStaffController;
 
-Route::middleware(['auth', 'verified', 'admin'])->group(function () {
+Route::middleware(['auth', 'verified', 'admin', 'role:Super Admin,Admin'])->group(function () {
     // Stores
     Route::resource('stores', StoreController::class)->except(['create', 'edit'])->names('stores');
     Route::get('/dataTable/stores', [StoreController::class, 'dataTable'])->name('stores.dataTable');

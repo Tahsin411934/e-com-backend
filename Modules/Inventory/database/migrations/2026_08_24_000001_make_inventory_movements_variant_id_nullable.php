@@ -2,6 +2,7 @@
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
@@ -16,12 +17,17 @@ return new class extends Migration
             return;
         }
 
-        Schema::table('inventory_movements', function (Blueprint $table) {
-            $table->dropForeign('inventory_movements_variant_id_foreign');
+        $sqlite = DB::connection()->getDriverName() === 'sqlite';
+
+        Schema::table('inventory_movements', function (Blueprint $table) use ($sqlite) {
+            if (! $sqlite) {
+                $table->dropForeign('inventory_movements_variant_id_foreign');
+            }
+
             $table->unsignedBigInteger('variant_id')->nullable()->change();
         });
 
-        if (Schema::hasTable('product_variants')) {
+        if (! $sqlite && Schema::hasTable('product_variants')) {
             Schema::table('inventory_movements', function (Blueprint $table) {
                 $table->foreign('variant_id')->references('id')->on('product_variants');
             });
@@ -30,10 +36,18 @@ return new class extends Migration
 
     public function down(): void
     {
-        Schema::table('inventory_movements', function (Blueprint $table) {
-            $table->dropForeign('inventory_movements_variant_id_foreign');
+        $sqlite = DB::connection()->getDriverName() === 'sqlite';
+
+        Schema::table('inventory_movements', function (Blueprint $table) use ($sqlite) {
+            if (! $sqlite) {
+                $table->dropForeign('inventory_movements_variant_id_foreign');
+            }
+
             $table->unsignedBigInteger('variant_id')->change();
-            $table->foreign('variant_id')->references('id')->on('product_variants');
+
+            if (! $sqlite) {
+                $table->foreign('variant_id')->references('id')->on('product_variants');
+            }
         });
     }
 };

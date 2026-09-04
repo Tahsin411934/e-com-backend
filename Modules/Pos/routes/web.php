@@ -6,7 +6,7 @@ use Modules\Pos\Http\Controllers\PosSaleController;
 use Modules\Pos\Http\Controllers\PosSellController;
 use Modules\Pos\Http\Controllers\PosShiftController;
 
-Route::middleware(['auth', 'verified', 'admin'])->group(function () {
+Route::middleware(['auth', 'verified', 'admin', 'role:Super Admin,Admin,Manager,Staff'])->group(function () {
     // POS Registers
     Route::resource('pos-registers', PosRegisterController::class)->except(['create', 'edit'])->names('pos-registers');
     Route::get('/dataTable/pos-registers', [PosRegisterController::class, 'dataTable'])->name('pos-registers.dataTable');

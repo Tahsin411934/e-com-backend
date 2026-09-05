@@ -378,6 +378,30 @@
     @push('scripts')
     <script>
     // Custom modal helper (project-scoped, no Bootstrap).
+    function posToastSuccess(message) {
+        Toastify({
+            text: message,
+            duration: 4000,
+            close: true,
+            gravity: 'bottom',
+            position: 'right',
+            stopOnFocus: true,
+            style: { background: 'linear-gradient(135deg, #16a34a, #4ade80)' }
+        }).showToast();
+    }
+
+    function posToastError(message) {
+        Toastify({
+            text: message,
+            duration: 3500,
+            close: true,
+            gravity: 'bottom',
+            position: 'right',
+            stopOnFocus: true,
+            style: { background: 'linear-gradient(135deg, #dc2626, #f87171)' }
+        }).showToast();
+    }
+
     function bsModal(action, selector) {
         const el = document.querySelector(selector);
         if (!el) return;
@@ -599,8 +623,12 @@
             const variants = p.variants;
             if (!variants || variants.length === 0) return;
 
-            // Fast path: only one priceable choice → add straight to cart.
-            if (variants.length === 1 && variants[0].options.length <= 1) {
+            // Fast path: only one priceable choice, in stock → add straight to cart.
+            const onlyChoice = variants.length === 1 && variants[0].options.length <= 1;
+            const firstStock = variants[0].stock;
+            const firstStockNum = (firstStock === null || firstStock === undefined || isNaN(Number(firstStock))) ? 0 : Number(firstStock);
+            const inStock = onlyChoice && firstStockNum > 0;
+            if (onlyChoice && inStock) {
                 const v = variants[0];
                 const opt = v.options[0] || null;
                 const price = opt ? opt.price : v.price;
@@ -623,6 +651,8 @@
                 return;
             }
 
+            // Multiple choices (or out of stock) → open the picker so the
+            // cashier sees the disabled state and stock info clearly.
             vpCurrentProduct = p;
             vpSelectedVariant = null;
             vpSelectedOption = null;
@@ -640,7 +670,8 @@
         function renderVariantButtons() {
             $('#vpVariants').empty();
             vpCurrentProduct.variants.forEach((v, i) => {
-                const out = Number(v.stock) <= 0;
+                const vStock = (v.stock === null || v.stock === undefined || isNaN(Number(v.stock))) ? 0 : Number(v.stock);
+                const out = vStock <= 0;
                 $('#vpVariants').append(`
                     <button type="button" class="vp-variant-btn" data-vidx="${i}"
                         style="text-align:left; border-radius: 10px; padding: 8px 12px; min-width: 130px; border: 1.5px solid #e5e7eb; background: #fff; cursor:pointer;">
@@ -722,14 +753,16 @@
             const price = opt ? opt.price : v.price;
             const original = opt ? opt.original_price : v.original_price;
             const disc = opt ? opt.discount_percent : v.discount_percent;
-            const stock = opt ? opt.stock : v.stock;
             const label = opt ? decodeEntities(v.name) + ' / ' + decodeEntities(opt.color_name) : decodeEntities(v.name);
 
             $('#vpSelectedLabel').text(label);
 
-            // Stock is informational only - POS sales stay allowed even when
-            // inventory is not tracked for the item.
-            $('#vpStock').text('Stock: ' + stock).css('color', stock > 0 ? '#059669' : '#dc2626');
+            // Robust stock: option → variant → 0. Treat null/undefined/NaN as 0.
+            const rawStock = opt ? opt.stock : v.stock;
+            const stock = (rawStock === null || rawStock === undefined || isNaN(Number(rawStock))) ? 0 : Number(rawStock);
+            const outOfStock = stock <= 0;
+
+            $('#vpStock').text('Stock: ' + stock).css('color', outOfStock ? '#dc2626' : '#059669');
 
             $('#vpFinalPrice').text('৳' + Number(price || 0).toFixed(2));
 
@@ -741,7 +774,16 @@
                 $('#vpDiscountBadge').hide();
             }
 
-            $('#vpAddBtn').prop('disabled', false);
+            // Disable Add to Cart when stock is 0 or negative.
+            $('#vpAddBtn').prop('disabled', outOfStock);
+            $('#vpAddBtn').css({
+                background: outOfStock ? '#9ca3af' : '#2563eb',
+                cursor: outOfStock ? 'not-allowed' : 'pointer',
+                opacity: outOfStock ? 0.6 : 1
+            });
+            $('#vpAddBtn').html(outOfStock
+                ? '<i class="fas fa-ban" style="margin-right:8px;"></i>Out of Stock'
+                : '<i class="fas fa-cart-plus" style="margin-right:8px;"></i>Add To Cart');
         }
 
         $(document).on('click', '.vp-variant-btn', function() {
@@ -1026,7 +1068,7 @@
 
         $('#processSaleBtn').on('click', function() {
             if (cart.length === 0) {
-                alert('Please add at least one item to the cart.');
+                posToastError('Please add at least one item to the cart.');
                 return;
             }
 
@@ -1034,11 +1076,11 @@
             const shiftId = $('#pos_shift_id').val();
             
             if (!registerId) {
-                alert('Please select a register.');
+                posToastError('Please select a register.');
                 return;
             }
             if (!shiftId) {
-                alert('Please select a shift.');
+                posToastError('Please select a shift.');
                 return;
             }
 
@@ -1107,8 +1149,20 @@
                 notes: $('#inputNotes').val() || ''
             };
 
-            const $btn = $(this);
+            const $btn = $('#processSaleBtn');
+            const $btnLeft = $('#processSaleBtnLeft');
+
+            if (window.posSubmitting) return;
+            window.posSubmitting = true;
+
             $btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin" style="margin-right:8px;"></i>Processing...');
+            $btnLeft.prop('disabled', true).css({ opacity: 0.6, cursor: 'not-allowed' });
+
+            const restoreButtons = function() {
+                window.posSubmitting = false;
+                $btn.prop('disabled', false).html('<i class="fas fa-check-circle" style="margin-right:8px;"></i>Complete Sale');
+                $btnLeft.prop('disabled', false).css({ opacity: 1, cursor: 'pointer' });
+            };
 
             $.ajax({
                 url: '{{ route("pos.sell.process") }}',
@@ -1117,33 +1171,62 @@
                 contentType: 'application/json',
                 headers: { 'X-CSRF-TOKEN': '{{ csrf_token() }}' },
                 success: function(res) {
+                    restoreButtons();
+
                     if (res.status === 'success') {
-                        $('#receiptNumber').text(res.data.receipt.receipt_number);
-                        $('#saleTotalDisplay').text('৳' + parseFloat(res.data.receipt.total).toFixed(2));
-                        bsModal('show', '#saleSuccessModal');
-                        
-                        // Reset cart
-                        cart = [];
-                        renderCart();
-                        $amountReceived.val(0);
-                        $inputDiscount.val(0);
-                        $inputTax.val(0);
-                        $inputNotes.val('');
-                        $('#changeDueLabel').text('Change Due');
-                        $('#changeDue').text('৳0.00');
-                        $('#changeDue').css('color', '#059669');
+                        // Reset the entire sale form for the next customer.
+                        resetSaleForm();
+
+                        posToastSuccess('Sale completed! Receipt #' + res.data.receipt.receipt_number + ' | Total: ৳' + parseFloat(res.data.receipt.total).toFixed(2));
                     } else {
-                        alert(res.message || 'Error processing sale.');
+                        posToastError(res.message || 'Error processing sale.');
                     }
                 },
                 error: function(xhr) {
-                    alert('Error: ' + (xhr.responseJSON?.message || 'Something went wrong'));
+                    restoreButtons();
+
+                    posToastError('Error: ' + (xhr.responseJSON?.message || 'Something went wrong'));
                 },
                 complete: function() {
-                    $btn.prop('disabled', false).html('<i class="fas fa-check-circle" style="margin-right:8px;"></i>Complete Sale');
+                    restoreButtons();
                 }
             });
         });
+
+        // Reset the whole sale form (cart, customer, payment) after completion.
+        function resetSaleForm() {
+            cart = [];
+            renderCart();
+
+            // Reset customer to walk-in.
+            selectedCustomer = null;
+            $('#customer_id').val('');
+            $('#selectedCustomer').hide();
+            $('#customerSearch').val('').prop('disabled', false);
+            $('#walkinBtn').show();
+            $('#custName').text('Walk-in Customer');
+            $('#custPhone').text('No contact info');
+
+            // Reset payment to Cash.
+            paymentMethod = 'cash';
+            $('.pay-method-btn').each(function() {
+                $(this).css({ background: '#f0f0f0', color: '#6c757d' });
+            });
+            $('.pay-method-btn[data-method="cash"]').css({ background: '#2563eb', color: 'white' });
+            $('#cashPaymentSection').show();
+            $('#mixedPaymentSection').hide();
+
+            $amountReceived.val(0);
+            $('#mixedCash').val(0);
+            $('#mixedCard').val(0);
+            $inputDiscount.val(0);
+            $inputTax.val(0);
+            $inputNotes.val('');
+            $('#changeDueLabel').text('Change Due');
+            $('#changeDue').text('৳0.00').css('color', '#059669');
+
+            $productSearch.val('').focus();
+        }
 
         // Reset on new sale modal close (custom modal event)
         $('#saleSuccessModal').on('posModalHidden', function() {

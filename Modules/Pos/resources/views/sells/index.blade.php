@@ -228,7 +228,7 @@
                                     style="width:100%; border-radius: 8px; border: 1.5px solid #e0e0e0; padding: 8px 12px; font-size: 16px; font-weight: 700; text-align: center; outline:none;">
                             </div>
                             <div style="display: flex; justify-content: space-between; padding: 8px; background:#f8f9fa; border-radius: 8px;">
-                                <span style="font-size: 13px; color: #6c757d;">Change Due</span>
+                                <span id="changeDueLabel" style="font-size: 13px; color: #6c757d;">Change Due</span>
                                 <span id="changeDue" style="font-weight:700; font-size: 18px; color: #059669;">0.00</span>
                             </div>
                         </div>
@@ -788,8 +788,9 @@
                 existing.quantity += 1;
                 existing.subtotal = existing.unit_price * existing.quantity;
                 existing.total = existing.subtotal;
-                existing.discount_amount = (existing.original_price - existing.unit_price) * existing.quantity;
+                existing.discount_amount = existing.discount_per_unit * existing.quantity;
             } else {
+                const perUnitDiscount = (product.original_price || product.unit_price) - product.unit_price;
                 cart.push({
                     key,
                     product_id: product.product_id,
@@ -801,10 +802,11 @@
                     sku: product.sku || '',
                     unit_price: product.unit_price,
                     original_price: product.original_price || product.unit_price,
+                    discount_per_unit: perUnitDiscount,
                     discount_percent: product.discount_percent || 0,
                     quantity: 1,
                     subtotal: product.unit_price,
-                    discount_amount: (product.original_price || product.unit_price) - product.unit_price,
+                    discount_amount: perUnitDiscount,
                     total: product.unit_price
                 });
             }
@@ -824,6 +826,7 @@
             cart[index].quantity = newQty;
             cart[index].subtotal = cart[index].unit_price * newQty;
             cart[index].total = cart[index].subtotal;
+            cart[index].discount_amount = cart[index].discount_per_unit * newQty;
             renderCart();
         }
 
@@ -853,9 +856,14 @@
                             <strong style="font-size: 13px;">${decodeEntities(item.product_name)}</strong>
                             ${(item.variant_name || item.color_name) ? `<small style="display:block; font-size: 11px; color: #2563eb; font-weight: 600;">${decodeEntities(item.variant_name)}${item.color_name ? ' / ' + decodeEntities(item.color_name) : ''}</small>` : ''}
                             <small style="display:block; font-size: 11px; color:#6c757d;">${item.sku ? 'SKU: ' + decodeEntities(item.sku) : ''}</small>
-                            ${item.discount_percent > 0 ? `<small style="display:block; font-size: 10px; color: #dc2626; font-weight: 600;">-${item.discount_percent}% variant discount</small>` : ''}
                         </td>
-                        <td style="padding: 10px 14px; vertical-align: middle; font-weight: 600;">৳${item.unit_price.toFixed(2)}</td>
+                        <td style="padding: 10px 14px; vertical-align: middle;">
+                            ${item.discount_per_unit > 0 ? `
+                                <div style="font-size: 11px; color: #9ca3af; text-decoration: line-through;">৳${Number(item.original_price).toFixed(2)}</div>
+                                <div style="font-size: 11px; color: #dc2626; font-weight: 600;">-৳${Number(item.discount_per_unit).toFixed(2)}${item.discount_percent > 0 ? ' (-' + item.discount_percent + '%)' : ''}</div>
+                            ` : ''}
+                            <div style="font-weight: 700; color: #2563eb; font-size: 14px;">৳${Number(item.unit_price).toFixed(2)}</div>
+                        </td>
                         <td style="padding: 6px 14px; vertical-align: middle;">
                             <div style="display:flex; align-items:center; max-width:110px; border-radius:6px; overflow:hidden; border:1px solid #e5e7eb;">
                                 <button class="qty-minus" data-i="${i}" style="padding: 2px 8px; font-size: 11px; background:#fff; border:none; cursor:pointer; color:#4b5563;">-</button>
@@ -864,7 +872,7 @@
                                 <button class="qty-plus" data-i="${i}" style="padding: 2px 8px; font-size: 11px; background:#fff; border:none; cursor:pointer; color:#4b5563;">+</button>
                             </div>
                         </td>
-                        <td style="padding: 10px 14px; vertical-align: middle; text-align: right; font-weight: 700; color: #2563eb;">৳${item.total.toFixed(2)}</td>
+                        <td style="padding: 10px 14px; vertical-align: middle; text-align: right; font-weight: 700; color: #2563eb;">৳${Number(item.total).toFixed(2)}</td>
                         <td style="padding: 10px 14px; vertical-align: middle; text-align: center;">
                             <button class="remove-item" data-i="${i}" style="padding: 4px; font-size: 14px; background:none; border:none; color:#dc2626; cursor:pointer;">
                                 <i class="fas fa-trash-alt"></i>
@@ -908,19 +916,24 @@
         });
 
         function updateTotals() {
-            const discount = parseFloat($inputDiscount.val()) || 0;
+            const manualDiscount = parseFloat($inputDiscount.val()) || 0;
             const tax = parseFloat($inputTax.val()) || 0;
-            
+
             let subtotal = 0;
-            cart.forEach(item => { subtotal += item.total; });
-            
-            const total = subtotal - discount + tax;
-            
+            let itemDiscount = 0;
+            cart.forEach(item => {
+                subtotal += item.total;
+                itemDiscount += item.discount_amount || 0;
+            });
+
+            const totalDiscount = itemDiscount + manualDiscount;
+            const total = subtotal - manualDiscount + tax;
+
             $cartSubtotal.text('৳' + subtotal.toFixed(2));
-            $cartDiscount.text('- ৳' + discount.toFixed(2));
+            $cartDiscount.text('- ৳' + totalDiscount.toFixed(2));
             $cartTax.text('+ ৳' + tax.toFixed(2));
             $cartTotal.text('৳' + total.toFixed(2));
-            
+
             // Update change
             calculateChange();
         }
@@ -940,7 +953,7 @@
                 $('#cashPaymentSection').hide();
                 $('#mixedPaymentSection').show();
                 $('#amountReceived').val(0);
-                $('#changeDue').text('0.00');
+                calculateChange();
             } else {
                 $('#cashPaymentSection').show();
                 $('#mixedPaymentSection').hide();
@@ -959,22 +972,49 @@
             let subtotal = 0;
             cart.forEach(item => { subtotal += item.total; });
             const total = subtotal - discount + tax;
+            const $label = $('#changeDueLabel');
 
             if (paymentMethod === 'cash') {
                 const received = parseFloat($amountReceived.val()) || 0;
-                const change = received - total;
-                $changeDue.text(change >= 0 ? '৳' + change.toFixed(2) : '৳0.00');
-                if (change < 0 && received > 0) {
+                if (received >= total) {
+                    const change = received - total;
+                    $label.text('Change Due');
+                    $changeDue.text('৳' + change.toFixed(2));
+                    $changeDue.css('color', '#059669');
+                } else if (received > 0) {
+                    const due = total - received;
+                    $label.text('Due');
+                    $changeDue.text('-৳' + due.toFixed(2));
                     $changeDue.css('color', '#dc2626');
                 } else {
-                    $changeDue.css('color', '#059669');
+                    $label.text('Total Due');
+                    $changeDue.text('৳' + total.toFixed(2));
+                    $changeDue.css('color', '#f59e0b');
                 }
             } else if (paymentMethod === 'mixed') {
                 const cash = parseFloat($('#mixedCash').val()) || 0;
                 const card = parseFloat($('#mixedCard').val()) || 0;
                 const paid = cash + card;
-                const change = cash - total;
-                $changeDue.text(change >= 0 ? '৳' + change.toFixed(2) : '৳0.00');
+                if (paid >= total) {
+                    const change = paid - total;
+                    $label.text('Change Due');
+                    $changeDue.text('৳' + change.toFixed(2));
+                    $changeDue.css('color', '#059669');
+                } else if (paid > 0) {
+                    const due = total - paid;
+                    $label.text('Due');
+                    $changeDue.text('-৳' + due.toFixed(2));
+                    $changeDue.css('color', '#dc2626');
+                } else {
+                    $label.text('Total Due');
+                    $changeDue.text('৳' + total.toFixed(2));
+                    $changeDue.css('color', '#f59e0b');
+                }
+            } else {
+                // Card method: show the amount to be charged.
+                $label.text('Amount');
+                $changeDue.text('৳' + total.toFixed(2));
+                $changeDue.css('color', '#f59e0b');
             }
         }
 
@@ -1002,11 +1042,16 @@
                 return;
             }
 
-            const discount = parseFloat($inputDiscount.val()) || 0;
+            const manualDiscount = parseFloat($inputDiscount.val()) || 0;
             const tax = parseFloat($inputTax.val()) || 0;
             let subtotal = 0;
-            cart.forEach(item => { subtotal += item.total; });
-            const total = subtotal - discount + tax;
+            let itemDiscountTotal = 0;
+            cart.forEach(item => {
+                subtotal += item.total;
+                itemDiscountTotal += item.discount_amount || 0;
+            });
+            const totalDiscount = itemDiscountTotal + manualDiscount;
+            const total = subtotal - manualDiscount + tax;
 
             const received = paymentMethod === 'cash' ? (parseFloat($amountReceived.val()) || 0) : 0;
             const mixedCash = paymentMethod === 'mixed' ? (parseFloat($('#mixedCash').val()) || 0) : 0;
@@ -1017,15 +1062,16 @@
             if (paymentMethod === 'cash') {
                 cashAmount = received;
                 changeAmount = received >= total ? received - total : 0;
-                paymentStatus = received >= total ? 'paid' : 'partial';
+                paymentStatus = received >= total ? 'paid' : (received > 0 ? 'partial' : 'pending');
             } else if (paymentMethod === 'card') {
                 cardAmount = total;
                 paymentStatus = 'paid';
             } else if (paymentMethod === 'mixed') {
                 cashAmount = mixedCash;
                 cardAmount = mixedCard;
-                changeAmount = mixedCash >= total ? mixedCash - total : 0;
-                paymentStatus = (mixedCash + mixedCard) >= total ? 'paid' : 'partial';
+                const paidMixed = mixedCash + mixedCard;
+                changeAmount = paidMixed >= total ? paidMixed - total : 0;
+                paymentStatus = paidMixed >= total ? 'paid' : (paidMixed > 0 ? 'partial' : 'pending');
             }
 
             const items = cart.map(item => ({
@@ -1051,7 +1097,7 @@
                 items: items,
                 subtotal: subtotal,
                 tax_amount: tax,
-                discount_amount: discount,
+                discount_amount: totalDiscount,
                 total: total,
                 cash_amount: cashAmount,
                 card_amount: cardAmount,
@@ -1083,7 +1129,8 @@
                         $inputDiscount.val(0);
                         $inputTax.val(0);
                         $inputNotes.val('');
-                        $('#changeDue').text('0.00');
+                        $('#changeDueLabel').text('Change Due');
+                        $('#changeDue').text('৳0.00');
                         $('#changeDue').css('color', '#059669');
                     } else {
                         alert(res.message || 'Error processing sale.');

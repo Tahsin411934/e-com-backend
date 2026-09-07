@@ -5,6 +5,8 @@ namespace Tests\Feature\Saas;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
+use Modules\Cart\Models\Campaign;
+use Modules\Cart\Models\CampaignProduct;
 use Modules\Catalog\Models\Product;
 use Modules\Catalog\Models\ProductVariant;
 use Modules\Catalog\Models\VariantOption;
@@ -234,8 +236,133 @@ class PosPagesTest extends TestCase
 
         $this->assertNotNull($saleItem);
         $this->assertSame($option->id, (int) $saleItem->variant_option_id);
-        $this->assertEquals($perUnitDiscount, (float) $saleItem->discount_amount);
+        $this->assertEquals($perUnitDiscount * 2, (float) $saleItem->discount_amount); // line total (per unit x qty 2)
         $this->assertEquals(595.0, (float) $saleItem->unit_price);
+    }
+
+    public function test_pos_campaign_discount_wins_and_is_stored_on_sale_item(): void
+    {
+        $admin = $this->createAdmin();
+
+        $product = Product::create([
+            'name' => 'Campaign Headset',
+            'slug' => 'campaign-headset-pos',
+            'product_type' => 'physical',
+            'status' => 'active',
+            'visibility' => 'public',
+        ]);
+
+        $variant = ProductVariant::create([
+            'product_id' => $product->id,
+            'name' => 'Standard',
+            'sku' => 'CH-STD',
+            'sale_price' => 700,
+            'discount_percent' => 15, // 15% variant discount — must LOSE to the campaign
+            'status' => 'active',
+        ]);
+
+        $option = VariantOption::create([
+            'product_variant_id' => $variant->id,
+            'color_name' => 'Red',
+            'sku' => 'CH-STD-RD',
+            'sale_price' => 700,
+            'status' => 'active',
+        ]);
+
+        $campaign = Campaign::create([
+            'name' => 'Summer Sale',
+            'slug' => 'summer-sale-pos',
+            'status' => 'active',
+            'is_active' => true,
+            'priority' => 50,
+        ]);
+
+        CampaignProduct::create([
+            'campaign_id' => $campaign->id,
+            'product_id' => $product->id,
+            'discount_type' => 'percentage',
+            'discount_value' => 20, // 20% campaign discount
+        ]);
+
+        $store = Store::create([
+            'name' => 'Pos Campaign Store',
+            'slug' => 'pos-campaign-store',
+            'status' => 'active',
+            'currency_code' => 'USD',
+            'timezone' => 'UTC',
+        ]);
+
+        $register = PosRegister::create([
+            'store_id' => $store->id,
+            'name' => 'Test Register',
+            'code' => 'REG-C',
+            'type' => 'cash',
+            'status' => 'active',
+        ]);
+
+        $shift = PosShift::create([
+            'register_id' => $register->id,
+            'user_id' => $admin->id,
+            'opened_at' => now(),
+            'opening_balance' => 0,
+            'status' => 'open',
+        ]);
+
+        // 1. Search payload must surface the campaign with source + bracket price.
+        $search = $this->actingAs($admin)->getJson('/pos-sell/search-products?term=Campaign');
+
+        $search->assertOk();
+
+        $data = collect($search->json('data'))->firstWhere('name', 'Campaign Headset');
+
+        $this->assertNotNull($data, 'Campaign product not found in search results');
+        $this->assertSame('Summer Sale', $data['campaign']['name']);
+        $this->assertTrue($data['has_discount'], 'Campaign discount should flag has_discount');
+
+        $variantPayload = $data['variants'][0];
+        $optionPayload = collect($variantPayload['options'])->firstWhere('color_name', 'Red');
+
+        // 20% campaign wins over the 15% variant/option discount.
+        $this->assertSame('campaign', $optionPayload['campaign']['source']);
+        $this->assertSame('Summer Sale', $optionPayload['campaign']['name']);
+        $this->assertEquals(560.0, (float) $optionPayload['price']); // 700 * 0.80
+        $this->assertEquals(700.0, (float) $optionPayload['original_price']);
+
+        // 2. processSale must persist campaign_id + discount_source server-side.
+        $response = $this->actingAs($admin)->postJson('/pos-sell/process', [
+            'register_id' => $register->id,
+            'shift_id' => $shift->id,
+            'items' => [[
+                'product_id' => $product->id,
+                'variant_id' => $variant->id,
+                'option_id' => $option->id,
+                'product_name' => $product->name,
+                'variant_name' => $variant->name,
+                'color_name' => $option->color_name,
+                'sku' => $option->sku,
+                'unit_price' => 560,
+                'original_price' => 700,
+                'discount_amount' => 140,
+                'quantity' => 2,
+                'subtotal' => 1120,
+                'total' => 1120,
+            ]],
+            'subtotal' => 1120,
+            'total' => 1120,
+            'payment_status' => 'paid',
+        ]);
+
+        $response->assertOk()
+            ->assertJsonPath('status', 'success');
+
+        $saleItem = PosSaleItem::where('variant_id', $variant->id)->first();
+
+        $this->assertNotNull($saleItem);
+        $this->assertSame($campaign->id, (int) $saleItem->campaign_id);
+        $this->assertSame('campaign', $saleItem->discount_source);
+        $this->assertEquals(560.0, (float) $saleItem->unit_price);
+        $this->assertEquals(280.0, (float) $saleItem->discount_amount); // 140 per unit x 2
+        $this->assertEquals(1120.0, (float) $saleItem->total);
     }
 
     private function createAdmin(): User

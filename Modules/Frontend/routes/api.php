@@ -13,6 +13,7 @@ use Modules\Frontend\Http\Controllers\ProductApiController;
 use Modules\Frontend\Http\Controllers\ProductRequestApiController;
 use Modules\Frontend\Http\Controllers\ProductSearchApiController;
 use Modules\Frontend\Http\Controllers\SettingsApiController;
+use Modules\Frontend\Http\Controllers\SitemapApiController;
 use Modules\Frontend\Http\Controllers\SubnavbarApiController;
 
 /*
@@ -70,6 +71,10 @@ Route::prefix('v1')->group(function () {
 
     // Product Request API - submit a product request from frontend
     Route::post('/product-requests', [ProductRequestApiController::class, 'store'])->name('api.product-requests.store');
+
+    // Sitemap API - chunked product feed for the Next.js frontend sitemap
+    Route::get('/sitemap/products-count', [SitemapApiController::class, 'productCount'])->name('api.sitemap.products-count');
+    Route::get('/sitemap/products', [SitemapApiController::class, 'products'])->name('api.sitemap.products');
 });
 
 /*

@@ -2,6 +2,7 @@
 
 namespace Modules\Catalog\Models;
 
+use App\Helpers\SitemapCache;
 use App\Traits\BelongsToStore;
 use App\Traits\CustomSoftDeletes;
 use Illuminate\Database\Eloquent\Builder;
@@ -82,5 +83,23 @@ class Product extends Model
     public function scopeOrdered(Builder $query): Builder
     {
         return $query->orderBy('order_column');
+    }
+
+    /**
+     * Sitemap cache invalidation.
+     * Product যেকোনো create/update/soft/hard-delete-এ Laravel সাইটম্যাপ ক্যাশ
+     * generation বাড়ে → Next.js পরের রিকুম্পে নতুন প্রোডাক্ট URL পায়।
+     */
+    protected static function booted(): void
+    {
+        parent::booted();
+
+        static::saved(function (Product $product): void {
+            SitemapCache::bust();
+        });
+
+        static::deleted(function (Product $product): void {
+            SitemapCache::bust();
+        });
     }
 }

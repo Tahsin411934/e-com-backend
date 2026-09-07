@@ -7,14 +7,21 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Validation\ValidationException;
 use Modules\Account\Services\AccountTransactionService;
+use Modules\Cart\Models\CampaignProduct;
+use Modules\Cart\Services\CampaignPricingService;
 use Modules\Catalog\Models\Product;
+use Modules\Catalog\Models\ProductVariant;
+use Modules\Catalog\Models\VariantOption;
 use Modules\Identity\Models\User;
 use Modules\Pos\Models\PosSale;
 use Modules\Pos\Models\PosSaleItem;
 
 class PosSellService
 {
+    public function __construct(private CampaignPricingService $campaignPricing) {}
+
     /**
      * Search customers by phone number or name
      */
@@ -103,6 +110,7 @@ class PosSellService
                         'min_price' => $prices['min'],
                         'max_price' => $prices['max'],
                         'has_discount' => $prices['discounted'],
+                        'campaign' => $this->productCampaign($product),
                     ];
                 });
 
@@ -124,33 +132,42 @@ class PosSellService
             ->values()
             ->map(fn ($option) => $this->optionPayload($option, $variant));
 
+        // CampaignPricingService is the single source of truth:
+        // live campaign wins, otherwise variant discount applies.
+        $variantPricing = $this->campaignPricing->finalPriceFor($variant);
+        $variantBase = (float) $variant->sale_price;
+        $variantPrice = (float) $variantPricing['unit_price'];
+        $variantCampaign = $variantPricing['campaign'];
+
         return [
             'id' => $variant->id,
             'name' => $variant->name,
             'sku' => $variant->sku,
             'barcode' => $variant->barcode,
-            'sale_price' => (float) $variant->sale_price,
+            'sale_price' => $variantBase,
             'discount_percent' => (float) $variant->discount_percent,
             'compare_at_price' => (float) $variant->compare_at_price,
-            'price' => $this->finalPrice((float) $variant->sale_price, (float) $variant->discount_percent),
-            'original_price' => (float) $variant->sale_price,
+            'price' => round(max(0, $variantPrice), 2),
+            'original_price' => $variantBase,
             'stock' => (int) $variant->stock,
             'options' => $options,
+            'campaign' => $variantCampaign ? [
+                'id' => $variantCampaign->id,
+                'name' => $variantCampaign->name,
+                'source' => $variantPricing['source'],
+            ] : null,
         ];
     }
 
-    /**
-     * Build the payload for a color option of a variant. Final price:
-     * option sale_price if set, else variant sale_price + option price_adjustment.
-     * Discount uses the option's own discount_percent when set, else the
-     * variant's discount_percent.
-     */
     private function optionPayload($option, $variant): array
     {
+        // CampaignPricingService is the single source of truth.
+        $pricing = $this->campaignPricing->finalPriceFor($variant, $option);
         $basePrice = (float) ($option->sale_price > 0
             ? $option->sale_price
             : (float) $variant->sale_price + (float) $option->price_adjustment);
-        $discount = (float) ($option->discount_percent > 0 ? $option->discount_percent : $variant->discount_percent);
+        $optionPrice = (float) $pricing['unit_price'];
+        $campaign = $pricing['campaign'];
 
         return [
             'id' => $option->id,
@@ -163,26 +180,15 @@ class PosSellService
             'price_adjustment' => (float) $option->price_adjustment,
             'discount_percent' => (float) $option->discount_percent,
             'compare_at_price' => $option->compare_at_price > 0 ? (float) $option->compare_at_price : (float) $variant->compare_at_price,
-            'price' => $this->finalPrice($basePrice, $discount),
+            'price' => round(max(0, $optionPrice), 2),
             'original_price' => $basePrice,
             'stock' => (int) $option->stock,
+            'campaign' => $campaign ? [
+                'id' => $campaign->id,
+                'name' => $campaign->name,
+                'source' => $pricing['source'],
+            ] : null,
         ];
-    }
-
-    /**
-     * Apply discount_percent to a price and round to 2 decimals.
-     */
-    private function finalPrice(float $price, float $discountPercent): float
-    {
-        if ($price <= 0) {
-            return 0;
-        }
-
-        if ($discountPercent > 0) {
-            return round($price * (1 - $discountPercent / 100), 2);
-        }
-
-        return round($price, 2);
     }
 
     /**
@@ -197,14 +203,14 @@ class PosSellService
         foreach ($variants as $variant) {
             foreach ($variant['options'] as $option) {
                 $prices[] = $option['price'];
-                if ($option['discount_percent'] > 0) {
+                if ($option['discount_percent'] > 0 || ! empty($option['campaign'])) {
                     $discounted = true;
                 }
             }
 
             if (empty($variant['options'])) {
                 $prices[] = $variant['price'];
-                if ($variant['discount_percent'] > 0) {
+                if ($variant['discount_percent'] > 0 || ! empty($variant['campaign'])) {
                     $discounted = true;
                 }
             }
@@ -222,55 +228,90 @@ class PosSellService
     }
 
     /**
-     * Process the POS sale and save it
+     * Process and complete a POS sale.
+     *
+     * Server-side price resolution: for each item we load the variant/option
+     * and run it through CampaignPricingService so the final unit price,
+     * discount source (variant vs campaign) and campaign_id are always
+     * authoritative — never trusted from the client payload.
      */
     public function processSale(Request $request): JsonResponse
     {
         try {
-            return DB::transaction(function () use ($request) {
-                $data = $request->validate([
-                    'customer_id' => 'nullable|exists:users,id',
-                    'register_id' => 'required|exists:pos_registers,id',
-                    'shift_id' => 'required|exists:pos_shifts,id',
-                    'items' => 'required|array|min:1',
-                    'items.*.product_id' => 'required|exists:products,id',
-                    'items.*.variant_id' => 'nullable|exists:product_variants,id',
-                    'items.*.option_id' => 'nullable|integer',
-                    'items.*.product_name' => 'required|string|max:220',
-                    'items.*.variant_name' => 'nullable|string|max:220',
-                    'items.*.color_name' => 'nullable|string|max:100',
-                    'items.*.sku' => 'nullable|string|max:100',
-                    'items.*.unit_price' => 'required|numeric|min:0',
-                    'items.*.original_price' => 'nullable|numeric|min:0',
-                    'items.*.discount_amount' => 'nullable|numeric|min:0',
-                    'items.*.quantity' => 'required|numeric|min:0.01',
-                    'items.*.subtotal' => 'required|numeric|min:0',
-                    'items.*.total' => 'required|numeric|min:0',
-                    'subtotal' => 'required|numeric|min:0',
-                    'tax_amount' => 'nullable|numeric|min:0',
-                    'discount_amount' => 'nullable|numeric|min:0',
-                    'total' => 'required|numeric|min:0',
-                    'cash_amount' => 'nullable|numeric|min:0',
-                    'card_amount' => 'nullable|numeric|min:0',
-                    'other_amount' => 'nullable|numeric|min:0',
-                    'change_amount' => 'nullable|numeric|min:0',
-                    'payment_status' => 'required|in:paid,partial,pending',
-                    'notes' => 'nullable|string|max:500',
-                ]);
+            $data = $request->validate([
+                'register_id' => 'required|exists:pos_registers,id',
+                'shift_id' => 'required|exists:pos_shifts,id',
+                'customer_id' => 'nullable|exists:users,id',
+                'items' => 'required|array|min:1',
+                'items.*.product_id' => 'required|exists:products,id',
+                'items.*.variant_id' => 'required|exists:product_variants,id',
+                'items.*.option_id' => 'nullable|exists:variant_options,id',
+                'items.*.quantity' => 'required|numeric|min:0.01',
+                'items.*.sku' => 'nullable|string',
+                'items.*.product_name' => 'nullable|string',
+                'payment_status' => 'required|in:paid,partial,pending',
+                'notes' => 'nullable|string|max:500',
+            ]);
 
-                $receiptNumber = 'POS-'.strtoupper(uniqid());
+            return DB::transaction(function () use ($data) {
+                $subtotal = 0;
+                $totalDiscount = 0;
+                $items = [];
 
-                // Create the sale
+                foreach ($data['items'] as $item) {
+                    $variant = ProductVariant::findOrFail($item['variant_id']);
+                    $option = ! empty($item['option_id'])
+                        ? VariantOption::find($item['option_id'])
+                        : null;
+
+                    $pricing = $this->campaignPricing->finalPriceFor($variant, $option);
+                    $unitPrice = (float) $pricing['unit_price'];
+                    $campaign = $pricing['campaign'];
+                    $discountSource = $campaign ? 'campaign' : 'variant';
+
+                    $basePrice = $option !== null
+                        ? ($option->sale_price !== null
+                            ? (float) $option->sale_price
+                            : (float) $variant->sale_price + (float) ($option->price_adjustment ?? 0))
+                        : (float) $variant->sale_price;
+
+                    $discountPerUnit = round($basePrice - $unitPrice, 2);
+                    $quantity = (float) $item['quantity'];
+                    $itemSubtotal = round($unitPrice * $quantity, 2);
+                    $itemDiscount = round($discountPerUnit * $quantity, 2);
+
+                    $subtotal += $itemSubtotal;
+                    $totalDiscount += $itemDiscount;
+
+                    $items[] = [
+                        'product_id' => $item['product_id'],
+                        'variant_id' => $item['variant_id'],
+                        'variant_option_id' => $item['option_id'] ?? null,
+                        'campaign_id' => $campaign ? $campaign->id : null,
+                        'discount_source' => $discountSource,
+                        'product_name' => $this->normalizeText($item['product_name'] ?? $variant->name),
+                        'sku' => $item['sku'] ?? ($option->sku ?? $variant->sku),
+                        'unit_price' => $unitPrice,
+                        'quantity' => $quantity,
+                        'subtotal' => $itemSubtotal,
+                        'tax_amount' => 0,
+                        'discount_amount' => $itemDiscount,
+                        'total' => $itemSubtotal,
+                    ];
+                }
+
+                $total = round($subtotal, 2);
+
                 $sale = PosSale::create([
                     'register_id' => $data['register_id'],
                     'shift_id' => $data['shift_id'],
                     'user_id' => $data['customer_id'] ?? auth()->id(),
-                    'receipt_number' => $receiptNumber,
-                    'subtotal' => $data['subtotal'],
-                    'tax_amount' => $data['tax_amount'] ?? 0,
-                    'discount_amount' => $data['discount_amount'] ?? 0,
-                    'total' => $data['total'],
-                    'cash_amount' => $data['cash_amount'] ?? 0,
+                    'receipt_number' => 'POS-'.strtoupper(uniqid()),
+                    'subtotal' => $subtotal,
+                    'tax_amount' => 0,
+                    'discount_amount' => $totalDiscount,
+                    'total' => $total,
+                    'cash_amount' => $data['cash_amount'] ?? $total,
                     'card_amount' => $data['card_amount'] ?? 0,
                     'other_amount' => $data['other_amount'] ?? 0,
                     'change_amount' => $data['change_amount'] ?? 0,
@@ -279,50 +320,57 @@ class PosSellService
                     'notes' => $data['notes'] ?? null,
                 ]);
 
-                // Create sale items
-                foreach ($data['items'] as $item) {
-                    PosSaleItem::create([
-                        'pos_sale_id' => $sale->id,
-                        'product_id' => $item['product_id'],
-                        'variant_id' => $item['variant_id'] ?? null,
-                        'variant_option_id' => $item['option_id'] ?? null,
-                        'product_name' => $this->normalizeText($item['product_name']),
-                        'sku' => $item['sku'] ?? null,
-                        'unit_price' => $item['unit_price'],
-                        'quantity' => $item['quantity'],
-                        'subtotal' => $item['subtotal'],
-                        'tax_amount' => 0,
-                        'discount_amount' => $item['discount_amount'] ?? 0,
-                        'total' => $item['total'],
-                    ]);
+                foreach ($items as $item) {
+                    $item['pos_sale_id'] = $sale->id;
+                    PosSaleItem::create($item);
                 }
 
                 if (Schema::hasTable('account_transactions')) {
-                    app(AccountTransactionService::class)->postPosSale($sale->fresh(['items.product.variants', 'register.store']));
+                    app(AccountTransactionService::class)
+                        ->postPosSale($sale->fresh(['items.product.variants', 'register.store']));
                 }
 
                 return ApiResponse::success([
-                    'sale' => $sale->fresh()->load(['items', 'register', 'shift']),
-                    'receipt' => [
-                        'receipt_number' => $receiptNumber,
-                        'total' => $data['total'],
-                        'items_count' => count($data['items']),
-                    ],
-                ], 'Sale completed successfully!');
+                    'sale_id' => $sale->id,
+                    'receipt_number' => $sale->receipt_number,
+                    'total' => number_format($sale->total, 2),
+                    'items_count' => count($items),
+                ], 'Sale completed successfully.');
             });
+        } catch (ValidationException $e) {
+            return ApiResponse::error('Validation error: '.$e->getMessage(), 422);
         } catch (\Exception $e) {
             return ApiResponse::error('Error processing sale: '.$e->getMessage(), 500);
         }
     }
 
     /**
-     * Decode HTML entities repeatedly until the string stops changing.
-     *
-     * Product names sometimes get saved multiple times through HTML-escaped
-     * form values ("&" -> "&amp;" -> "&amp;amp;" ...). This normalises any
-     * depth of encoding back to the real text, so the POS shows and stores
-     * clean names instead of "&amp;amp;amp;".
+     * Return the live campaign that covers this product (highest priority),
+     * or null when no active campaign applies. Used by the search result
+     * row to show a CAMPAIGN badge.
      */
+    private function productCampaign($product): ?array
+    {
+        $offer = CampaignProduct::query()
+            ->with('campaign')
+            ->where('product_id', $product->id)
+            ->whereHas('campaign', fn ($q) => $q->live())
+            ->get()
+            ->sortByDesc(fn ($item) => $item->campaign->priority)
+            ->first();
+
+        if (! $offer) {
+            return null;
+        }
+
+        return [
+            'id' => $offer->campaign->id,
+            'name' => $offer->campaign->name,
+            'discount_type' => $offer->discount_type,
+            'discount_value' => (float) $offer->discount_value,
+        ];
+    }
+
     private function normalizeText(string $value): string
     {
         for ($i = 0; $i < 5 && str_contains($value, '&'); $i++) {

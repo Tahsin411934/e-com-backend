@@ -362,6 +362,7 @@
                         </div>
                         <div style="text-align:right;">
                             <span id="vpDiscountBadge" style="font-size: 10px; background:#dc2626; color:#fff; padding:2px 6px; border-radius: 9999px; display: none;">-0%</span>
+                            <span id="vpCampaignBadge" style="font-size: 10px; background:#7c3aed; color:#fff; padding:2px 6px; border-radius: 9999px; display: none;"></span>
                             <div id="vpOldPrice" style="font-size: 12px; color: #dc2626; text-decoration: line-through; display: none;"></div>
                             <div id="vpFinalPrice" style="font-size: 20px; font-weight: 800; color: #2563eb;">0.00</div>
                         </div>
@@ -586,6 +587,7 @@
                                         ${p.brand ? decodeEntities(p.brand) + ' ' : ''} ${p.unit ? '| ' + decodeEntities(p.unit) : ''}
                                         ${vcount > 0 ? '<span style="background:#0891b2; color:#fff; font-size:9px; padding:1px 6px; border-radius:9999px; margin-left:4px;">' + vcount + ' Variant' + (vcount > 1 ? 's' : '') + '</span>' : ''}
                                         ${p.has_discount ? '<span style="background:#dc2626; color:#fff; font-size:9px; padding:1px 6px; border-radius:9999px; margin-left:4px;">DISCOUNT</span>' : ''}
+                                        ${p.campaign ? '<span style="background:#059669; color:#fff; font-size:9px; padding:1px 6px; border-radius:9999px; margin-left:4px;">CAMPAIGN</span>' : ''}
                                     </small>
                                 </div>
                                 <div style="text-align:right; margin-left:8px; flex-shrink:0;">
@@ -753,6 +755,7 @@
             const price = opt ? opt.price : v.price;
             const original = opt ? opt.original_price : v.original_price;
             const disc = opt ? opt.discount_percent : v.discount_percent;
+            const campaign = opt ? opt.campaign : v.campaign;
             const label = opt ? decodeEntities(v.name) + ' / ' + decodeEntities(opt.color_name) : decodeEntities(v.name);
 
             $('#vpSelectedLabel').text(label);
@@ -766,12 +769,23 @@
 
             $('#vpFinalPrice').text('৳' + Number(price || 0).toFixed(2));
 
+            // Show discount badge: campaign name in brackets when discount comes from campaign
             if (disc > 0) {
                 $('#vpOldPrice').text('৳' + Number(original || 0).toFixed(2)).show();
-                $('#vpDiscountBadge').text('-' + disc + '%').show();
+                const discLabel = campaign
+                    ? ('-' + disc + '% ' + decodeEntities(campaign.name))
+                    : ('-' + disc + '%');
+                $('#vpDiscountBadge').text(discLabel).show();
             } else {
                 $('#vpOldPrice').hide();
                 $('#vpDiscountBadge').hide();
+            }
+
+            // Show campaign name in brackets when product is in a campaign
+            if (campaign) {
+                $('#vpCampaignBadge').text('[' + decodeEntities(campaign.name) + ']').show();
+            } else {
+                $('#vpCampaignBadge').hide();
             }
 
             // Disable Add to Cart when stock is 0 or negative.
@@ -815,6 +829,7 @@
                 unit_price: price,
                 original_price: opt ? opt.original_price : v.original_price,
                 discount_percent: opt ? opt.discount_percent : v.discount_percent,
+                campaign: opt ? opt.campaign : v.campaign,
                 quantity: 1
             });
 
@@ -846,6 +861,7 @@
                     original_price: product.original_price || product.unit_price,
                     discount_per_unit: perUnitDiscount,
                     discount_percent: product.discount_percent || 0,
+                    campaign: product.campaign || null,
                     quantity: 1,
                     subtotal: product.unit_price,
                     discount_amount: perUnitDiscount,
@@ -898,12 +914,14 @@
                             <strong style="font-size: 13px;">${decodeEntities(item.product_name)}</strong>
                             ${(item.variant_name || item.color_name) ? `<small style="display:block; font-size: 11px; color: #2563eb; font-weight: 600;">${decodeEntities(item.variant_name)}${item.color_name ? ' / ' + decodeEntities(item.color_name) : ''}</small>` : ''}
                             <small style="display:block; font-size: 11px; color:#6c757d;">${item.sku ? 'SKU: ' + decodeEntities(item.sku) : ''}</small>
+                            ${item.campaign ? `<small style="display:block; font-size: 11px; color: #059669; font-weight: 600;">[${decodeEntities(item.campaign.name)}${item.discount_per_unit > 0 ? ' -' + item.discount_percent + '% off' : ''}]</small>` : ''}
                         </td>
                         <td style="padding: 10px 14px; vertical-align: middle;">
                             ${item.discount_per_unit > 0 ? `
                                 <div style="font-size: 11px; color: #9ca3af; text-decoration: line-through;">৳${Number(item.original_price).toFixed(2)}</div>
-                                <div style="font-size: 11px; color: #dc2626; font-weight: 600;">-৳${Number(item.discount_per_unit).toFixed(2)}${item.discount_percent > 0 ? ' (-' + item.discount_percent + '%)' : ''}</div>
-                            ` : ''}
+                                <div style="font-size: 11px; color: #dc2626; font-weight: 600;">-৳${Number(item.discount_per_unit).toFixed(2)}${item.discount_percent > 0 ? ' (-' + item.discount_percent + '%' + (item.campaign ? ' ' + decodeEntities(item.campaign.name) : '') + ')' : (item.campaign ? ' (' + decodeEntities(item.campaign.name) + ')' : '')}</div>
+                                ${item.campaign ? `<div style="font-size: 10px; color: #7c3aed; font-weight: 600; margin-top: 2px;">[${decodeEntities(item.campaign.name)}]</div>` : ''}
+                            ` : (item.campaign ? `<div style="font-size: 11px; color: #7c3aed; font-weight: 600;">[${decodeEntities(item.campaign.name)}]</div>` : '')}
                             <div style="font-weight: 700; color: #2563eb; font-size: 14px;">৳${Number(item.unit_price).toFixed(2)}</div>
                         </td>
                         <td style="padding: 6px 14px; vertical-align: middle;">
@@ -1127,6 +1145,8 @@
                 unit_price: item.unit_price,
                 original_price: item.original_price,
                 discount_amount: item.discount_amount,
+                campaign_id: item.campaign ? item.campaign.id : null,
+                discount_source: item.campaign ? 'campaign' : 'variant',
                 quantity: item.quantity,
                 subtotal: item.subtotal,
                 total: item.total

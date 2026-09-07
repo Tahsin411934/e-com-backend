@@ -19,6 +19,8 @@ class PosSaleItem extends Model
         'product_id',
         'variant_id',
         'variant_option_id',
+        'campaign_id',
+        'discount_source',
         'product_name',
         'sku',
         'unit_price',

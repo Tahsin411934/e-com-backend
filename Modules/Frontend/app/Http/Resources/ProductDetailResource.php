@@ -5,6 +5,7 @@ namespace Modules\Frontend\Http\Resources;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Modules\Cart\Services\CampaignPricingService;
+use Modules\Catalog\Models\Product;
 use Modules\Frontend\Services\ProductPricingService;
 
 class ProductDetailResource extends JsonResource
@@ -195,6 +196,10 @@ class ProductDetailResource extends JsonResource
             'short_description' => $this->short_description,
             'description' => $this->description,
             'product_type' => $this->product_type,
+            // Product-level delivery charge (৳) — the highest one in the cart
+            // is taken once as the shipping charge at checkout. Falls back to
+            // the default when the column is absent (pre-migration).
+            'delivery_charge' => (float) ($this->delivery_charge ?? Product::DEFAULT_DELIVERY_CHARGE),
             'status' => $this->status,
             'visibility' => $this->visibility,
             'seo_title' => $this->seo_title,

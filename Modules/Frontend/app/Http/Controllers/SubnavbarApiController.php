@@ -96,6 +96,9 @@ class SubnavbarApiController extends Controller
                 'discount_amount' => $priceInfo['discount_amount'],
                 'has_discount' => $priceInfo['has_discount'],
                 'product_type' => $product->product_type,
+                // Product-level delivery charge (৳) — falls back to the default
+                // when the column is absent (pre-migration).
+                'delivery_charge' => (float) ($product->delivery_charge ?? Product::DEFAULT_DELIVERY_CHARGE),
                 'stock_status' => 'in_stock',
             ];
         });

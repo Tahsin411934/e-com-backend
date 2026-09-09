@@ -4,6 +4,7 @@ namespace Modules\Frontend\Http\Resources;
 
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
+use Modules\Catalog\Models\Product;
 use Modules\Frontend\Services\ProductPricingService;
 
 class ProductSearchResource extends JsonResource
@@ -52,6 +53,9 @@ class ProductSearchResource extends JsonResource
             'discount_amount' => $priceInfo['discount_amount'],
             'has_discount' => $priceInfo['has_discount'],
             'product_type' => $this->product_type,
+            // Product-level delivery charge (৳) — falls back to the default
+            // when the column is absent (pre-migration).
+            'delivery_charge' => (float) ($this->delivery_charge ?? Product::DEFAULT_DELIVERY_CHARGE),
             'relevance_score' => $this->relevance_score ?? null,
         ];
     }

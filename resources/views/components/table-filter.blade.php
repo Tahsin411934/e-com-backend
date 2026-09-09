@@ -5,6 +5,7 @@
     </label>
 
     <select id="{{ $id }}"
+        data-local-select2
         class="dt-filter-{{ $id }} w-full border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 rounded-lg px-3 py-2 text-sm
                focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary transition">
 

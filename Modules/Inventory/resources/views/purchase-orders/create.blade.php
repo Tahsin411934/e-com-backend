@@ -81,12 +81,13 @@
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-1">Payment Account</label>
-                        <select name="account_id" id="account_id" class="w-full border border-slate-300 dark:border-slate-600 rounded-md p-2 bg-white dark:bg-gray-700 text-slate-800 dark:text-slate-200 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all cursor-pointer">
-                            <option value="">Select Account (if paying now)</option>
-                            @foreach($accounts ?? [] as $account)
-                                <option value="{{ $account->id }}">{{ $account->name }} - ৳{{ number_format((float) $account->current_balance, 2) }}</option>
-                            @endforeach
-                        </select>
+                        <x-select2-dropdown
+                            name="account_id"
+                            id="account_id"
+                            :route="route('ajax.dropdown-search', 'accounts')"
+                            placeholder="Select Account (if paying now)"
+                            allow-clear
+                        />
                     </div>
                 </div>
             </div>

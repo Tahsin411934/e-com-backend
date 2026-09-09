@@ -17,7 +17,7 @@
         <form method="GET" class="flex flex-wrap items-end gap-3 mb-4 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4">
             <div>
                 <label class="block text-xs font-semibold text-gray-500 mb-1">Period</label>
-                <select name="period" class="rounded-lg border-gray-300 text-sm">
+                <select name="period" data-local-select2 class="rounded-lg border-gray-300 text-sm">
                     <option value="all" {{ request('period', 'all') === 'all' ? 'selected' : '' }}>All time</option>
                     <option value="today" {{ request('period') === 'today' ? 'selected' : '' }}>Today</option>
                     <option value="week" {{ request('period') === 'week' ? 'selected' : '' }}>This week</option>
@@ -35,7 +35,7 @@
             </div>
             <div>
                 <label class="block text-xs font-semibold text-gray-500 mb-1">Store</label>
-                <select name="store_id" class="rounded-lg border-gray-300 text-sm">
+                <select name="store_id" data-local-select2 class="rounded-lg border-gray-300 text-sm">
                     <option value="">All Stores</option>
                     @foreach(\Modules\Store\Models\Store::orderBy('name')->get() as $store)
                         <option value="{{ $store->id }}" {{ request('store_id') == $store->id ? 'selected' : '' }}>{{ $store->name }}</option>

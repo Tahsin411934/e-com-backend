@@ -204,12 +204,13 @@
                 </div>
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1">Payment Account <span class="text-rose-500">*</span></label>
-                    <select name="account_id" id="pay_account_id" class="w-full rounded-lg border border-slate-300 p-2 text-sm" required>
-                        <option value="">Select Account</option>
-                        @foreach($accounts as $account)
-                            <option value="{{ $account->id }}">{{ $account->name }} - ৳{{ number_format((float) $account->current_balance, 2) }}</option>
-                        @endforeach
-                    </select>
+                    <x-select2-dropdown
+                        name="account_id"
+                        id="pay_account_id"
+                        :route="route('ajax.dropdown-search', 'accounts')"
+                        placeholder="Select Account"
+                        required
+                    />
                 </div>
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1">Payment Date <span class="text-rose-500">*</span></label>
@@ -217,7 +218,7 @@
                 </div>
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1">Method</label>
-                    <select name="payment_method" id="pay_method" class="w-full rounded-lg border border-slate-300 p-2 text-sm">
+                    <select name="payment_method" id="pay_method" data-local-select2 class="w-full rounded-lg border border-slate-300 p-2 text-sm">
                         <option value="cash">Cash</option>
                         <option value="bank">Bank Transfer</option>
                         <option value="mobile_banking">Mobile Banking</option>

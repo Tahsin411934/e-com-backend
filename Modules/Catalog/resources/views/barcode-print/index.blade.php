@@ -29,20 +29,14 @@
                     </div>
                     <div>
                         <label class="block text-xs font-medium text-gray-600 mb-1.5">Brand</label>
-                        <select id="brandFilter" class="w-full text-sm border border-gray-300 rounded-lg px-3 py-2.5">
+                        <select id="brandFilter" data-ajax-select2 data-route="{{ route('ajax.dropdown-search', 'brands') }}" data-placeholder="All" data-allow-clear="1" data-limit="20" class="w-full text-sm border border-gray-300 rounded-lg px-3 py-2.5">
                             <option value="">All</option>
-                            @foreach($brands as $brand)
-                                <option value="{{ $brand->id }}">{{ $brand->name }}</option>
-                            @endforeach
                         </select>
                     </div>
                     <div>
                         <label class="block text-xs font-medium text-gray-600 mb-1.5">Category</label>
-                        <select id="categoryFilter" class="w-full text-sm border border-gray-300 rounded-lg px-3 py-2.5">
+                        <select id="categoryFilter" data-ajax-select2 data-route="{{ route('ajax.dropdown-search', 'categories') }}" data-placeholder="All" data-allow-clear="1" data-limit="20" class="w-full text-sm border border-gray-300 rounded-lg px-3 py-2.5">
                             <option value="">All</option>
-                            @foreach($categories as $category)
-                                <option value="{{ $category->id }}">{{ $category->name }}</option>
-                            @endforeach
                         </select>
                     </div>
                     <button id="searchBtn" class="w-full py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded-lg">
@@ -71,14 +65,14 @@
                 <div class="p-4 space-y-4">
                     <div>
                         <label class="block text-xs font-medium text-gray-600 mb-1.5">Paper</label>
-                        <select id="paperSize" class="w-full text-sm border border-gray-300 rounded-lg px-3 py-2.5">
+                        <select id="paperSize" data-local-select2 class="w-full text-sm border border-gray-300 rounded-lg px-3 py-2.5">
                             <option value="letter">Letter</option>
                             <option value="a4" selected>A4</option>
                         </select>
                     </div>
                     <div>
                         <label class="block text-xs font-medium text-gray-600 mb-1.5">Label Size</label>
-                        <select id="labelSize" class="w-full text-sm border border-gray-300 rounded-lg px-3 py-2.5">
+                        <select id="labelSize" data-local-select2 class="w-full text-sm border border-gray-300 rounded-lg px-3 py-2.5">
                             <option value="1x1">1" x 1"</option>
                             <option value="1x2">1" x 2"</option>
                             <option value="2x2" selected>2" x 2"</option>

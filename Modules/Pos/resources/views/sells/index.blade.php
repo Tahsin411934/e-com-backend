@@ -38,13 +38,13 @@
                 <h4 style="margin: 0; font-weight: 700; font-size: 18px; color: #1a1a2e; white-space: nowrap;">
                     <i class="fas fa-cash-register" style="margin-right: 8px; color: #2563eb;"></i>New Sale
                 </h4>
-                <select id="pos_register_id" class="pos-select-input" style="width: 180px;">
+                <select id="pos_register_id" data-local-select2 data-placeholder="Select Register" class="pos-select-input" style="width: 180px;">
                     <option value="">Select Register</option>
                     @foreach($registers as $register)
                         <option value="{{ $register['id'] }}" {{ $loop->first ? 'selected' : '' }}>{{ $register['name'] }}</option>
                     @endforeach
                 </select>
-                <select id="pos_shift_id" class="pos-select-input" style="width: 180px;">
+                <select id="pos_shift_id" data-local-select2 data-placeholder="Select Shift" class="pos-select-input" style="width: 180px;">
                     <option value="">Select Shift</option>
                     @foreach($openShifts as $shift)
                         <option value="{{ $shift['id'] }}" {{ $loop->first ? 'selected' : '' }}>{{ $shift['name'] ?? 'Shift #'.$shift['id'] }}</option>

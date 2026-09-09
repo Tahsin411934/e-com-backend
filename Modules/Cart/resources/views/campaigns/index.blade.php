@@ -14,7 +14,7 @@
                     <input x-model="form.starts_at" type="datetime-local" class="rounded border-gray-300">
                     <input x-model="form.ends_at" type="datetime-local" class="rounded border-gray-300">
                 </div>
-                <select x-model="form.status" class="w-full rounded border-gray-300">
+                <select x-model="form.status" data-local-select2 class="w-full rounded border-gray-300">
                     <option value="draft">Draft</option>
                     <option value="active">Active</option>
                     <option value="paused">Paused</option>
@@ -55,7 +55,7 @@
             <h2 class="font-semibold">Add products to campaign</h2>
             <div class="flex gap-2">
                 <input @input.debounce.300ms="searchProducts($event.target.value)" placeholder="Search product name..." class="flex-1 rounded border-gray-300">
-                <select x-model="discount_type" class="rounded border-gray-300"><option value="percentage">Percent</option><option value="fixed_amount">Fixed off</option><option value="fixed_price">Fixed price</option></select>
+                <select x-model="discount_type" data-local-select2 class="rounded border-gray-300"><option value="percentage">Percent</option><option value="fixed_amount">Fixed off</option><option value="fixed_price">Fixed price</option></select>
                 <input x-model="discount_value" type="number" min="0" step="0.01" placeholder="Discount" class="w-28 rounded border-gray-300">
             </div>
             <template x-for="product in searchResults" :key="product.id">
@@ -77,7 +77,7 @@
                                     </template>
                                     <template x-if="editingEntryId === item.id">
                                         <div class="flex items-center gap-1 flex-1 min-w-0">
-                                            <select x-model="editEntry.discount_type" class="rounded border-gray-300 text-xs py-1">
+                                            <select x-model="editEntry.discount_type" data-local-select2 class="rounded border-gray-300 text-xs py-1">
                                                 <option value="percentage">Percent</option>
                                                 <option value="fixed_amount">Fixed off</option>
                                                 <option value="fixed_price">Fixed price</option>
@@ -120,7 +120,7 @@
                 </div>
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1">Status</label>
-                    <select x-model="editForm.status" class="w-full rounded border-gray-300"><option value="draft">Draft</option><option value="active">Active</option><option value="paused">Paused</option></select>
+                    <select x-model="editForm.status" data-local-select2 class="w-full rounded border-gray-300"><option value="draft">Draft</option><option value="active">Active</option><option value="paused">Paused</option></select>
                 </div>
                 <div class="grid grid-cols-2 gap-2">
                     <div><label class="block text-sm font-medium text-gray-700 mb-1">Starts at</label><input x-model="editForm.starts_at" type="datetime-local" class="w-full rounded border-gray-300"></div>

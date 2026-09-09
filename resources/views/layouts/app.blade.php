@@ -64,6 +64,10 @@
     <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css" />
     <link rel="stylesheet" href="https://cdn.datatables.net/buttons/2.4.1/css/buttons.dataTables.min.css" />
 
+    <!-- Select2 (AJAX searchable dropdowns) + Tailwind/dark-mode integration -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" />
+    <link rel="stylesheet" href="{{ asset('css/select2-overrides.css') }}" />
+
     @stack('head')
 </head>
 
@@ -112,6 +116,10 @@
     <script src="{{ asset('js/sidebar.js') }}"></script>
     <!-- Theme JS -->
     <script src="{{ asset('js/theme.js') }}"></script>
+
+    <!-- Select2 AJAX searchable dropdowns (jQuery above is required) -->
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+    <script src="{{ asset('js/select2-init.js') }}"></script>
 
     <!-- CSRF Setup -->
     <script>

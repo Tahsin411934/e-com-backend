@@ -122,50 +122,72 @@
                             </h2>
                         </div>
                         <div class="p-6 space-y-4">
-                            <x-form-select label="Brand" name="brand_id" id="brand_id">
-                                <option value="">None</option>
-                                @foreach ($brands as $brand)
-                                    <option value="{{ $brand->id }}" {{ $product?->brand_id == $brand->id ? 'selected' : '' }}>{{ $brand->name }}</option>
-                                @endforeach
-                            </x-form-select>
-                            <x-form-select label="Unit" name="unit_id" id="unit_id">
-                                <option value="">None</option>
-                                @foreach ($units as $unit)
-                                    <option value="{{ $unit->id }}" {{ $product?->unit_id == $unit->id ? 'selected' : '' }}>{{ $unit->name }} ({{ $unit->short_name }})</option>
-                                @endforeach
-                            </x-form-select>
-                            <x-form-select label="Size" name="size_id" id="size_id">
-                                <option value="">None</option>
-                                @foreach ($sizes as $size)
-                                    <option value="{{ $size->id }}" {{ $product?->size_id == $size->id ? 'selected' : '' }}>{{ $size->group_name }}</option>
-                                @endforeach
-                            </x-form-select>
-                            <x-form-select label="Tax Rate" name="tax_rate_id" id="tax_rate_id">
-                                <option value="">No Tax</option>
-                                @foreach ($taxRates as $taxRate)
-                                    <option value="{{ $taxRate->id }}" {{ $product?->tax_rate_id == $taxRate->id ? 'selected' : '' }}>
-                                        {{ $taxRate->name }} ({{ $taxRate->type === 'percentage' ? $taxRate->rate . '%' : '৳' . number_format($taxRate->rate, 2) }})
-                                    </option>
-                                @endforeach
-                            </x-form-select>
+                            <x-select2-dropdown
+                                label="Brand"
+                                name="brand_id"
+                                id="brand_id"
+                                :route="route('ajax.dropdown-search', 'brands')"
+                                placeholder="None — search brands..."
+                                allow-clear
+                                :selected="$product?->brand ? ['id' => $product->brand->id, 'text' => $product->brand->name] : null"
+                            />
+                            <x-select2-dropdown
+                                label="Unit"
+                                name="unit_id"
+                                id="unit_id"
+                                :route="route('ajax.dropdown-search', 'units')"
+                                placeholder="None — search units..."
+                                allow-clear
+                                :selected="$product?->unit ? ['id' => $product->unit->id, 'text' => $product->unit->name.' ('.$product->unit->short_name.')'] : null"
+                            />
+                            <x-select2-dropdown
+                                label="Size"
+                                name="size_id"
+                                id="size_id"
+                                :route="route('ajax.dropdown-search', 'sizes')"
+                                placeholder="None — search sizes..."
+                                allow-clear
+                                :selected="$product?->size ? ['id' => $product->size->id, 'text' => $product->size->group_name] : null"
+                            />
+                            <x-select2-dropdown
+                                label="Tax Rate"
+                                name="tax_rate_id"
+                                id="tax_rate_id"
+                                :route="route('ajax.dropdown-search', 'tax-rates')"
+                                placeholder="No Tax — search tax rates..."
+                                allow-clear
+                                :selected="$product?->taxRate ? ['id' => $product->taxRate->id, 'text' => $product->taxRate->name.' ('.($product->taxRate->type === 'percentage' ? $product->taxRate->rate.'%' : '৳'.number_format((float) $product->taxRate->rate, 2)).')'] : null"
+                            />
                             <div>
-                                <label for="category_ids" class="block text-sm font-medium text-gray-700 mb-2">Categories</label>
-                                <select name="category_ids[]" id="category_ids" multiple class="w-full rounded-lg border-gray-300 shadow-sm focus:border-primary focus:ring-primary text-sm" size="5">
-                                    @foreach ($categories as $category)
-                                        <option value="{{ $category->id }}" {{ $isEdit && $product?->categories->contains($category->id) ? 'selected' : '' }}>{{ $category->name }}</option>
-                                    @endforeach
-                                </select>
-                                <p class="text-xs text-gray-400 mt-1">Hold Ctrl/Cmd to select multiple</p>
+                                <x-select2-dropdown
+                                    label="Categories"
+                                    name="category_ids[]"
+                                    id="category_ids"
+                                    :route="route('ajax.dropdown-search', 'categories')"
+                                    placeholder="Search categories..."
+                                    multiple
+                                    :selected="$isEdit && $product ? $product->categories->map(fn ($category) => ['id' => $category->id, 'text' => $category->name])->all() : []"
+                                />
+                                <p class="text-xs text-gray-400 mt-1">Type to search, click to select multiple</p>
                             </div>
-                            <x-form-select label="Navbar Item" name="navbar_item_id" id="navbar_item_id">
-                                <option value="">None</option>
-                                @foreach ($navbarItems as $navbarItem)
-                                    <option value="{{ $navbarItem->id }}" {{ $isEdit && $product?->navbar_item_id == $navbarItem->id ? 'selected' : '' }}>{{ $navbarItem->name }}</option>
-                                @endforeach
-                            </x-form-select>
-                            <x-form-select label="Subnavbar Item" name="subnavbar_item_id" id="subnavbar_item_id">
-                                <option value="">None</option>
-                            </x-form-select>
+                            <x-select2-dropdown
+                                label="Navbar Item"
+                                name="navbar_item_id"
+                                id="navbar_item_id"
+                                :route="route('ajax.dropdown-search', 'navbar-items')"
+                                placeholder="None — search navbar items..."
+                                allow-clear
+                                :selected="$product?->navbarItem ? ['id' => $product->navbarItem->id, 'text' => $product->navbarItem->name] : null"
+                            />
+                            <x-select2-dropdown
+                                label="Subnavbar Item"
+                                name="subnavbar_item_id"
+                                id="subnavbar_item_id"
+                                :route="route('ajax.dropdown-search', 'subnavbar-items')"
+                                placeholder="None — search subnavbar items..."
+                                allow-clear
+                                :selected="$product?->subnavbarItem ? ['id' => $product->subnavbarItem->id, 'text' => $product->subnavbarItem->name] : null"
+                            />
                         </div>
                     </div>
 

@@ -22,7 +22,7 @@ class Order extends Model
         'payment_status', 'fulfillment_status', 'currency_code',
         'subtotal', 'discount_total', 'tax_total', 'shipping_total', 'grand_total',
         'coupon_id', 'billing_address_id', 'shipping_address_id',
-        'customer_note', 'placed_at', 'cancelled_at',
+        'customer_name', 'customer_note', 'placed_at', 'cancelled_at',
     ];
 
     protected $casts = [

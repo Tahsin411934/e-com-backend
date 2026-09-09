@@ -164,7 +164,7 @@ class CheckoutController extends Controller
                 $request->validate([
                     'items' => 'required|array|min:1',
                     'items.*.product_id' => 'required|integer|exists:products,id',
-                    'items.*.variant_id' => 'required|integer|exists:product_variants,id',
+                    'items.*.variant_id' => 'nullable|integer|exists:product_variants,id',
                     'items.*.variant_option_id' => 'nullable|integer|exists:variant_options,id',
                     'items.*.quantity' => 'required|integer|min:1|max:99',
                     'customer_name' => 'required|string|max:191',
@@ -179,7 +179,20 @@ class CheckoutController extends Controller
                 $shippingTotal = 0.0;
 
                 foreach ($request->input('items', []) as $itemData) {
-                    $variant = ProductVariant::with('product')->findOrFail($itemData['variant_id']);
+                    $variant = ProductVariant::with('product')
+                        ->when(
+                            $itemData['variant_id'] ?? null,
+                            fn ($query, $variantId) => $query->whereKey($variantId)
+                        )
+                        ->where('product_id', $itemData['product_id'])
+                        ->first();
+
+                    if (! $variant) {
+                        return [
+                            'status' => 'error',
+                            'message' => 'The selected product variant is unavailable.',
+                        ];
+                    }
 
                     // Resolve the selected option (must belong to the variant)
                     $variantOptionId = $itemData['variant_option_id'] ?? null;

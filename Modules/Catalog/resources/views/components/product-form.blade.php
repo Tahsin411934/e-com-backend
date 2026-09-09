@@ -215,6 +215,19 @@
                                 <option value="hidden" {{ $product?->visibility === 'hidden' ? 'selected' : '' }}>Hidden</option>
                                 <option value="private" {{ $product?->visibility === 'private' ? 'selected' : '' }}>Private</option>
                             </x-form-select>
+                            <div>
+                                <x-form-input
+                                    label="Delivery Charge (৳)"
+                                    name="delivery_charge"
+                                    id="delivery_charge"
+                                    type="number"
+                                    min="0"
+                                    step="0.01"
+                                    placeholder="120"
+                                    value="{{ $product?->delivery_charge ?? 120 }}"
+                                />
+                                <p class="text-xs text-gray-400 mt-1">Shipping charge for this product. At checkout the highest product charge in the cart is taken once.</p>
+                            </div>
                             <x-form-input label="Published At" name="published_at" id="published_at" type="datetime-local" value="{{ $isEdit ? ($product?->published_at?->format('Y-m-d\TH:i') ?? '') : now()->format('Y-m-d\TH:i') }}" />
                             <div class="pt-2">
                                 <label class="block text-sm font-medium text-gray-700 mb-2">Show on Homepage</label>

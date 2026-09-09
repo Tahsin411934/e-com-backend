@@ -20,7 +20,10 @@ class CartService
     public function getCartDataTable(Request $request)
     {
         $query = Cart::query()
-            ->with(['user', 'store', 'items'])
+            // items.variant.product is eager-loaded because every serialized
+            // cart item carries its product delivery_charge ($appends) —
+            // without it the admin carts table would lazy-load per row (N+1).
+            ->with(['user', 'store', 'items.variant.product'])
             ->withCount('items as items_count')
             ->orderByDesc('created_at');
 

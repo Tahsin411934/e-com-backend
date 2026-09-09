@@ -20,12 +20,20 @@ class Product extends Model
 
     protected $table = 'products';
 
-    protected $fillable = ['store_id', 'brand_id', 'category_id', 'unit_id', 'size_id', 'tax_rate_id', 'navbar_item_id', 'subnavbar_item_id', 'name', 'slug', 'short_description', 'description', 'product_type', 'status', 'visibility', 'seo_title', 'seo_description', 'published_at', 'is_homepage', 'order_column'];
+    protected $fillable = ['store_id', 'brand_id', 'category_id', 'unit_id', 'size_id', 'tax_rate_id', 'navbar_item_id', 'subnavbar_item_id', 'name', 'slug', 'short_description', 'description', 'product_type', 'delivery_charge', 'status', 'visibility', 'seo_title', 'seo_description', 'published_at', 'is_homepage', 'order_column'];
 
     protected $casts = [
         'published_at' => 'datetime',
         'is_homepage' => 'boolean',
+        'delivery_charge' => 'decimal:2',
     ];
+
+    /**
+     * Delivery charge fallback (৳) for products without an explicit charge —
+     * legacy rows created before the column existed, or a product deleted
+     * while still sitting in someone's cart.
+     */
+    public const DEFAULT_DELIVERY_CHARGE = 120.0;
 
     public function brand()
     {

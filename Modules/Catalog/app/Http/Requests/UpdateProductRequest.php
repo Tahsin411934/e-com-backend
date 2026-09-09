@@ -36,6 +36,7 @@ class UpdateProductRequest extends FormRequest
             'short_description' => 'nullable|string|max:500',
             'description' => 'nullable|string',
             'product_type' => 'required|in:physical,digital,service,bundle',
+            'delivery_charge' => 'nullable|numeric|min:0',
             'images' => 'nullable|array',
             'images.*' => 'nullable|file|image|mimes:jpeg,png,jpg,gif,webp|max:5120',
             'status' => 'required|in:draft,active,archived',

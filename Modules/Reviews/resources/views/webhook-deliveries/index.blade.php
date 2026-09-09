@@ -163,8 +163,8 @@
         // ========== INIT ==========
         $(document).ready(function () {
             $('#resetDeliveryFilters').on('click', function () {
-                $('#delivery_filter_webhook').val('');
-                $('#delivery_filter_success').val('');
+                $('#delivery_filter_webhook').val('').trigger('change.select2');
+                $('#delivery_filter_success').val('').trigger('change.select2');
                 getTable().ajax.reload(null, false);
             });
         });

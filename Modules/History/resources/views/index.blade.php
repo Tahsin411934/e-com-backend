@@ -193,8 +193,8 @@
 
         $(document).ready(function () {
             $('#resetHistoryFilters').on('click', function () {
-                $('#history_filter_action').val('');
-                $('#history_filter_entity_type').val('');
+                $('#history_filter_action').val('').trigger('change.select2');
+                $('#history_filter_entity_type').val('').trigger('change.select2');
                 $('#history_filter_date_from').val('');
                 $('#history_filter_date_to').val('');
                 getTable().ajax.reload(null, false);

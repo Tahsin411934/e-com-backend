@@ -6,10 +6,14 @@ use App\Helpers\ApiResponse;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Modules\Cart\Services\CartService;
+use Modules\Cart\Services\DeliveryChargeService;
 
 class CartController extends Controller
 {
-    public function __construct(private CartService $cartService) {}
+    public function __construct(
+        private CartService $cartService,
+        private DeliveryChargeService $deliveryCharges,
+    ) {}
 
     public function index()
     {
@@ -79,7 +83,20 @@ class CartController extends Controller
 
         // Prices are recalculated server-side (campaign > 0 wins, else
         // variant/option discount) so the cart never returns stale prices.
-        return ApiResponse::success($this->cartService->freshPricedCart($userId), 'Cart retrieved successfully.');
+        $cart = $this->cartService->freshPricedCart($userId);
+
+        // Shipping = the highest product delivery charge in the cart, taken
+        // ONCE per order (one parcel = one charge). The /checkout screen
+        // reads shipping_total / grand_total straight from this payload.
+        $shippingTotal = $this->deliveryCharges->shippingTotalFor($cart);
+        $subtotal = round((float) $cart->total, 2);
+
+        $payload = $cart->toArray();
+        $payload['subtotal'] = $subtotal;
+        $payload['shipping_total'] = $shippingTotal;
+        $payload['grand_total'] = round($subtotal + $shippingTotal, 2);
+
+        return ApiResponse::success($payload, 'Cart retrieved successfully.');
     }
 
     public function syncCart(Request $request)

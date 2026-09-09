@@ -105,8 +105,10 @@
         },
         reloadTable: function() { this.getTable().ajax.reload(null, false); },
         resetFilters: function() {
-            // .trigger('change') re-paints local Select2 filters after reset
-            $('[id^="filter_{{ $safeId }}_"]').val('').trigger('change');
+            // Repaint Select2 UI only — the namespaced event does NOT fire
+            // plain change handlers, so this.reloadTable() below stays the
+            // single data refresh (no double DataTable reload).
+            $('[id^="filter_{{ $safeId }}_"]').val('').trigger('change.select2');
             this.reloadTable();
         }
     };

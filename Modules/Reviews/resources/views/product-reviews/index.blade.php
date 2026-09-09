@@ -236,8 +236,8 @@
         // ========== INIT ==========
         $(document).ready(function () {
             $('#resetReviewFilters').on('click', function () {
-                $('#review_filter_status').val('');
-                $('#review_filter_product').val('');
+                $('#review_filter_status').val('').trigger('change.select2');
+                $('#review_filter_product').val('').trigger('change.select2');
                 getTable().ajax.reload(null, false);
             });
         });

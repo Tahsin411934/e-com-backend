@@ -206,9 +206,9 @@
         // ========== INIT ==========
         $(document).ready(function () {
             $('#resetNotificationFilters').on('click', function () {
-                $('#notification_filter_type').val('');
-                $('#notification_filter_channel').val('');
-                $('#notification_filter_read').val('');
+                $('#notification_filter_type').val('').trigger('change.select2');
+                $('#notification_filter_channel').val('').trigger('change.select2');
+                $('#notification_filter_read').val('').trigger('change.select2');
                 getTable().ajax.reload(null, false);
             });
         });

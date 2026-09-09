@@ -7,13 +7,17 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Modules\Cart\Models\Cart;
 use Modules\Cart\Services\CampaignPricingService;
+use Modules\Cart\Services\DeliveryChargeService;
 use Modules\Order\Models\Delivery;
 use Modules\Order\Models\Order;
 use Modules\Order\Models\OrderItem;
 
 class CheckoutController extends Controller
 {
-    public function __construct(private CampaignPricingService $campaignPricing) {}
+    public function __construct(
+        private CampaignPricingService $campaignPricing,
+        private DeliveryChargeService $deliveryCharges,
+    ) {}
 
     public function checkout(Request $request)
     {
@@ -56,7 +60,10 @@ class CheckoutController extends Controller
                 $subtotal = $cart->items->sum(fn ($item) => $item->unit_price * $item->quantity);
                 $discountTotal = 0; // TODO: Apply coupon logic if needed
                 $taxTotal = 0; // TODO: Calculate tax if needed
-                $shippingTotal = $subtotal >= 99 ? 0 : 10; // Free shipping over ৳99
+                // Shipping = the highest product delivery charge in the cart,
+                // taken ONCE per order (one parcel = one charge). Every product
+                // carries an editable delivery_charge (admin), default ৳120.
+                $shippingTotal = $this->deliveryCharges->shippingTotalFor($cart);
                 $grandTotal = $subtotal + $taxTotal + $shippingTotal - $discountTotal;
 
                 // Create order

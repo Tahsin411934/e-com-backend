@@ -212,7 +212,7 @@
             });
 
             $('#resetWebhookFilters').on('click', function () {
-                $('#webhook_filter_status').val('');
+                $('#webhook_filter_status').val('').trigger('change.select2');
                 getTable().ajax.reload(null, false);
             });
         });

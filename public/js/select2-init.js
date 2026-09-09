@@ -118,6 +118,27 @@
         }, 0);
     });
 
+    // Safety net for filter-bar "Reset" buttons (any id starting with
+    // "reset", e.g. resetFilters, resetBannerFilters). Page code clears the
+    // native select values; we repaint the Select2 UI to match. The
+    // namespaced event touches ONLY Select2's own listener, so no extra
+    // DataTable reloads fire — the page's reset handler refreshes the data.
+    $(document).on('click', '[id^="reset"]', function () {
+        var $btn = $(this);
+
+        window.setTimeout(function () {
+            $btn.parents().filter(function () {
+                return $(this).find('select.select2-hidden-accessible').length > 0;
+            }).first().find('select[data-ajax-select2], select[data-local-select2]').each(function () {
+                var $el = $(this);
+
+                if ($el.hasClass('select2-hidden-accessible')) {
+                    $el.trigger('change.select2');
+                }
+            });
+        }, 0);
+    });
+
     // Public API for dynamically injected content:
     // window.Select2Ajax.init($('#someContainer'));
     window.Select2Ajax = { init: init };

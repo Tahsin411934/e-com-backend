@@ -129,8 +129,10 @@
 
             $(document).ready(function() {
                 $('#resetFilters').on('click', function() {
-                    $('#filter_brand').val('');
-                    $('#filter_category').val('');
+                    // change.select2 repaints the Select2 UI without firing
+                    // the DataTable's own change→reload handler (single reload below)
+                    $('#filter_brand').val('').trigger('change.select2');
+                    $('#filter_category').val('').trigger('change.select2');
                     $('#productTable').DataTable().ajax.reload();
                 });
 

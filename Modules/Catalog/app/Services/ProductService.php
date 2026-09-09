@@ -128,6 +128,13 @@ class ProductService
                 $productId = $data['product_id'] ?? null;
                 $oldSlug = null;
 
+                // Product-level delivery charge — blank/omitted falls back to
+                // the ৳120 default (the column is NOT NULL, the admin field
+                // is optional).
+                $data['delivery_charge'] = (isset($data['delivery_charge']) && $data['delivery_charge'] !== '')
+                    ? $data['delivery_charge']
+                    : Product::DEFAULT_DELIVERY_CHARGE;
+
                 if ($productId) {
                     $product = Product::forCurrentStore()->findOrFail($productId);
                     $oldSlug = $product->slug;

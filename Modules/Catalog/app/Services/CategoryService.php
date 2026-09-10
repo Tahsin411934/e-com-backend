@@ -15,12 +15,19 @@ class CategoryService
 {
     public function getParentCategories()
     {
-        return Category::whereNull('parent_id')->orderBy('name')->get();
+        return Category::forCurrentStore()
+            ->whereNull('parent_id')
+            ->orderBy('name')
+            ->get();
     }
 
     public function getCategoryDataTable(Request $request)
     {
-        $query = Category::with('parent')->orderByDesc('created_at');
+        $query = Category::forCurrentStore()->with(['parent', 'store'])->orderByDesc('created_at');
+
+        if ($request->store_id) {
+            $query->where('store_id', $request->store_id);
+        }
 
         return DataTables::of($query)
             ->addColumn('image_preview', function (Category $category) {
@@ -36,6 +43,9 @@ class CategoryService
             })
             ->editColumn('status', function (Category $category) {
                 return ucfirst($category->status);
+            })
+            ->addColumn('store_name', function (Category $category) {
+                return $category->store?->name ?? 'Platform';
             })
             ->editColumn('created_at', function (Category $category) {
                 return $category->created_at->format('d M Y H:i');

@@ -12,6 +12,7 @@ use Modules\Catalog\Models\Unit;
 use Modules\Catalog\Services\ProductService;
 use Modules\Frontend\Models\NavbarItem;
 use Modules\Frontend\Models\SubnavbarItem;
+use Modules\Store\Models\Store;
 
 class ProductController extends Controller
 {
@@ -34,12 +35,28 @@ class ProductController extends Controller
         return [];
     }
 
+    /**
+     * Store context for product forms/tables. Only platform admins
+     * (Super Admin / Admin) may see every store and assign a product
+     * to one; store owners/staff are locked to their current store.
+     */
+    private function storeContext(): array
+    {
+        $actor = auth()->user();
+        $canAssignStore = (bool) ($actor && ($actor->hasRole('Super Admin') || $actor->hasRole('Admin')));
+
+        return [
+            'stores' => $canAssignStore ? Store::orderBy('name')->get() : collect(),
+            'canAssignStore' => $canAssignStore,
+        ];
+    }
+
     public function index(Request $request)
     {
         $brands = $this->productService->getBrands();
         $categories = $this->productService->getCategories();
 
-        return view('catalog::index', compact('brands', 'categories'));
+        return view('catalog::index', compact('brands', 'categories') + $this->storeContext());
     }
 
     public function dataTable(Request $request)
@@ -60,7 +77,7 @@ class ProductController extends Controller
         $navbarItems = NavbarItem::where('status', 'active')->orderBy('sort_order')->orderBy('name')->get();
         $subnavbarItems = collect();
 
-        return view('catalog::products.create', compact('brands', 'categories', 'units', 'sizes', 'taxRates', 'navbarItems', 'subnavbarItems'));
+        return view('catalog::products.create', compact('brands', 'categories', 'units', 'sizes', 'taxRates', 'navbarItems', 'subnavbarItems') + $this->storeContext());
     }
 
     public function store(StoreProductRequest $request)
@@ -106,7 +123,7 @@ class ProductController extends Controller
             ? SubnavbarItem::where('navbar_item_id', $product->navbar_item_id)->where('status', 'active')->orderBy('sort_order')->orderBy('name')->get()
             : collect();
 
-        return view('catalog::products.edit', compact('product', 'brands', 'categories', 'units', 'sizes', 'taxRates', 'navbarItems', 'subnavbarItems'));
+        return view('catalog::products.edit', compact('product', 'brands', 'categories', 'units', 'sizes', 'taxRates', 'navbarItems', 'subnavbarItems') + $this->storeContext());
     }
 
     public function update(UpdateProductRequest $request, $id)

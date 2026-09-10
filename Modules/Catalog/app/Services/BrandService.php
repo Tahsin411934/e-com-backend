@@ -16,7 +16,11 @@ class BrandService
 {
     public function getBrandDataTable(Request $request)
     {
-        $query = Brand::query()->orderByDesc('created_at');
+        $query = Brand::forCurrentStore()->with('store')->orderByDesc('created_at');
+
+        if ($request->store_id) {
+            $query->where('store_id', $request->store_id);
+        }
 
         return DataTables::of($query)
             ->addColumn('logo', function (Brand $brand) {
@@ -28,6 +32,9 @@ class BrandService
             })
             ->editColumn('status', function (Brand $brand) {
                 return ucfirst($brand->status);
+            })
+            ->addColumn('store_name', function (Brand $brand) {
+                return $brand->store?->name ?? 'Platform';
             })
             ->editColumn('created_at', function (Brand $brand) {
                 return $brand->created_at->format('d M Y H:i');

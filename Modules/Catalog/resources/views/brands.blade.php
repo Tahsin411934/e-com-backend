@@ -3,8 +3,9 @@
         id="brand"
         title="Brand Catalog"
         icon="fa-solid fa-star"
-        :columns="['Logo','Name','Slug','Status','Created At','Action']"
+        :columns="['Store','Logo','Name','Slug','Status','Created At','Action']"
         :dtColumns="[
+            ['data' => 'store_name', 'name' => 'store_name'],
             ['data' => 'logo', 'orderable' => false, 'searchable' => false],
             ['data' => 'name'],
             ['data' => 'slug'],
@@ -12,6 +13,14 @@
             ['data' => 'created_at'],
             ['data' => 'action', 'orderable' => false, 'searchable' => false],
         ]"
+        @if(count($stores))
+        :filters="[
+            'store_id' => [
+                'label' => 'Store',
+                'options' => '<option value=\"\">All Stores</option>' . collect($stores)->map(fn ($store) => '<option value=\"'.$store->id.'\">'.e($store->name).'</option>')->implode(''),
+            ],
+        ]"
+        @endif
         ajaxUrl="{{ route('brands.dataTable') }}"
         storeUrl="{{ route('brands.store') }}"
         updateUrl="{{ route('brands.update', ':id') }}"

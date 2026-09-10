@@ -3,8 +3,9 @@
         id="category"
         title="Category Catalog"
         icon="fa-solid fa-tags"
-        :columns="['Image','Name','Parent','Status','Created At','Action']"
+        :columns="['Store','Image','Name','Parent','Status','Created At','Action']"
         :dtColumns="[
+            ['data' => 'store_name', 'name' => 'store_name'],
             ['data' => 'image_preview', 'orderable' => false, 'searchable' => false],
             ['data' => 'name'],
             ['data' => 'parent'],
@@ -12,6 +13,14 @@
             ['data' => 'created_at'],
             ['data' => 'action', 'orderable' => false, 'searchable' => false],
         ]"
+        @if(count($stores))
+        :filters="[
+            'store_id' => [
+                'label' => 'Store',
+                'options' => '<option value=\"\">All Stores</option>' . collect($stores)->map(fn ($store) => '<option value=\"'.$store->id.'\">'.e($store->name).'</option>')->implode(''),
+            ],
+        ]"
+        @endif
         ajaxUrl="{{ route('categories.dataTable') }}"
         storeUrl="{{ route('categories.store') }}"
         updateUrl="{{ route('categories.update', ':id') }}"

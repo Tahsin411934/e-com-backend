@@ -36,11 +36,11 @@
 <div class="p-4">
     @if(count($filters) > 0)
     <div class="flex flex-col md:flex-row md:items-end gap-4 mb-5 bg-white dark:bg-gray-800 p-4 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm">
-        @foreach ($filters as $label => $options)
+        @foreach ($filters as $param => $filter)
             <div class="flex flex-col w-full md:w-1/4">
-                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{{ $label }}</label>
-                <select id="filter_{{ $safeId }}_{{ Str::slug($label) }}" data-local-select2 class="dt-filter-{{ $safeTableId }} block w-full border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
-                    {!! $options !!}
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{{ $filter['label'] }}</label>
+                <select id="filter_{{ $safeId }}_{{ $param }}" data-local-select2 class="dt-filter-{{ $safeTableId }} block w-full border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                    {!! $filter['options'] !!}
                 </select>
             </div>
         @endforeach
@@ -53,7 +53,13 @@
     </div>
     @endif
 
-    <x-data-table :id="$safeTableId" :title="$title" :icon="$icon" :buttonId="$safeButtonId" :buttonText="'Add New ' . $title" :columns="$columns" :ajaxUrl="$ajaxUrl" :dtColumns="$dtColumns" :exportButtons="$exportButtons" :order="$order" />
+    @php
+        $filterMap = [];
+        foreach ($filters as $param => $filter) {
+            $filterMap[$param] = '#filter_' . $safeId . '_' . $param;
+        }
+    @endphp
+    <x-data-table :id="$safeTableId" :title="$title" :icon="$icon" :buttonId="$safeButtonId" :buttonText="'Add New ' . $title" :columns="$columns" :ajaxUrl="$ajaxUrl" :dtColumns="$dtColumns" :exportButtons="$exportButtons" :order="$order" :filters="$filterMap" />
 </div>
 
 <x-drawer :id="$safeDrawerId" :overlayId="$safeOverlayId" :title="$drawerTitle" :submitOnClick="'save' . $safeUcId . 'Form()'">

@@ -10,6 +10,8 @@
     'formTitle' => 'Create New Product',
     'submitButton' => 'Save Product',
     'isEdit' => false,
+    'stores' => [],
+    'canAssignStore' => false,
 ])
 
 <x-app-layout>
@@ -49,6 +51,21 @@
                                 </div>
                                 <div>
                                     <x-form-input label="Slug" name="slug" id="slug" placeholder="auto-generated-slug" value="{{ $product?->slug ?? '' }}" required />
+                                </div>
+                                <div class="md:col-span-2">
+                                    @if ($canAssignStore)
+                                        <x-form-select label="Store" name="store_id" id="store_id" placeholder="Platform (No Store)">
+                                            @foreach ($stores as $store)
+                                                <option value="{{ $store->id }}" {{ $product?->store_id == $store->id ? 'selected' : '' }}>{{ $store->name }}</option>
+                                            @endforeach
+                                        </x-form-select>
+                                        <p class="text-xs text-gray-400 mt-1">Select which store this product belongs to.</p>
+                                    @else
+                                        <x-form-select label="Store" name="store_id_display" id="store_id_display" :searchable="false" placeholder="">
+                                            <option value="">{{ $product?->store?->name ?? \Modules\Store\Support\CurrentStore::store()?->name ?? 'Platform (No Store)' }}</option>
+                                        </x-form-select>
+                                        <p class="text-xs text-gray-400 mt-1">Your products are assigned to your store automatically.</p>
+                                    @endif
                                 </div>
                             </div>
                             <div>

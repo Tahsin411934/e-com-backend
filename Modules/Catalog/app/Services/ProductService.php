@@ -22,9 +22,10 @@ class ProductService
 {
     public function getProductDataTable(Request $request)
     {
-        $query = Product::forCurrentStore()->with(['brand'])
+        $query = Product::forCurrentStore()->with(['brand', 'store'])
             ->select([
                 'products.id',
+                'products.store_id',
                 'products.brand_id',
                 'products.name',
                 'products.slug',
@@ -40,6 +41,10 @@ class ProductService
             $query->where('brand_id', $request->brand_id);
         }
 
+        if ($request->store_id) {
+            $query->where('store_id', $request->store_id);
+        }
+
         if ($request->category_id) {
             $query->whereHas('categories', function ($q) use ($request) {
                 $q->where('categories.id', $request->category_id);
@@ -52,6 +57,9 @@ class ProductService
             })
             ->editColumn('visibility', function (Product $product) {
                 return ucfirst($product->visibility);
+            })
+            ->addColumn('store_name', function (Product $product) {
+                return $product->store?->name ?? 'Platform';
             })
             ->editColumn('created_at', function (Product $product) {
                 return $product->created_at->format('d M Y H:i');
@@ -554,12 +562,12 @@ class ProductService
 
     public function getBrands(): Collection
     {
-        return Brand::where('status', 'active')->orderBy('name')->get();
+        return Brand::forCurrentStore()->where('status', 'active')->orderBy('name')->get();
     }
 
     public function getCategories(): Collection
     {
-        return Category::where('status', 'active')->orderBy('name')->get();
+        return Category::forCurrentStore()->where('status', 'active')->orderBy('name')->get();
     }
 
     public function searchProducts(string $query, ?int $categoryId = null): JsonResponse

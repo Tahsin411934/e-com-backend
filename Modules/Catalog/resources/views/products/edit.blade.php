@@ -7,6 +7,8 @@
     :taxRates="$taxRates"
     :navbarItems="$navbarItems"
     :subnavbarItems="$subnavbarItems"
+    :stores="$stores"
+    :canAssignStore="$canAssignStore"
     formTitle="Edit Product"
     submitButton="Update Product"
     :isEdit="true"

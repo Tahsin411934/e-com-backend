@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use Modules\Catalog\Http\Requests\StoreCategoryRequest;
 use Modules\Catalog\Http\Requests\UpdateCategoryRequest;
 use Modules\Catalog\Services\CategoryService;
+use Modules\Store\Models\Store;
 
 class CategoryController extends Controller
 {
@@ -15,8 +16,12 @@ class CategoryController extends Controller
     public function index(Request $request)
     {
         $parents = $this->categoryService->getParentCategories();
+        $actor = auth()->user();
+        $stores = ($actor && ($actor->hasRole('Super Admin') || $actor->hasRole('Admin')))
+            ? Store::orderBy('name')->get()
+            : collect();
 
-        return view('catalog::categories', compact('parents'));
+        return view('catalog::categories', compact('parents', 'stores'));
     }
 
     public function dataTable(Request $request)

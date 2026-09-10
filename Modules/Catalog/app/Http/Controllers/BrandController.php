@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use Modules\Catalog\Http\Requests\StoreBrandRequest;
 use Modules\Catalog\Http\Requests\UpdateBrandRequest;
 use Modules\Catalog\Services\BrandService;
+use Modules\Store\Models\Store;
 
 class BrandController extends Controller
 {
@@ -14,7 +15,14 @@ class BrandController extends Controller
 
     public function index(Request $request)
     {
-        return view('catalog::brands');
+        $actor = auth()->user();
+        // Store-wise filter is only meaningful for platform admins;
+        // owners/staff are already scoped to their own store.
+        $stores = ($actor && ($actor->hasRole('Super Admin') || $actor->hasRole('Admin')))
+            ? Store::orderBy('name')->get()
+            : collect();
+
+        return view('catalog::brands', compact('stores'));
     }
 
     public function dataTable(Request $request)

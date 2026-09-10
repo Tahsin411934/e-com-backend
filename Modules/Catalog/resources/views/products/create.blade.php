@@ -6,6 +6,8 @@
     :taxRates="$taxRates"
     :navbarItems="$navbarItems"
     :subnavbarItems="$subnavbarItems"
+    :stores="$stores"
+    :canAssignStore="$canAssignStore"
     formTitle="Create New Product"
     submitButton="Save Product"
 />

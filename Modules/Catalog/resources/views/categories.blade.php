@@ -1,4 +1,13 @@
 <x-app-layout>
+    @php
+        $categoryStoreFilter = count($stores ?? []) ? [
+            'store_id' => [
+                'label' => 'Store',
+                'options' => '<option value="">All Stores</option>'
+                    . collect($stores)->map(fn ($store) => '<option value="'.$store->id.'">'.e($store->name).'</option>')->implode(''),
+            ],
+        ] : [];
+    @endphp
     <x-entity-crud
         id="category"
         title="Category Catalog"
@@ -13,14 +22,7 @@
             ['data' => 'created_at'],
             ['data' => 'action', 'orderable' => false, 'searchable' => false],
         ]"
-        @if(count($stores))
-        :filters="[
-            'store_id' => [
-                'label' => 'Store',
-                'options' => '<option value=\"\">All Stores</option>' . collect($stores)->map(fn ($store) => '<option value=\"'.$store->id.'\">'.e($store->name).'</option>')->implode(''),
-            ],
-        ]"
-        @endif
+        :filters="$categoryStoreFilter"
         ajaxUrl="{{ route('categories.dataTable') }}"
         storeUrl="{{ route('categories.store') }}"
         updateUrl="{{ route('categories.update', ':id') }}"

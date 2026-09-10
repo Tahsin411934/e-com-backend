@@ -10,6 +10,23 @@ use Modules\Inventory\Http\Controllers\SupplierController;
 use Modules\Inventory\Http\Controllers\SupplierPaymentController;
 
 Route::middleware(['auth', 'verified', 'admin'])->group(function () {
+    // Inventory Locations
+    Route::get('inventory-locations', [InventoryLocationController::class, 'index'])->name('inventory-locations.index');
+    Route::get('dataTable/inventory-locations', [InventoryLocationController::class, 'dataTable'])->name('inventory-locations.dataTable');
+    Route::get('inventory-locations/{id}', [InventoryLocationController::class, 'show'])->name('inventory-locations.show');
+    Route::post('inventory-locations', [InventoryLocationController::class, 'store'])->name('inventory-locations.store');
+    Route::put('inventory-locations/{id}', [InventoryLocationController::class, 'update'])->name('inventory-locations.update');
+    Route::patch('inventory-locations/{id}', [InventoryLocationController::class, 'update']);
+    Route::delete('inventory-locations/{id}', [InventoryLocationController::class, 'destroy'])->name('inventory-locations.destroy');
+
+    // Inventory Stock
+    Route::get('inventory-stock', [InventoryStockController::class, 'index'])->name('inventory-stock.index');
+    Route::get('dataTable/inventory-stock', [InventoryStockController::class, 'dataTable'])->name('inventory-stock.dataTable');
+    Route::get('inventory-stock/{id}', [InventoryStockController::class, 'show'])->name('inventory-stock.show');
+    Route::post('inventory-stock', [InventoryStockController::class, 'store'])->name('inventory-stock.store');
+    Route::put('inventory-stock/{id}', [InventoryStockController::class, 'update'])->name('inventory-stock.update');
+    Route::patch('inventory-stock/{id}', [InventoryStockController::class, 'update']);
+    Route::delete('inventory-stock/{id}', [InventoryStockController::class, 'destroy'])->name('inventory-stock.destroy');
 
     // Inventory Movements
     Route::get('inventory-movements', [InventoryMovementController::class, 'index'])

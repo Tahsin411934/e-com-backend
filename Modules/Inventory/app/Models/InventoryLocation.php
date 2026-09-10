@@ -2,6 +2,7 @@
 
 namespace Modules\Inventory\Models;
 
+use App\Traits\BelongsToStore;
 use App\Traits\CustomSoftDeletes;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -9,6 +10,7 @@ use Modules\Store\Models\Store;
 
 class InventoryLocation extends Model
 {
+    use BelongsToStore;
     use CustomSoftDeletes;
     use HasFactory;
 

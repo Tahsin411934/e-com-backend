@@ -9,6 +9,7 @@ use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Modules\Catalog\Models\Category;
+use Modules\Store\Support\CurrentStore;
 use Yajra\DataTables\DataTables;
 
 class CategoryService
@@ -84,11 +85,17 @@ class CategoryService
                 $data['parent_id'] = $data['parent_id'] ?: null;
                 $data['status'] = $data['status'] ?? 'active';
 
+                // Store owners/staff are locked to their own store;
+                // platform admins may pick any store (or Platform/null).
+                if (! $this->isPlatformAdmin()) {
+                    $data['store_id'] = CurrentStore::id();
+                }
+
                 // Handle image upload
                 if (isset($data['image']) && $data['image'] instanceof UploadedFile) {
                     // Delete old uploaded image if updating
                     if ($categoryId) {
-                        $oldCategory = Category::find($categoryId);
+                        $oldCategory = Category::forCurrentStore()->find($categoryId);
                         if ($oldCategory && $oldCategory->image) {
                             Storage::disk('public')->delete($oldCategory->image);
                         }
@@ -101,7 +108,7 @@ class CategoryService
                 }
 
                 if ($categoryId) {
-                    $category = Category::findOrFail($categoryId);
+                    $category = Category::forCurrentStore()->findOrFail($categoryId);
                     $category->update($data);
 
                     return ApiResponse::success($category->fresh(), 'Category updated successfully.');
@@ -119,7 +126,7 @@ class CategoryService
     public function getCategoryById(int $id): JsonResponse
     {
         try {
-            $category = Category::findOrFail($id);
+            $category = Category::forCurrentStore()->findOrFail($id);
             $categoryArray = $category->toArray();
             $categoryArray['category_image_url'] = $this->getCategoryImageUrl($category);
 
@@ -133,7 +140,7 @@ class CategoryService
     {
         try {
             return DB::transaction(function () use ($id) {
-                $category = Category::findOrFail($id);
+                $category = Category::forCurrentStore()->findOrFail($id);
 
                 // Delete uploaded image file
                 if ($category->image) {
@@ -147,5 +154,12 @@ class CategoryService
         } catch (\Exception $e) {
             return ApiResponse::error('Error deleting category: '.$e->getMessage(), 500);
         }
+    }
+
+    private function isPlatformAdmin(): bool
+    {
+        $actor = auth()->user();
+
+        return (bool) ($actor && ($actor->hasRole('Super Admin') || $actor->hasRole('Admin')));
     }
 }

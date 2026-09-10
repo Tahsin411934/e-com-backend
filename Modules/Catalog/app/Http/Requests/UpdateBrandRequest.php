@@ -17,6 +17,7 @@ class UpdateBrandRequest extends FormRequest
         $brandId = $this->route('brand');
 
         return [
+            'store_id' => 'nullable|integer|exists:stores,id',
             'name' => 'required|string|max:160',
             'slug' => [
                 'required',

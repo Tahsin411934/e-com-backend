@@ -8,6 +8,7 @@ use Modules\Catalog\Http\Requests\StoreCategoryRequest;
 use Modules\Catalog\Http\Requests\UpdateCategoryRequest;
 use Modules\Catalog\Services\CategoryService;
 use Modules\Store\Models\Store;
+use Modules\Store\Support\CurrentStore;
 
 class CategoryController extends Controller
 {
@@ -17,11 +18,14 @@ class CategoryController extends Controller
     {
         $parents = $this->categoryService->getParentCategories();
         $actor = auth()->user();
-        $stores = ($actor && ($actor->hasRole('Super Admin') || $actor->hasRole('Admin')))
-            ? Store::orderBy('name')->get()
-            : collect();
+        $canAssignStore = (bool) ($actor && ($actor->hasRole('Super Admin') || $actor->hasRole('Admin')));
 
-        return view('catalog::categories', compact('parents', 'stores'));
+        $stores = $canAssignStore
+            ? Store::where('status', 'active')->orderBy('name')->get()
+            : collect();
+        $currentStore = CurrentStore::store();
+
+        return view('catalog::categories', compact('parents', 'stores', 'canAssignStore', 'currentStore'));
     }
 
     public function dataTable(Request $request)

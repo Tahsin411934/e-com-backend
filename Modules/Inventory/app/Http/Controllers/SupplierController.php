@@ -6,6 +6,8 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Modules\Inventory\Http\Requests\SupplierRequest;
 use Modules\Inventory\Services\SupplierService;
+use Modules\Store\Models\Store;
+use Modules\Store\Support\CurrentStore;
 
 class SupplierController extends Controller
 {
@@ -13,7 +15,15 @@ class SupplierController extends Controller
 
     public function index()
     {
-        return view('inventory::suppliers.index');
+        $actor = auth()->user();
+        $canAssignStore = (bool) ($actor && ($actor->hasRole('Super Admin') || $actor->hasRole('Admin')));
+
+        $stores = $canAssignStore
+            ? Store::where('status', 'active')->orderBy('name')->get()
+            : collect();
+        $currentStore = CurrentStore::store();
+
+        return view('inventory::suppliers.index', compact('stores', 'currentStore', 'canAssignStore'));
     }
 
     public function dataTable(Request $request)

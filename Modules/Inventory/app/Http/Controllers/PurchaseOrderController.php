@@ -17,7 +17,7 @@ class PurchaseOrderController extends Controller
 
     public function index()
     {
-        $suppliers = Supplier::where('status', 'active')->orderBy('name')->get();
+        $suppliers = Supplier::forCurrentStore()->where('status', 'active')->orderBy('name')->get();
         $stores = Store::where('status', 'active')->orderBy('name')->get();
         $accounts = AccountAccount::where('is_active', true)->orderBy('name')->get();
 
@@ -31,7 +31,7 @@ class PurchaseOrderController extends Controller
 
     public function create()
     {
-        $suppliers = Supplier::where('status', 'active')->orderBy('name')->get();
+        $suppliers = Supplier::forCurrentStore()->where('status', 'active')->orderBy('name')->get();
         $stores = Store::where('status', 'active')->orderBy('name')->get();
         $accounts = AccountAccount::where('is_active', true)->orderBy('name')->get();
 
@@ -71,7 +71,7 @@ class PurchaseOrderController extends Controller
             return redirect()->route('purchase-orders.show', $id)->with('error', 'Cannot edit a '.$purchase_order->status.' order.');
         }
 
-        $suppliers = Supplier::where('status', 'active')->orderBy('name')->get();
+        $suppliers = Supplier::forCurrentStore()->where('status', 'active')->orderBy('name')->get();
         $stores = Store::where('status', 'active')->orderBy('name')->get();
         $accounts = AccountAccount::where('is_active', true)->orderBy('name')->get();
 

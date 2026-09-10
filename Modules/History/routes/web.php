@@ -3,15 +3,15 @@
 use Illuminate\Support\Facades\Route;
 use Modules\History\Http\Controllers\HistoryController;
 
-Route::middleware(['auth', 'verified', 'admin', 'role:Super Admin,Admin'])->group(function () {
-    Route::get('histories', [HistoryController::class, 'page'])->name('history.page');
+Route::middleware(['auth', 'verified', 'admin'])->group(function () {
+    Route::get('histories', [HistoryController::class, 'page'])->name('history.page')->middleware('permission:histories.view');
 
     // DataTables endpoint for the /histories admin page (same convention as
     // /dataTable/users, /dataTable/carts, etc.).
-    Route::get('/dataTable/histories', [HistoryController::class, 'dataTable'])->name('history.dataTable');
+    Route::get('/dataTable/histories', [HistoryController::class, 'dataTable'])->name('history.dataTable')->middleware('permission:histories.view');
 
     // Session-authenticated restore endpoint used by the admin page
     // (the browser has no Bearer token, matching the dataTable convention
     // used by the other admin modules).
-    Route::post('histories/{id}/restore', [HistoryController::class, 'restore'])->name('history.restore');
+    Route::post('histories/{id}/restore', [HistoryController::class, 'restore'])->name('history.restore')->middleware('permission:histories.restore');
 });

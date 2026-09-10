@@ -14,6 +14,7 @@ class StoreBrandRequest extends FormRequest
     public function rules(): array
     {
         return [
+            'store_id' => 'nullable|integer|exists:stores,id',
             'name' => 'required|string|max:160',
             'slug' => 'required|string|max:180|unique:brands,slug',
             'logo' => 'nullable|image|max:2048',

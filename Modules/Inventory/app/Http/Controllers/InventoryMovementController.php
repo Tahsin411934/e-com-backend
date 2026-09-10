@@ -7,6 +7,8 @@ use Illuminate\Http\Request;
 use Modules\Inventory\Http\Requests\InventoryMovementRequest;
 use Modules\Inventory\Models\InventoryLocation;
 use Modules\Inventory\Services\InventoryMovementService;
+use Modules\Store\Models\Store;
+use Modules\Store\Support\CurrentStore;
 
 class InventoryMovementController extends Controller
 {
@@ -14,9 +16,17 @@ class InventoryMovementController extends Controller
 
     public function index()
     {
-        $locations = InventoryLocation::where('status', 'active')->orderBy('name')->get();
+        $locations = InventoryLocation::forCurrentStore()->where('status', 'active')->orderBy('name')->get();
 
-        return view('inventory::movements.index', compact('locations'));
+        $actor = auth()->user();
+        $canAssignStore = (bool) ($actor && ($actor->hasRole('Super Admin') || $actor->hasRole('Admin')));
+
+        $stores = $canAssignStore
+            ? Store::where('status', 'active')->orderBy('name')->get()
+            : collect();
+        $currentStore = CurrentStore::store();
+
+        return view('inventory::movements.index', compact('locations', 'stores', 'currentStore', 'canAssignStore'));
     }
 
     public function dataTable(Request $request)

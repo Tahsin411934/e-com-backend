@@ -5,8 +5,10 @@ namespace Modules\Inventory\Http\Controllers;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Modules\Inventory\Http\Requests\InventoryLocationRequest;
+use Modules\Inventory\Models\InventoryLocation;
 use Modules\Inventory\Services\InventoryLocationService;
 use Modules\Store\Models\Store;
+use Modules\Store\Support\CurrentStore;
 
 class InventoryLocationController extends Controller
 {
@@ -14,9 +16,15 @@ class InventoryLocationController extends Controller
 
     public function index()
     {
-        $stores = Store::where('status', 'active')->orderBy('name')->get();
+        $actor = auth()->user();
+        $canAssignStore = (bool) ($actor && ($actor->hasRole('Super Admin') || $actor->hasRole('Admin')));
 
-        return view('inventory::locations.index', compact('stores'));
+        $stores = $canAssignStore
+            ? Store::where('status', 'active')->orderBy('name')->get()
+            : collect();
+        $currentStore = CurrentStore::store();
+
+        return view('inventory::locations.index', compact('stores', 'currentStore', 'canAssignStore'));
     }
 
     public function dataTable(Request $request)

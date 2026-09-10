@@ -16,7 +16,7 @@ class InventoryLocationRequest extends FormRequest
         $locationId = $this->route('inventory_location') ?? $this->input('location_id');
 
         return [
-            'store_id' => 'required|exists:stores,id',
+            'store_id' => 'nullable|exists:stores,id',
             'name' => 'required|string|max:160',
             'location_type' => 'required|in:warehouse,retail,delivery_hub',
             'status' => 'required|in:active,inactive',

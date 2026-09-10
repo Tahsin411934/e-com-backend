@@ -22,24 +22,24 @@ Route::middleware('guest')->group(function () {
         ->name('store-owner.register.post');
 });
 
-Route::middleware(['auth', 'verified', 'admin', 'role:Super Admin,Admin'])->group(function () {
+Route::middleware(['auth', 'verified', 'admin'])->group(function () {
     // Stores
-    Route::resource('stores', StoreController::class)->except(['create', 'edit'])->names('stores');
-    Route::get('/dataTable/stores', [StoreController::class, 'dataTable'])->name('stores.dataTable');
+    Route::resource('stores', StoreController::class)->except(['create', 'edit'])->names('stores')->middleware('permission:stores.*');
+    Route::get('/dataTable/stores', [StoreController::class, 'dataTable'])->name('stores.dataTable')->middleware('permission:stores.view');
 
     // Store Staff
-    Route::resource('store-staff', StoreStaffController::class)->except(['create', 'edit'])->names('store-staff');
-    Route::get('/dataTable/store-staff', [StoreStaffController::class, 'dataTable'])->name('store-staff.dataTable');
+    Route::resource('store-staff', StoreStaffController::class)->except(['create', 'edit'])->names('store-staff')->middleware('permission:store-staff.*');
+    Route::get('/dataTable/store-staff', [StoreStaffController::class, 'dataTable'])->name('store-staff.dataTable')->middleware('permission:store-staff.view');
 
     // Countries
-    Route::resource('countries', CountryController::class)->except(['create', 'edit'])->names('countries');
-    Route::get('/dataTable/countries', [CountryController::class, 'dataTable'])->name('countries.dataTable');
+    Route::resource('countries', CountryController::class)->except(['create', 'edit'])->names('countries')->middleware('permission:countries.*');
+    Route::get('/dataTable/countries', [CountryController::class, 'dataTable'])->name('countries.dataTable')->middleware('permission:countries.view');
 
     // Addresses
-    Route::resource('addresses', AddressController::class)->except(['create', 'edit'])->names('addresses');
-    Route::get('/dataTable/addresses', [AddressController::class, 'dataTable'])->name('addresses.dataTable');
+    Route::resource('addresses', AddressController::class)->except(['create', 'edit'])->names('addresses')->middleware('permission:addresses.*');
+    Route::get('/dataTable/addresses', [AddressController::class, 'dataTable'])->name('addresses.dataTable')->middleware('permission:addresses.view');
 
     // App Settings
-    Route::resource('app-settings', AppSettingController::class)->except(['create', 'edit'])->names('app-settings');
-    Route::get('/dataTable/app-settings', [AppSettingController::class, 'dataTable'])->name('app-settings.dataTable');
+    Route::resource('app-settings', AppSettingController::class)->except(['create', 'edit'])->names('app-settings')->middleware('permission:app-settings.*');
+    Route::get('/dataTable/app-settings', [AppSettingController::class, 'dataTable'])->name('app-settings.dataTable')->middleware('permission:app-settings.view');
 });

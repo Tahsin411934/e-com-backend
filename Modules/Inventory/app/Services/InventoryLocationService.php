@@ -7,13 +7,18 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Modules\Inventory\Models\InventoryLocation;
+use Modules\Store\Support\CurrentStore;
 use Yajra\DataTables\DataTables;
 
 class InventoryLocationService
 {
     public function getLocationDataTable(Request $request)
     {
-        $query = InventoryLocation::query()->with('store')->orderByDesc('created_at');
+        $query = InventoryLocation::forCurrentStore()->with('store')->orderByDesc('created_at');
+
+        if ($request->store_id) {
+            $query->where('store_id', $request->store_id);
+        }
 
         return DataTables::of($query)
             ->editColumn('status', function (InventoryLocation $location) {
@@ -46,8 +51,13 @@ class InventoryLocationService
                 $locationId = $data['location_id'] ?? null;
                 unset($data['location_id']);
 
+                // Store owners/staff are locked to their own store.
+                if (! $this->isPlatformAdmin()) {
+                    $data['store_id'] = CurrentStore::id();
+                }
+
                 if ($locationId) {
-                    $location = InventoryLocation::findOrFail($locationId);
+                    $location = InventoryLocation::forCurrentStore()->findOrFail($locationId);
                     $location->update($data);
                     $message = 'Location updated successfully.';
                 } else {
@@ -65,7 +75,7 @@ class InventoryLocationService
     public function getLocationById(int $id): JsonResponse
     {
         try {
-            $location = InventoryLocation::with('store')->findOrFail($id);
+            $location = InventoryLocation::forCurrentStore()->with('store')->findOrFail($id);
 
             return ApiResponse::success($location);
         } catch (\Exception $e) {
@@ -77,7 +87,7 @@ class InventoryLocationService
     {
         try {
             return DB::transaction(function () use ($id) {
-                $location = InventoryLocation::findOrFail($id);
+                $location = InventoryLocation::forCurrentStore()->findOrFail($id);
                 $location->delete();
 
                 return ApiResponse::success(null, 'Location deleted successfully.');
@@ -89,10 +99,18 @@ class InventoryLocationService
 
     public function getAllActiveLocations(): JsonResponse
     {
-        return InventoryLocation::where('status', 'active')
+        return InventoryLocation::forCurrentStore()
+            ->where('status', 'active')
             ->with('store')
             ->orderBy('name')
             ->get()
             ->toArray();
+    }
+
+    private function isPlatformAdmin(): bool
+    {
+        $actor = auth()->user();
+
+        return (bool) ($actor && ($actor->hasRole('Super Admin') || $actor->hasRole('Admin')));
     }
 }

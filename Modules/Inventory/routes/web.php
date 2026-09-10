@@ -11,38 +11,52 @@ use Modules\Inventory\Http\Controllers\SupplierPaymentController;
 
 Route::middleware(['auth', 'verified', 'admin'])->group(function () {
     // Inventory Locations
-    Route::get('inventory-locations', [InventoryLocationController::class, 'index'])->name('inventory-locations.index');
-    Route::get('dataTable/inventory-locations', [InventoryLocationController::class, 'dataTable'])->name('inventory-locations.dataTable');
-    Route::get('inventory-locations/{id}', [InventoryLocationController::class, 'show'])->name('inventory-locations.show');
-    Route::post('inventory-locations', [InventoryLocationController::class, 'store'])->name('inventory-locations.store');
-    Route::put('inventory-locations/{id}', [InventoryLocationController::class, 'update'])->name('inventory-locations.update');
-    Route::patch('inventory-locations/{id}', [InventoryLocationController::class, 'update']);
-    Route::delete('inventory-locations/{id}', [InventoryLocationController::class, 'destroy'])->name('inventory-locations.destroy');
+    Route::get('inventory-locations', [InventoryLocationController::class, 'index'])
+        ->name('inventory-locations.index')->middleware('permission:inventory-locations.view');
+    Route::get('dataTable/inventory-locations', [InventoryLocationController::class, 'dataTable'])
+        ->name('inventory-locations.dataTable')->middleware('permission:inventory-locations.view');
+    Route::get('inventory-locations/{id}', [InventoryLocationController::class, 'show'])
+        ->name('inventory-locations.show')->middleware('permission:inventory-locations.view');
+    Route::post('inventory-locations', [InventoryLocationController::class, 'store'])
+        ->name('inventory-locations.store')->middleware('permission:inventory-locations.create');
+    Route::put('inventory-locations/{id}', [InventoryLocationController::class, 'update'])
+        ->name('inventory-locations.update')->middleware('permission:inventory-locations.edit');
+    Route::patch('inventory-locations/{id}', [InventoryLocationController::class, 'update'])
+        ->middleware('permission:inventory-locations.edit');
+    Route::delete('inventory-locations/{id}', [InventoryLocationController::class, 'destroy'])
+        ->name('inventory-locations.destroy')->middleware('permission:inventory-locations.delete');
 
     // Inventory Stock
-    Route::get('inventory-stock', [InventoryStockController::class, 'index'])->name('inventory-stock.index');
-    Route::get('dataTable/inventory-stock', [InventoryStockController::class, 'dataTable'])->name('inventory-stock.dataTable');
-    Route::get('inventory-stock/{id}', [InventoryStockController::class, 'show'])->name('inventory-stock.show');
-    Route::post('inventory-stock', [InventoryStockController::class, 'store'])->name('inventory-stock.store');
-    Route::put('inventory-stock/{id}', [InventoryStockController::class, 'update'])->name('inventory-stock.update');
-    Route::patch('inventory-stock/{id}', [InventoryStockController::class, 'update']);
-    Route::delete('inventory-stock/{id}', [InventoryStockController::class, 'destroy'])->name('inventory-stock.destroy');
+    Route::get('inventory-stock', [InventoryStockController::class, 'index'])
+        ->name('inventory-stock.index')->middleware('permission:inventory-stock.view');
+    Route::get('dataTable/inventory-stock', [InventoryStockController::class, 'dataTable'])
+        ->name('inventory-stock.dataTable')->middleware('permission:inventory-stock.view');
+    Route::get('inventory-stock/{id}', [InventoryStockController::class, 'show'])
+        ->name('inventory-stock.show')->middleware('permission:inventory-stock.view');
+    Route::post('inventory-stock', [InventoryStockController::class, 'store'])
+        ->name('inventory-stock.store')->middleware('permission:inventory-stock.create');
+    Route::put('inventory-stock/{id}', [InventoryStockController::class, 'update'])
+        ->name('inventory-stock.update')->middleware('permission:inventory-stock.edit');
+    Route::patch('inventory-stock/{id}', [InventoryStockController::class, 'update'])
+        ->middleware('permission:inventory-stock.edit');
+    Route::delete('inventory-stock/{id}', [InventoryStockController::class, 'destroy'])
+        ->name('inventory-stock.destroy')->middleware('permission:inventory-stock.delete');
 
     // Inventory Movements
     Route::get('inventory-movements', [InventoryMovementController::class, 'index'])
-        ->name('inventory-movements.index')->middleware('permission:inventory.view');
+        ->name('inventory-movements.index')->middleware('permission:inventory-movements.view');
     Route::get('dataTable/inventory-movements', [InventoryMovementController::class, 'dataTable'])
-        ->name('inventory-movements.dataTable')->middleware('permission:inventory.view');
+        ->name('inventory-movements.dataTable')->middleware('permission:inventory-movements.view');
     Route::get('inventory-movements/{id}', [InventoryMovementController::class, 'show'])
-        ->name('inventory-movements.show')->middleware('permission:inventory.view');
+        ->name('inventory-movements.show')->middleware('permission:inventory-movements.view');
     Route::post('inventory-movements', [InventoryMovementController::class, 'store'])
-        ->name('inventory-movements.store')->middleware('permission:inventory.create');
+        ->name('inventory-movements.store')->middleware('permission:inventory-movements.create');
     Route::put('inventory-movements/{id}', [InventoryMovementController::class, 'update'])
-        ->name('inventory-movements.update')->middleware('permission:inventory.edit');
+        ->name('inventory-movements.update')->middleware('permission:inventory-movements.edit');
     Route::patch('inventory-movements/{id}', [InventoryMovementController::class, 'update'])
-        ->middleware('permission:inventory.edit');
+        ->middleware('permission:inventory-movements.edit');
     Route::delete('inventory-movements/{id}', [InventoryMovementController::class, 'destroy'])
-        ->name('inventory-movements.destroy')->middleware('permission:inventory.delete');
+        ->name('inventory-movements.destroy')->middleware('permission:inventory-movements.delete');
 
     // Suppliers
     Route::get('suppliers', [SupplierController::class, 'index'])

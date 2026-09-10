@@ -33,6 +33,20 @@
         idField="category_id"
     >
         <div class="mb-4">
+            @if($canAssignStore ?? false)
+                <x-form-select label="Store" name="store_id" id="category_store_id" placeholder="Platform (No Store)">
+                    @foreach($stores ?? [] as $store)
+                        <option value="{{ $store['id'] ?? $store->id }}">{{ $store['name'] ?? $store->name }}</option>
+                    @endforeach
+                </x-form-select>
+            @else
+                <x-form-select label="Store" name="store_id_display" id="category_store_id_display" :searchable="false">
+                    <option value="">{{ $currentStore?->name ?? 'No Store' }}</option>
+                </x-form-select>
+                <input type="hidden" name="store_id" id="category_store_id" value="{{ $currentStore?->id ?? '' }}">
+            @endif
+        </div>
+        <div class="mb-4">
             <x-form-select label="Parent Category" name="parent_id" id="category_parent_id">
                 <option value="">None</option>
                 @foreach ($parents as $parent)
@@ -71,6 +85,7 @@
     @push('scripts')
     <script>
         window.fillCategoryForm = function(data) {
+            $('#category_store_id').val(data.store_id);
             $('#category_parent_id').val(data.parent_id || '');
             $('#category_name').val(data.name);
             $('#category_slug').val(data.slug);

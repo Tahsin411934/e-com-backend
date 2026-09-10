@@ -16,6 +16,7 @@ class SupplierRequest extends FormRequest
         $supplierId = $this->input('supplier_id');
 
         return [
+            'store_id' => 'nullable|exists:stores,id',
             'name' => 'required|string|max:220',
             'email' => 'nullable|email|max:255',
             'phone' => 'nullable|string|max:32',

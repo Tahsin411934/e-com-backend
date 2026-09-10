@@ -8,6 +8,7 @@ use Modules\Catalog\Models\ProductVariant;
 use Modules\Inventory\Http\Requests\InventoryStockRequest;
 use Modules\Inventory\Models\InventoryLocation;
 use Modules\Inventory\Services\InventoryStockService;
+use Modules\Store\Models\Store;
 
 class InventoryStockController extends Controller
 {
@@ -15,11 +16,19 @@ class InventoryStockController extends Controller
 
     public function index()
     {
-        $locations = InventoryLocation::with('store')->where('status', 'active')->orderBy('name')->get();
+        $locations = InventoryLocation::forCurrentStore()->with('store')->where('status', 'active')->orderBy('name')->get();
         $variants = ProductVariant::with(['product', 'options' => fn ($query) => $query->where('status', 'active')])
+            ->whereHas('product', fn ($q) => $q->forCurrentStore())
             ->where('status', 'active')->orderBy('name')->get();
 
-        return view('inventory::stock.index', compact('locations', 'variants'));
+        $actor = auth()->user();
+        $canAssignStore = (bool) ($actor && ($actor->hasRole('Super Admin') || $actor->hasRole('Admin')));
+
+        $stores = $canAssignStore
+            ? Store::where('status', 'active')->orderBy('name')->get()
+            : collect();
+
+        return view('inventory::stock.index', compact('locations', 'variants', 'stores', 'canAssignStore'));
     }
 
     public function dataTable(Request $request)

@@ -6,17 +6,23 @@ use App\Helpers\ApiResponse;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Modules\Inventory\Models\InventoryLocation;
 use Modules\Inventory\Models\InventoryMovement;
 use Modules\Inventory\Models\InventoryStock;
+use Modules\Store\Support\CurrentStore;
 use Yajra\DataTables\DataTables;
 
 class InventoryStockService
 {
     public function getStockDataTable(Request $request)
     {
-        $query = InventoryStock::query()
+        $query = InventoryStock::forCurrentStore()
             ->with(['location.store', 'variant.product', 'variantOption'])
             ->orderByDesc('updated_at');
+
+        if ($request->store_id) {
+            $query->whereHas('location', fn ($q) => $q->where('store_id', $request->store_id));
+        }
 
         return DataTables::of($query)
             ->addColumn('location_name', function (InventoryStock $stock) {
@@ -77,7 +83,7 @@ class InventoryStockService
                 unset($data['stock_id']);
 
                 if ($stockId) {
-                    $stock = InventoryStock::findOrFail($stockId);
+                    $stock = InventoryStock::forCurrentStore()->findOrFail($stockId);
 
                     $oldQuantity = $stock->quantity_on_hand;
                     $stock->update($data);
@@ -96,6 +102,12 @@ class InventoryStockService
 
                     $message = 'Stock record updated successfully.';
                 } else {
+                    // Location must belong to the acting store (tenant isolation).
+                    $location = InventoryLocation::forCurrentStore()->find($data['location_id'] ?? null);
+                    if (! $location) {
+                        throw new \RuntimeException('Selected location does not belong to your store.');
+                    }
+
                     $stock = InventoryStock::create($data);
                     $this->logMovement(
                         $stock->location_id,
@@ -118,7 +130,7 @@ class InventoryStockService
     public function getStockById(int $id): JsonResponse
     {
         try {
-            $stock = InventoryStock::with('location.store')->findOrFail($id);
+            $stock = InventoryStock::forCurrentStore()->with('location.store')->findOrFail($id);
 
             return ApiResponse::success($stock);
         } catch (\Exception $e) {
@@ -130,7 +142,7 @@ class InventoryStockService
     {
         try {
             return DB::transaction(function () use ($id) {
-                $stock = InventoryStock::findOrFail($id);
+                $stock = InventoryStock::forCurrentStore()->findOrFail($id);
                 $stock->delete();
 
                 return ApiResponse::success(null, 'Stock record deleted successfully.');
@@ -155,6 +167,7 @@ class InventoryStockService
     public function getLowStockItems(): JsonResponse
     {
         return InventoryStock::query()
+            ->whereHas('location', fn ($q) => $q->forCurrentStore())
             ->select('inventory_stock.*')
             ->join('product_variants', 'inventory_stock.variant_id', '=', 'product_variants.id')
             ->join('products', 'product_variants.product_id', '=', 'products.id')

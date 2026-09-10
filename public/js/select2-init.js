@@ -102,19 +102,28 @@
         });
     }
 
+    /**
+     * Repaint Select2 UI so it matches the native <select> values.
+     * Call after programmatically setting values (e.g. form fill in edit
+     * drawers) — plain .val() doesn't update the Select2 control itself.
+     */
+    function sync(scope) {
+        $(scope || document).find('select[data-ajax-select2], select[data-local-select2]').each(function () {
+            var $el = $(this);
+
+            if ($el.hasClass('select2-hidden-accessible')) {
+                $el.trigger('change.select2');
+            }
+        });
+    }
+
     // Keep the Select2 UI in sync after a native form.reset() — the shared
     // entity-crud drawer calls form.reset() when opening "Add New".
     $(document).on('reset', 'form', function () {
         var $form = $(this);
 
         window.setTimeout(function () {
-            $form.find('select[data-ajax-select2], select[data-local-select2]').each(function () {
-                var $el = $(this);
-
-                if ($el.hasClass('select2-hidden-accessible')) {
-                    $el.trigger('change.select2');
-                }
-            });
+            sync($form);
         }, 0);
     });
 
@@ -141,7 +150,8 @@
 
     // Public API for dynamically injected content:
     // window.Select2Ajax.init($('#someContainer'));
-    window.Select2Ajax = { init: init };
+    // window.Select2Ajax.sync($('#someForm'));   ← repaint after .val()
+    window.Select2Ajax = { init: init, sync: sync };
 
     $(function () {
         init(document);

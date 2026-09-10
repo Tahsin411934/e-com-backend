@@ -2,19 +2,23 @@
 
 namespace Modules\Inventory\Models;
 
+use App\Traits\BelongsToStore;
 use App\Traits\CustomSoftDeletes;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Modules\Catalog\Models\Product;
+use Modules\Store\Models\Store;
 
 class Supplier extends Model
 {
+    use BelongsToStore;
     use CustomSoftDeletes;
     use HasFactory;
 
     protected $table = 'suppliers';
 
     protected $fillable = [
+        'store_id',
         'name',
         'slug',
         'email',
@@ -28,6 +32,11 @@ class Supplier extends Model
         'notes',
         'status',
     ];
+
+    public function store()
+    {
+        return $this->belongsTo(Store::class, 'store_id');
+    }
 
     public function purchaseOrders()
     {

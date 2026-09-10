@@ -34,6 +34,20 @@
         :order="[[4, 'desc']]"
     >
         <div class="mb-4">
+            @if($canAssignStore ?? false)
+                <x-form-select label="Store" name="store_id" id="brand_store_id" placeholder="Platform (No Store)">
+                    @foreach($stores ?? [] as $store)
+                        <option value="{{ $store['id'] ?? $store->id }}">{{ $store['name'] ?? $store->name }}</option>
+                    @endforeach
+                </x-form-select>
+            @else
+                <x-form-select label="Store" name="store_id_display" id="brand_store_id_display" :searchable="false">
+                    <option value="">{{ $currentStore?->name ?? 'No Store' }}</option>
+                </x-form-select>
+                <input type="hidden" name="store_id" id="brand_store_id" value="{{ $currentStore?->id ?? '' }}">
+            @endif
+        </div>
+        <div class="mb-4">
             <x-form-input label="Name" name="name" id="brand_name" placeholder="Brand Name" required />
         </div>
         <div class="mb-4">
@@ -57,6 +71,7 @@
     @push('scripts')
     <script>
         window.fillBrandForm = function(data) {
+            $('#brand_store_id').val(data.store_id);
             $('#brand_name').val(data.name);
             $('#brand_slug').val(data.slug);
             $('#brand_status').val(data.status);

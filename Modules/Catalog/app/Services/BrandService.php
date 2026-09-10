@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Modules\Catalog\Models\Brand;
+use Modules\Store\Support\CurrentStore;
 use Yajra\DataTables\DataTables;
 
 class BrandService
@@ -63,8 +64,14 @@ class BrandService
                 $data['status'] = $data['status'] ?? 'active';
                 unset($data['brand_id'], $data['logo']);
 
+                // Store owners/staff are locked to their own store;
+                // platform admins may pick any store (or Platform/null).
+                if (! $this->isPlatformAdmin()) {
+                    $data['store_id'] = CurrentStore::id();
+                }
+
                 if ($brandId) {
-                    $brand = Brand::findOrFail($brandId);
+                    $brand = Brand::forCurrentStore()->findOrFail($brandId);
                     $oldLogoUrl = $brand->logo_url;
 
                     if ($logo instanceof UploadedFile) {
@@ -106,7 +113,7 @@ class BrandService
     public function getBrandById(int $id): JsonResponse
     {
         try {
-            $brand = Brand::findOrFail($id);
+            $brand = Brand::forCurrentStore()->findOrFail($id);
             $brand->logo_url = $brand->logo_url ? $this->logoUrl($brand->logo_url) : null;
 
             return ApiResponse::success($brand);
@@ -164,5 +171,12 @@ class BrandService
         }
 
         return $logoUrl;
+    }
+
+    private function isPlatformAdmin(): bool
+    {
+        $actor = auth()->user();
+
+        return (bool) ($actor && ($actor->hasRole('Super Admin') || $actor->hasRole('Admin')));
     }
 }

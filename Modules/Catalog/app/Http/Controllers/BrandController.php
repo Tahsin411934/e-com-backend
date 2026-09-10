@@ -8,6 +8,7 @@ use Modules\Catalog\Http\Requests\StoreBrandRequest;
 use Modules\Catalog\Http\Requests\UpdateBrandRequest;
 use Modules\Catalog\Services\BrandService;
 use Modules\Store\Models\Store;
+use Modules\Store\Support\CurrentStore;
 
 class BrandController extends Controller
 {
@@ -16,13 +17,14 @@ class BrandController extends Controller
     public function index(Request $request)
     {
         $actor = auth()->user();
-        // Store-wise filter is only meaningful for platform admins;
-        // owners/staff are already scoped to their own store.
-        $stores = ($actor && ($actor->hasRole('Super Admin') || $actor->hasRole('Admin')))
-            ? Store::orderBy('name')->get()
-            : collect();
+        $canAssignStore = (bool) ($actor && ($actor->hasRole('Super Admin') || $actor->hasRole('Admin')));
 
-        return view('catalog::brands', compact('stores'));
+        $stores = $canAssignStore
+            ? Store::where('status', 'active')->orderBy('name')->get()
+            : collect();
+        $currentStore = CurrentStore::store();
+
+        return view('catalog::brands', compact('stores', 'canAssignStore', 'currentStore'));
     }
 
     public function dataTable(Request $request)

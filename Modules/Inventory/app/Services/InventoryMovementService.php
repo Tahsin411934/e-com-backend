@@ -6,7 +6,9 @@ use App\Helpers\ApiResponse;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Modules\Inventory\Models\InventoryLocation;
 use Modules\Inventory\Models\InventoryMovement;
+use Modules\Store\Support\CurrentStore;
 use Yajra\DataTables\DataTables;
 
 class InventoryMovementService
@@ -14,8 +16,13 @@ class InventoryMovementService
     public function getMovementDataTable(Request $request)
     {
         $query = InventoryMovement::query()
-            ->with(['location', 'createdBy'])
+            ->with(['location.store', 'createdBy'])
+            ->whereHas('location', fn ($q) => $q->forCurrentStore())
             ->orderByDesc('created_at');
+
+        if ($request->store_id) {
+            $query->whereHas('location', fn ($q) => $q->where('store_id', $request->store_id));
+        }
 
         return DataTables::of($query)
             ->addColumn('location_name', function (InventoryMovement $movement) {
@@ -28,6 +35,9 @@ class InventoryMovementService
                 return $movement->quantity > 0
                     ? '<span class="text-green-600">+'.number_format($movement->quantity).'</span>'
                     : '<span class="text-red-600">'.number_format($movement->quantity).'</span>';
+            })
+            ->addColumn('store_name', function (InventoryMovement $movement) {
+                return $movement->location?->store?->name ?? '-';
             })
             ->addColumn('created_by_name', function (InventoryMovement $movement) {
                 return $movement->createdBy ? $movement->createdBy->name : 'System';
@@ -57,8 +67,14 @@ class InventoryMovementService
                     $data['created_by'] = auth()->id();
                 }
 
+                // Location must belong to the acting store (tenant isolation).
+                $location = InventoryLocation::forCurrentStore()->find($data['location_id'] ?? null);
+                if (! $location) {
+                    throw new \RuntimeException('Selected location does not belong to your store.');
+                }
+
                 if ($movementId) {
-                    $movement = InventoryMovement::findOrFail($movementId);
+                    $movement = InventoryMovement::forCurrentStore()->findOrFail($movementId);
                     $movement->update($data);
                     $message = 'Movement updated successfully.';
                 } else {
@@ -76,7 +92,7 @@ class InventoryMovementService
     public function getMovementById(int $id): JsonResponse
     {
         try {
-            $movement = InventoryMovement::with(['location', 'createdBy'])->findOrFail($id);
+            $movement = InventoryMovement::forCurrentStore()->with(['location.store', 'createdBy'])->findOrFail($id);
 
             return ApiResponse::success($movement);
         } catch (\Exception $e) {
@@ -88,7 +104,7 @@ class InventoryMovementService
     {
         try {
             return DB::transaction(function () use ($id) {
-                $movement = InventoryMovement::findOrFail($id);
+                $movement = InventoryMovement::forCurrentStore()->findOrFail($id);
                 $movement->delete();
 
                 return ApiResponse::success(null, 'Movement deleted successfully.');

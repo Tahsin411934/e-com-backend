@@ -1,10 +1,20 @@
 <x-app-layout>
+@php
+    $supplierStoreFilter = count($stores ?? []) ? [
+        'store_id' => [
+            'label' => 'Store',
+            'options' => '<option value="">All Stores</option>'
+                . collect($stores)->map(fn ($s) => '<option value="'.$s->id.'">'.e($s->name).'</option>')->implode(''),
+        ],
+    ] : [];
+@endphp
     <x-entity-crud
         id="supplier"
         title="Suppliers"
         icon="fa-solid fa-truck"
-        :columns="['Name','Email','Phone','Contact Person','City','Country','Status','Created At','Action']"
+        :columns="['Store','Name','Email','Phone','Contact Person','City','Country','Status','Created At','Action']"
         :dtColumns="[
+            ['data' => 'store_name', 'name' => 'store_name'],
             ['data' => 'name'],
             ['data' => 'email'],
             ['data' => 'phone'],
@@ -20,11 +30,27 @@
         updateUrl="{{ route('suppliers.update', ':id') }}"
         showUrl="{{ route('suppliers.show', ':id') }}"
         destroyUrl="{{ route('suppliers.destroy', ':id') }}"
+        :filters="$supplierStoreFilter"
         drawerTitle="Supplier"
         dataKey="data"
         idField="supplier_id"
-        :order="[[7, 'desc']]"
+        :order="[[8, 'desc']]"
     >
+        <div class="mb-4">
+            @if($canAssignStore ?? false)
+                <x-form-select label="Store" name="store_id" id="supplier_store_id">
+                    <option value="" disabled selected>Select a store</option>
+                    @foreach($stores ?? [] as $store)
+                        <option value="{{ $store['id'] }}">{{ $store['name'] }}</option>
+                    @endforeach
+                </x-form-select>
+            @else
+                <x-form-select label="Store" name="store_id_display" id="supplier_store_id_display" :searchable="false">
+                    <option value="">{{ $currentStore?->name ?? 'No Store' }}</option>
+                </x-form-select>
+                <input type="hidden" name="store_id" id="supplier_store_id" value="{{ $currentStore?->id ?? '' }}">
+            @endif
+        </div>
         <div class="mb-4">
             <x-form-input label="Name" name="name" id="supplier_name" placeholder="Supplier Name" required />
         </div>
@@ -66,6 +92,7 @@
     @push('scripts')
     <script>
         window.fillSupplierForm = function(data) {
+            $('#supplier_store_id').val(data.store_id);
             $('#supplier_name').val(data.name);
             $('#supplier_email').val(data.email);
             $('#supplier_phone').val(data.phone);

@@ -1,11 +1,21 @@
 <x-app-layout>
+@php
+    $movementStoreFilter = count($stores ?? []) ? [
+        'store_id' => [
+            'label' => 'Store',
+            'options' => '<option value="">All Stores</option>'
+                . collect($stores)->map(fn ($s) => '<option value="'.$s->id.'">'.e($s->name).'</option>')->implode(''),
+        ],
+    ] : [];
+@endphp
     <x-entity-crud
         id="inventory-movement"
         title="Inventory Movements"
         icon="fa-solid fa-exchange-alt"
-        :columns="['Location','Type','Quantity','Reference','Note','Created By','Date','Action']"
+        :columns="['Location','Store','Type','Quantity','Reference','Note','Created By','Date','Action']"
         :dtColumns="[
             ['data' => 'location_name'],
+            ['data' => 'store_name', 'name' => 'store_name'],
             ['data' => 'movement_type'],
             ['data' => 'quantity'],
             ['data' => 'reference_type'],
@@ -14,6 +24,7 @@
             ['data' => 'created_at'],
             ['data' => 'action', 'orderable' => false, 'searchable' => false],
         ]"
+        :filters="$movementStoreFilter"
         ajaxUrl="{{ route('inventory-movements.dataTable') }}"
         storeUrl="{{ route('inventory-movements.store') }}"
         updateUrl="{{ route('inventory-movements.update', ':id') }}"

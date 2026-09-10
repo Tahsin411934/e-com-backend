@@ -3,6 +3,7 @@
 namespace Modules\Inventory\Models;
 
 use App\Traits\CustomSoftDeletes;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Modules\Catalog\Models\ProductVariant;
@@ -37,5 +38,14 @@ class InventoryStock extends Model
     public function variantOption()
     {
         return $this->belongsTo(VariantOption::class, 'variant_option_id');
+    }
+
+    /**
+     * Stock does not carry its own store_id — it is scoped through the
+     * owning inventory location (tenant isolation).
+     */
+    public function scopeForCurrentStore(Builder $query): Builder
+    {
+        return $query->whereHas('location', fn ($q) => $q->forCurrentStore());
     }
 }

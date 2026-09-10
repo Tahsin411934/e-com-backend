@@ -23,12 +23,19 @@
         :order="[[4, 'desc']]"
     >
         <div class="mb-4">
-            <x-form-select label="Store" name="store_id" id="location_store_id">
-                @foreach($stores ?? [] as $store)
-                    <option value="{{ $store['id'] }}">{{ $store['name'] }}</option>
-                @endforeach
-                <option value="" disabled selected>Select a store</option>
-            </x-form-select>
+            @if($canAssignStore ?? false)
+                <x-form-select label="Store" name="store_id" id="location_store_id">
+                    <option value="" disabled selected>Select a store</option>
+                    @foreach($stores ?? [] as $store)
+                        <option value="{{ $store['id'] }}">{{ $store['name'] }}</option>
+                    @endforeach
+                </x-form-select>
+            @else
+                <x-form-select label="Store" name="store_id_display" id="location_store_id_display" :searchable="false">
+                    <option value="">{{ $currentStore?->name ?? 'No Store' }}</option>
+                </x-form-select>
+                <input type="hidden" name="store_id" id="location_store_id" value="{{ $currentStore?->id ?? '' }}">
+            @endif
         </div>
         <div class="mb-4">
             <x-form-input label="Name" name="name" id="location_name" placeholder="Location Name" required />

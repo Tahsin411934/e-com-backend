@@ -24,9 +24,13 @@ class PurchaseOrderService
 
     public function getPoDataTable(Request $request)
     {
-        $query = PurchaseOrder::query()
+        $query = PurchaseOrder::forCurrentStore()
             ->with(['supplier', 'store'])
             ->orderByDesc('created_at');
+
+        if ($request->store_id) {
+            $query->where('store_id', $request->store_id);
+        }
 
         return DataTables::of($query)
             ->editColumn('status', function (PurchaseOrder $po) {
@@ -276,7 +280,9 @@ class PurchaseOrderService
      */
     public function getPoModel(int $id): PurchaseOrder
     {
-        return PurchaseOrder::with(['supplier', 'store', 'items.variant.product', 'creator'])->findOrFail($id);
+        return PurchaseOrder::forCurrentStore()
+            ->with(['supplier', 'store', 'items.variant.product', 'creator'])
+            ->findOrFail($id);
     }
 
     protected function recordPoPayment(PurchaseOrder $po, float $amount, string $accountId): array

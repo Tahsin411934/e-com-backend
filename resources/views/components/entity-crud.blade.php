@@ -173,6 +173,18 @@
                 if (typeof window['fill' + CFG.safeUcId + 'Form'] === 'function') {
                     window['fill' + CFG.safeUcId + 'Form'](data);
                 }
+                // Sync Select2 UI with the values the page's fill function
+                // just set — plain .val() doesn't repaint the Select2
+                // control, so the previously selected option looked unset.
+                window.setTimeout(function () {
+                    $('#' + CFG.formId).find('select[data-ajax-select2], select[data-local-select2]').each(function () {
+                        var $el = $(this);
+
+                        if ($el.hasClass('select2-hidden-accessible')) {
+                            $el.trigger('change.select2');
+                        }
+                    });
+                }, 0);
                 window['open' + CFG.safeUcId + 'Drawer']('edit');
             } else {
                 Swal.fire('Error', res.message || 'Failed to fetch data.', 'error');

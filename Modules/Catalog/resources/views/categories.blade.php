@@ -78,7 +78,7 @@
 
         $(document).ready(function() {
             $('#category_name').on('input', function() {
-                if ($('#category_id').val() === '') {
+                if ($('#category_hid').val() === '') {
                     let slug = $(this).val().toLowerCase().replace(/[^a-z0-9-]/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '');
                     $('#category_slug').val(slug);
                 }

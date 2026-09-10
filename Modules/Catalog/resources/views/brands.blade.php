@@ -13,14 +13,12 @@
             ['data' => 'created_at'],
             ['data' => 'action', 'orderable' => false, 'searchable' => false],
         ]"
-        @if(count($stores))
-        :filters="[
+        :filters="count($stores) ? [
             'store_id' => [
                 'label' => 'Store',
                 'options' => '<option value=\"\">All Stores</option>' . collect($stores)->map(fn ($store) => '<option value=\"'.$store->id.'\">'.e($store->name).'</option>')->implode(''),
             ],
-        ]"
-        @endif
+        ] : []"
         ajaxUrl="{{ route('brands.dataTable') }}"
         storeUrl="{{ route('brands.store') }}"
         updateUrl="{{ route('brands.update', ':id') }}"

@@ -65,7 +65,7 @@
             });
 
             $('#brand_name').on('input', function() {
-                if ($('#brand_id').val() === '') {
+                if ($('#brand_hid').val() === '') {
                     let slug = $(this).val().toLowerCase().replace(/[^a-z0-9-]/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '');
                     $('#brand_slug').val(slug);
                 }

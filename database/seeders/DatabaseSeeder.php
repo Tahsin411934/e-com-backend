@@ -20,6 +20,7 @@ class DatabaseSeeder extends Seeder
         // Order matters for foreign key dependencies
         // $this->call(IdentityDatabaseSeeder::class);
         $this->call(AdditionalPermissionsSeeder::class);
+        $this->call(\Modules\Inventory\Database\Seeders\InventoryPermissionsSeeder::class);
         // $this->call(\Modules\Account\Database\Seeders\AccountDatabaseSeeder::class);
         // $this->call(\Modules\Store\Database\Seeders\StoreDatabaseSeeder::class);
         // $this->call(\Modules\Catalog\Database\Seeders\CatalogDatabaseSeeder::class);

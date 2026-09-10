@@ -9,34 +9,93 @@ use Modules\Inventory\Http\Controllers\PurchaseReturnController;
 use Modules\Inventory\Http\Controllers\SupplierController;
 use Modules\Inventory\Http\Controllers\SupplierPaymentController;
 
-Route::middleware(['auth', 'verified', 'admin', 'role:Super Admin,Admin,Manager,Staff'])->group(function () {
-    // Inventory Locations
-    Route::resource('inventory-locations', InventoryLocationController::class)->except(['create', 'edit'])->names('inventory-locations');
-    Route::get('/dataTable/inventory-locations', [InventoryLocationController::class, 'dataTable'])->name('inventory-locations.dataTable');
-
-    // Inventory Stock
-    Route::resource('inventory-stock', InventoryStockController::class)->except(['create', 'edit'])->names('inventory-stock');
-    Route::get('/dataTable/inventory-stock', [InventoryStockController::class, 'dataTable'])->name('inventory-stock.dataTable');
+Route::middleware(['auth', 'verified', 'admin'])->group(function () {
 
     // Inventory Movements
-    Route::resource('inventory-movements', InventoryMovementController::class)->except(['create', 'edit'])->names('inventory-movements');
-    Route::get('/dataTable/inventory-movements', [InventoryMovementController::class, 'dataTable'])->name('inventory-movements.dataTable');
+    Route::get('inventory-movements', [InventoryMovementController::class, 'index'])
+        ->name('inventory-movements.index')->middleware('permission:inventory.view');
+    Route::get('dataTable/inventory-movements', [InventoryMovementController::class, 'dataTable'])
+        ->name('inventory-movements.dataTable')->middleware('permission:inventory.view');
+    Route::get('inventory-movements/{id}', [InventoryMovementController::class, 'show'])
+        ->name('inventory-movements.show')->middleware('permission:inventory.view');
+    Route::post('inventory-movements', [InventoryMovementController::class, 'store'])
+        ->name('inventory-movements.store')->middleware('permission:inventory.create');
+    Route::put('inventory-movements/{id}', [InventoryMovementController::class, 'update'])
+        ->name('inventory-movements.update')->middleware('permission:inventory.edit');
+    Route::patch('inventory-movements/{id}', [InventoryMovementController::class, 'update'])
+        ->middleware('permission:inventory.edit');
+    Route::delete('inventory-movements/{id}', [InventoryMovementController::class, 'destroy'])
+        ->name('inventory-movements.destroy')->middleware('permission:inventory.delete');
 
     // Suppliers
-    Route::resource('suppliers', SupplierController::class)->except(['create', 'edit'])->names('suppliers');
-    Route::get('/dataTable/suppliers', [SupplierController::class, 'dataTable'])->name('suppliers.dataTable');
+    Route::get('suppliers', [SupplierController::class, 'index'])
+        ->name('suppliers.index')->middleware('permission:suppliers.view');
+    Route::get('dataTable/suppliers', [SupplierController::class, 'dataTable'])
+        ->name('suppliers.dataTable')->middleware('permission:suppliers.view');
+    Route::get('suppliers/{id}', [SupplierController::class, 'show'])
+        ->name('suppliers.show')->middleware('permission:suppliers.view');
+    Route::post('suppliers', [SupplierController::class, 'store'])
+        ->name('suppliers.store')->middleware('permission:suppliers.create');
+    Route::put('suppliers/{id}', [SupplierController::class, 'update'])
+        ->name('suppliers.update')->middleware('permission:suppliers.edit');
+    Route::patch('suppliers/{id}', [SupplierController::class, 'update'])
+        ->middleware('permission:suppliers.edit');
+    Route::delete('suppliers/{id}', [SupplierController::class, 'destroy'])
+        ->name('suppliers.destroy')->middleware('permission:suppliers.delete');
 
     // Purchase Orders
-    Route::resource('purchase-orders', PurchaseOrderController::class)->names('purchase-orders');
-    Route::get('/dataTable/purchase-orders', [PurchaseOrderController::class, 'dataTable'])->name('purchase-orders.dataTable');
-    Route::post('purchase-orders/{id}/update-status', [PurchaseOrderController::class, 'updateStatus'])->name('purchase-orders.update-status');
-    Route::get('/purchase-orders-search-products', [PurchaseOrderController::class, 'searchProducts'])->name('purchase-orders.search-products');
+    Route::get('purchase-orders', [PurchaseOrderController::class, 'index'])
+        ->name('purchase-orders.index')->middleware('permission:purchase-orders.view');
+    Route::get('purchase-orders/create', [PurchaseOrderController::class, 'create'])
+        ->name('purchase-orders.create')->middleware('permission:purchase-orders.create');
+    Route::get('purchase-orders-search-products', [PurchaseOrderController::class, 'searchProducts'])
+        ->name('purchase-orders.search-products')->middleware('permission:purchase-orders.view');
+    Route::get('dataTable/purchase-orders', [PurchaseOrderController::class, 'dataTable'])
+        ->name('purchase-orders.dataTable')->middleware('permission:purchase-orders.view');
+    Route::post('purchase-orders', [PurchaseOrderController::class, 'store'])
+        ->name('purchase-orders.store')->middleware('permission:purchase-orders.create');
+    Route::get('purchase-orders/{id}', [PurchaseOrderController::class, 'show'])
+        ->name('purchase-orders.show')->middleware('permission:purchase-orders.view');
+    Route::get('purchase-orders/{id}/edit', [PurchaseOrderController::class, 'edit'])
+        ->name('purchase-orders.edit')->middleware('permission:purchase-orders.edit');
+    Route::post('purchase-orders/{id}/update-status', [PurchaseOrderController::class, 'updateStatus'])
+        ->name('purchase-orders.update-status')->middleware('permission:purchase-orders.edit');
+    Route::put('purchase-orders/{id}', [PurchaseOrderController::class, 'update'])
+        ->name('purchase-orders.update')->middleware('permission:purchase-orders.edit');
+    Route::patch('purchase-orders/{id}', [PurchaseOrderController::class, 'update'])
+        ->middleware('permission:purchase-orders.edit');
+    Route::delete('purchase-orders/{id}', [PurchaseOrderController::class, 'destroy'])
+        ->name('purchase-orders.destroy')->middleware('permission:purchase-orders.delete');
 
     // Purchase Returns
-    Route::resource('purchase-returns', PurchaseReturnController::class)->names('purchase-returns');
-    Route::get('/dataTable/purchase-returns', [PurchaseReturnController::class, 'dataTable'])->name('purchase-returns.dataTable');
+    Route::get('purchase-returns', [PurchaseReturnController::class, 'index'])
+        ->name('purchase-returns.index')->middleware('permission:purchase-returns.view');
+    Route::get('purchase-returns/create', [PurchaseReturnController::class, 'create'])
+        ->name('purchase-returns.create')->middleware('permission:purchase-returns.create');
+    Route::get('dataTable/purchase-returns', [PurchaseReturnController::class, 'dataTable'])
+        ->name('purchase-returns.dataTable')->middleware('permission:purchase-returns.view');
+    Route::post('purchase-returns', [PurchaseReturnController::class, 'store'])
+        ->name('purchase-returns.store')->middleware('permission:purchase-returns.create');
+    Route::get('purchase-returns/{id}', [PurchaseReturnController::class, 'show'])
+        ->name('purchase-returns.show')->middleware('permission:purchase-returns.view');
+    Route::get('purchase-returns/{id}/edit', [PurchaseReturnController::class, 'edit'])
+        ->name('purchase-returns.edit')->middleware('permission:purchase-returns.edit');
+    Route::put('purchase-returns/{id}', [PurchaseReturnController::class, 'update'])
+        ->name('purchase-returns.update')->middleware('permission:purchase-returns.edit');
+    Route::patch('purchase-returns/{id}', [PurchaseReturnController::class, 'update'])
+        ->middleware('permission:purchase-returns.edit');
+    Route::delete('purchase-returns/{id}', [PurchaseReturnController::class, 'destroy'])
+        ->name('purchase-returns.destroy')->middleware('permission:purchase-returns.delete');
 
     // Supplier Payments (professional payment ledger against POs)
-    Route::resource('supplier-payments', SupplierPaymentController::class)->only(['index', 'store', 'show', 'destroy'])->names('supplier-payments');
-    Route::get('/dataTable/supplier-payments', [SupplierPaymentController::class, 'dataTable'])->name('supplier-payments.dataTable');
+    Route::get('supplier-payments', [SupplierPaymentController::class, 'index'])
+        ->name('supplier-payments.index')->middleware('permission:supplier-payments.view');
+    Route::get('dataTable/supplier-payments', [SupplierPaymentController::class, 'dataTable'])
+        ->name('supplier-payments.dataTable')->middleware('permission:supplier-payments.view');
+    Route::post('supplier-payments', [SupplierPaymentController::class, 'store'])
+        ->name('supplier-payments.store')->middleware('permission:supplier-payments.create');
+    Route::get('supplier-payments/{id}', [SupplierPaymentController::class, 'show'])
+        ->name('supplier-payments.show')->middleware('permission:supplier-payments.view');
+    Route::delete('supplier-payments/{id}', [SupplierPaymentController::class, 'destroy'])
+        ->name('supplier-payments.destroy')->middleware('permission:supplier-payments.delete');
 });

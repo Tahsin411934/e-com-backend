@@ -12,7 +12,7 @@ class CheckPermission
      * Handle an incoming request.
      *
      * @param  Closure(Request): (Response)  $next
-     * @param  string  ...$permissions  One or more permission names
+     * @param  string  ...$permissions  One or more permission names (supports "x.*" wildcards)
      */
     public function handle(Request $request, Closure $next, string ...$permissions): Response
     {
@@ -33,8 +33,15 @@ class CheckPermission
             ->pluck('name')
             ->unique();
 
-        // Check if user has any of the specified permissions
+        // Check if user has any of the specified permissions.
+        // A pattern like "units.*" matches any user permission starting with "units."
         $hasPermission = collect($permissions)->contains(function ($permission) use ($userPermissions) {
+            if (str_ends_with($permission, '.*')) {
+                $prefix = substr($permission, 0, -1); // keep trailing dot: "units."
+
+                return $userPermissions->contains(fn ($name) => str_starts_with($name, $prefix));
+            }
+
             return $userPermissions->contains($permission);
         });
 

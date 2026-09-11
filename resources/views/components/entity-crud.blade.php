@@ -25,6 +25,8 @@
     // STABLE identifiers — safe for JS (no hyphens)
     $safeId = str_replace(['-', '_'], '', $id);
     $safeUcId = ucfirst($safeId);
+    $studlyId = str_replace(' ', '', ucwords(str_replace(['-', '_'], ' ', $id)));
+    $camelId = lcfirst($studlyId);
     $safeDrawerId = $safeId . 'Drawer';
     $safeOverlayId = $safeId . 'Overlay';
     $safeFormId = $safeId . 'Form';
@@ -77,6 +79,8 @@
     var CFG = {
         safeId: '{{ $safeId }}',
         safeUcId: '{{ $safeUcId }}',
+        studlyId: '{{ $studlyId }}',
+        camelId: '{{ $camelId }}',
         entityId: '{{ $id }}',
         tableId: '{{ $safeTableId }}',
         drawerId: '{{ $safeDrawerId }}',
@@ -171,8 +175,9 @@
             if (res.status === 'success') {
                 var data = res[CFG.dataKey];
                 $('#' + CFG.hiddenId).val(data.id);
-                if (typeof window['fill' + CFG.safeUcId + 'Form'] === 'function') {
-                    window['fill' + CFG.safeUcId + 'Form'](data);
+                var fillForm = window['fill' + CFG.safeUcId + 'Form'] || window['fill' + CFG.studlyId + 'Form'];
+                if (typeof fillForm === 'function') {
+                    fillForm(data);
                 }
                 // Sync Select2 UI with the values the page's fill function
                 // just set — plain .val() doesn't repaint the Select2
@@ -197,6 +202,7 @@
     };
     window[CFG.entityId + 'Edit'] = editHandler;
     window[CFG.safeId + 'Edit'] = editHandler;
+    window[CFG.camelId + 'Edit'] = editHandler;
 
     // Save
     window['save' + CFG.safeUcId + 'Form'] = function() {
@@ -284,6 +290,7 @@
     };
     window[CFG.entityId + 'Delete'] = deleteHandler;
     window[CFG.safeId + 'Delete'] = deleteHandler;
+    window[CFG.camelId + 'Delete'] = deleteHandler;
 
     // Init
     $(function() {

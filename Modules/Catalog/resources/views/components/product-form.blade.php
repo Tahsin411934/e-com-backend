@@ -421,6 +421,17 @@
         let productDescriptionEditor;
         let deletedImageIds = [];
         let optionCounters = {};
+        // The form already receives every active size set from ProductController.
+        // Keeping this data local avoids a second request (and its permission/
+        // route failure modes) when the user chooses a set.
+        const sizeSetValues = @json(collect($sizes)->mapWithKeys(fn ($size) => [
+            $size->id => collect(explode(',', (string) $size->sizes))
+                ->map(fn ($value) => trim($value))
+                ->filter()
+                ->unique(fn ($value) => strtolower($value))
+                ->values()
+                ->all(),
+        ])->all());
         @if($isEdit && $product?->variants)
             @foreach($product->variants as $vIdx => $v)
                 optionCounters[{{ $vIdx }}] = {{ $v->options->count() }};
@@ -597,8 +608,6 @@
         // A size set is a reusable template (for example: S, M, L, XL).
         // Choosing one appends only missing sizes and never removes existing
         // variants, protecting their SKU, stock and colour-option records.
-        let sizeSetRequest = 0;
-
         function normaliseSize(value) {
             return String(value || '').trim().toLocaleLowerCase();
         }
@@ -616,46 +625,33 @@
 
         $('#size_id').on('change', function() {
             const sizeSetId = $(this).val();
-            const requestId = ++sizeSetRequest;
             if (!sizeSetId) return;
 
-            const url = "{{ route('products.size-set-values', ':size') }}".replace(':size', sizeSetId);
-            $.get(url)
-                .done(function(response) {
-                    // Ignore a response from an older selection.
-                    if (requestId !== sizeSetRequest || String($('#size_id').val()) !== String(sizeSetId)) return;
+            const sizes = sizeSetValues[String(sizeSetId)] || [];
+            const existing = existingVariantSizes();
+            const added = [];
 
-                    const sizes = response?.data?.sizes || [];
-                    const existing = existingVariantSizes();
-                    const added = [];
+            sizes.forEach(function(size) {
+                const value = String(size || '').trim();
+                const key = normaliseSize(value);
+                if (!key || existing.has(key)) return;
 
-                    sizes.forEach(function(size) {
-                        const value = String(size || '').trim();
-                        const key = normaliseSize(value);
-                        if (!key || existing.has(key)) return;
+                $('#noVariantsMsg').hide();
+                $('#variantsContainer').append(getVariantTemplate(variantIndex, value));
+                existing.add(key);
+                added.push(value);
+                variantIndex++;
+            });
 
-                        $('#noVariantsMsg').hide();
-                        $('#variantsContainer').append(getVariantTemplate(variantIndex, value));
-                        existing.add(key);
-                        added.push(value);
-                        variantIndex++;
-                    });
-
-                    if (added.length) {
-                        Toastify({
-                            text: `${added.join(', ')} added as variants. Add SKU and price before saving.`,
-                            duration: 4000,
-                            gravity: 'bottom',
-                            position: 'right',
-                            style: { background: 'linear-gradient(135deg, #2563eb, #60a5fa)' },
-                        }).showToast();
-                    }
-                })
-                .fail(function() {
-                    if (requestId === sizeSetRequest) {
-                        Swal.fire('Unable to load size set', 'Please select the size set again.', 'error');
-                    }
-                });
+            if (added.length) {
+                Toastify({
+                    text: `${added.join(', ')} added as variants. Add SKU and price before saving.`,
+                    duration: 4000,
+                    gravity: 'bottom',
+                    position: 'right',
+                    style: { background: 'linear-gradient(135deg, #2563eb, #60a5fa)' },
+                }).showToast();
+            }
         });
 
         // Remove variant

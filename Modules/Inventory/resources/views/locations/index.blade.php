@@ -33,7 +33,7 @@
                 </x-form-select>
             @else
                 <x-form-select label="Store" name="store_id_display" id="location_store_id_display" :searchable="false">
-                    <option value="">{{ $currentStore?->name ?? 'No Store' }}</option>
+                    <option value="{{ $currentStore?->id ?? '' }}">{{ $currentStore?->name ?? 'No Store' }}</option>
                 </x-form-select>
                 <input type="hidden" name="store_id" id="location_store_id" value="{{ $currentStore?->id ?? '' }}">
             @endif
@@ -59,10 +59,19 @@
     @push('scripts')
     <script>
         window.fillInventoryLocationForm = function(data) {
-            $('#location_store_id').val(data.store_id);
+            const storeId = data.store_id || (data.store ? data.store.id : '');
+            const storeName = data.store ? data.store.name : '';
+            const $store = $('#location_store_id');
+
+            if ($store.is('select') && storeId && !$store.find('option[value="' + storeId + '"]').length && storeName) {
+                $store.append(new Option(storeName, storeId));
+            }
+
+            $store.val(storeId).trigger('change');
+            $('#location_store_id_display').val(storeId).find('option[value="' + storeId + '"]').text(storeName);
             $('#location_name').val(data.name);
-            $('#location_type').val(data.location_type);
-            $('#location_status').val(data.status);
+            $('#location_type').val(data.location_type).trigger('change');
+            $('#location_status').val(data.status).trigger('change');
         };
     </script>
     @endpush

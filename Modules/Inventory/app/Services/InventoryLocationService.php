@@ -38,8 +38,8 @@ class InventoryLocationService
                 'permission' => 'inventory-locations',
                 'entityLabel' => 'Inventory Location',
                     'id' => $location->id,
-                    'edit' => 'locationEdit',
-                    'delete' => 'locationDelete',
+                    'edit' => 'inventorylocationEdit',
+                    'delete' => 'inventorylocationDelete',
                 ])->render();
             })
             ->rawColumns(['action'])

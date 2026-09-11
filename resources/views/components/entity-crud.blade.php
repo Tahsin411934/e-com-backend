@@ -155,7 +155,7 @@
     };
 
     // Edit
-    window[CFG.entityId + 'Edit'] = function(id) {
+    var editHandler = function(id) {
         Swal.fire({
             title: 'Loading...',
             text: 'Fetching details',
@@ -195,6 +195,8 @@
             Swal.fire('Error', 'Server communication error.', 'error');
         });
     };
+    window[CFG.entityId + 'Edit'] = editHandler;
+    window[CFG.safeId + 'Edit'] = editHandler;
 
     // Save
     window['save' + CFG.safeUcId + 'Form'] = function() {
@@ -246,7 +248,7 @@
     };
 
     // Delete
-    window[CFG.entityId + 'Delete'] = function(id) {
+    var deleteHandler = function(id) {
         Swal.fire({
             title: 'Are you sure?',
             text: 'This action cannot be undone!',
@@ -280,6 +282,8 @@
             }
         });
     };
+    window[CFG.entityId + 'Delete'] = deleteHandler;
+    window[CFG.safeId + 'Delete'] = deleteHandler;
 
     // Init
     $(function() {

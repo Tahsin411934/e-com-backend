@@ -27,6 +27,9 @@ Route::middleware(['auth', 'verified', 'admin'])->group(function () {
 
     Route::post('/products/reorder', [ProductController::class, 'reorder'])->name('products.reorder')->middleware('permission:products.edit');
     Route::post('/products/{id}/duplicate', [ProductController::class, 'duplicate'])->name('products.duplicate')->middleware('permission:products.create');
+    // Selected size sets supply the product form's generated size variants.
+    // This must appear before the /products/{id} route.
+    Route::get('products/size-sets/{size}/values', [ProductController::class, 'sizeSetValues'])->name('products.size-set-values')->middleware('permission:products.create|products.edit');
     Route::get('products', [ProductController::class, 'index'])->name('products.index')->middleware('permission:products.view');
     Route::get('products/create', [ProductController::class, 'create'])->name('products.create')->middleware('permission:products.create');
     Route::post('products', [ProductController::class, 'store'])->name('products.store')->middleware('permission:products.create');

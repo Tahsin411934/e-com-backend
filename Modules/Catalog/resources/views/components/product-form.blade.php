@@ -158,7 +158,7 @@
                                 :selected="$product?->unit ? ['id' => $product->unit->id, 'text' => $product->unit->name.' ('.$product->unit->short_name.')'] : null"
                             />
                             <x-select2-dropdown
-                                label="Size"
+                                label="Size Set"
                                 name="size_id"
                                 id="size_id"
                                 :route="route('ajax.dropdown-search', 'sizes')"
@@ -166,6 +166,7 @@
                                 allow-clear
                                 :selected="$product?->size ? ['id' => $product->size->id, 'text' => $product->size->group_name] : null"
                             />
+                            <p class="-mt-2 text-xs text-gray-400">Selecting a set adds its missing sizes as variants. Existing variants are never removed.</p>
                             <x-select2-dropdown
                                 label="Tax Rate"
                                 name="tax_rate_id"
@@ -479,7 +480,8 @@
             </div>`;
         }
 
-        function getVariantTemplate(index) {
+        function getVariantTemplate(index, size = '') {
+            const safeSize = escapeHtml(size);
             return `
             <div class="variant-item bg-gray-50 rounded-lg p-4 mb-3 border border-gray-200 relative">
                 <button type="button" class="remove-variant absolute top-2 right-2 text-gray-400 hover:text-red-500" data-index="${index}">
@@ -493,7 +495,7 @@
                     </div>
                     <div>
                         <label class="block text-xs font-medium text-gray-600 mb-1">Name *</label>
-                        <input type="text" name="variants[${index}][name]" class="variant-name w-full rounded-lg border-gray-300 shadow-sm text-sm" required>
+                        <input type="text" name="variants[${index}][name]" value="${safeSize}" class="variant-name w-full rounded-lg border-gray-300 shadow-sm text-sm" required>
                     </div>
                 </div>
                 <div class="grid grid-cols-2 gap-3 mb-3">
@@ -520,7 +522,7 @@
                 </div>
                 <div class="mb-3">
                     <label class="block text-xs font-medium text-gray-600 mb-1">Size / Variant Attribute</label>
-                    <input type="text" name="variants[${index}][attributes][size]" class="w-full rounded-lg border-gray-300 shadow-sm text-sm">
+                    <input type="text" name="variants[${index}][attributes][size]" value="${safeSize}" class="w-full rounded-lg border-gray-300 shadow-sm text-sm">
                 </div>
                 <div class="mb-3 border-t border-gray-200 pt-3">
                     <div class="flex items-center justify-between mb-2">
@@ -590,6 +592,70 @@
             $('#noVariantsMsg').hide();
             $('#variantsContainer').append(getVariantTemplate(variantIndex));
             variantIndex++;
+        });
+
+        // A size set is a reusable template (for example: S, M, L, XL).
+        // Choosing one appends only missing sizes and never removes existing
+        // variants, protecting their SKU, stock and colour-option records.
+        let sizeSetRequest = 0;
+
+        function normaliseSize(value) {
+            return String(value || '').trim().toLocaleLowerCase();
+        }
+
+        function existingVariantSizes() {
+            const values = new Set();
+            $('#variantsContainer .variant-item').each(function() {
+                const size = $(this).find('input[name$="[attributes][size]"]').val()
+                    || $(this).find('.variant-name').val();
+                const normalised = normaliseSize(size);
+                if (normalised) values.add(normalised);
+            });
+            return values;
+        }
+
+        $('#size_id').on('change', function() {
+            const sizeSetId = $(this).val();
+            const requestId = ++sizeSetRequest;
+            if (!sizeSetId) return;
+
+            const url = "{{ route('products.size-set-values', ':size') }}".replace(':size', sizeSetId);
+            $.get(url)
+                .done(function(response) {
+                    // Ignore a response from an older selection.
+                    if (requestId !== sizeSetRequest || String($('#size_id').val()) !== String(sizeSetId)) return;
+
+                    const sizes = response?.data?.sizes || [];
+                    const existing = existingVariantSizes();
+                    const added = [];
+
+                    sizes.forEach(function(size) {
+                        const value = String(size || '').trim();
+                        const key = normaliseSize(value);
+                        if (!key || existing.has(key)) return;
+
+                        $('#noVariantsMsg').hide();
+                        $('#variantsContainer').append(getVariantTemplate(variantIndex, value));
+                        existing.add(key);
+                        added.push(value);
+                        variantIndex++;
+                    });
+
+                    if (added.length) {
+                        Toastify({
+                            text: `${added.join(', ')} added as variants. Add SKU and price before saving.`,
+                            duration: 4000,
+                            gravity: 'bottom',
+                            position: 'right',
+                            style: { background: 'linear-gradient(135deg, #2563eb, #60a5fa)' },
+                        }).showToast();
+                    }
+                })
+                .fail(function() {
+                    if (requestId === sizeSetRequest) {
+                        Swal.fire('Unable to load size set', 'Please select the size set again.', 'error');
+                    }
+                });
         });
 
         // Remove variant

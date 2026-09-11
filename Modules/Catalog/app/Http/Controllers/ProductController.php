@@ -2,7 +2,9 @@
 
 namespace Modules\Catalog\Http\Controllers;
 
+use App\Helpers\ApiResponse;
 use App\Http\Controllers\Controller;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Modules\Catalog\Http\Requests\StoreProductRequest;
 use Modules\Catalog\Http\Requests\UpdateProductRequest;
@@ -105,6 +107,24 @@ class ProductController extends Controller
     public function show($id)
     {
         return $this->productService->getProductById((int) $id);
+    }
+
+    /** Return the individual values that belong to a catalog size set. */
+    public function sizeSetValues(int $size): JsonResponse
+    {
+        $sizeSet = Size::where('status', 'active')->findOrFail($size);
+
+        $values = collect(explode(',', (string) $sizeSet->sizes))
+            ->map(fn (string $value) => trim($value))
+            ->filter()
+            ->unique(fn (string $value) => mb_strtolower($value))
+            ->values();
+
+        return ApiResponse::success([
+            'id' => $sizeSet->id,
+            'group_name' => $sizeSet->group_name,
+            'sizes' => $values,
+        ]);
     }
 
     /**

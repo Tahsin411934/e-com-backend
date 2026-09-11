@@ -5,6 +5,7 @@ namespace Modules\Order\Http\Controllers;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Collection;
 use Modules\Cart\Models\Cart;
 use Modules\Cart\Services\CampaignPricingService;
 use Modules\Cart\Services\DeliveryChargeService;
@@ -22,6 +23,59 @@ class CheckoutController extends Controller
         private DeliveryChargeService $deliveryCharges,
     ) {}
 
+    /**
+     * Group cart items by their product's store and build an array of
+     * "store order groups". Each group becomes exactly one Order.
+     *
+     * Mixed carts are NOT blocked — they are split into one order per store
+     * (Amazon-style). Delivery charge is the highest product charge INSIDE
+     * each store group, so each store pays its own parcel charge.
+     *
+     * Returns:
+     * [
+     *   { store_id, items, subtotal, shipping_total, grand_total },
+     *   ...
+     * ]
+     */
+    private function splitCartByStore(Collection $items): array
+    {
+        $groups = [];
+
+        foreach ($items as $item) {
+            if (! $item->variant?->product) {
+                continue;
+            }
+
+            $storeId = $item->variant->product->store_id;
+            $key = $storeId === null ? 'platform' : (string) $storeId;
+
+            $groups[$key] ??= [
+                'store_id' => $storeId,
+                'items' => collect(),
+                'subtotal' => 0.0,
+                'shipping_total' => 0.0,
+                'grand_total' => 0.0,
+            ];
+
+            $groups[$key]['items'][] = $item;
+            $groups[$key]['subtotal'] += $item->unit_price * $item->quantity;
+        }
+
+        $result = [];
+        foreach ($groups as $group) {
+            $group['subtotal'] = round($group['subtotal'], 2);
+            $group['shipping_total'] = round(
+                (float) $group['items']->max(fn ($it) => $it->delivery_charge),
+                2
+            );
+            $group['grand_total'] = round($group['subtotal'] + $group['shipping_total'], 2);
+
+            $result[] = $group;
+        }
+
+        return $result;
+    }
+
     public function checkout(Request $request)
     {
         try {
@@ -31,7 +85,7 @@ class CheckoutController extends Controller
                 // Get user's active cart
                 $cart = Cart::where('user_id', $userId)
                     ->where('status', 'active')
-                    ->with('items.variant', 'items.variantOption')
+                    ->with('items.variant.product', 'items.variantOption')
                     ->first();
 
                 if (! $cart || $cart->items->isEmpty()) {
@@ -57,77 +111,77 @@ class CheckoutController extends Controller
                         $cartItem->update(['unit_price' => $currentPrice]);
                     }
                 }
-                $cart->load('items.variant', 'items.variantOption');
+                $cart->load('items.variant.product', 'items.variantOption');
 
-                // Calculate totals
-                $subtotal = $cart->items->sum(fn ($item) => $item->unit_price * $item->quantity);
-                $discountTotal = 0; // TODO: Apply coupon logic if needed
-                $taxTotal = 0; // TODO: Calculate tax if needed
-                // Shipping = the highest product delivery charge in the cart,
-                // taken ONCE per order (one parcel = one charge). Every product
-                // carries an editable delivery_charge (admin), default ৳120.
-                $shippingTotal = $this->deliveryCharges->shippingTotalFor($cart);
-                $grandTotal = $subtotal + $taxTotal + $shippingTotal - $discountTotal;
+                // Group cart items by store — one Order per store group.
+                $groups = $this->splitCartByStore($cart->items);
 
-                // Create order
-                $order = Order::create([
-                    'order_number' => 'ORD-'.strtoupper(uniqid()),
-                    'user_id' => $userId,
-                    'store_id' => $cart->store_id,
-                    'source' => 'web',
-                    'status' => 'pending',
-                    'payment_status' => 'unpaid',
-                    'fulfillment_status' => 'unfulfilled',
-                    'currency_code' => 'BDT',
-                    'subtotal' => $subtotal,
-                    'discount_total' => $discountTotal,
-                    'tax_total' => $taxTotal,
-                    'shipping_total' => $shippingTotal,
-                    'grand_total' => $grandTotal,
-                    'billing_address_id' => $request->billing_address_id,
-                    'shipping_address_id' => $request->shipping_address_id,
-                    'customer_note' => $request->notes,
-                    'placed_at' => now(),
-                ]);
+                $orders = [];
+                $totalSpend = 0.0;
 
-                // Create delivery record
-                Delivery::create([
-                    'order_id' => $order->id,
-                    'user_id' => $userId,
-                    'status' => 'pending',
-                    'delivery_address' => $request->delivery_address ?? 'N/A',
-                    'delivery_city' => $request->delivery_city ?? 'N/A',
-                    'delivery_phone' => $request->delivery_phone ?? 'N/A',
-                    'delivery_notes' => $request->delivery_notes,
-                ]);
+                foreach ($groups as $group) {
+                    $storeId = $group['store_id'];
 
-                // Create order items from cart items
-                foreach ($cart->items as $cartItem) {
-                    $variant = $cartItem->variant;
-                    $variantOption = $cartItem->variantOption;
-
-                    $productName = $variant->product->name ?? 'Unknown Product';
-                    $variantName = $variant->name ?? 'Default';
-
-                    // Build variant description with color if available
-                    $variantDescription = $variantName;
-                    if ($variantOption && $variantOption->color_name) {
-                        $variantDescription .= ' - '.$variantOption->color_name;
-                    }
-
-                    OrderItem::create([
-                        'order_id' => $order->id,
-                        'product_id' => $variant->product_id,
-                        'variant_id' => $cartItem->variant_id,
-                        'sku' => $variantOption?->sku ?? $variant->sku,
-                        'product_name' => $productName,
-                        'variant_name' => $variantDescription,
-                        'quantity' => $cartItem->quantity,
-                        'unit_price' => $cartItem->unit_price,
+                    $order = Order::create([
+                        'order_number' => 'ORD-'.strtoupper(uniqid()),
+                        'user_id' => $userId,
+                        'store_id' => $storeId,
+                        'source' => 'web',
+                        'status' => 'pending',
+                        'payment_status' => 'unpaid',
+                        'fulfillment_status' => 'unfulfilled',
+                        'currency_code' => 'BDT',
+                        'subtotal' => $group['subtotal'],
                         'discount_total' => 0,
                         'tax_total' => 0,
-                        'line_total' => $cartItem->unit_price * $cartItem->quantity,
+                        'shipping_total' => $group['shipping_total'],
+                        'grand_total' => $group['grand_total'],
+                        'billing_address_id' => $request->billing_address_id,
+                        'shipping_address_id' => $request->shipping_address_id,
+                        'customer_note' => $request->notes,
+                        'placed_at' => now(),
                     ]);
+
+                    Delivery::create([
+                        'order_id' => $order->id,
+                        'user_id' => $userId,
+                        'status' => 'pending',
+                        'delivery_address' => $request->delivery_address ?? 'N/A',
+                        'delivery_city' => $request->delivery_city ?? 'N/A',
+                        'delivery_phone' => $request->delivery_phone ?? 'N/A',
+                        'delivery_notes' => $request->notes,
+                    ]);
+
+                    foreach ($group['items'] as $cartItem) {
+                        $variant = $cartItem->variant;
+                        $variantOption = $cartItem->variantOption;
+
+                        $productName = $variant->product->name ?? 'Unknown Product';
+                        $variantName = $variant->name ?? 'Default';
+
+                        // Build variant description with color if available
+                        $variantDescription = $variantName;
+                        if ($variantOption && $variantOption->color_name) {
+                            $variantDescription .= ' - '.$variantOption->color_name;
+                        }
+
+                        OrderItem::create([
+                            'order_id' => $order->id,
+                            'product_id' => $variant->product_id,
+                            'variant_id' => $cartItem->variant_id,
+                            'sku' => $variantOption?->sku ?? $variant->sku,
+                            'product_name' => $productName,
+                            'variant_name' => $variantDescription,
+                            'quantity' => $cartItem->quantity,
+                            'unit_price' => $cartItem->unit_price,
+                            'discount_total' => 0,
+                            'tax_total' => 0,
+                            'line_total' => $cartItem->unit_price * $cartItem->quantity,
+                        ]);
+                    }
+
+                    $orders[] = $order->fresh()->load('items');
+                    $totalSpend += $group['grand_total'];
                 }
 
                 // Clear the cart
@@ -136,8 +190,13 @@ class CheckoutController extends Controller
 
                 return [
                     'status' => 'success',
-                    'message' => 'Order placed successfully.',
-                    'order' => $order->load('items'),
+                    'message' => count($orders) > 1
+                        ? count($orders).' orders placed successfully (one per store).'
+                        : 'Order placed successfully.',
+                    'orders' => $orders,
+                    'order_count' => count($orders),
+                    'total_amount' => round($totalSpend, 2),
+                    'split_by_store' => count($orders) > 1,
                 ];
             });
         } catch (\Exception $e) {
@@ -208,13 +267,6 @@ class CheckoutController extends Controller
                     $unitPrice = $this->campaignPricing->finalPriceFor($variant, $variantOption)['unit_price'];
                     $quantity = (int) $itemData['quantity'];
 
-                    // Shipping = the highest product delivery charge in the
-                    // order, taken ONCE (one parcel = one charge).
-                    $deliveryCharge = (float) ($variant->product?->delivery_charge ?? Product::DEFAULT_DELIVERY_CHARGE);
-                    if ($deliveryCharge > $shippingTotal) {
-                        $shippingTotal = $deliveryCharge;
-                    }
-
                     $productName = $variant->product?->name ?? 'Unknown Product';
                     $variantName = $variant->name ?? 'Default';
 
@@ -224,7 +276,16 @@ class CheckoutController extends Controller
                         $variantDescription .= ' - '.$variantOption->color_name;
                     }
 
-                    $orderItems[] = [
+                    // Group by the product's owning store (tenant isolation).
+                    $storeId = $variant->product?->store_id;
+                    $key = $storeId === null ? 'platform' : (string) $storeId;
+                    $groups[$key] ??= [
+                        'store_id' => $storeId,
+                        'items' => [],
+                        'subtotal' => 0.0,
+                        'shipping_total' => 0.0,
+                    ];
+                    $groups[$key]['items'][] = [
                         'product_id' => $variant->product_id,
                         'variant_id' => $variant->id,
                         'sku' => $variantOption?->sku ?? $variant->sku,
@@ -233,55 +294,74 @@ class CheckoutController extends Controller
                         'quantity' => $quantity,
                         'unit_price' => round($unitPrice, 4),
                         'line_total' => round($unitPrice * $quantity, 4),
+                        'delivery_charge' => (float) ($variant->product?->delivery_charge ?? Product::DEFAULT_DELIVERY_CHARGE),
                     ];
-
-                    $subtotal += $unitPrice * $quantity;
+                    $groups[$key]['subtotal'] += $unitPrice * $quantity;
                 }
 
                 $subtotal = round($subtotal, 2);
                 $shippingTotal = round($shippingTotal, 2);
 
-                // Create order (no user — guest checkout)
-                $order = Order::create([
-                    'order_number' => 'ORD-'.strtoupper(uniqid()),
-                    'user_id' => null,
-                    'store_id' => null,
-                    'source' => 'web',
-                    'status' => 'pending',
-                    'payment_status' => 'unpaid',
-                    'fulfillment_status' => 'unfulfilled',
-                    'currency_code' => 'BDT',
-                    'subtotal' => $subtotal,
-                    'discount_total' => 0,
-                    'tax_total' => 0,
-                    'shipping_total' => $shippingTotal,
-                    'grand_total' => $subtotal + $shippingTotal,
-                    'customer_name' => $request->customer_name,
-                    'customer_note' => $request->delivery_notes,
-                    'placed_at' => now(),
-                ]);
+                // Create one order per store group.
+                $orders = [];
+                $totalSpend = 0.0;
 
-                // Create delivery record (no user for guests)
-                Delivery::create([
-                    'order_id' => $order->id,
-                    'user_id' => null,
-                    'status' => 'pending',
-                    'delivery_address' => $request->delivery_address ?? 'N/A',
-                    'delivery_city' => $request->delivery_city ?? 'N/A',
-                    'delivery_phone' => $request->delivery_phone ?? 'N/A',
-                    'delivery_notes' => $request->delivery_notes,
-                ]);
+                foreach ($groups as $group) {
+                    $groupSubtotal = round($group['subtotal'], 2);
+                    $groupShipping = round(
+                        (float) collect($group['items'])->map(fn ($i) => $i['delivery_charge'])->max() ?? 0,
+                        2
+                    );
 
-                // Create order items
-                foreach ($orderItems as $item) {
-                    $item['order_id'] = $order->id;
-                    OrderItem::create($item);
+                    $order = Order::create([
+                        'order_number' => 'ORD-'.strtoupper(uniqid()),
+                        'user_id' => null,
+                        'store_id' => $group['store_id'],
+                        'source' => 'web',
+                        'status' => 'pending',
+                        'payment_status' => 'unpaid',
+                        'fulfillment_status' => 'unfulfilled',
+                        'currency_code' => 'BDT',
+                        'subtotal' => $groupSubtotal,
+                        'discount_total' => 0,
+                        'tax_total' => 0,
+                        'shipping_total' => $groupShipping,
+                        'grand_total' => $groupSubtotal + $groupShipping,
+                        'customer_name' => $request->customer_name,
+                        'customer_note' => $request->delivery_notes,
+                        'placed_at' => now(),
+                    ]);
+
+                    // Create delivery record (no user for guests)
+                    Delivery::create([
+                        'order_id' => $order->id,
+                        'user_id' => null,
+                        'status' => 'pending',
+                        'delivery_address' => $request->delivery_address ?? 'N/A',
+                        'delivery_city' => $request->delivery_city ?? 'N/A',
+                        'delivery_phone' => $request->delivery_phone ?? 'N/A',
+                        'delivery_notes' => $request->delivery_notes,
+                    ]);
+
+                    // Create order items
+                    foreach ($group['items'] as $item) {
+                        $item['order_id'] = $order->id;
+                        OrderItem::create(collect($item)->except('delivery_charge')->toArray());
+                    }
+
+                    $orders[] = $order->fresh()->load('items');
+                    $totalSpend += $groupSubtotal + $groupShipping;
                 }
 
                 return [
                     'status' => 'success',
-                    'message' => 'Order placed successfully.',
-                    'order' => $order->load('items'),
+                    'message' => count($orders) > 1
+                        ? count($orders).' orders placed successfully (one per store).'
+                        : 'Order placed successfully.',
+                    'orders' => $orders,
+                    'order_count' => count($orders),
+                    'total_amount' => round($totalSpend, 2),
+                    'split_by_store' => count($orders) > 1,
                 ];
             });
         } catch (\Exception $e) {

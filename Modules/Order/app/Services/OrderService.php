@@ -7,13 +7,18 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Modules\Order\Models\Order;
+use Modules\Store\Support\CurrentStore;
 use Yajra\DataTables\DataTables;
 
 class OrderService
 {
     public function getOrderDataTable(Request $request)
     {
-        $query = Order::with(['user', 'store'])->orderByDesc('created_at');
+        $query = Order::forCurrentStore()->with(['user', 'store'])->orderByDesc('created_at');
+
+        if ($request->store_id) {
+            $query->where('store_id', $request->store_id);
+        }
 
         return DataTables::of($query)
             ->addColumn('user_email', function (Order $order) {
@@ -74,7 +79,7 @@ class OrderService
     public function getOrderById(int $id): JsonResponse
     {
         try {
-            $order = Order::with(['user', 'store', 'items', 'payments', 'refunds'])->findOrFail($id);
+            $order = Order::forCurrentStore()->with(['user', 'store', 'items', 'payments', 'refunds'])->findOrFail($id);
 
             return ApiResponse::success($order);
         } catch (\Exception $e) {
@@ -86,7 +91,7 @@ class OrderService
     {
         try {
             return DB::transaction(function () use ($id) {
-                $order = Order::findOrFail($id);
+                $order = Order::forCurrentStore()->findOrFail($id);
                 $order->delete();
 
                 return ApiResponse::success(null, 'Order deleted successfully.');

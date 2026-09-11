@@ -2,6 +2,7 @@
 
 namespace Modules\Order\Models;
 
+use App\Traits\BelongsToStore;
 use App\Traits\CustomSoftDeletes;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -13,7 +14,7 @@ use Modules\Store\Models\Store;
 
 class Order extends Model
 {
-    use CustomSoftDeletes, HasFactory;
+    use BelongsToStore, CustomSoftDeletes, HasFactory;
 
     protected $table = 'orders';
 

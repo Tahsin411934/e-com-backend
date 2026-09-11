@@ -1,4 +1,13 @@
 <x-app-layout>
+    @php
+        $orderStoreFilter = count($stores ?? []) ? [
+            'store_id' => [
+                'label' => 'Store',
+                'options' => '<option value="">All Stores</option>'
+                    . collect($stores)->map(fn ($s) => '<option value="'.$s->id.'">'.e($s->name).'</option>')->implode(''),
+            ],
+        ] : [];
+    @endphp
     <x-entity-crud
         id="order"
         title="Orders"
@@ -15,6 +24,7 @@
             ['data' => 'action', 'orderable' => false, 'searchable' => false],
         ]"
         ajaxUrl="{{ route('orders.dataTable') }}"
+        :filters="$orderStoreFilter"
         storeUrl="{{ route('orders.store') }}"
         updateUrl="{{ route('orders.update', ':id') }}"
         showUrl="{{ route('orders.show', ':id') }}"

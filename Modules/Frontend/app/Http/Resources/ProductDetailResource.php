@@ -200,6 +200,14 @@ class ProductDetailResource extends JsonResource
             // is taken once as the shipping charge at checkout. Falls back to
             // the default when the column is absent (pre-migration).
             'delivery_charge' => (float) ($this->delivery_charge ?? Product::DEFAULT_DELIVERY_CHARGE),
+            // Owning store (null = platform product) — lets the storefront
+            // show multi-store cart warnings and split checkout per store.
+            'store_id' => $this->store_id,
+            'store' => $this->store ? [
+                'id' => $this->store->id,
+                'name' => $this->store->name,
+                'slug' => $this->store->slug,
+            ] : null,
             'status' => $this->status,
             'visibility' => $this->visibility,
             'seo_title' => $this->seo_title,

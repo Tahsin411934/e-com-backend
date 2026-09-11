@@ -28,7 +28,7 @@ class CartItem extends Model
         'unit_price' => 'decimal:4',
     ];
 
-    protected $appends = ['delivery_charge'];
+    protected $appends = ['delivery_charge', 'store_id', 'store_name'];
 
     public function cart()
     {
@@ -58,5 +58,20 @@ class CartItem extends Model
     public function getDeliveryChargeAttribute(): float
     {
         return (float) ($this->variant?->product?->delivery_charge ?? Product::DEFAULT_DELIVERY_CHARGE);
+    }
+
+    /**
+     * Owning store of this cart item (nullable = platform product).
+     * Lets the checkout screen group items and warn when a cart spans
+     * multiple stores (orders are then split one per store).
+     */
+    public function getStoreIdAttribute(): ?int
+    {
+        return $this->variant?->product?->store_id;
+    }
+
+    public function getStoreNameAttribute(): ?string
+    {
+        return $this->variant?->product?->store?->name;
     }
 }

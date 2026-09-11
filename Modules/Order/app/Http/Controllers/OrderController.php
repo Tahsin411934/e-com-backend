@@ -5,6 +5,8 @@ namespace Modules\Order\Http\Controllers;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Modules\Order\Services\OrderService;
+use Modules\Store\Models\Store;
+use Modules\Store\Support\CurrentStore;
 
 class OrderController extends Controller
 {
@@ -12,7 +14,15 @@ class OrderController extends Controller
 
     public function index()
     {
-        return view('order::orders.index');
+        $actor = auth()->user();
+        $canAssignStore = (bool) ($actor && ($actor->hasRole('Super Admin') || $actor->hasRole('Admin')));
+
+        $stores = $canAssignStore
+            ? Store::where('status', 'active')->orderBy('name')->get()
+            : collect();
+        $currentStore = CurrentStore::store();
+
+        return view('order::orders.index', compact('stores', 'canAssignStore', 'currentStore'));
     }
 
     public function dataTable(Request $request)

@@ -164,7 +164,7 @@
 
         @endif
 
-        @if(auth()->user()->hasAnyRole(['Super Admin','Admin','Manager','Staff']) || auth()->user()->hasPermission('inventory.view'))
+        @if(auth()->user()->hasAnyRole(['Super Admin','Admin','Manager','Staff']) || auth()->user()->hasAnyPermission(['inventory.view','inventory-stock.view','inventory-locations.view','inventory-movements.view']))
         <!-- Inventory -->
         <div class="mb-0.5">
             <button
@@ -175,18 +175,24 @@
                 <i class="nav-chevron fas fa-chevron-down text-[10px] flex-shrink-0"></i>
             </button>
             <div class="submenu sub-indent" id="sub-inv">
+                @if(auth()->user()->hasAnyRole(['Super Admin','Admin','Manager','Staff']) || auth()->user()->hasPermission('inventory-stock.view'))
                 <a href="{{ route('inventory-stock.index') }}"
                     class="flex items-center gap-2.5 pl-9 pr-3 py-1.5 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-50 text-[13px] transition-colors {{ request()->routeIs('inventory-stock.*') ? 'text-primary bg-primary-light font-medium' : '' }}">
                     <i class="fas fa-boxes w-3.5 text-center"></i><span>Stock</span>
                 </a>
+                @endif
+                @if(auth()->user()->hasAnyRole(['Super Admin','Admin','Manager','Staff']) || auth()->user()->hasPermission('inventory-locations.view'))
                 <a href="{{ route('inventory-locations.index') }}"
                     class="flex items-center gap-2.5 pl-9 pr-3 py-1.5 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-50 text-[13px] transition-colors {{ request()->routeIs('inventory-locations.*') ? 'text-primary bg-primary-light font-medium' : '' }}">
                     <i class="fas fa-map-marker-alt w-3.5 text-center"></i><span>Locations</span>
                 </a>
+                @endif
+                @if(auth()->user()->hasAnyRole(['Super Admin','Admin','Manager','Staff']) || auth()->user()->hasPermission('inventory-movements.view'))
                 <a href="{{ route('inventory-movements.index') }}"
                     class="flex items-center gap-2.5 pl-9 pr-3 py-1.5 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-50 text-[13px] transition-colors {{ request()->routeIs('inventory-movements.*') ? 'text-primary bg-primary-light font-medium' : '' }}">
                     <i class="fas fa-exchange-alt w-3.5 text-center"></i><span>Movements</span>
                 </a>
+                @endif
             </div>
         </div>
 
@@ -525,7 +531,7 @@
 
         @endif
 
-        @if(auth()->user()->hasAnyRole(['Super Admin','Admin']))
+        @if(auth()->user()->hasAnyRole(['Super Admin','Admin']) || auth()->user()->hasAnyPermission(['marketing.view','marketing.gtm.view']))
         <!-- Marketing -->
         <div class="mb-0.5">
             <button
@@ -536,10 +542,12 @@
                 <i class="nav-chevron fas fa-chevron-down text-[10px] flex-shrink-0"></i>
             </button>
             <div class="submenu sub-indent" id="sub-marketing">
+                @if(auth()->user()->hasAnyRole(['Super Admin','Admin']) || auth()->user()->hasPermission('marketing.gtm.view'))
                 <a href="{{ route('frontend.marketing.gtm.index') }}"
                     class="flex items-center gap-2.5 pl-9 pr-3 py-1.5 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-50 text-[13px] transition-colors {{ request()->routeIs('frontend.marketing.gtm.*') ? 'text-primary bg-primary-light font-medium' : '' }}">
                     <i class="fas fa-tags w-3.5 text-center"></i><span>Google Tag Manager</span>
                 </a>
+                @endif
             </div>
         </div>
 

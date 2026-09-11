@@ -18,6 +18,8 @@ class CountryService
         return DataTables::of($query)
             ->addColumn('action', function (Country $country) {
                 return view('components.action-buttons', [
+                'permission' => 'countries',
+                'entityLabel' => 'Country',
                     'id' => $country->id,
                     'edit' => 'countryEdit',
                     'delete' => 'countryDelete',

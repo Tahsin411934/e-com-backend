@@ -34,6 +34,8 @@ class SupplierService
             })
             ->addColumn('action', function (Supplier $supplier) {
                 return view('components.action-buttons', [
+                'permission' => 'suppliers',
+                'entityLabel' => 'Supplier',
                     'id' => $supplier->id,
                     'edit' => 'supplierEdit',
                     'delete' => 'supplierDelete',

@@ -29,6 +29,8 @@ class WishlistService
             })
             ->addColumn('action', function (Wishlist $wishlist) {
                 return view('components.action-buttons', [
+                'permission' => 'wishlists',
+                'entityLabel' => 'Wishlist',
                     'id' => $wishlist->id,
                     'edit' => 'wishlistEdit',
                     'delete' => 'wishlistDelete',

@@ -25,6 +25,8 @@ class ShipmentEventService
             ->editColumn('occurred_at', fn (ShipmentEvent $event) => $event->occurred_at->format('d M Y H:i'))
             ->addColumn('action', function (ShipmentEvent $event) {
                 return view('components.action-buttons', [
+                'permission' => 'shipment-events',
+                'entityLabel' => 'Shipment Event',
                     'id' => $event->id,
                     'edit' => 'shipment-eventEdit',
                     'delete' => 'shipment-eventDelete',

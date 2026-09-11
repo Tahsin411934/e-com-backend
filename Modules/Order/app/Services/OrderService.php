@@ -41,6 +41,8 @@ class OrderService
             })
             ->addColumn('action', function (Order $order) {
                 return view('components.action-buttons', [
+                'permission' => 'orders',
+                'entityLabel' => 'Order',
                     'id' => $order->id,
                     'edit' => 'orderEdit',
                     'delete' => 'orderDelete',

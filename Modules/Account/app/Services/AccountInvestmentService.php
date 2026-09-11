@@ -29,6 +29,8 @@ class AccountInvestmentService
             ->addColumn('status', fn (AccountInvestment $investment) => ucfirst($investment->status))
             ->addColumn('action', function (AccountInvestment $investment) {
                 return view('components.action-buttons', [
+                'permission' => 'account-investments',
+                'entityLabel' => 'Account Investment',
                     'id' => $investment->id,
                     'edit' => 'accountinvestmentEdit',
                     'delete' => 'accountinvestmentDelete',

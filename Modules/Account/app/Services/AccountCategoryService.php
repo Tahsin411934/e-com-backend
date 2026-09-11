@@ -27,6 +27,8 @@ class AccountCategoryService
                 }
 
                 return view('components.action-buttons', [
+                'permission' => 'account-categories',
+                'entityLabel' => 'Account Category',
                     'id' => $category->id,
                     'edit' => 'accountcategoryEdit',
                     'delete' => 'accountcategoryDelete',

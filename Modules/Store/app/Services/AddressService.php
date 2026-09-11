@@ -33,6 +33,8 @@ class AddressService
             })
             ->addColumn('action', function (Address $address) {
                 return view('components.action-buttons', [
+                'permission' => 'addresses',
+                'entityLabel' => 'Address',
                     'id' => $address->id,
                     'edit' => 'addressEdit',
                     'delete' => 'addressDelete',

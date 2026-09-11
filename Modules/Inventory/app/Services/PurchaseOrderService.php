@@ -77,27 +77,31 @@ class PurchaseOrderService
             ->addColumn('action', function (PurchaseOrder $po) {
                 $html = '';
 
-                // Quick status workflow buttons (inline)
-                if ($po->status === 'draft') {
-                    $html .= '<button onclick="updatePoStatus('.$po->id.', \'ordered\')" class="bg-blue-600 text-white px-2 py-1 rounded text-xs hover:bg-blue-700 mr-1" title="Mark as Ordered"><i class="fas fa-check"></i> Order</button>';
+                // Quick status workflow buttons (inline) — gated by purchase-orders.edit
+                if (auth()->user()->hasPermission('purchase-orders.edit')) {
+                    if ($po->status === 'draft') {
+                        $html .= '<button onclick="updatePoStatus('.$po->id.', \'ordered\')" class="bg-blue-600 text-white px-2 py-1 rounded text-xs hover:bg-blue-700 mr-1" title="Mark as Ordered"><i class="fas fa-check"></i> Order</button>';
+                    }
+                    if (in_array($po->status, ['ordered', 'partially_received'])) {
+                        $html .= '<button onclick="updatePoStatus('.$po->id.', \'received\')" class="bg-green-600 text-white px-2 py-1 rounded text-xs hover:bg-green-700 mr-1" title="Mark as Received"><i class="fas fa-check-double"></i> Receive</button>';
+                    }
+                    if (in_array($po->status, ['draft', 'ordered'])) {
+                        $html .= '<button onclick="updatePoStatus('.$po->id.', \'cancelled\')" class="bg-red-500 text-white px-2 py-1 rounded text-xs hover:bg-red-600 mr-1" title="Cancel Order"><i class="fas fa-times"></i></button>';
+                    }
                 }
-                if (in_array($po->status, ['ordered', 'partially_received'])) {
-                    $html .= '<button onclick="updatePoStatus('.$po->id.', \'received\')" class="bg-green-600 text-white px-2 py-1 rounded text-xs hover:bg-green-700 mr-1" title="Mark as Received"><i class="fas fa-check-double"></i> Receive</button>';
-                }
-                if (in_array($po->status, ['draft', 'ordered'])) {
-                    $html .= '<button onclick="updatePoStatus('.$po->id.', \'cancelled\')" class="bg-red-500 text-white px-2 py-1 rounded text-xs hover:bg-red-600 mr-1" title="Cancel Order"><i class="fas fa-times"></i></button>';
-                }
-                if ($po->payment_status !== 'paid' && $po->status !== 'cancelled') {
+                if ($po->payment_status !== 'paid' && $po->status !== 'cancelled' && auth()->user()->hasPermission('supplier-payments.create')) {
                     $html .= '<a href="'.route('purchase-orders.show', $po->id).'" class="bg-indigo-600 text-white px-2 py-1 rounded text-xs hover:bg-indigo-700 mr-1 transition" title="Record Payment"><i class="fas fa-dollar-sign"></i> Pay</a>';
                 }
 
-                // Create a purchase return for received orders.
-                if (in_array($po->status, ['received', 'partially_received'], true)) {
+                // Create a purchase return for received orders — gated by purchase-returns.create.
+                if (in_array($po->status, ['received', 'partially_received'], true) && auth()->user()->hasPermission('purchase-returns.create')) {
                     $html .= '<a href="'.route('purchase-returns.create', ['purchase_order_id' => $po->id]).'" class="bg-orange-500 text-white px-2 py-1 rounded text-xs hover:bg-orange-600 mr-1 transition" title="Create Purchase Return"><i class="fas fa-undo-alt"></i> Return</a>';
                 }
 
                 // Standard action buttons (hide edit/delete for locked statuses)
                 $html .= view('components.action-buttons', [
+                'permission' => 'purchase-orders',
+                'entityLabel' => 'Purchase Order',
                     'id' => $po->id,
                     'show' => true,
                     'showUrl' => route('purchase-orders.show', ':id'),

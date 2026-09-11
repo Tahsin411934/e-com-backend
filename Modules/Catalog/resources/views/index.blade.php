@@ -32,7 +32,7 @@
             </div>
         </div>
 
-        <x-data-table id="productTable" title="Product Catalog" icon="fa-solid fa-boxes" buttonLink="{{ route('products.create') }}" buttonText="Add New Product" :columns="['Store','Brand','SKU','Name','Type','Status','Visibility','Created At','Action']" :ajaxUrl="route('products.dataTable')" :dtColumns="[
+        <x-data-table id="productTable" title="Product Catalog" icon="fa-solid fa-boxes" createPermission="products" buttonLink="{{ route('products.create') }}" buttonText="Add New Product" :columns="['Store','Brand','SKU','Name','Type','Status','Visibility','Created At','Action']" :ajaxUrl="route('products.dataTable')" :dtColumns="[
             ['data' => 'store_name', 'name' => 'store_name'],
             ['data' => 'brand.name'],
             ['data' => 'slug'],

@@ -34,6 +34,8 @@ class CouponService
             })
             ->addColumn('action', function (Coupon $coupon) {
                 return view('components.action-buttons', [
+                'permission' => 'coupons',
+                'entityLabel' => 'Coupon',
                     'id' => $coupon->id,
                     'edit' => 'couponEdit',
                     'delete' => 'couponDelete',

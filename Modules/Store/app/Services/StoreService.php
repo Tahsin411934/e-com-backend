@@ -27,6 +27,8 @@ class StoreService
             })
             ->addColumn('action', function (Store $store) {
                 return view('components.action-buttons', [
+                'permission' => 'stores',
+                'entityLabel' => 'Store',
                     'id' => $store->id,
                     'edit' => 'storeEdit',
                     'delete' => 'storeDelete',

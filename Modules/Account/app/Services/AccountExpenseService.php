@@ -27,6 +27,8 @@ class AccountExpenseService
             ->editColumn('expense_date', fn (AccountExpense $expense) => $expense->expense_date?->format('d M Y') ?? '-')
             ->addColumn('action', function (AccountExpense $expense) {
                 return view('components.action-buttons', [
+                'permission' => 'account-expenses',
+                'entityLabel' => 'Account Expense',
                     'id' => $expense->id,
                     'edit' => 'accountexpenseEdit',
                     'delete' => 'accountexpenseDelete',

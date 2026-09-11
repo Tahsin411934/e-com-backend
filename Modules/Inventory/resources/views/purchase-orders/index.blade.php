@@ -4,6 +4,7 @@
             id="purchaseOrderTable"
             title="Purchase Orders"
             icon="fa-solid fa-file-invoice"
+            createPermission="purchase-orders"
             :buttonId="'btnAddPurchaseOrder'"
             buttonText="Add New Purchase Order"
             :columns="['PO Number','Supplier','Store','Status','Payment','Paid','Due','Total','Created At','Action']"

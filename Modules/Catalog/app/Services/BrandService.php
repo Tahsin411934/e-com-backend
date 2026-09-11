@@ -42,6 +42,8 @@ class BrandService
             })
             ->addColumn('action', function (Brand $brand) {
                 return view('components.action-buttons', [
+                'permission' => 'brands',
+                'entityLabel' => 'Brand',
                     'id' => $brand->id,
                     'edit' => 'brandEdit',
                     'delete' => 'brandDelete',

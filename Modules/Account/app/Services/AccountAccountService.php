@@ -28,6 +28,8 @@ class AccountAccountService
             ->editColumn('created_at', fn (AccountAccount $account) => $account->created_at->format('d M Y H:i'))
             ->addColumn('action', function (AccountAccount $account) {
                 return view('components.action-buttons', [
+                'permission' => 'accounts',
+                'entityLabel' => 'Account',
                     'id' => $account->id,
                     'edit' => 'accountaccountEdit',
                     'delete' => 'accountaccountDelete',

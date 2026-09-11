@@ -5,6 +5,7 @@
     'buttonId' => 'btnAddNew',
     'buttonText' => 'Add New',
     'buttonLink' => null,
+    'createPermission' => null, // Permission group (e.g., 'units') — hides the Add New button unless granted
     'columns' => [],
     'ajaxUrl' => '',
     'dtColumns' => [],
@@ -12,6 +13,11 @@
     'filters' => [],
     'order' => [[0, 'desc']],
 ])
+
+@php
+    // Show the "Add New" / create button only when the role has the create permission.
+    $canCreate = ! $createPermission || auth()->user()->hasPermission($createPermission.'.create');
+@endphp
 
 <div class="bg-white dark:bg-gray-800 shadow-md rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
     {{-- TABLE HEADER --}}
@@ -24,16 +30,18 @@
 
         <div class="flex flex-wrap items-center gap-3 justify-end">
 
-            @if ($buttonLink)
-                <a href="{{ $buttonLink }}"
-                    class="bg-primary hover:bg-primary text-white px-4 py-2 rounded-lg shadow-sm flex items-center gap-2 transition-all duration-200 text-sm font-medium whitespace-nowrap active:scale-95">
-                    <i class="fa fa-plus-circle"></i> {{ $buttonText }}
-                </a>
-            @elseif ($buttonId)
-                <button id="{{ $buttonId }}"
-                    class="bg-primary hover:bg-primary text-white px-4 py-2 rounded-lg shadow-sm flex items-center gap-2 transition-all duration-200 text-sm font-medium whitespace-nowrap active:scale-95">
-                    <i class="fa fa-plus-circle"></i> {{ $buttonText }}
-                </button>
+            @if ($canCreate)
+                @if ($buttonLink)
+                    <a href="{{ $buttonLink }}"
+                        class="bg-primary hover:bg-primary text-white px-4 py-2 rounded-lg shadow-sm flex items-center gap-2 transition-all duration-200 text-sm font-medium whitespace-nowrap active:scale-95">
+                        <i class="fa fa-plus-circle"></i> {{ $buttonText }}
+                    </a>
+                @elseif ($buttonId)
+                    <button id="{{ $buttonId }}"
+                        class="bg-primary hover:bg-primary text-white px-4 py-2 rounded-lg shadow-sm flex items-center gap-2 transition-all duration-200 text-sm font-medium whitespace-nowrap active:scale-95">
+                        <i class="fa fa-plus-circle"></i> {{ $buttonText }}
+                    </button>
+                @endif
             @endif
         </div>
     </div>

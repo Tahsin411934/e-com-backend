@@ -42,6 +42,8 @@ class PurchaseReturnService
             })
             ->addColumn('action', function (PurchaseReturn $return) {
                 return view('components.action-buttons', [
+                'permission' => 'purchase-returns',
+                'entityLabel' => 'Purchase Return',
                     'id' => $return->id,
                     'edit' => 'purchaseReturnEdit',
                     'delete' => 'purchaseReturnDelete',

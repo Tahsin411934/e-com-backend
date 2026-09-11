@@ -33,6 +33,8 @@ class ProductVariantService
             })
             ->addColumn('action', function (ProductVariant $variant) {
                 return view('components.action-buttons', [
+                'permission' => 'products',
+                'entityLabel' => 'Product',
                     'id' => $variant->id,
                     'edit' => 'variantEdit',
                     'delete' => 'variantDelete',

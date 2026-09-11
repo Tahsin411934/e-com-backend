@@ -58,6 +58,8 @@ class NavbarService
             })
             ->addColumn('action', function (SubnavbarItem $item) {
                 return view('components.action-buttons', [
+                'permission' => 'frontend.navbar',
+                'entityLabel' => 'Frontend.navbar',
                     'id' => $item->id,
                     'edit' => 'subnavbar_itemEdit',
                     'delete' => 'subnavbar_itemDelete',

@@ -17,7 +17,7 @@
             </div>
         </div>
 
-        <x-data-table id="productRequestTable" title="Product Requests" icon="fa-solid fa-clipboard-list" 
+        <x-data-table id="productRequestTable" title="Product Requests" icon="fa-solid fa-clipboard-list" createPermission="product-requests"
             :buttonId="'btnAddProductRequest'" :buttonText="'Add New Request'"
             :columns="['Image','Customer','Email','Phone','Product','Status','Date','Action']" 
             :ajaxUrl="route('product-requests.dataTable')" :dtColumns="[

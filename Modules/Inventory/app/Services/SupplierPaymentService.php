@@ -35,6 +35,8 @@ class SupplierPaymentService
             ->editColumn('payment_date', fn (SupplierPayment $payment) => $payment->payment_date?->format('d M Y') ?? '-')
             ->addColumn('action', function (SupplierPayment $payment) {
                 return view('components.action-buttons', [
+                'permission' => 'supplier-payments',
+                'entityLabel' => 'Supplier Payment',
                     'id' => $payment->id,
                     'delete' => 'supplierPaymentDelete',
                 ])->render();

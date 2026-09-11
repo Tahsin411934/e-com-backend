@@ -66,6 +66,8 @@ class InventoryStockService
             })
             ->addColumn('action', function (InventoryStock $stock) {
                 return view('components.action-buttons', [
+                'permission' => 'inventory-stock',
+                'entityLabel' => 'Inventory Stock',
                     'id' => $stock->id,
                     'edit' => 'stockEdit',
                     'delete' => 'stockDelete',

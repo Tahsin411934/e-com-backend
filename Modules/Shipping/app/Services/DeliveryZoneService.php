@@ -25,6 +25,8 @@ class DeliveryZoneService
             ->editColumn('created_at', fn (DeliveryZone $zone) => $zone->created_at->format('d M Y H:i'))
             ->addColumn('action', function (DeliveryZone $zone) {
                 return view('components.action-buttons', [
+                'permission' => 'delivery-zones',
+                'entityLabel' => 'Delivery Zone',
                     'id' => $zone->id,
                     'edit' => 'delivery-zoneEdit',
                     'delete' => 'delivery-zoneDelete',

@@ -45,6 +45,8 @@ class CartService
             })
             ->addColumn('action', function (Cart $cart) {
                 return view('components.action-buttons', [
+                'permission' => 'carts',
+                'entityLabel' => 'Cart',
                     'id' => $cart->id,
                     'edit' => 'cartEdit',
                     'delete' => 'cartDelete',

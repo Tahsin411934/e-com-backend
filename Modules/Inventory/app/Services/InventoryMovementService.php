@@ -47,6 +47,8 @@ class InventoryMovementService
             })
             ->addColumn('action', function (InventoryMovement $movement) {
                 return view('components.action-buttons', [
+                'permission' => 'inventory-movements',
+                'entityLabel' => 'Inventory Movement',
                     'id' => $movement->id,
                     'edit' => 'movementEdit',
                     'delete' => 'movementDelete',

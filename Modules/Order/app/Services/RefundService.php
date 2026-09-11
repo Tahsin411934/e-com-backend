@@ -35,6 +35,8 @@ class RefundService
             })
             ->addColumn('action', function (Refund $refund) {
                 return view('components.action-buttons', [
+                'permission' => 'refunds',
+                'entityLabel' => 'Refund',
                     'id' => $refund->id,
                     'edit' => 'refundEdit',
                     'delete' => 'refundDelete',

@@ -53,6 +53,8 @@ class CategoryService
             })
             ->addColumn('action', function (Category $category) {
                 return view('components.action-buttons', [
+                'permission' => 'categories',
+                'entityLabel' => 'Category',
                     'id' => $category->id,
                     'edit' => 'categoryEdit',
                     'delete' => 'categoryDelete',

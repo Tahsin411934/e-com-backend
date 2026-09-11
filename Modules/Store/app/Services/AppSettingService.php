@@ -35,6 +35,8 @@ class AppSettingService
             })
             ->addColumn('action', function (AppSetting $setting) {
                 return view('components.action-buttons', [
+                'permission' => 'app-settings',
+                'entityLabel' => 'App Setting',
                     'id' => $setting->id,
                     'edit' => 'appSettingEdit',
                     'delete' => 'appSettingDelete',

@@ -21,6 +21,8 @@ class PermissionService
             })
             ->addColumn('action', function (Permission $permission) {
                 return view('components.action-buttons', [
+                'permission' => 'permissions',
+                'entityLabel' => 'Permission',
                     'id' => $permission->id,
                     'edit' => 'permissionEdit',
                     'delete' => 'permissionDelete',

@@ -24,6 +24,8 @@ class RoleService
             })
             ->addColumn('action', function (Role $role) {
                 return view('components.action-buttons', [
+                'permission' => 'roles',
+                'entityLabel' => 'Role',
                     'id' => $role->id,
                     'edit' => 'roleEdit',
                     'delete' => 'roleDelete',

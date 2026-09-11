@@ -24,6 +24,8 @@ class DeliveryDriverService
             ->editColumn('created_at', fn (DeliveryDriver $driver) => $driver->created_at->format('d M Y H:i'))
             ->addColumn('action', function (DeliveryDriver $driver) {
                 return view('components.action-buttons', [
+                'permission' => 'delivery-drivers',
+                'entityLabel' => 'Delivery Driver',
                     'id' => $driver->id,
                     'edit' => 'delivery-driverEdit',
                     'delete' => 'delivery-driverDelete',

@@ -38,6 +38,8 @@ class PaymentService
             })
             ->addColumn('action', function (Payment $payment) {
                 return view('components.action-buttons', [
+                'permission' => 'payments',
+                'entityLabel' => 'Payment',
                     'id' => $payment->id,
                     'edit' => 'paymentEdit',
                     'delete' => 'paymentDelete',

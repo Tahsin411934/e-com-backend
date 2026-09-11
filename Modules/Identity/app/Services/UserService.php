@@ -31,6 +31,8 @@ class UserService
             })
             ->addColumn('action', function (User $user) {
                 return view('components.action-buttons', [
+                'permission' => 'users',
+                'entityLabel' => 'User',
                     'id' => $user->id,
                     'edit' => 'userEdit',
                     'delete' => 'userDelete',

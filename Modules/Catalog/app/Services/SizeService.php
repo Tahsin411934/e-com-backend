@@ -35,6 +35,8 @@ class SizeService
             })
             ->addColumn('action', function (Size $size) {
                 return view('components.action-buttons', [
+                'permission' => 'sizes',
+                'entityLabel' => 'Size',
                     'id' => $size->id,
                     'edit' => 'sizeEdit',
                     'delete' => 'sizeDelete',

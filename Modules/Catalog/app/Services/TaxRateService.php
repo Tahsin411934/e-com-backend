@@ -43,6 +43,8 @@ class TaxRateService
             })
             ->addColumn('action', function (TaxRate $tax) {
                 return view('components.action-buttons', [
+                'permission' => 'tax-rates',
+                'entityLabel' => 'Tax Rate',
                     'id' => $tax->id,
                     'edit' => 'taxRateEdit',
                     'delete' => 'taxRateDelete',

@@ -29,6 +29,8 @@ class ShipmentService
             ->editColumn('created_at', fn (Shipment $shipment) => $shipment->created_at->format('d M Y H:i'))
             ->addColumn('action', function (Shipment $shipment) {
                 return view('components.action-buttons', [
+                'permission' => 'shipments',
+                'entityLabel' => 'Shipment',
                     'id' => $shipment->id,
                     'edit' => 'shipmentEdit',
                     'delete' => 'shipmentDelete',

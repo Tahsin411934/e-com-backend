@@ -27,6 +27,8 @@ class UnitService
             })
             ->addColumn('action', function (Unit $unit) {
                 return view('components.action-buttons', [
+                'permission' => 'units',
+                'entityLabel' => 'Unit',
                     'id' => $unit->id,
                     'edit' => 'unitEdit',
                     'delete' => 'unitDelete',

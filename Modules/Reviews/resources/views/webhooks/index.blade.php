@@ -17,7 +17,7 @@
         </div>
 
         {{-- Webhooks table (reusable DataTable component) --}}
-        <x-data-table id="webhookTable" title="Webhooks" icon="fa-solid fa-plug"
+        <x-data-table id="webhookTable" title="Webhooks" icon="fa-solid fa-plug" createPermission="webhooks"
             :buttonId="'btnAddWebhook'" :buttonText="'Add New Webhook'"
             :columns="['Name','Endpoint URL','Events','Status','Retries','Timeout','Date','Action']"
             :ajaxUrl="route('webhooks.dataTable')"

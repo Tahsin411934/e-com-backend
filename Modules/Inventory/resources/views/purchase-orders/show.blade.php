@@ -84,7 +84,7 @@
             </div>
         </div>
 
-        @if(in_array($purchase_order->status, ['draft', 'ordered', 'partially_received']))
+        @if(in_array($purchase_order->status, ['draft', 'ordered', 'partially_received']) && auth()->user()->hasPermission('purchase-orders.edit'))
             <div class="flex gap-2">
                 @if($purchase_order->status === 'draft')
                     <form action="{{ route('purchase-orders.update-status', $purchase_order->id) }}" method="POST" class="inline">
@@ -110,7 +110,7 @@
             </div>
         @endif
 
-        @if(in_array($purchase_order->status, ['received', 'partially_received']))
+        @if(in_array($purchase_order->status, ['received', 'partially_received']) && auth()->user()->hasPermission('purchase-returns.create'))
             <div class="mt-4 flex gap-2">
                 <a href="{{ route('purchase-returns.create', ['purchase_order_id' => $purchase_order->id]) }}"
                     class="px-4 py-2 bg-orange-500 text-white rounded-lg text-sm hover:bg-orange-600 inline-flex items-center">
@@ -132,7 +132,7 @@
                 <h2 class="text-lg font-semibold text-gray-800 flex items-center gap-2">
                     <i class="fas fa-money-bill-wave text-emerald-600"></i> Payments
                 </h2>
-                @if($purchase_order->payment_status !== 'paid')
+                @if($purchase_order->payment_status !== 'paid' && auth()->user()->hasPermission('supplier-payments.create'))
                     <button onclick="openPaymentDrawer()" class="px-4 py-2 bg-emerald-600 text-white rounded-lg text-sm font-medium hover:bg-emerald-700 transition">
                         <i class="fas fa-plus mr-1"></i> Add Payment
                     </button>

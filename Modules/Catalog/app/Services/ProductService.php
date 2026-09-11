@@ -66,6 +66,8 @@ class ProductService
             })
             ->addColumn('action', function (Product $product) {
                 return view('components.action-buttons', [
+                'permission' => 'products',
+                'entityLabel' => 'Product',
                     'id' => $product->id,
                     'edit' => 'productEdit',
                     'delete' => 'productDelete',

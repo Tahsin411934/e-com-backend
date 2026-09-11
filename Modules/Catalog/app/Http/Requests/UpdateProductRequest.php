@@ -14,7 +14,7 @@ class UpdateProductRequest extends FormRequest
 
     public function rules(): array
     {
-        $productId = $this->route('product');
+        $productId = $this->route('product') ?? $this->route('id');
 
         return [
             'store_id' => 'nullable|integer|exists:stores,id',

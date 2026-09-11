@@ -14,7 +14,7 @@ class UpdateBrandRequest extends FormRequest
 
     public function rules(): array
     {
-        $brandId = $this->route('brand');
+        $brandId = $this->route('brand') ?? $this->route('id');
 
         return [
             'store_id' => 'nullable|integer|exists:stores,id',

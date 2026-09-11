@@ -14,7 +14,9 @@ class UpdateCategoryRequest extends FormRequest
 
     public function rules(): array
     {
-        $categoryId = $this->route('category');
+        // Category routes use {id} (e.g. PUT categories/{id}) — fall back to 'id'
+        // so the unique-slug rule can ignore the CURRENT row on update.
+        $categoryId = $this->route('category') ?? $this->route('id');
 
         return [
             'store_id' => 'nullable|integer|exists:stores,id',

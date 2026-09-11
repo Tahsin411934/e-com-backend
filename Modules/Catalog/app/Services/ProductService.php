@@ -564,12 +564,13 @@ class ProductService
 
     public function getBrands(): Collection
     {
-        return Brand::forCurrentStore()->where('status', 'active')->orderBy('name')->get();
+        // Categories & brands are global reference data (shared across stores).
+        return Brand::query()->where('status', 'active')->orderBy('name')->get();
     }
 
     public function getCategories(): Collection
     {
-        return Category::forCurrentStore()->where('status', 'active')->orderBy('name')->get();
+        return Category::query()->where('status', 'active')->orderBy('name')->get();
     }
 
     public function searchProducts(string $query, ?int $categoryId = null): JsonResponse

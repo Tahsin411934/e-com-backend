@@ -17,7 +17,10 @@ class BrandService
 {
     public function getBrandDataTable(Request $request)
     {
-        $query = Brand::forCurrentStore()->with('store')->orderByDesc('created_at');
+        // Categories & brands are global reference data: everyone
+        // (platform staff + SaaS store owners) sees the full list.
+        // Only administrators may edit or delete them.
+        $query = Brand::query()->with('store')->orderByDesc('created_at');
 
         if ($request->store_id) {
             $query->where('store_id', $request->store_id);
@@ -44,6 +47,7 @@ class BrandService
                 return view('components.action-buttons', [
                 'permission' => 'brands',
                 'entityLabel' => 'Brand',
+                'adminOnly' => true,
                     'id' => $brand->id,
                     'edit' => 'brandEdit',
                     'delete' => 'brandDelete',
@@ -63,6 +67,12 @@ class BrandService
                 $logo = $data['logo'] ?? null;
                 $oldLogoUrl = null;
 
+                // Only administrators may edit or delete brands;
+                // store owners may create new ones for their store.
+                if ($brandId && ! $this->isPlatformAdmin()) {
+                    return ApiResponse::error('Only administrators can update brands.', 403);
+                }
+
                 $data['status'] = $data['status'] ?? 'active';
                 unset($data['brand_id'], $data['logo']);
 
@@ -73,7 +83,7 @@ class BrandService
                 }
 
                 if ($brandId) {
-                    $brand = Brand::forCurrentStore()->findOrFail($brandId);
+                    $brand = Brand::findOrFail($brandId);
                     $oldLogoUrl = $brand->logo_url;
 
                     if ($logo instanceof UploadedFile) {
@@ -115,7 +125,7 @@ class BrandService
     public function getBrandById(int $id): JsonResponse
     {
         try {
-            $brand = Brand::forCurrentStore()->findOrFail($id);
+            $brand = Brand::findOrFail($id);
             $brand->logo_url = $brand->logo_url ? $this->logoUrl($brand->logo_url) : null;
 
             return ApiResponse::success($brand);
@@ -128,6 +138,10 @@ class BrandService
     {
         try {
             return DB::transaction(function () use ($id) {
+                if (! $this->isPlatformAdmin()) {
+                    return ApiResponse::error('Only administrators can delete brands.', 403);
+                }
+
                 $brand = Brand::findOrFail($id);
                 $this->deleteLogo($brand->logo_url);
                 $brand->delete();

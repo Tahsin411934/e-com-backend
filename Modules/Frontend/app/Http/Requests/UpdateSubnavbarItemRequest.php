@@ -14,7 +14,7 @@ class UpdateSubnavbarItemRequest extends FormRequest
 
     public function rules(): array
     {
-        $subnavbarItemId = $this->route('subnavbar_item');
+        $subnavbarItemId = $this->route('subnavbar_item') ?? $this->route('id');
 
         return [
             'navbar_item_id' => 'required|exists:navbar_items,id',

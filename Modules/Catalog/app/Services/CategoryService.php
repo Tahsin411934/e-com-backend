@@ -16,7 +16,9 @@ class CategoryService
 {
     public function getParentCategories()
     {
-        return Category::forCurrentStore()
+        // Categories are global reference data — every store owner sees
+        // the shared list (not just their own store's entries).
+        return Category::query()
             ->whereNull('parent_id')
             ->orderBy('name')
             ->get();
@@ -24,7 +26,7 @@ class CategoryService
 
     public function getCategoryDataTable(Request $request)
     {
-        $query = Category::forCurrentStore()->with(['parent', 'store'])->orderByDesc('created_at');
+        $query = Category::query()->with(['parent', 'store'])->orderByDesc('created_at');
 
         if ($request->store_id) {
             $query->where('store_id', $request->store_id);
@@ -55,6 +57,7 @@ class CategoryService
                 return view('components.action-buttons', [
                 'permission' => 'categories',
                 'entityLabel' => 'Category',
+                'adminOnly' => true,
                     'id' => $category->id,
                     'edit' => 'categoryEdit',
                     'delete' => 'categoryDelete',
@@ -87,6 +90,12 @@ class CategoryService
                 $data['parent_id'] = $data['parent_id'] ?: null;
                 $data['status'] = $data['status'] ?? 'active';
 
+                // Only administrators may edit or delete categories;
+                // store owners may create new ones for their store.
+                if ($categoryId && ! $this->isPlatformAdmin()) {
+                    return ApiResponse::error('Only administrators can update categories.', 403);
+                }
+
                 // Store owners/staff are locked to their own store;
                 // platform admins may pick any store (or Platform/null).
                 if (! $this->isPlatformAdmin()) {
@@ -97,7 +106,7 @@ class CategoryService
                 if (isset($data['image']) && $data['image'] instanceof UploadedFile) {
                     // Delete old uploaded image if updating
                     if ($categoryId) {
-                        $oldCategory = Category::forCurrentStore()->find($categoryId);
+                        $oldCategory = Category::find($categoryId);
                         if ($oldCategory && $oldCategory->image) {
                             Storage::disk('public')->delete($oldCategory->image);
                         }
@@ -110,7 +119,7 @@ class CategoryService
                 }
 
                 if ($categoryId) {
-                    $category = Category::forCurrentStore()->findOrFail($categoryId);
+                    $category = Category::findOrFail($categoryId);
                     $category->update($data);
 
                     return ApiResponse::success($category->fresh(), 'Category updated successfully.');
@@ -128,7 +137,7 @@ class CategoryService
     public function getCategoryById(int $id): JsonResponse
     {
         try {
-            $category = Category::forCurrentStore()->findOrFail($id);
+            $category = Category::findOrFail($id);
             $categoryArray = $category->toArray();
             $categoryArray['category_image_url'] = $this->getCategoryImageUrl($category);
 
@@ -142,7 +151,11 @@ class CategoryService
     {
         try {
             return DB::transaction(function () use ($id) {
-                $category = Category::forCurrentStore()->findOrFail($id);
+                if (! $this->isPlatformAdmin()) {
+                    return ApiResponse::error('Only administrators can delete categories.', 403);
+                }
+
+                $category = Category::findOrFail($id);
 
                 // Delete uploaded image file
                 if ($category->image) {

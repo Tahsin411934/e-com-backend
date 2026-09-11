@@ -40,17 +40,19 @@ Route::middleware(['auth', 'verified', 'admin'])->group(function () {
     Route::get('/dataTable/brands', [BrandController::class, 'dataTable'])->name('brands.dataTable')->middleware('permission:brands.view');
     Route::get('brands/{id}', [BrandController::class, 'show'])->name('brands.show')->middleware('permission:brands.view');
     Route::post('brands', [BrandController::class, 'store'])->name('brands.store')->middleware('permission:brands.create');
-    Route::put('brands/{id}', [BrandController::class, 'update'])->name('brands.update')->middleware('permission:brands.edit');
-    Route::patch('brands/{id}', [BrandController::class, 'update'])->middleware('permission:brands.edit');
-    Route::delete('brands/{id}', [BrandController::class, 'destroy'])->name('brands.destroy')->middleware('permission:brands.delete');
+    // Brands are global reference data — only platform admins may edit or delete them.
+    Route::put('brands/{id}', [BrandController::class, 'update'])->name('brands.update')->middleware(['role:Super Admin,Admin', 'permission:brands.edit']);
+    Route::patch('brands/{id}', [BrandController::class, 'update'])->middleware(['role:Super Admin,Admin', 'permission:brands.edit']);
+    Route::delete('brands/{id}', [BrandController::class, 'destroy'])->name('brands.destroy')->middleware(['role:Super Admin,Admin', 'permission:brands.delete']);
 
     Route::get('categories', [CategoryController::class, 'index'])->name('categories.index')->middleware('permission:categories.view');
     Route::get('/dataTable/categories', [CategoryController::class, 'dataTable'])->name('categories.dataTable')->middleware('permission:categories.view');
     Route::get('categories/{id}', [CategoryController::class, 'show'])->name('categories.show')->middleware('permission:categories.view');
     Route::post('categories', [CategoryController::class, 'store'])->name('categories.store')->middleware('permission:categories.create');
-    Route::put('categories/{id}', [CategoryController::class, 'update'])->name('categories.update')->middleware('permission:categories.edit');
-    Route::patch('categories/{id}', [CategoryController::class, 'update'])->middleware('permission:categories.edit');
-    Route::delete('categories/{id}', [CategoryController::class, 'destroy'])->name('categories.destroy')->middleware('permission:categories.delete');
+    // Categories are global reference data — only platform admins may edit or delete them.
+    Route::put('categories/{id}', [CategoryController::class, 'update'])->name('categories.update')->middleware(['role:Super Admin,Admin', 'permission:categories.edit']);
+    Route::patch('categories/{id}', [CategoryController::class, 'update'])->middleware(['role:Super Admin,Admin', 'permission:categories.edit']);
+    Route::delete('categories/{id}', [CategoryController::class, 'destroy'])->name('categories.destroy')->middleware(['role:Super Admin,Admin', 'permission:categories.delete']);
 });
 
 /*

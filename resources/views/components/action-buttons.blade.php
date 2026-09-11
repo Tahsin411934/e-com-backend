@@ -9,17 +9,27 @@
     'show' => false,       // Show "View" button
     'permission' => null,  // Permission prefix (e.g., 'units', 'inventory-locations') -> gates edit/delete dynamically
     'entityLabel' => null, // Human label for the permission tooltip (e.g., 'Unit', 'Inventory Location')
+    'adminOnly' => false,  // When true, edit/delete are restricted to Super Admin/Admin roles only
 ])
 
 @php
     // Dynamic permission gating — buttons stay visible but become disabled
     // when the user's role lacks the matching permission (admin grants via Role Management UI).
-    $canEdit   = ! $permission || auth()->user()->hasPermission($permission.'.edit');
-    $canDelete = ! $permission || auth()->user()->hasPermission($permission.'.delete');
+    // Categories & brands are admin-managed reference data: with adminOnly=true
+    // store owners can view and create, but only Super Admin/Admin may edit or delete.
+    $isAdmin = auth()->user()->hasAnyRole(['Super Admin', 'Admin']);
+    $canEdit   = (! $adminOnly) && (! $permission || auth()->user()->hasPermission($permission.'.edit'))
+                 || ($adminOnly && $isAdmin);
+    $canDelete = (! $adminOnly) && (! $permission || auth()->user()->hasPermission($permission.'.delete'))
+                 || ($adminOnly && $isAdmin);
 
     $subject = $entityLabel ? 'this '.$entityLabel : 'this record';
-    $editMsg   = "You don't have authority to edit {$subject}. Connect with administrator.";
-    $deleteMsg = "You don't have authority to delete {$subject}. Connect with administrator.";
+    $editMsg   = $adminOnly
+        ? "Only administrators can edit {$subject}."
+        : "You don't have authority to edit {$subject}. Connect with administrator.";
+    $deleteMsg = $adminOnly
+        ? "Only administrators can delete {$subject}."
+        : "You don't have authority to delete {$subject}. Connect with administrator.";
 @endphp
 
 <div class="flex space-x-1 justify-center items-center">

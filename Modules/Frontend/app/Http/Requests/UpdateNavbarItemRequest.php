@@ -14,7 +14,7 @@ class UpdateNavbarItemRequest extends FormRequest
 
     public function rules(): array
     {
-        $navbarItemId = $this->route('navbar_item');
+        $navbarItemId = $this->route('navbar_item') ?? $this->route('id');
 
         return [
             'name' => 'required|string|max:160',

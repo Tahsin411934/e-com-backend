@@ -7,13 +7,14 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Modules\Catalog\Models\Size;
+use Modules\Catalog\Models\SizeGroup;
 use Yajra\DataTables\DataTables;
 
 class SizeService
 {
     public function getSizeDataTable(Request $request)
     {
-        $query = Size::query()->orderByDesc('created_at');
+        $query = Size::query()->with('sizeGroup')->orderByDesc('created_at');
 
         return DataTables::of($query)
             ->editColumn('sizes', function (Size $size) {
@@ -62,18 +63,31 @@ class SizeService
                     $data['sizes'] = implode(', ', $items);
                 }
 
+                // Each size group may hold exactly ONE size set.
+                $takenBy = Size::where('size_group_id', $data['size_group_id'] ?? 0)
+                    ->when($sizeId, fn ($q) => $q->where('id', '!=', $sizeId))
+                    ->first();
+                if ($takenBy) {
+                    return ApiResponse::error('This size group already has a size set.', 409);
+                }
+
+                // Denormalized group_name stays in sync with the group table
+                if (! empty($data['size_group_id'])) {
+                    $data['group_name'] = SizeGroup::find($data['size_group_id'])?->name ?? ($data['group_name'] ?? null);
+                }
+
                 unset($data['size_id']);
 
                 if ($sizeId) {
                     $size = Size::findOrFail($sizeId);
                     $size->update($data);
 
-                    return ApiResponse::success($size->fresh(), 'Size group updated successfully.');
+                    return ApiResponse::success($size->fresh(), 'Size updated successfully.');
                 }
 
                 $size = Size::create($data);
 
-                return ApiResponse::created($size->fresh(), 'Size group created successfully.');
+                return ApiResponse::created($size->fresh(), 'Size created successfully.');
             });
         } catch (\Exception $e) {
             return ApiResponse::error('Error saving size group: '.$e->getMessage(), 500);
@@ -85,8 +99,18 @@ class SizeService
         try {
             return ApiResponse::success(Size::findOrFail($id));
         } catch (\Exception) {
-            return ApiResponse::notFound('Size group not found.');
+            return ApiResponse::notFound('Size not found.');
         }
+    }
+
+    /**
+     * Size set attached to a size group (null when the group has none yet).
+     */
+    public function getSizeByGroupId(int $sizeGroupId): JsonResponse
+    {
+        $size = Size::where('size_group_id', $sizeGroupId)->first();
+
+        return ApiResponse::success($size);
     }
 
     public function deleteSize(int $id): JsonResponse
@@ -96,7 +120,7 @@ class SizeService
                 $size = Size::findOrFail($id);
                 $size->delete();
 
-                return ApiResponse::success(null, 'Size group deleted successfully.');
+                return ApiResponse::success(null, 'Size deleted successfully.');
             });
         } catch (\Exception $e) {
             return ApiResponse::error('Error deleting size group: '.$e->getMessage(), 500);

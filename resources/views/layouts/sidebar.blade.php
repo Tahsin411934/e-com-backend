@@ -76,7 +76,7 @@
         </div>
         @endif
 
-        @if(auth()->user()->hasAnyPermission(['products.view','categories.view','brands.view','units.view','sizes.view','tax-rates.view','barcode-print.view','product-requests.view']))
+        @if(auth()->user()->hasAnyPermission(['products.view','categories.view','brands.view','units.view','sizes.view','size-groups.view','tax-rates.view','barcode-print.view','product-requests.view']))
         <!-- Catalog -->
         <div class="mb-0.5">
             <button
@@ -115,6 +115,12 @@
                     <a href="{{ route('sizes.index') }}"
                         class="flex items-center gap-2.5 pl-9 pr-3 py-1.5 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-50 text-[13px] transition-colors {{ request()->routeIs('sizes.*') ? 'text-primary bg-primary-light font-medium' : '' }}">
                         <i class="fas fa-ruler w-3.5 text-center"></i><span>Sizes</span>
+                    </a>
+                    @endif
+                    @if(auth()->user()->hasPermission('size-groups.view'))
+                    <a href="{{ route('size-groups.index') }}"
+                        class="flex items-center gap-2.5 pl-9 pr-3 py-1.5 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-50 text-[13px] transition-colors {{ request()->routeIs('size-groups.*') ? 'text-primary bg-primary-light font-medium' : '' }}">
+                        <i class="fas fa-layer-group w-3.5 text-center"></i><span>Size Groups</span>
                     </a>
                     @endif
                     @if(auth()->user()->hasPermission('barcode-print.view'))

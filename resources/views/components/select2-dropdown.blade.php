@@ -9,6 +9,9 @@
     'allowClear' => false,
     'minimumInputLength' => 0,
     'limit' => 10,
+    // When tags=true, the admin can also TYPE a brand-new value and press
+    // Enter to create it (select2 tags) — not just pick from server results.
+    'tags' => false,
     // Pre-selected value(s) for edit forms: ['id' => 3, 'text' => 'Foo']
     // or a list of those pairs / an Eloquent collection mapped the same way.
     'selected' => null,
@@ -51,6 +54,7 @@
             data-placeholder="{{ $placeholder }}"
             data-limit="{{ $limit }}"
             @if ($allowClear) data-allow-clear="1" @endif
+            @if ($tags) data-tags="1" @endif
             @if ($minimumInputLength > 0) data-minimum-input-length="{{ $minimumInputLength }}" @endif
             {{ $attributes->merge(['class' => 'w-full border border-slate-300 dark:border-slate-600 rounded-md p-2 bg-white dark:bg-gray-700 text-slate-800 dark:text-slate-200 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all']) }}>
         @if (! $multiple)

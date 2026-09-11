@@ -86,6 +86,29 @@
             };
         }
 
+        // data-tags="1" → allow typing a brand-new value (select2 tags mode)
+        // alongside the AJAX results. Perfect for fields like "Group Name"
+        // where admins can pick an existing group OR create a new one.
+        if (String($el.data('tags')) === '1') {
+            options.tags = true;
+            options.tokenSeparators = [',', '|', '\n'];
+            options.createTag = function (params) {
+                var term = params && params.term ? String(params.term).trim() : '';
+                if (term === '') {
+                    return null;
+                }
+                // Skip if an AJAX option with the same text already exists.
+                var duplicate = $el.find('option').toArray().some(function (o) {
+                    return $(o).text() === term;
+                });
+                if (duplicate) {
+                    return null;
+                }
+
+                return { id: term, text: term };
+            };
+        }
+
         return options;
     }
 

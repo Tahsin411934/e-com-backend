@@ -6,22 +6,20 @@ use App\Traits\CustomSoftDeletes;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class Size extends Model
+class SizeGroup extends Model
 {
     use CustomSoftDeletes;
     use HasFactory;
 
-    protected $table = 'sizes';
+    protected $table = 'size_groups';
 
     protected $fillable = [
-        'size_group_id',
-        'group_name', // denormalized display/search copy of the group's name
-        'sizes',
+        'name',
         'status',
     ];
 
-    public function sizeGroup()
+    public function sizes()
     {
-        return $this->belongsTo(SizeGroup::class, 'size_group_id');
+        return $this->hasMany(Size::class, 'size_group_id');
     }
 }

@@ -31,6 +31,16 @@ class SizeController extends Controller
         return $this->sizeService->getSizeById((int) $id);
     }
 
+    /**
+     * Return the size set attached to a size group (or null) so the Size
+     * form can decide between creating a new set and updating the group's
+     * existing one.
+     */
+    public function getByGroup($sizeGroupId)
+    {
+        return $this->sizeService->getSizeByGroupId((int) $sizeGroupId);
+    }
+
     public function update(StoreSizeRequest $request, $id)
     {
         return $this->sizeService->saveSize($request->validated() + ['size_id' => $id]);

@@ -16,7 +16,8 @@ class StoreSizeRequest extends FormRequest
         $sizeId = $this->route('size');
 
         return [
-            'group_name' => 'required|string|max:160',
+            'size_group_id' => 'required|integer|exists:size_groups,id',
+            'group_name' => 'nullable|string|max:160', // denormalized, auto-synced
             'sizes' => 'required|string',
             'status' => 'required|in:active,inactive',
         ];
@@ -25,7 +26,8 @@ class StoreSizeRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'group_name.required' => 'Group name is required.',
+            'size_group_id.required' => 'Group name is required.',
+            'size_group_id.exists' => 'Selected size group does not exist.',
             'sizes.required' => 'Please enter at least one size.',
             'status.in' => 'Status is invalid.',
         ];

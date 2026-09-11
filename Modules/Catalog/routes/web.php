@@ -7,6 +7,7 @@ use Modules\Catalog\Http\Controllers\CategoryController;
 use Modules\Catalog\Http\Controllers\ProductController;
 use Modules\Catalog\Http\Controllers\ProductRequestController;
 use Modules\Catalog\Http\Controllers\SizeController;
+use Modules\Catalog\Http\Controllers\SizeGroupController;
 use Modules\Catalog\Http\Controllers\TaxRateController;
 use Modules\Catalog\Http\Controllers\UnitController;
 
@@ -66,12 +67,18 @@ Route::middleware(['auth', 'verified', 'admin'])->group(function () {
 
     Route::resource('sizes', SizeController::class)->except(['create', 'edit'])->names('sizes')->middleware('permission:sizes.*');
     Route::get('/dataTable/sizes', [SizeController::class, 'dataTable'])->name('sizes.dataTable')->middleware('permission:sizes.view');
+    // Resolve the size set attached to a size group (create-vs-update on the Size form)
+    Route::get('/sizes/by-group/{sizeGroupId}', [SizeController::class, 'getByGroup'])->name('sizes.by-group')->middleware('permission:sizes.view');
 
     Route::resource('tax-rates', TaxRateController::class)->except(['create', 'edit'])->names('tax-rates')->middleware('permission:tax-rates.*');
     Route::get('/dataTable/tax-rates', [TaxRateController::class, 'dataTable'])->name('tax-rates.dataTable')->middleware('permission:tax-rates.view');
 
     // Product Requests
     Route::get('/product-requests', [ProductRequestController::class, 'index'])->name('product-requests.index')->middleware('permission:product-requests.view');
+
+    // Size Groups (reference table backing the Size form's Group Name dropdown)
+    Route::resource('size-groups', SizeGroupController::class)->except(['create', 'edit'])->names('size-groups')->middleware('permission:size-groups.*');
+    Route::get('/dataTable/size-groups', [SizeGroupController::class, 'dataTable'])->name('size-groups.dataTable')->middleware('permission:size-groups.view');
     Route::get('/dataTable/product-requests', [ProductRequestController::class, 'dataTable'])->name('product-requests.dataTable')->middleware('permission:product-requests.view');
     Route::post('/product-requests', [ProductRequestController::class, 'store'])->name('product-requests.store')->middleware('permission:product-requests.create');
     Route::get('/product-requests/{id}', [ProductRequestController::class, 'show'])->name('product-requests.show')->middleware('permission:product-requests.view');

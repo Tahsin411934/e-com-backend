@@ -12,6 +12,7 @@ use Modules\Catalog\Models\Brand;
 use Modules\Catalog\Models\Category;
 use Modules\Catalog\Models\Product;
 use Modules\Catalog\Models\Size;
+use Modules\Catalog\Models\SizeGroup;
 use Modules\Catalog\Models\TaxRate;
 use Modules\Catalog\Models\Unit;
 use Modules\Frontend\Models\NavbarItem;
@@ -60,9 +61,17 @@ class DropdownSearchController extends Controller
             'label' => 'name',
             'text' => fn (Unit $unit) => $unit->name.' ('.$unit->short_name.')',
         ],
+        // Size GROUP table — Group Name dropdown source on the /sizes form.
+        'size-groups' => [
+            'model' => SizeGroup::class,
+            'label' => 'name',
+            'filters' => ['status' => 'active'],
+        ],
         'sizes' => [
             'model' => Size::class,
             'label' => 'group_name',
+            'filters' => ['status' => 'active'],
+            'text' => fn (Size $size) => $size->group_name.'  —  '.$size->sizes,
         ],
         'tax-rates' => [
             'model' => TaxRate::class,

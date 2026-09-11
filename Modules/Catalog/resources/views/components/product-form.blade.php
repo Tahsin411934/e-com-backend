@@ -413,6 +413,22 @@
         </form>
     </div>
 
+    @php
+        // Build a simple { size_set_id: ["S", "M", ...] } map once on the
+        // server. The JavaScript below can then generate variants without an
+        // additional request.
+        $sizeSetValues = [];
+        foreach ($sizes as $sizeSet) {
+            $values = collect(explode(',', (string) $sizeSet->sizes))
+                ->map(fn ($value) => trim($value))
+                ->filter()
+                ->unique(fn ($value) => strtolower($value))
+                ->values()
+                ->all();
+            $sizeSetValues[$sizeSet->id] = $values;
+        }
+    @endphp
+
     @push('scripts')
     <script src="https://cdn.ckeditor.com/ckeditor5/39.0.1/classic/ckeditor.js"></script>
     <script>
@@ -424,14 +440,7 @@
         // The form already receives every active size set from ProductController.
         // Keeping this data local avoids a second request (and its permission/
         // route failure modes) when the user chooses a set.
-        const sizeSetValues = @json(collect($sizes)->mapWithKeys(fn ($size) => [
-            $size->id => collect(explode(',', (string) $size->sizes))
-                ->map(fn ($value) => trim($value))
-                ->filter()
-                ->unique(fn ($value) => strtolower($value))
-                ->values()
-                ->all(),
-        ])->all());
+        const sizeSetValues = @json($sizeSetValues);
         @if($isEdit && $product?->variants)
             @foreach($product->variants as $vIdx => $v)
                 optionCounters[{{ $vIdx }}] = {{ $v->options->count() }};

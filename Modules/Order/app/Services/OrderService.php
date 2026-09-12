@@ -39,7 +39,9 @@ class OrderService
                 return $order->created_at->format('d M Y H:i');
             })
             ->addColumn('action', function (Order $order) {
-                $detailsButton = '<button type="button" class="js-order-details bg-sky-600 text-white px-2 py-1 rounded text-sm hover:bg-sky-700 transition" data-order-id="'.$order->id.'" title="Details"><i class="fa fa-eye"></i></button>';
+                $detailsButton = auth()->user()?->hasPermission('orders.details')
+                    ? '<button type="button" class="js-order-details btn-action-details" data-order-id="'.$order->id.'" title="View order details"><i class="fa fa-eye"></i><span>Details</span></button>'
+                    : '';
 
                 return $detailsButton.view('components.action-buttons', [
                     'permission' => 'orders',
@@ -79,7 +81,18 @@ class OrderService
         }
     }
 
-    public function getOrderById(int $id): JsonResponse
+    public function getOrderForEditById(int $id): JsonResponse
+    {
+        try {
+            $order = Order::forCurrentStore()->findOrFail($id);
+
+            return ApiResponse::success($order);
+        } catch (\Exception $e) {
+            return ApiResponse::notFound('Order not found.');
+        }
+    }
+
+    public function getOrderDetailsById(int $id): JsonResponse
     {
         try {
             $order = Order::forCurrentStore()->with([

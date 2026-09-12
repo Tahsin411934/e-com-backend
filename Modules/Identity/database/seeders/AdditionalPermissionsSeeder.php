@@ -137,6 +137,9 @@ class AdditionalPermissionsSeeder extends Seeder
         ],
 
         // ===== Orders & Fulfilment =====
+        'orders' => [
+            'orders.details' => 'View order details',
+        ],
         'deliveries' => [
             'deliveries.view' => 'View deliveries',
             'deliveries.create' => 'Create deliveries',

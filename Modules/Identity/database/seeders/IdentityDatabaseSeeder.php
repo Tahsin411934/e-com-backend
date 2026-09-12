@@ -44,6 +44,7 @@ class IdentityDatabaseSeeder extends Seeder
             ['name' => 'inventory.edit', 'description' => 'Edit inventory'],
             ['name' => 'inventory.delete', 'description' => 'Delete inventory'],
             ['name' => 'orders.view', 'description' => 'View orders'],
+            ['name' => 'orders.details', 'description' => 'View order details'],
             ['name' => 'orders.create', 'description' => 'Create orders'],
             ['name' => 'orders.edit', 'description' => 'Edit orders'],
             ['name' => 'orders.delete', 'description' => 'Delete orders'],

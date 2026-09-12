@@ -87,13 +87,15 @@
         </div>
     </x-entity-crud>
 
-    <x-drawer id="orderDetailsDrawer" overlayId="orderDetailsOverlay" title="Order Details" maxWidth="max-w-3xl"
-        submitBtnId="closeOrderDetailsBtn" submitBtnText="Close" submitBtnColor="bg-gray-600 hover:bg-gray-700"
-        submitEntity="orderdetails" submitAction="close">
-        <div id="orderDetailsContent" class="space-y-5 text-sm">
-            <p class="text-gray-400">Select an order to view its details.</p>
-        </div>
-    </x-drawer>
+    @if ($canViewDetails)
+        <x-drawer id="orderDetailsDrawer" overlayId="orderDetailsOverlay" title="Order Details" maxWidth="max-w-3xl"
+            submitBtnId="closeOrderDetailsBtn" submitBtnText="Close" submitBtnColor="bg-gray-600 hover:bg-gray-700"
+            submitEntity="orderdetails" submitAction="close">
+            <div id="orderDetailsContent" class="space-y-5 text-sm">
+                <p class="text-gray-400">Select an order to view its details.</p>
+            </div>
+        </x-drawer>
+    @endif
 
     @push('scripts')
     <script>
@@ -106,6 +108,7 @@ Crud.register('order', 'fill', function (data) {
             $('#order_fulfillment_status').val(data.fulfillment_status);
         });
 
+        @if ($canViewDetails)
         function escapeHtml(value) {
             return $('<div>').text(value ?? '-').html();
         }
@@ -118,7 +121,7 @@ Crud.register('order', 'fill', function (data) {
         }
 
         function showOrderDetails(id) {
-            $.get("{{ route('orders.show', ':id') }}".replace(':id', id), function (res) {
+            $.get("{{ route('orders.details', ':id') }}".replace(':id', id), function (res) {
                 if (res.status !== 'success') {
                     Swal.fire('Error', res.message || 'Order not found.', 'error');
                     return;
@@ -186,6 +189,7 @@ Crud.register('order', 'fill', function (data) {
         $(document).on('click', '.js-order-details', function () {
             showOrderDetails($(this).data('order-id'));
         });
+        @endif
     </script>
     @endpush
 </x-app-layout>

@@ -21,6 +21,7 @@ Route::middleware(['auth', 'verified', 'admin'])->group(function () {
     // Orders
     Route::resource('orders', OrderController::class)->except(['create', 'edit'])->names('orders')->middleware('permission:orders.*');
     Route::get('/dataTable/orders', [OrderController::class, 'dataTable'])->name('orders.dataTable')->middleware('permission:orders.view');
+    Route::get('/orders/{order}/details', [OrderController::class, 'details'])->name('orders.details')->middleware('permission:orders.details');
 
     // Payments
     Route::resource('payments', PaymentController::class)->except(['create', 'edit'])->names('payments')->middleware('permission:payments.*');

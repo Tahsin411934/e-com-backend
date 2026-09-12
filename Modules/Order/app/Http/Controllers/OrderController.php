@@ -17,13 +17,14 @@ class OrderController extends Controller
     {
         $actor = auth()->user();
         $canAssignStore = (bool) ($actor && ($actor->hasRole('Super Admin') || $actor->hasRole('Admin')));
+        $canViewDetails = (bool) ($actor && $actor->hasPermission('orders.details'));
 
         $stores = $canAssignStore
             ? Store::where('status', 'active')->orderBy('name')->get()
             : collect();
         $currentStore = CurrentStore::store();
 
-        return view('order::orders.index', compact('stores', 'canAssignStore', 'currentStore'));
+        return view('order::orders.index', compact('stores', 'canAssignStore', 'canViewDetails', 'currentStore'));
     }
 
     public function dataTable(Request $request)
@@ -38,7 +39,12 @@ class OrderController extends Controller
 
     public function show($id)
     {
-        return $this->orderService->getOrderById((int) $id);
+        return $this->orderService->getOrderForEditById((int) $id);
+    }
+
+    public function details($id)
+    {
+        return $this->orderService->getOrderDetailsById((int) $id);
     }
 
     public function update(OrderRequest $request, int $id)

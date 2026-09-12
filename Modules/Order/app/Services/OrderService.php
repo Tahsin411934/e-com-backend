@@ -7,7 +7,6 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Modules\Order\Models\Order;
-use Modules\Store\Support\CurrentStore;
 use Yajra\DataTables\DataTables;
 
 class OrderService
@@ -22,7 +21,7 @@ class OrderService
 
         return DataTables::of($query)
             ->addColumn('user_email', function (Order $order) {
-                return $order->user?->email ?? '-';
+                return $order->user?->email ?? ($order->customer_name ?: 'Guest');
             })
             ->addColumn('store_name', function (Order $order) {
                 return $order->store?->name ?? '-';
@@ -40,9 +39,11 @@ class OrderService
                 return $order->created_at->format('d M Y H:i');
             })
             ->addColumn('action', function (Order $order) {
-                return view('components.action-buttons', [
-                'permission' => 'orders',
-                'entityLabel' => 'Order',
+                $detailsButton = '<button type="button" class="js-order-details bg-sky-600 text-white px-2 py-1 rounded text-sm hover:bg-sky-700 transition" data-order-id="'.$order->id.'" title="Details"><i class="fa fa-eye"></i></button>';
+
+                return $detailsButton.view('components.action-buttons', [
+                    'permission' => 'orders',
+                    'entityLabel' => 'Order',
                     'id' => $order->id,
                     'edit' => 'orderEdit',
                     'delete' => 'orderDelete',
@@ -81,7 +82,16 @@ class OrderService
     public function getOrderById(int $id): JsonResponse
     {
         try {
-            $order = Order::forCurrentStore()->with(['user', 'store', 'items', 'payments', 'refunds'])->findOrFail($id);
+            $order = Order::forCurrentStore()->with([
+                'user',
+                'store',
+                'items',
+                'payments',
+                'refunds',
+                'deliveries.deliveryBoy',
+                'billingAddress',
+                'shippingAddress',
+            ])->findOrFail($id);
 
             return ApiResponse::success($order);
         } catch (\Exception $e) {

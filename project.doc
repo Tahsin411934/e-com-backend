@@ -1,0 +1,372 @@
+ই-কমার্স ব্যাকএন্ড - প্রজেক্ট অডিট রিপোর্ট
+তারিখ: ১২ সেপ্টেম্বর ২০২৬
+পরিধি: Laravel backend, ১৩টি module, Blade/jQuery/Vite frontend code, route, test, migration ও dependency।
+
+নোট: আপনার চাওয়া অনুযায়ী এটি .doc নামে একটি plain-text report। Editor বা Word-এ খোলা যাবে।
+
+১. সংক্ষিপ্ত মূল্যায়ন
+
+Project-এর Laravel modular base ভালো। সাম্প্রতিক shared CRUD registry/data-action কাজটি আগের প্রতি-entity window function থেকে উন্নত। Route name duplicate নেই, Form Request এবং transaction-এর ব্যবহারও যথেষ্ট আছে।
+
+এখন সবচেয়ে জরুরি risk হলো guest checkout abuse protection, role name-এর অমিল, raw exception message browser-এ যাওয়া, পুরোনো/ভুল automated test, এবং Service/Blade file-এ অতিরিক্ত UI ও JavaScript রাখা।
+
+অগ্রাধিকারের ক্রম:
+
+P0 - Production traffic বাড়ার আগে
+১. Guest checkout-এ rate limit ও idempotency দিতে হবে।
+২. API response-এ raw exception message পাঠানো বন্ধ করতে হবে।
+৩. Delivery role name-এর অমিল ঠিক করতে হবে।
+৪. Authentication test ঠিক করতে হবে অথবা বর্তমান login flow অনুযায়ী test বদলাতে হবে।
+
+P1 - পরের sprint-এ
+৫. Guest customer-এর সম্পূর্ণ contact snapshot ও secure order tracking যুক্ত করতে হবে।
+৬. Domain Service থেকে DataTable HTML/action rendering আলাদা করতে হবে।
+৭. বড় Blade file-গুলোকে component, partial ও Vite JS module-এ ভাগ করতে হবে।
+৮. Slow/background কাজের জন্য queue job চালু করতে হবে।
+
+P2 - পরিকল্পিত code-quality উন্নয়ন
+৯. Blade view থেকে database query সরাতে হবে।
+১০. External JavaScript exact version-এ pin করে Vite দিয়ে bundle করতে হবে।
+১১. JavaScript ownership standard করতে হবে এবং transitional global bootstrap কমাতে হবে।
+১২. Checkout, tenancy, inventory ও permission-এর test coverage বাড়াতে হবে।
+
+
+২. Audit evidence
+
+বিষয়                                    ফলাফল
+--------------------------------------  ------------------------------------
+Module                                  ১৩টি
+Module-এর নাম                           Account, Cart, Catalog, Frontend,
+                                        History, Identity, Inventory, Order,
+                                        Pos, Reports, Reviews, Shipping, Store
+Tracked source file                     ৮৮১টি
+Registered route                        ৫২০টি
+Duplicate route name                    ০টি
+Unnamed route                           ১৭টি
+Test file                               ১৭টি
+Form Request class                      ৭১টি
+Transaction ব্যবহার করা file            ৫৩টি
+Queued Job class                        ০টি
+Composer security advisory              ০টি
+
+এই report তৈরিতে route:list --json, composer audit, app/Modules/resources/routes/tests জুড়ে code search, এবং Laravel test suite চালানো হয়েছে।
+
+
+৩. নিশ্চিতভাবে পাওয়া সমস্যা ও সমাধান
+
+৩.১ P0 - Public guest checkout-এ abuse control ও duplicate-submit protection নেই
+
+Evidence
+- Route: POST api/v1/guest-checkout, name: api.cart.guestCheckout।
+- Middleware শুধু api; auth বা throttle middleware নেই।
+- Modules/Order/app/Http/Controllers/CheckoutController.php transaction-এর ভিতরে order তৈরি করে, কিন্তু একই request বারবার এলে তা আটকায় না।
+
+কেন সমস্যা
+Browser refresh, double click, frontend retry, bot, বা malicious caller একই order একাধিকবার তৈরি করতে পারে। Transaction একটি request-এর database consistency রাখে, কিন্তু একই request দ্বিতীয়বার create হওয়া আটকায় না।
+
+যা করা উচিত
+১. guest-checkout নামে named rate limiter দিন; IP এবং normalized phone দিয়ে limit key বানাতে পারেন।
+২. Guest checkout request-এ client-generated idempotency key header বাধ্যতামূলক করুন।
+৩. orders table-এ unique idempotency_key column দিন, অথবা আলাদা checkout_requests table করুন।
+৪. একই key আবার এলে নতুন order না বানিয়ে আগের completed response ফেরত দিন।
+৫. Double submit নিয়ে feature test লিখুন।
+
+Route-এর সম্ভাব্য রূপ:
+Route::post('/guest-checkout', ...)->middleware('throttle:guest-checkout');
+
+
+৩.২ P0 - Raw exception text user-এর কাছে যাচ্ছে
+
+Evidence
+অনেক Service $e->getMessage() ব্যবহার করে সরাসরি API response তৈরি করছে। উদাহরণ:
+- Modules/Order/app/Http/Controllers/CheckoutController.php
+- Modules/Order/app/Services/OrderService.php
+- Modules/Store/app/Services/StoreService.php
+- Modules/Identity/app/Services/UserService.php
+- Modules/Reviews/app/Services/WebhookService.php
+- Modules/Shipping/app/Services/ShipmentService.php
+
+কেন সমস্যা
+Database detail, SQL name, storage path, implementation detail বা third-party provider-এর message browser-এ চলে যেতে পারে। এটি নিরাপদ নয় এবং user experience-ও একরকম থাকে না।
+
+যা করা উচিত
+বাস্তব exception log করুন, কিন্তু user-কে নির্দিষ্ট ও সাধারণ message দিন:
+
+try {
+    // operation
+} catch (Throwable $exception) {
+    Log::error('Unable to create order', [
+        'exception' => $exception,
+        'order_input' => $safeContext,
+    ]);
+
+    return ApiResponse::error('Unable to complete the request. Please try again.', 500);
+}
+
+Password, token, card data, বা পুরো raw request payload log করা যাবে না। একটি shared exception-response pattern বানিয়ে ধীরে ধীরে সব Service-এ ব্যবহার করুন।
+
+
+৩.৩ P0 - Delivery authorization-এ role name-এর অমিল আছে
+
+Evidence
+- Seed file-এ Super Admin এবং Admin role name ব্যবহার হয়েছে।
+- Modules/Order/app/Http/Controllers/DeliveryController.php-এ lowercase admin ও delivery_boy check করা হয়েছে।
+- একই controller delivery person-এর জন্য delivery_boy role check করে।
+
+কেন সমস্যা
+Custom User::hasRole() name মিলিয়ে কাজ করে। Database-এ যদি Admin, Super Admin, বা Delivery Boy থাকে, তাহলে lowercase নাম মিলবে না। ফলে ভুলভাবে delivery access deny হতে পারে অথবা delivery person validation সবসময় fail করতে পারে।
+
+যা করা উচিত
+Role name এক জায়গায় define করুন; constant বা RoleName enum ভালো পদ্ধতি। যেমন:
+
+final class RoleName
+{
+    public const SUPER_ADMIN = 'Super Admin';
+    public const ADMIN = 'Admin';
+    public const DELIVERY_BOY = 'Delivery Boy';
+}
+
+Code বদলানোর আগে database-এ delivery role-এর বর্তমান value নিশ্চিত করুন। প্রয়োজন হলে data migration করুন। Admin, Super Admin, Delivery Boy, এবং অন্য user-এর জন্য authorization test যোগ করুন।
+
+
+৩.৪ P0 - Authentication test suite বর্তমান application-এর সঙ্গে মিলছে না
+
+Evidence
+- php artisan test --no-coverage চালালে Tests/Feature/Auth/AuthenticationTest fail করে।
+- প্রথম failing test GET /login-এ 200 আশা করে, কিন্তু application 404 দেয়।
+- Stop-on-failure run: ১টি failed, ৪টি passed, ৫০টি pending।
+- Full run-এ authentication, email verification, password confirmation/reset/update এবং registration feature test-এ failure দেখা গেছে।
+
+কেন সমস্যা
+Red test baseline থাকলে নতুন regression বোঝা কঠিন হয়। Application যদি intentionally /login ব্যবহার না করে, তাহলে default Breeze-style test আর বাস্তব product behaviour-এর মধ্যে mismatch হয়েছে।
+
+যা করা উচিত
+আগে product rule ঠিক করুন:
+- /login দরকার হলে route ও view ফিরিয়ে আনুন।
+- আলাদা admin/store-owner login URL বা registration disable করা product decision হলে, actual route ও flow অনুযায়ী test rewrite/remove করুন।
+
+শুধু failing test delete করা ঠিক হবে না। বাস্তব admin, store owner, API token, এবং guest checkout flow-এর test লিখতে হবে।
+
+
+৩.৫ P1 - Guest order-এ সম্পূর্ণ customer identity/contact snapshot নেই
+
+Evidence
+- Guest checkout customer_name, delivery_address, delivery_city, delivery_phone, এবং optional delivery_notes validate করে।
+- Order user_id = null ও customer_name দিয়ে তৈরি হয়।
+- Phone/address deliveries table-এ থাকে; guest email request বা store করা হয় না।
+
+বর্তমান আচরণ
+Logged-in user-এর order user_id দিয়ে linked থাকে। Guest-এর ক্ষেত্রে order-এ customer_name এবং delivery row-তে contact/address থাকে। Delivery দেওয়া সম্ভব, কিন্তু customer support, order confirmation, tracking, repeat-order analysis ও পরে account link করা দুর্বল হয়।
+
+যা করা উচিত
+orders table-এ immutable customer_email ও customer_phone snapshot field দিন। Delivery-specific তথ্য deliveries table-এ থাকুক। Public order tracking লাগলে প্রতিটি order-এর জন্য random tracking token দিন; শুধু order ID expose করবেন না। Personal-data consent ও retention policy-ও ঠিক করুন।
+
+
+৩.৬ P1 - Domain Service HTML, CSS ও button behavior-এর সঙ্গে অতিরিক্তভাবে যুক্ত
+
+Evidence
+অনেক *Service.php DataTable label, badge এবং action button HTML string দিয়ে বানায়। উদাহরণ:
+- Modules/Order/app/Services/OrderService.php
+- Modules/Inventory/app/Services/PurchaseOrderService.php
+- Modules/Frontend/app/Services/BannerService.php
+- Modules/Frontend/app/Services/NavbarService.php
+- Modules/Reviews/app/Services/ProductReviewService.php
+- Modules/Store/app/Services/AppSettingService.php
+
+কিছু Frontend service এখনো inline onclick তৈরি করে, যেমন bannerEdit(), bannerDelete(), ctaEdit(), ctaDelete(), navbar_itemEdit(), এবং announcement_barEdit()।
+
+কেন সমস্যা
+Business Service-এর কাজ query ও write rule রাখা। HTML string থাকলে Service Tailwind class, Font Awesome, browser event এবং নির্দিষ্ট DataTable library-এর সঙ্গে বাঁধা পড়ে যায়। Unit test কঠিন হয়, markup duplicate হয়, এবং পুরোনো inline event pattern নতুন delegated action architecture-এর পাশাপাশি রয়ে যায়।
+
+যা করা উচিত
+Table row-এর presentation নিচের যেকোনো জায়গায় নিন:
+১. Laravel API/JSON Resource বা Presenter class।
+২. Badge ও action-এর জন্য Blade partial।
+৩. data-action/data-id attribute-সহ shared ActionButton component।
+
+Service data ফেরত দেবে, তারপর presenter/view HTML ঠিক করবে। প্রথমে Frontend module migrate করুন, কারণ সেখানেই legacy inline onclick এখনো আছে।
+
+
+৩.৭ P1 - বড় Blade file-এ অতিরিক্ত state ও behavior আছে
+
+সবচেয়ে বড় কিছু Blade file:
+
+File                                                                    Line
+----------------------------------------------------------------------  -----
+Modules/Pos/resources/views/sells/index.blade.php                      1301
+Modules/Catalog/resources/views/components/product-form.blade.php       932
+resources/views/layouts/sidebar.blade.php                               772
+Modules/Inventory/resources/views/purchase-orders/create.blade.php      636
+Modules/Catalog/resources/views/product-requests/index.blade.php        539
+Modules/Inventory/resources/views/purchase-orders/edit.blade.php        455
+Modules/Frontend/resources/views/homepage-ctas.blade.php                425
+resources/views/dashboard.blade.php                                     373
+resources/views/components/data-table.blade.php                         331
+resources/views/components/entity-crud.blade.php                        300
+
+কেন সমস্যা
+এত বড় file-এ markup, state, AJAX, validation, rendering এবং event setup মিশে যায়। এক দায়িত্বের change অন্য দায়িত্ব ভেঙে দিতে পারে; review কঠিন হয় এবং page JS আলাদাভাবে test/bundle করা যায় না।
+
+যা করা উচিত
+প্রতিটি বড় page ধাপে ধাপে ভাগ করুন:
+- Blade page shell;
+- section/field-এর Blade partial বা component;
+- শুধু সেই page initialize করা Vite JavaScript module;
+- Blade থেকে দেওয়া ছোট data/config object।
+
+শুরু করুন POS sell, product form, এবং purchase-order create/edit দিয়ে। একবারে সব page rewrite করা ঠিক হবে না।
+
+
+৩.৮ P1 - Project-এ queued Job ও dispatch নেই
+
+Evidence
+Code scan-এ *Job.php file ০টি এবং application dispatch() call ০টি পাওয়া গেছে।
+
+কেন সমস্যা
+Webhook delivery, email/SMS notification, বড় export, image processing, বা report generation-এর মতো ধীর কাজ web request slow করতে পারে। External provider down থাকলে request fail-ও হতে পারে।
+
+যা করা উচিত
+Laravel queue ব্যবহার করুন:
+- SendWebhookDelivery job করুন; retry, backoff, timeout এবং failed-job record দিন।
+- Notification delivery ও বড় report export queue-তে নিন।
+- যেসব database write atomic হওয়া জরুরি তা transaction-এ রাখুন; dispatch after commit করুন।
+- Production-এ worker/supervisor চালান এবং failed job monitor করুন।
+
+
+৩.৯ P1 - Blade view-এর ভিতরে database query আছে
+
+Evidence
+Modules/Reports/resources/views/page.blade.php-এ আছে:
+
+\Modules\Store\Models\Store::orderBy('name')->get()
+
+কেন সমস্যা
+View database-এর দায়িত্ব নিচ্ছে। এটি cache/test করা কঠিন এবং প্রতিটি render-এ অপ্রত্যাশিত query চালাতে পারে।
+
+যা করা উচিত
+Controller বা report view-model-এ store list আনুন, $stores হিসেবে view-তে দিন, প্রয়োজন হলে cache করুন। Blade view শুধু দেওয়া data render করবে।
+
+
+৩.১০ P1 - Shared JavaScript architecture ভালো হয়েছে, কিন্তু এখনো transitional অবস্থায় আছে
+
+বর্তমান ভালো দিক
+Generic entity CRUD flow shared Crud registry এবং delegated data-action handler ব্যবহার করে। এটি প্রতি entity-তে window.brandEdit, window.bannerEdit-এর মতো আলাদা global function রাখার চেয়ে ভালো।
+
+বাকি বিষয়
+Blade inline script Vite module-এর আগে চলতে পারে বলে registry layout-এ early bootstrap এবং Vite app bundle-এ defensive bootstrap, দুই জায়গায় আছে। এটি বর্তমান script-order সমস্যা সমাধান করে, কিন্তু bootstrap responsibility duplicate করে। openGlobalDrawer/closeGlobalDrawer-এর মতো কয়েকটি global helper আছে; এগুলো shared browser API হিসেবে যুক্তিযুক্ত, তবে clear owner থাকা দরকার।
+
+যা করা উচিত
+বর্তমান stable implementation রাখুন। পরের focused change-এ registry ও drawer utility এক early non-deferred bootstrap asset-এ নিন, অথবা page initializer-কে imported Vite module করুন। সব consumer migrate না হওয়া পর্যন্ত global remove করবেন না। এটি বর্তমানে functional bug নয়; architecture cleanup।
+
+
+৩.১১ P2 - Raw Blade output-এর trust boundary পরিষ্কার করা দরকার
+
+Evidence
+Shared component-এ filter option, AJAX URL ও DataTables column-এর জন্য raw Blade output আছে। Barcode SVG-ও intentionally raw output হিসেবে render হয়।
+
+কেন সমস্যা
+Trusted generated SVG/HTML বা JSON-এর জন্য raw output গ্রহণযোগ্য। কিন্তু future-এ user-controlled text/URL ঢুকলে XSS risk তৈরি হবে।
+
+যা করা উচিত
+- JavaScript data-এর জন্য @json বা Js::from() ব্যবহার করুন।
+- সম্ভব হলে filter option array হিসেবে পাঠান এবং component-এ option tag render করুন।
+- Barcode SVG trusted generated markup হিসেবে document করুন।
+- User-provided string দিয়ে table HTML বানালে escape করুন।
+
+
+৩.১২ P2 - External SortableJS dependency @latest ব্যবহার করছে
+
+Evidence
+- Modules/Catalog/resources/views/index.blade.php
+- Modules/Cart/resources/views/campaigns/index.blade.php
+
+দুই জায়গাতেই https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js ব্যবহার হয়েছে।
+
+কেন সমস্যা
+একই deployment আগামীকাল অন্য version load করতে পারে। Breaking release বা supply-chain incident reproduce এবং rollback কঠিন করে।
+
+যা করা উচিত
+SortableJS exact version-এ npm দিয়ে install করুন ও Vite দিয়ে import করুন। CDN লাগলে exact version pin করুন এবং সম্ভব হলে SRI দিন।
+
+
+৩.১৩ P2 - Formatting, encoding ও naming consistency-এর জন্য project-wide standard দরকার
+
+Evidence
+Role naming-এ mismatch আছে; পুরোনো inline JavaScript এবং নতুন delegated handler একসঙ্গে আছে; কিছু পুরোনো comment-এ malformed/mixed encoding দেখা গেছে।
+
+যা করা উচিত
+- Laravel Pint চালু করুন এবং CI-তে দিন।
+- PHPStan/Larastan ধীরে ধীরে যুক্ত করুন; শুরুতে permissive level নিন।
+- resources/js ও extracted page module-এর জন্য ESLint/Prettier দিন।
+- সব source UTF-8-এ রাখুন এবং malformed comment ঠিক করুন।
+- Role, order state ও permission-এর নাম constant/enum-এ রাখুন।
+
+
+৪. Performance ও scaling-এর সুযোগ
+
+১. Caching
+Sitemap data-তে cache আছে, এটি ভালো। Public setting, category/navigation tree, store list এবং report filter option-এর মতো read-heavy data measured ভাবে cache করুন। প্রতিটি cache-এর স্পষ্ট invalidation point থাকতে হবে।
+
+২. DataTable ও list endpoint
+Project-এ pagination/DataTable ব্যাপকভাবে ব্যবহার হয়েছে, যা ভালো। High-volume table-এর filter/sort column-এ index এবং relation eager-load হচ্ছে কি না যাচাই করুন। Orders, inventory movement, POS sale, review ও report-এ query profiling করে তারপর index দিন। Blind index দেওয়া ঠিক নয়।
+
+৩. Checkout inventory safety
+Guest checkout server-side price আবার হিসাব করে, এটি সঠিক। Traffic বাড়ার আগে stock কখন reserve হবে এবং কখন deduct হবে সেই rule পরিষ্কার করুন। সেই জায়গায় transaction-এর সঙ্গে row locking বা atomic stock operation ব্যবহার করুন। শেষ একটি item নিয়ে simultaneous দুই checkout-এর test লিখুন।
+
+৪. Reports
+Aggregate query এবং date/store index ব্যবহার করুন। বড় date range বা long-running export browser request-এ না চালিয়ে queue export করুন।
+
+৫. Frontend bundle
+CDN dependency Vite-এ নিন, POS ও product-form behaviour-এ page-specific dynamic import ব্যবহার করুন এবং extraction-এর পরে production bundle যাচাই করুন। এতে cacheability বাড়বে ও unused code কমবে।
+
+
+৫. যেগুলো ইতিমধ্যে ভালো এবং রাখা উচিত
+
+- ১৩টি module-এর structure domain boundary তৈরি করেছে।
+- ৫২০টি route-এ duplicate route name নেই; route() generation ও route cache-এর জন্য এটি গুরুত্বপূর্ণ।
+- Composer audit-এ known dependency advisory নেই।
+- ৭১টি Form Request class আছে; অনেক validation controller থেকে সরে গেছে।
+- ৫৩টি file-এ database transaction ব্যবহার হয়েছে; checkout, inventory ও financial flow-এর জন্য গুরুত্বপূর্ণ।
+- Catalog ও inventory code-এ Store scope এবং admin/store-owner check আছে।
+- Shared Crud registry/data-action pattern প্রতি entity-র আলাদা browser global function-এর চেয়ে ভালো।
+- Checkout frontend price trust না করে server-side price হিসাব করে।
+- Sitemap cache আছে এবং product change-এ তা invalidate হয়।
+
+
+৬. Recommended delivery plan
+
+Phase 1 - Security ও correctness
+১. Role name standard করুন এবং delivery authorization test লিখুন।
+২. Guest checkout-এ throttle ও idempotency দিন।
+৩. Client-facing exception message generic করুন; structured log রাখুন।
+৪. Intended authentication route ঠিক করে test-কে সেই flow অনুযায়ী আনুন।
+
+Phase 2 - Order/customer ও operations
+৫. Guest email/contact snapshot এবং প্রয়োজন হলে secure guest tracking token দিন।
+৬. Stock reserve/deduct rule ঠিক করে concurrency test লিখুন।
+৭. Queue infrastructure দিন এবং webhook/notification delivery migrate করুন।
+
+Phase 3 - Maintainability
+৮. Frontend Service-এর inline onclick action shared data-action button-এ migrate করুন।
+৯. DataTable row-এর জন্য presenter/resource introduce করুন।
+১০. POS, product form এবং purchase-order page script Vite module-এ নিন।
+১১. View-level database query সরান।
+
+Phase 4 - Engineering guardrail
+১২. Test baseline green করুন; তারপর checkout, multi-store visibility, role access, inventory ও order details test যোগ করুন।
+১৩. CI-তে Pint, static analysis এবং frontend formatting check দিন।
+১৪. Third-party JavaScript pin ও bundle করুন।
+
+
+৭. এই audit-এর সময়ের verification status
+
+Passed
+- Route scan: duplicate route name নেই।
+- Composer dependency audit: known security advisory নেই।
+- Unit permission test passed।
+- Example feature test passed।
+- php artisan view:cache passed।
+
+মনোযোগ প্রয়োজন
+- Full Laravel test run green নয়, কারণ authentication feature test /login-এ 200 আশা করে কিন্তু application 404 দেয়।
+- এটি static/codebase audit। প্রতিটি page-এর browser test, load test, penetration test, backup/restore drill এবং production observability check-এর বিকল্প নয়।

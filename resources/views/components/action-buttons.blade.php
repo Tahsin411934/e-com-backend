@@ -45,8 +45,7 @@
     {{-- Edit Button (JavaScript function) --}}
     @if($edit)
         @if($canEdit)
-        <button onclick="{{ $edit }}({{ $id }})"
-            class="btn-primary px-2 py-1 rounded text-sm transition"
+        <button type="button" class="js-crud-action btn-primary px-2 py-1 rounded text-sm transition" data-crud-action="edit" data-crud-callback="{{ $edit }}" data-crud-id="{{ $id }}"
             title="Edit">
             <i class="fa fa-pencil"></i>
         </button>
@@ -80,8 +79,7 @@
 
     {{-- Duplicate Button (JavaScript function) --}}
     @if($duplicate)
-        <button onclick="{{ $duplicate }}({{ $id }})"
-            class="bg-amber-500 text-white px-2 py-1 rounded text-sm hover:bg-amber-400 transition"
+        <button type="button" class="js-crud-action bg-amber-500 text-white px-2 py-1 rounded text-sm hover:bg-amber-400 transition" data-crud-action="duplicate" data-crud-callback="{{ $duplicate }}" data-crud-id="{{ $id }}"
             title="Duplicate">
             <i class="fa fa-copy"></i>
         </button>
@@ -90,8 +88,7 @@
     {{-- Delete Button --}}
     @if($deleteUrl)
         @if($canDelete)
-        <button onclick="deleteEntity('{{ $deleteUrl }}'.replace(':id', {{ $id }}), '{{ $delete ?? 'delete' }}')"
-            class="bg-red-500 text-white px-2 py-1 rounded text-sm hover:bg-red-600 transition"
+        <button type="button" class="js-crud-action bg-red-500 text-white px-2 py-1 rounded text-sm hover:bg-red-600 transition" data-crud-action="delete-url" data-crud-url="{{ str_replace(':id', $id, $deleteUrl) }}" data-crud-label="{{ $delete ?? 'delete' }}"
             title="Delete">
             <i class="fa fa-trash"></i>
         </button>
@@ -105,8 +102,7 @@
         @endif
     @elseif($delete)
         @if($canDelete)
-        <button onclick="{{ $delete }}({{ $id }})"
-            class="bg-red-500 text-white px-2 py-1 rounded text-sm hover:bg-red-600 transition"
+        <button type="button" class="js-crud-action bg-red-500 text-white px-2 py-1 rounded text-sm hover:bg-red-600 transition" data-crud-action="delete" data-crud-callback="{{ $delete }}" data-crud-id="{{ $id }}"
             title="Delete">
             <i class="fa fa-trash"></i>
         </button>

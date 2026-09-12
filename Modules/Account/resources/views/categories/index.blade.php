@@ -51,13 +51,13 @@
 
     @push('scripts')
     <script>
-        window.fillAccountcategoryForm = function(data) {
+Crud.register('accountcategory', 'fill', function (data) {
             $('#accountcategory_name').val(data.name);
             $('#accountcategory_slug').val(data.slug);
             $('#accountcategory_parent_id').val(data.parent_id);
             $('#accountcategory_type').val(data.type);
             $('#accountcategory_is_active').prop('checked', !!data.is_active);
-        };
+        });
     </script>
     @endpush
 </x-app-layout>

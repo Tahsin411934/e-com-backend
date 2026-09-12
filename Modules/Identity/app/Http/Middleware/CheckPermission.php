@@ -33,13 +33,15 @@ class CheckPermission
             ->pluck('name')
             ->unique();
 
-        // Check if user has any of the specified permissions.
-        // A pattern like "units.*" matches any user permission starting with "units."
-        $hasPermission = collect($permissions)->contains(function ($permission) use ($userPermissions) {
+        // Resource wildcards resolve to the permission required by the current
+        // controller action. A user with only `products.view` must never pass
+        // an update or destroy route protected by `products.*`.
+        $hasPermission = collect($permissions)->contains(function ($permission) use ($request, $userPermissions) {
             if (str_ends_with($permission, '.*')) {
-                $prefix = substr($permission, 0, -1); // keep trailing dot: "units."
+                $ability = $this->abilityForAction($request->route()?->getActionMethod());
 
-                return $userPermissions->contains(fn ($name) => str_starts_with($name, $prefix));
+                return $ability !== null
+                    && $userPermissions->contains(substr($permission, 0, -1).$ability);
             }
 
             return $userPermissions->contains($permission);
@@ -50,5 +52,16 @@ class CheckPermission
         }
 
         return $next($request);
+    }
+
+    private function abilityForAction(?string $action): ?string
+    {
+        return match ($action) {
+            'index', 'show', 'dataTable' => 'view',
+            'create', 'store' => 'create',
+            'edit', 'update' => 'edit',
+            'destroy' => 'delete',
+            default => null,
+        };
     }
 }

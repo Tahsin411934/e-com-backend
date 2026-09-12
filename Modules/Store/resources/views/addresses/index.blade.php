@@ -114,7 +114,7 @@
 
     @push('scripts')
     <script>
-        window.fillAddressForm = function(data) {
+Crud.register('address', 'fill', function (data) {
             $('#address_label').val(data.label);
             $('#address_contact_name').val(data.contact_name);
             $('#address_contact_phone').val(data.contact_phone);
@@ -128,7 +128,7 @@
             $('#address_longitude').val(data.longitude);
             if (data.is_default) $('#address_is_default').prop('checked', true);
             if (data.store_id) $('#address_store_id').val(data.store_id);
-        };
+        });
     </script>
     @endpush
 </x-app-layout>

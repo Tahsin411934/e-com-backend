@@ -69,7 +69,7 @@
     @push('scripts')
     <script>
         // ===== Subnavbar Item form fill =====
-        window.fillSubnavbaritemForm = function(data) {
+Crud.register('subnavbaritem', 'fill', function (data) {
             $('#subnavbar_item_navbar_item_id').val(data.navbar_item_id);
             $('#subnavbar_item_name').val(data.name);
             $('#subnavbar_item_slug').val(data.slug);
@@ -77,7 +77,7 @@
             $('#subnavbar_item_icon').val(data.icon || '');
             $('#subnavbar_item_sort_order').val(data.sort_order || 0);
             $('#subnavbar_item_status').val(data.status);
-        };
+        });
 
         // ===== Load navbar items into select dropdown =====
         function loadNavbarItemsSelect() {

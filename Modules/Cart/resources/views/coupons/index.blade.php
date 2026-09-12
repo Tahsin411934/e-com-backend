@@ -57,7 +57,7 @@
 
     @push('scripts')
     <script>
-        window.fillCouponForm = function(data) {
+Crud.register('coupon', 'fill', function (data) {
             $('#coupon_code').val(data.code);
             $('#coupon_discount_type').val(data.discount_type);
             $('#coupon_discount_value').val(data.discount_value);
@@ -67,7 +67,7 @@
             $('#coupon_starts_at').val(data.starts_at ? data.starts_at.replace(' ', 'T').substring(0, 16) : '');
             $('#coupon_ends_at').val(data.ends_at ? data.ends_at.replace(' ', 'T').substring(0, 16) : '');
             $('#coupon_status').val(data.status);
-        };
+        });
     </script>
     @endpush
 </x-app-layout>

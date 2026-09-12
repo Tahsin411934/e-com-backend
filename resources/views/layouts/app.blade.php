@@ -133,16 +133,16 @@
     <!-- ✅ GLOBAL LOADER HANDLING - FINAL WORKING VERSION -->
     <script>
         $(document).ready(function() {
-            window.isInitialPageLoad = true;
+            var isInitialPageLoad = true;
 
-            window.isDataTableProcessing = function() {
+            function isDataTableProcessing() {
                 return $('.dataTables_processing:visible').length > 0 || $('body').hasClass(
                 'dt-custom-loading');
             };
 
             // ১. AJAX start
             $(document).on('ajaxStart', function() {
-                if (window.isInitialPageLoad && !window.isDataTableProcessing()) {
+                if (isInitialPageLoad && !isDataTableProcessing()) {
                     $('#global-loader').removeClass('hidden');
                 }
             });
@@ -150,9 +150,9 @@
             // ২. AJAX শেষ হলে (টাইম কমিয়ে ১০০ms করা হয়েছে দ্রুত রেসপন্সের জন্য)
             $(document).on('ajaxStop', function() {
                 setTimeout(function() {
-                    if (!window.isDataTableProcessing()) {
+                    if (!isDataTableProcessing()) {
                         $('#global-loader').addClass('hidden');
-                        window.isInitialPageLoad = false;
+                        isInitialPageLoad = false;
                     }
                 }, 100);
             });
@@ -160,9 +160,9 @@
             // ৩. স্ট্যাটিক পেজের জন্য (টাইম কমিয়ে ১০০ms করা হয়েছে)
             function handleStaticPageLoader() {
                 setTimeout(function() {
-                    if (!window.isDataTableProcessing()) {
+                    if (!isDataTableProcessing()) {
                         $('#global-loader').addClass('hidden');
-                        window.isInitialPageLoad = false;
+                        isInitialPageLoad = false;
                     }
                 }, 100); // ১০০ms পলকের মতো কাজ করবে, ইউজার কোনো ল্যাগ বুঝবে না
             }

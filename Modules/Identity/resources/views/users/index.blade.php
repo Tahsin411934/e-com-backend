@@ -58,7 +58,7 @@
 
     @push('scripts')
     <script>
-        window.fillUserForm = function(data) {
+Crud.register('user', 'fill', function (data) {
             $('#user_first_name').val(data.first_name);
             $('#user_last_name').val(data.last_name);
             $('#user_email').val(data.email);
@@ -69,7 +69,7 @@
             if (data.roles && data.roles.length > 0) {
                 $('#user_role_id').val(data.roles[0].id);
             }
-        };
+        });
     </script>
     @endpush
 </x-app-layout>

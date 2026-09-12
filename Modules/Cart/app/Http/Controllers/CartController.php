@@ -5,6 +5,7 @@ namespace Modules\Cart\Http\Controllers;
 use App\Helpers\ApiResponse;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
+use Modules\Cart\Http\Requests\CartRequest;
 use Modules\Cart\Services\CartService;
 use Modules\Cart\Services\DeliveryChargeService;
 
@@ -25,9 +26,9 @@ class CartController extends Controller
         return $this->cartService->getCartDataTable($request);
     }
 
-    public function store(Request $request)
+    public function store(CartRequest $request)
     {
-        return $this->cartService->saveCart($request->all());
+        return $this->cartService->saveCart($request->validated());
     }
 
     public function show($id)
@@ -35,9 +36,9 @@ class CartController extends Controller
         return $this->cartService->getCartById((int) $id);
     }
 
-    public function update(Request $request, int $id)
+    public function update(CartRequest $request, int $id)
     {
-        $data = $request->all();
+        $data = $request->validated();
         $data['cart_id'] = $id;
 
         return $this->cartService->saveCart($data);

@@ -115,9 +115,9 @@
     </div>
 
     <script>
-        window.onload = function() {
+        window.addEventListener('load', function () {
             window.print();
-        }
+        });
     </script>
 </body>
 </html>

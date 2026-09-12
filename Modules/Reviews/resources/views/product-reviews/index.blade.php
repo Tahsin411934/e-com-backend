@@ -48,7 +48,7 @@
     {{-- Review drawer (reusable drawer component) --}}
     <x-drawer id="productReviewDrawer" overlayId="productReviewOverlay" title="Edit Review" maxWidth="max-w-lg"
         submitBtnId="saveReviewBtn" submitBtnText="Update Review" submitBtnColor="bg-emerald-600 hover:bg-emerald-700"
-        submitOnClick="saveReviewForm()">
+        submitEntity="productreview" submitAction="save">
 
         <form id="productReviewForm">
             <input type="hidden" name="review_id" id="productReview_hid">
@@ -112,7 +112,7 @@
         }
 
         // ========== EDIT (opens the reusable drawer) ==========
-        window.productReviewEdit = function (id) {
+        function productReviewEdit(id) {
             $.get("{{ route('product-reviews.show', ':id') }}".replace(':id', id), function (res) {
                 if (res.status !== 'success') {
                     Swal.fire('Error', res.message || 'Review not found.', 'error');
@@ -175,7 +175,7 @@
         }
 
         // ========== DELETE ==========
-        window.productReviewDelete = function (id) {
+        function productReviewDelete(id) {
             Swal.fire({
                 title: 'Are you sure?',
                 text: 'This review will be deleted!',
@@ -212,7 +212,7 @@
         };
 
         // ========== APPROVE ==========
-        window.productReviewApprove = function (id) {
+        function productReviewApprove(id) {
             $.post("{{ route('product-reviews.approve', ':id') }}".replace(':id', id),
                 { _token: '{{ csrf_token() }}' },
                 function (res) {
@@ -232,6 +232,18 @@
                     Swal.fire('Error', xhr.responseJSON?.message || 'Server error', 'error');
                 });
         };
+
+        Crud.register('productreview', 'fill', fillReviewForm);
+        Crud.register('productreview', 'edit', productReviewEdit);
+        Crud.register('productreview', 'save', saveReviewForm);
+        Crud.register('productreview', 'delete', productReviewDelete);
+        Crud.register('productreview', 'approve', productReviewApprove);
+
+        $(document).on('click', '.js-product-review-action', function () {
+            var button = $(this);
+            var callback = Crud.get('productreview', button.data('action'));
+            if (typeof callback === 'function') callback(button.data('id'));
+        });
 
         // ========== INIT ==========
         $(document).ready(function () {

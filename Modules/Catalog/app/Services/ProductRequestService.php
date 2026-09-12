@@ -44,13 +44,13 @@ class ProductRequestService
                 return '-';
             })
             ->addColumn('action', function (ProductRequest $pr) {
-                $viewBtn = '<button onclick="viewProductRequest('.$pr->id.')" class="bg-blue-600 text-white px-2 py-1 rounded text-sm hover:bg-blue-500 mr-1" title="View"><i class="fa fa-eye"></i></button>';
-                $editBtn = '<button onclick="productRequestEdit('.$pr->id.')" class="bg-amber-500 text-white px-2 py-1 rounded text-sm hover:bg-amber-400 mr-1" title="Edit"><i class="fa fa-edit"></i></button>';
-                $deleteBtn = '<button onclick="productRequestDelete('.$pr->id.')" class="bg-red-600 text-white px-2 py-1 rounded text-sm hover:bg-red-500 mr-1" title="Delete"><i class="fa fa-trash"></i></button>';
-                $statusBtn = '<button onclick="changeProductRequestStatus('.$pr->id.')" class="bg-green-600 text-white px-2 py-1 rounded text-sm hover:bg-green-500" title="Change Status"><i class="fa fa-check-circle"></i></button>';
+                $viewBtn = '<button type="button" class="js-product-request-action bg-blue-600 text-white px-2 py-1 rounded text-sm hover:bg-blue-500 mr-1" data-action="view" data-id="'.$pr->id.'" title="View"><i class="fa fa-eye"></i></button>';
+                $editBtn = '<button type="button" class="js-product-request-action bg-amber-500 text-white px-2 py-1 rounded text-sm hover:bg-amber-400 mr-1" data-action="edit" data-id="'.$pr->id.'" title="Edit"><i class="fa fa-edit"></i></button>';
+                $deleteBtn = '<button type="button" class="js-product-request-action bg-red-600 text-white px-2 py-1 rounded text-sm hover:bg-red-500 mr-1" data-action="delete" data-id="'.$pr->id.'" title="Delete"><i class="fa fa-trash"></i></button>';
+                $statusBtn = '<button type="button" class="js-product-request-action bg-green-600 text-white px-2 py-1 rounded text-sm hover:bg-green-500" data-action="status" data-id="'.$pr->id.'" title="Change Status"><i class="fa fa-check-circle"></i></button>';
                 $approveBtn = '';
                 if ($pr->status !== 'approved' && $pr->status !== 'fulfilled') {
-                    $approveBtn = '<button onclick="approveProductRequest('.$pr->id.')" class="bg-emerald-600 text-white px-2 py-1 rounded text-sm hover:bg-emerald-500 mr-1" title="Approve"><i class="fa fa-thumbs-up"></i></button>';
+                    $approveBtn = '<button type="button" class="js-product-request-action bg-emerald-600 text-white px-2 py-1 rounded text-sm hover:bg-emerald-500 mr-1" data-action="approve" data-id="'.$pr->id.'" title="Approve"><i class="fa fa-thumbs-up"></i></button>';
                 }
 
                 return $approveBtn.$viewBtn.$editBtn.$deleteBtn.$statusBtn;

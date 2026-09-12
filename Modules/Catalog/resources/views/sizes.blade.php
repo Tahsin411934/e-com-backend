@@ -94,7 +94,7 @@
             syncSizeGroupSelection();
         });
 
-        window.fillSizeForm = function(data) {
+Crud.register('size', 'fill', function (data) {
             var picker = $('#size_group_id_picker');
 
             // Inject the size's group so Select2 displays it
@@ -116,7 +116,7 @@
             if (window.Select2Ajax) {
                 window.Select2Ajax.sync(picker.closest('form'));
             }
-        };
+        });
     </script>
     @endpush
 </x-app-layout>

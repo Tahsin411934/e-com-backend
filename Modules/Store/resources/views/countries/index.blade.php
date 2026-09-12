@@ -41,10 +41,10 @@
 
     @push('scripts')
     <script>
-        window.fillCountryForm = function(data) {
+Crud.register('country', 'fill', function (data) {
             $('#country_iso2').val(data.iso2);
             $('#country_name').val(data.name);
-        };
+        });
     </script>
     @endpush
 </x-app-layout>

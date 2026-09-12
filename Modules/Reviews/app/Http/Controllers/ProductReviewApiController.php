@@ -6,8 +6,8 @@ use App\Helpers\ApiResponse;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Validation\Rule;
 use Modules\Catalog\Models\Product;
+use Modules\Reviews\Http\Requests\SubmitProductReviewRequest;
 use Modules\Reviews\Models\ProductReview;
 use Modules\Reviews\Services\NotificationService;
 
@@ -48,16 +48,11 @@ class ProductReviewApiController extends Controller
     /**
      * Store a pending review for a product.
      */
-    public function store(Request $request, int $productId): JsonResponse
+    public function store(SubmitProductReviewRequest $request, int $productId): JsonResponse
     {
         Product::findOrFail($productId);
 
-        $validated = $request->validate([
-            'product_id' => ['sometimes', 'integer', Rule::in([$productId])],
-            'rating' => ['required', 'integer', 'min:1', 'max:5'],
-            'title' => ['required', 'string', 'max:255'],
-            'body' => ['required', 'string', 'max:2000'],
-        ]);
+        $validated = $request->validated();
 
         $existingReview = ProductReview::where('product_id', $productId)
             ->where('user_id', $request->user()->id)

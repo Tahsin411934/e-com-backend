@@ -68,7 +68,7 @@
             function productDelete(id) {
                 let deleteUrl = "{{ route('products.destroy', ':id') }}".replace(':id', id);
                 let tableId = '#productTable';
-                confirmAndDelete(deleteUrl, tableId);
+                Crud.get('shared', 'delete-url')(deleteUrl, tableId);
             }
 
             function productDuplicate(id) {
@@ -136,6 +136,10 @@
                     Swal.fire('Error', 'Server communication error.', 'error');
                 });
             }
+
+            Crud.register('product', 'edit', productEdit);
+            Crud.register('product', 'delete', productDelete);
+            Crud.register('product', 'duplicate', productDuplicate);
 
             $(document).ready(function() {
                 $('#resetFilters').on('click', function() {

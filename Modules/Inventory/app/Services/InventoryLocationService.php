@@ -35,8 +35,8 @@ class InventoryLocationService
             })
             ->addColumn('action', function (InventoryLocation $location) {
                 return view('components.action-buttons', [
-                'permission' => 'inventory-locations',
-                'entityLabel' => 'Inventory Location',
+                    'permission' => 'inventory-locations',
+                    'entityLabel' => 'Inventory Location',
                     'id' => $location->id,
                     'edit' => 'inventoryLocationEdit',
                     'delete' => 'inventoryLocationDelete',

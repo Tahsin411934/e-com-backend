@@ -52,12 +52,12 @@
 
     @push('scripts')
     <script>
-        window.fillPosShiftForm = function(data) {
+Crud.register('posshift', 'fill', function (data) {
             $('#shift_register_id').val(data.register_id);
             $('#shift_user_id').val(data.user_id);
             $('#shift_opening_balance').val(data.opening_balance);
             $('#shift_notes').val(data.notes);
-        };
+        });
     </script>
     @endpush
 </x-app-layout>

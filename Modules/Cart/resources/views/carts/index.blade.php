@@ -41,10 +41,10 @@
 
     @push('scripts')
     <script>
-        window.fillCartForm = function(data) {
+Crud.register('cart', 'fill', function (data) {
             $('#cart_session_id').val(data.session_id || '');
             $('#cart_status').val(data.status);
-        };
+        });
     </script>
     @endpush
 </x-app-layout>

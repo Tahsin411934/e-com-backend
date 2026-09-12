@@ -73,7 +73,7 @@
 
     @push('scripts')
     <script>
-        window.fillTaxRateForm = function(data) {
+Crud.register('taxrate', 'fill', function (data) {
             $('#taxRate_name').val(data.name);
             $('#taxRate_rate').val(data.rate);
             $('#taxRate_type').val(data.type);
@@ -81,7 +81,7 @@
             $('#taxRate_status').val(data.status);
             $('#taxRate_is_default').prop('checked', data.is_default == 1 || data.is_default == true);
             $('#taxRate_description').val(data.description);
-        };
+        });
     </script>
     @endpush
 </x-app-layout>

@@ -92,7 +92,7 @@
 
     @push('scripts')
     <script>
-        window.fillSupplierForm = function(data) {
+Crud.register('supplier', 'fill', function (data) {
             $('#supplier_store_id').val(data.store_id);
             $('#supplier_name').val(data.name);
             $('#supplier_email').val(data.email);
@@ -105,7 +105,7 @@
             $('#supplier_payment_terms').val(data.payment_terms);
             $('#supplier_notes').val(data.notes);
             $('#supplier_status').val(data.status);
-        };
+        });
     </script>
     @endpush
 </x-app-layout>

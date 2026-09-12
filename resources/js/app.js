@@ -6,6 +6,17 @@ window.Alpine = Alpine;
 
 Alpine.start();
 
+window.Crud = window.Crud || {
+    callbacks: {},
+    register(entity, action, callback) {
+        this.callbacks[entity] = this.callbacks[entity] || {};
+        this.callbacks[entity][action] = callback;
+    },
+    get(entity, action) {
+        return this.callbacks[entity]?.[action] ?? null;
+    },
+};
+
 // Global Drawer Handlers
 window.openGlobalDrawer = function(drawerId, overlayId) {
     const $drawer = $(`#${drawerId}`);
@@ -31,6 +42,19 @@ window.closeGlobalDrawer = function(drawerId, overlayId) {
 
 // গ্লোবাল ইভেন্ট লিসেনার (পেজ লোড হওয়ার পর একবারই কাজ করবে)
 $(document).ready(function() {
+    $(document).on('click', '.js-global-drawer-close', function() {
+        closeGlobalDrawer($(this).data('drawer-id'), $(this).data('overlay-id'));
+    });
+
+    $(document).on('click', '.js-drawer-submit', function() {
+        const button = $(this);
+        const callback = window.Crud.get(button.data('crud-entity'), button.data('crud-action'));
+
+        if (typeof callback === 'function') {
+            callback();
+        }
+    });
+
     // ১. ওভারলে-তে ক্লিক করলে ড্রয়ার বন্ধ হবে
     $(document).on('click', '[id$="-overlay"], [id$="Overlay"], #drawer-overlay', function() {
         closeGlobalDrawer();

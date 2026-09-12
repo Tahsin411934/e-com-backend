@@ -4,6 +4,7 @@ namespace Modules\Cart\Http\Controllers;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
+use Modules\Cart\Http\Requests\CouponRequest;
 use Modules\Cart\Services\CouponService;
 
 class CouponController extends Controller
@@ -20,9 +21,9 @@ class CouponController extends Controller
         return $this->couponService->getCouponDataTable($request);
     }
 
-    public function store(Request $request)
+    public function store(CouponRequest $request)
     {
-        return $this->couponService->saveCoupon($request->all());
+        return $this->couponService->saveCoupon($request->validated());
     }
 
     public function show($id)
@@ -30,9 +31,9 @@ class CouponController extends Controller
         return $this->couponService->getCouponById((int) $id);
     }
 
-    public function update(Request $request, int $id)
+    public function update(CouponRequest $request, int $id)
     {
-        return $this->couponService->saveCoupon($request->all() + ['coupon_id' => $id]);
+        return $this->couponService->saveCoupon($request->validated() + ['coupon_id' => $id]);
     }
 
     public function destroy($id)

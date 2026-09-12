@@ -82,7 +82,7 @@
             }
         });
 
-        window.fillRoleForm = function(data) {
+Crud.register('role', 'fill', function (data) {
             $('#role_name').val(data.name);
             $('#role_description').val(data.description);
             
@@ -104,7 +104,7 @@
                     $(this).prop('checked', total === checked && total > 0);
                 });
             }
-        };
+        });
     </script>
     @endpush
 </x-app-layout>

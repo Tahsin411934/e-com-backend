@@ -96,14 +96,15 @@
         // When arriving from a received Purchase Order ("Return" button), open the drawer
         // with that order pre-selected (and its supplier/store auto-filled).
         $(function() {
-            if (typeof window.openPurchaseReturnDrawer !== 'function') return;
+            var openDrawer = Crud.get('purchasereturn', 'open');
+            if (typeof openDrawer !== 'function') return;
             var params = new URLSearchParams(window.location.search);
             var poId = params.get('purchase_order_id');
             if (!poId) return;
 
             // Entity-CRUD resets the form when opening the "add" drawer, so set
             // the pre-selected values AFTER it opens.
-            window.openPurchaseReturnDrawer('add');
+            openDrawer('add');
             var opt = $('#purchaseReturn_purchase_order_id option[value="' + poId + '"]');
             if (opt.length) {
                 $('#purchaseReturn_purchase_order_id').val(opt.val());
@@ -112,7 +113,7 @@
             }
         });
 
-        window.fillPurchaseReturnForm = function(data) {
+Crud.register('purchasereturn', 'fill', function (data) {
             $('#purchaseReturn_purchase_order_id').val(data.purchase_order_id);
             $('#purchaseReturn_supplier_id').val(data.supplier_id);
             $('#purchaseReturn_store_id').val(data.store_id);
@@ -122,7 +123,7 @@
             $('#purchaseReturn_return_date').val(data.return_date);
             $('#purchaseReturn_reason').val(data.reason);
             $('#purchaseReturn_notes').val(data.notes);
-        };
+        });
     </script>
     @endpush
 </x-app-layout>

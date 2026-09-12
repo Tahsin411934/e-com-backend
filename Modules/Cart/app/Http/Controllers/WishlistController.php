@@ -4,6 +4,7 @@ namespace Modules\Cart\Http\Controllers;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
+use Modules\Cart\Http\Requests\WishlistRequest;
 use Modules\Cart\Services\WishlistService;
 
 class WishlistController extends Controller
@@ -20,9 +21,9 @@ class WishlistController extends Controller
         return $this->wishlistService->getWishlistDataTable($request);
     }
 
-    public function store(Request $request)
+    public function store(WishlistRequest $request)
     {
-        return $this->wishlistService->saveWishlist($request->all());
+        return $this->wishlistService->saveWishlist($request->validated());
     }
 
     public function show($id)
@@ -30,9 +31,9 @@ class WishlistController extends Controller
         return $this->wishlistService->getWishlistById((int) $id);
     }
 
-    public function update(Request $request, int $id)
+    public function update(WishlistRequest $request, int $id)
     {
-        $data = $request->all();
+        $data = $request->validated();
         $data['wishlist_id'] = $id;
 
         return $this->wishlistService->saveWishlist($data);

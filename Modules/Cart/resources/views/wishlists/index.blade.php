@@ -32,10 +32,10 @@
 
     @push('scripts')
     <script>
-        window.fillWishlistForm = function(data) {
+Crud.register('wishlist', 'fill', function (data) {
             $('#wishlist_user_id').val(data.user_id);
             $('#wishlist_product_id').val(data.product_id);
-        };
+        });
     </script>
     @endpush
 </x-app-layout>

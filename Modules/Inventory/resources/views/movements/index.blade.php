@@ -69,13 +69,13 @@
 
     @push('scripts')
     <script>
-        window.fillInventoryMovementForm = function(data) {
+Crud.register('inventorymovement', 'fill', function (data) {
             $('#movement_location_id').val(data.location_id);
             $('#movement_type').val(data.movement_type);
             $('#movement_quantity').val(data.quantity);
             $('#movement_reference_type').val(data.reference_type);
             $('#movement_note').val(data.note);
-        };
+        });
     </script>
     @endpush
 </x-app-layout>

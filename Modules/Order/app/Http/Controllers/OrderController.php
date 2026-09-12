@@ -4,6 +4,7 @@ namespace Modules\Order\Http\Controllers;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
+use Modules\Order\Http\Requests\OrderRequest;
 use Modules\Order\Services\OrderService;
 use Modules\Store\Models\Store;
 use Modules\Store\Support\CurrentStore;
@@ -30,9 +31,9 @@ class OrderController extends Controller
         return $this->orderService->getOrderDataTable($request);
     }
 
-    public function store(Request $request)
+    public function store(OrderRequest $request)
     {
-        return $this->orderService->saveOrder($request->all());
+        return $this->orderService->saveOrder($request->validated());
     }
 
     public function show($id)
@@ -40,9 +41,9 @@ class OrderController extends Controller
         return $this->orderService->getOrderById((int) $id);
     }
 
-    public function update(Request $request, int $id)
+    public function update(OrderRequest $request, int $id)
     {
-        return $this->orderService->saveOrder($request->all() + ['order_id' => $id]);
+        return $this->orderService->saveOrder($request->validated() + ['order_id' => $id]);
     }
 
     public function destroy($id)

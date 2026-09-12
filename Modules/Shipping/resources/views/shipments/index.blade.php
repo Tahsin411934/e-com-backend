@@ -109,7 +109,7 @@
 
     @push('scripts')
     <script>
-        window.fillShipmentForm = function(data) {
+Crud.register('shipment', 'fill', function (data) {
             $('#shipment_order_id').val(data.order_id || '');
             $('#shipment_store_id').val(data.store_id || '');
             $('#shipment_delivery_zone_id').val(data.delivery_zone_id || '');
@@ -130,7 +130,7 @@
             $('#shipment_eta_at').val(data.eta_at ? data.eta_at.substring(0, 16) : '');
             $('#shipment_shipped_at').val(data.shipped_at ? data.shipped_at.substring(0, 16) : '');
             $('#shipment_delivered_at').val(data.delivered_at ? data.delivered_at.substring(0, 16) : '');
-        };
+        });
     </script>
     @endpush
 </x-app-layout>

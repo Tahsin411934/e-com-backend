@@ -50,7 +50,7 @@ class ProductReviewService
                 ])->render();
 
                 if ($r->status === 'pending') {
-                    $html .= '<button type="button" onclick="productReviewApprove('.$r->id.')" title="Approve" '
+                    $html .= '<button type="button" class="js-product-review-action" data-action="approve" data-id="'.$r->id.'" title="Approve" '
                         .'class="bg-emerald-500 text-white px-2 py-1 rounded text-sm hover:bg-emerald-600 transition">'
                         .'<i class="fa fa-check"></i></button>';
                 }

@@ -9,7 +9,6 @@ use Illuminate\Support\Facades\DB;
 use Modules\Inventory\Models\InventoryLocation;
 use Modules\Inventory\Models\InventoryMovement;
 use Modules\Inventory\Models\InventoryStock;
-use Modules\Store\Support\CurrentStore;
 use Yajra\DataTables\DataTables;
 
 class InventoryStockService
@@ -66,11 +65,11 @@ class InventoryStockService
             })
             ->addColumn('action', function (InventoryStock $stock) {
                 return view('components.action-buttons', [
-                'permission' => 'inventory-stock',
-                'entityLabel' => 'Inventory Stock',
+                    'permission' => 'inventory-stock',
+                    'entityLabel' => 'Inventory Stock',
                     'id' => $stock->id,
-                    'edit' => 'stockEdit',
-                    'delete' => 'stockDelete',
+                    'edit' => 'inventoryStockEdit',
+                    'delete' => 'inventoryStockDelete',
                 ])->render();
             })
             ->rawColumns(['low_stock', 'action'])

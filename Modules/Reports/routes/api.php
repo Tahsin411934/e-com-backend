@@ -19,6 +19,6 @@ use Modules\Reports\Http\Controllers\ReportApiController;
 */
 
 Route::middleware(['convert.auth.cookie', 'auth:sanctum', 'role:Super Admin,Admin,Manager,Staff'])->prefix('v1/reports')->group(function () {
-    Route::get('/{category}/{method}', [ReportApiController::class, 'report']);
-    Route::get('/{category}/{method}/export', [ReportApiController::class, 'export']);
+    Route::get('/{category}/{method}', [ReportApiController::class, 'report'])->name('reports.show');
+    Route::get('/{category}/{method}/export', [ReportApiController::class, 'export'])->name('reports.export');
 });

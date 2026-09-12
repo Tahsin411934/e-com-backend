@@ -57,14 +57,14 @@
     @push('scripts')
     <script>
         // ===== Navbar Item form fill =====
-        window.fillNavbaritemForm = function(data) {
+Crud.register('navbaritem', 'fill', function (data) {
             $('#navbar_item_name').val(data.name);
             $('#navbar_item_slug').val(data.slug);
             $('#navbar_item_url').val(data.url || '');
             $('#navbar_item_icon').val(data.icon || '');
             $('#navbar_item_sort_order').val(data.sort_order || 0);
             $('#navbar_item_status').val(data.status);
-        };
+        });
 
         $(document).ready(function() {
             // Auto-generate slug from name

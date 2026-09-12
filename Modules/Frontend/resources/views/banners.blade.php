@@ -133,7 +133,7 @@
         }
 
         // ===== Banner form fill =====
-        window.fillBannerForm = function(data) {
+Crud.register('banner', 'fill', function (data) {
             $('#banner_title').val(data.title);
             $('#banner_subtitle').val(data.subtitle || '');
             $('#banner_smtag').val(data.smtag || '');
@@ -163,7 +163,7 @@
             } else {
                 $('#bannerImagePreview').addClass('hidden');
             }
-        };
+        });
 
         // Preview image on file select + color picker <-> hex input sync
         $(document).ready(function() {

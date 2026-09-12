@@ -85,7 +85,7 @@
 
     @push('scripts')
     <script>
-        window.fillPosSaleForm = function(data) {
+Crud.register('possale', 'fill', function (data) {
             $('#sale_register_id').val(data.register_id);
             $('#sale_user_id').val(data.user_id);
             $('#sale_subtotal').val(data.subtotal);
@@ -98,7 +98,7 @@
             $('#sale_payment_status').val(data.payment_status);
             $('#sale_status').val(data.status);
             $('#sale_notes').val(data.notes);
-        };
+        });
     </script>
     @endpush
 </x-app-layout>

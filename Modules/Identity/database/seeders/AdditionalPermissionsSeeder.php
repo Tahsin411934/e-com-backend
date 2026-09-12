@@ -106,6 +106,9 @@ class AdditionalPermissionsSeeder extends Seeder
         ],
         'wishlists' => [
             'wishlists.view' => 'View wishlists',
+            'wishlists.create' => 'Create wishlists',
+            'wishlists.edit' => 'Edit wishlists',
+            'wishlists.delete' => 'Delete wishlists',
         ],
         // ===== Purchases =====
         'suppliers' => [
@@ -190,6 +193,9 @@ class AdditionalPermissionsSeeder extends Seeder
         ],
         'shipment_events' => [
             'shipment-events.view' => 'View shipment events',
+            'shipment-events.create' => 'Create shipment events',
+            'shipment-events.edit' => 'Edit shipment events',
+            'shipment-events.delete' => 'Delete shipment events',
         ],
         'delivery_drivers' => [
             'delivery-drivers.view' => 'View delivery drivers',

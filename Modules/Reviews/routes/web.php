@@ -19,8 +19,8 @@ Route::middleware(['auth', 'verified', 'admin'])->group(function () {
     Route::post('/notifications/{id}/mark-read', [NotificationController::class, 'markAsRead'])->name('notifications.mark-read')->middleware('permission:notifications.edit');
 
     // Navbar notification bell (polling endpoints) — accessible to any admin user
-    Route::get('/notifications/bell', [NotificationController::class, 'bell'])->name('notifications.bell');
-    Route::post('/notifications/mark-all-read', [NotificationController::class, 'markAllRead'])->name('notifications.mark-all-read');
+    Route::get('/notifications/bell', [NotificationController::class, 'bell'])->name('notifications.bell')->middleware('permission:notifications.view');
+    Route::post('/notifications/mark-all-read', [NotificationController::class, 'markAllRead'])->name('notifications.mark-all-read')->middleware('permission:notifications.edit');
 
     // Audit Logs
     Route::resource('audit-logs', AuditLogController::class)->except(['create', 'edit'])->names('audit-logs')->middleware('permission:audit-logs.*');

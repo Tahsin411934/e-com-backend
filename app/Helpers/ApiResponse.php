@@ -3,6 +3,7 @@
 namespace App\Helpers;
 
 use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\Log;
 
 class ApiResponse
 {
@@ -23,6 +24,15 @@ class ApiResponse
      */
     public static function error(string $message = 'Error', int $code = 400, $errors = null): JsonResponse
     {
+        if ($code >= 500) {
+            Log::error($message, ['response_errors' => $errors]);
+
+            if (! config('app.debug')) {
+                $message = 'An unexpected error occurred. Please try again.';
+                $errors = null;
+            }
+        }
+
         $response = [
             'status' => 'error',
             'message' => $message,

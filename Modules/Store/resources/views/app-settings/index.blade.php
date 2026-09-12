@@ -64,13 +64,13 @@
 
     @push('scripts')
     <script>
-        window.fillAppSettingForm = function(data) {
+Crud.register('appsetting', 'fill', function (data) {
             $('#setting_scope_type').val(data.scope_type);
             $('#setting_scope_id').val(data.scope_id);
             $('#setting_key').val(data.setting_key);
             $('#setting_value').val(JSON.stringify(data.setting_value, null, 2));
             if (data.is_public) $('#setting_is_public').prop('checked', true);
-        };
+        });
     </script>
     @endpush
 </x-app-layout>

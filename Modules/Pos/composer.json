@@ -1,5 +1,5 @@
 {
-    "name": "modules/pos",
+    "name": "nwidart/pos",
     "description": "",
     "authors": [
         {
@@ -18,6 +18,11 @@
             "Modules\\Pos\\": "app/",
             "Modules\\Pos\\Database\\Factories\\": "database/factories/",
             "Modules\\Pos\\Database\\Seeders\\": "database/seeders/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Modules\\Pos\\Tests\\": "tests/"
         }
     }
 }

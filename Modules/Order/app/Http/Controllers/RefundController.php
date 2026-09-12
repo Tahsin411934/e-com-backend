@@ -4,6 +4,7 @@ namespace Modules\Order\Http\Controllers;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
+use Modules\Order\Http\Requests\RefundRequest;
 use Modules\Order\Services\RefundService;
 
 class RefundController extends Controller
@@ -20,9 +21,9 @@ class RefundController extends Controller
         return $this->refundService->getRefundDataTable($request);
     }
 
-    public function store(Request $request)
+    public function store(RefundRequest $request)
     {
-        return $this->refundService->saveRefund($request->all());
+        return $this->refundService->saveRefund($request->validated());
     }
 
     public function show($id)
@@ -30,9 +31,9 @@ class RefundController extends Controller
         return $this->refundService->getRefundById((int) $id);
     }
 
-    public function update(Request $request, int $id)
+    public function update(RefundRequest $request, int $id)
     {
-        return $this->refundService->saveRefund($request->all() + ['refund_id' => $id]);
+        return $this->refundService->saveRefund($request->validated() + ['refund_id' => $id]);
     }
 
     public function destroy($id)

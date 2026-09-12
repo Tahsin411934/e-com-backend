@@ -22,6 +22,8 @@
         }
     },
     "autoload-dev": {
-        "psr-4": {}
+        "psr-4": {
+            "Modules\\Reports\\Tests\\": "tests/"
+        }
     }
 }

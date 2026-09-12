@@ -4,6 +4,7 @@ namespace Modules\Catalog\Http\Controllers;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
+use Modules\Catalog\Http\Requests\ProductEnquiryRequest;
 use Modules\Catalog\Services\ProductRequestService;
 
 class ProductRequestController extends Controller
@@ -25,20 +26,9 @@ class ProductRequestController extends Controller
         return $this->productRequestService->getProductRequestById((int) $id);
     }
 
-    public function store(Request $request)
+    public function store(ProductEnquiryRequest $request)
     {
-        $validated = $request->validate([
-            'customer_name' => 'required|string|max:160',
-            'customer_email' => 'required|email|max:160',
-            'customer_phone' => 'nullable|string|max:30',
-            'product_name' => 'required|string|max:220',
-            'product_description' => 'nullable|string|max:2000',
-            'product_image' => 'nullable|image|max:5120',
-            'quantity' => 'nullable|integer|min:1',
-            'expected_price' => 'nullable|numeric|min:0',
-            'notes' => 'nullable|string|max:2000',
-            'status' => 'nullable|in:pending,approved,rejected,fulfilled',
-        ]);
+        $validated = $request->validated();
 
         $validated['quantity'] = $validated['quantity'] ?? 1;
         $validated['status'] = $validated['status'] ?? 'pending';
@@ -50,20 +40,9 @@ class ProductRequestController extends Controller
         return $this->productRequestService->store($validated);
     }
 
-    public function update(Request $request, int $id)
+    public function update(ProductEnquiryRequest $request, int $id)
     {
-        $validated = $request->validate([
-            'customer_name' => 'required|string|max:160',
-            'customer_email' => 'required|email|max:160',
-            'customer_phone' => 'nullable|string|max:30',
-            'product_name' => 'required|string|max:220',
-            'product_description' => 'nullable|string|max:2000',
-            'product_image' => 'nullable|image|max:5120',
-            'quantity' => 'nullable|integer|min:1',
-            'expected_price' => 'nullable|numeric|min:0',
-            'notes' => 'nullable|string|max:2000',
-            'status' => 'nullable|in:pending,approved,rejected,fulfilled',
-        ]);
+        $validated = $request->validated();
 
         $validated['quantity'] = $validated['quantity'] ?? 1;
 

@@ -5,6 +5,7 @@ namespace Modules\Reviews\Http\Controllers;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Modules\Identity\Models\User;
+use Modules\Reviews\Http\Requests\NotificationRequest;
 use Modules\Reviews\Models\Notification;
 use Modules\Reviews\Services\NotificationService;
 
@@ -30,9 +31,9 @@ class NotificationController extends Controller
         return $this->service->getNotificationDataTable($request);
     }
 
-    public function store(Request $request)
+    public function store(NotificationRequest $request)
     {
-        return $this->service->saveNotification($request->all());
+        return $this->service->saveNotification($request->validated());
     }
 
     public function show($id)
@@ -40,9 +41,9 @@ class NotificationController extends Controller
         return $this->service->getNotificationById((int) $id);
     }
 
-    public function update(Request $request, $id)
+    public function update(NotificationRequest $request, $id)
     {
-        return $this->service->saveNotification($request->all() + ['notification_id' => $id]);
+        return $this->service->saveNotification($request->validated() + ['notification_id' => $id]);
     }
 
     public function destroy($id)

@@ -71,7 +71,7 @@
 
     @push('scripts')
     <script>
-        window.fillStoreForm = function(data) {
+Crud.register('store', 'fill', function (data) {
             $('#store_name').val(data.name);
             $('#store_slug').val(data.slug);
             $('#store_email').val(data.email);
@@ -79,19 +79,19 @@
             $('#store_status').val(data.status);
             $('#store_currency_code').val(data.currency_code);
             $('#store_timezone').val(data.timezone);
-        };
+        });
 
         // Owner credential fields are only used when ADDING a new store.
         // They are hidden (and not required) while editing an existing store.
         (function() {
-            var originalOpenStoreDrawer = window.openStoreDrawer;
-            window.openStoreDrawer = function(mode) {
+            var originalOpenStoreDrawer = Crud.get('store', 'open');
+            Crud.register('store', 'open', function(mode) {
                 originalOpenStoreDrawer(mode);
                 var isEdit = mode === 'edit';
                 $('#store_owner_section').toggleClass('hidden', isEdit);
                 $('#store_owner_first_name, #store_owner_last_name, #store_owner_password, #store_owner_password_confirmation')
                     .prop('required', !isEdit);
-            };
+            });
         })();
 
         $(document).ready(function() {

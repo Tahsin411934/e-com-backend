@@ -378,6 +378,7 @@
 
     @push('scripts')
     <script>
+        let isPosSubmitting = false;
     // Custom modal helper (project-scoped, no Bootstrap).
     function posToastSuccess(message) {
         Toastify({
@@ -1172,14 +1173,14 @@
             const $btn = $('#processSaleBtn');
             const $btnLeft = $('#processSaleBtnLeft');
 
-            if (window.posSubmitting) return;
-            window.posSubmitting = true;
+            if (isPosSubmitting) return;
+            isPosSubmitting = true;
 
             $btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin" style="margin-right:8px;"></i>Processing...');
             $btnLeft.prop('disabled', true).css({ opacity: 0.6, cursor: 'not-allowed' });
 
             const restoreButtons = function() {
-                window.posSubmitting = false;
+                isPosSubmitting = false;
                 $btn.prop('disabled', false).html('<i class="fas fa-check-circle" style="margin-right:8px;"></i>Complete Sale');
                 $btnLeft.prop('disabled', false).css({ opacity: 1, cursor: 'pointer' });
             };

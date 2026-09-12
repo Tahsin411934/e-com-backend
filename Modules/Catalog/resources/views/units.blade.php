@@ -53,13 +53,13 @@
 
     @push('scripts')
 <script>
-    window.fillUnitForm = function(data) {
+Crud.register('unit', 'fill', function (data) {
         $('#unit_name').val(data.name);
         $('#unit_slug').val(data.slug);
         $('#unit_short_name').val(data.short_name);
         $('#unit_type').val(data.type);
         $('#unit_status').val(data.status);
-    };
+    });
 
     $(document).ready(function() {
         // We use delegation on the body so it works even if the 

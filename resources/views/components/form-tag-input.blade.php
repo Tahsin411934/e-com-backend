@@ -23,8 +23,8 @@
 @once
     @push('scripts')
         <script>
-            // Global function to trigger re-renders from anywhere
-            window.renderTagComponent = function(fieldName) {
+            (function () {
+            function renderTagComponent(fieldName) {
                 let hiddenInput = $('#' + fieldName);
                 let wrapper = hiddenInput.closest('.tag-input-wrapper');
                 let container = wrapper.find('.tag-container');
@@ -50,7 +50,7 @@
                     `;
                     textInput.before(badgeHtml);
                 });
-            };
+            }
 
             $(document).ready(function() {
                 // Initialize existing values on page load
@@ -103,6 +103,7 @@
                     $(this).find('.tag-field-input').focus();
                 });
             });
+            })();
         </script>
     @endpush
 @endonce

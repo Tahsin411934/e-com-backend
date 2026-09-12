@@ -44,10 +44,10 @@ class WebhookDeliveryService
             ->editColumn('created_at', fn ($d) => $d->created_at?->format('d M Y H:i'))
             ->addColumn('action', function ($d) {
                 $html = '<div class="flex items-center justify-center gap-1">';
-                $html .= '<button type="button" onclick="webhookDeliveryView('.$d->id.', this)" title="View delivery" '
+                $html .= '<button type="button" class="js-webhook-delivery-action" data-action="view" data-id="'.$d->id.'" title="View delivery" '
                     .'class="inline-flex items-center bg-gray-100 text-gray-600 hover:bg-gray-200 hover:text-gray-800 p-1.5 rounded text-xs transition">'
                     .'<i class="fa fa-eye"></i></button>';
-                $html .= '<button type="button" onclick="webhookDeliveryDelete('.$d->id.')" title="Delete" '
+                $html .= '<button type="button" class="js-webhook-delivery-action" data-action="delete" data-id="'.$d->id.'" title="Delete" '
                     .'class="bg-red-500 text-white px-2 py-1 rounded text-sm hover:bg-red-600 transition">'
                     .'<i class="fa fa-trash"></i></button>';
                 $html .= '</div>';

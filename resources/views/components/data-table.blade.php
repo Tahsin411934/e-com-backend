@@ -153,7 +153,7 @@
             // Global delete function for URL-based action buttons.
             // Defined here so any page using x-data-table can delete rows
             // (e.g. Purchase Orders, Suppliers, Inventory Locations, etc.).
-            window.deleteEntity = function(url) {
+            var deleteEntity = function(url) {
                 Swal.fire({
                     title: 'Are you sure?',
                     text: 'This action cannot be undone!',
@@ -195,6 +195,37 @@
                     }
                 });
             };
+            window.Crud.register('shared', 'delete-url', deleteEntity);
+
+            if (!$(document).data('crud-action-delegated')) {
+                $(document).data('crud-action-delegated', true);
+
+                $(document).on('click.crudActions', '.js-crud-action', function () {
+                    var button = $(this);
+                    var action = button.data('crud-action');
+                    var callbackName = button.data('crud-callback');
+                    var id = button.data('crud-id');
+
+                    if (action === 'delete-url') {
+                        var deleteUrl = window.Crud.get('shared', 'delete-url');
+                        if (typeof deleteUrl === 'function') {
+                            deleteUrl(button.data('crud-url'), button.data('crud-label') || 'delete');
+                        }
+                        return;
+                    }
+
+                    var actionSuffix = action.charAt(0).toUpperCase() + action.slice(1);
+                    var entity = callbackName && callbackName.replace(new RegExp(actionSuffix + '$', 'i'), '');
+                    var callback = entity
+                        ? window.Crud.get(entity.replace(/[-_]/g, '').toLowerCase(), action)
+                        : null;
+
+                    if (typeof callback === 'function') {
+                        callback(id);
+                    }
+                });
+
+            }
         });
     </script>
 @endpush

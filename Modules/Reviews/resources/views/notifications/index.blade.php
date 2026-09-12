@@ -55,7 +55,7 @@
     {{-- Notification drawer (reusable drawer component) --}}
     <x-drawer id="notificationDrawer" overlayId="notificationOverlay" title="Edit Notification" maxWidth="max-w-lg"
         submitBtnId="saveNotificationBtn" submitBtnText="Update Notification" submitBtnColor="bg-emerald-600 hover:bg-emerald-700"
-        submitOnClick="saveNotificationForm()">
+        submitEntity="notification" submitAction="save">
 
         <form id="notificationForm">
             <input type="hidden" name="notification_id" id="notification_hid">
@@ -105,7 +105,7 @@
         }
 
         // ========== EDIT (opens the reusable drawer) ==========
-        window.notificationEdit = function (id) {
+        function notificationEdit(id) {
             $.get("{{ route('notifications.show', ':id') }}".replace(':id', id), function (res) {
                 if (res.status !== 'success') {
                     Swal.fire('Error', res.message || 'Notification not found.', 'error');
@@ -167,7 +167,7 @@
         }
 
         // ========== DELETE ==========
-        window.notificationDelete = function (id) {
+        function notificationDelete(id) {
             Swal.fire({
                 title: 'Are you sure?',
                 text: 'This notification will be deleted!',
@@ -202,6 +202,11 @@
                 });
             });
         };
+
+        Crud.register('notification', 'fill', fillNotificationForm);
+        Crud.register('notification', 'edit', notificationEdit);
+        Crud.register('notification', 'save', saveNotificationForm);
+        Crud.register('notification', 'delete', notificationDelete);
 
         // ========== INIT ==========
         $(document).ready(function () {

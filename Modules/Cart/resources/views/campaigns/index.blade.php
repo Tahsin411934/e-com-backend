@@ -104,7 +104,7 @@
         </div>
 
         <!-- Edit campaign drawer (reuses x-drawer like other modules) -->
-        <x-drawer id="campaignDrawer" overlayId="campaignOverlay" title="Edit Campaign" :submit-on-click="'saveCampaignForm()'" :submit-btn-text="'Update Campaign'">
+        <x-drawer id="campaignDrawer" overlayId="campaignOverlay" title="Edit Campaign" submitEntity="campaign" submitAction="save" :submit-btn-text="'Update Campaign'">
             <div class="space-y-4">
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1">Campaign name</label>
@@ -162,7 +162,7 @@
                 campaigns:[], selected:null, selectedData:null, searchResults:[], discount_type:'percentage', discount_value:'', editingEntryId:null, editEntry:{discount_type:'percentage',discount_value:''},
                 form:{name:'',description:'',banner_image:null,starts_at:'',ends_at:'',status:'draft'},
                 editForm:{id:null,name:'',description:'',button_text:'',priority:0,status:'draft',starts_at:'',ends_at:'',is_featured:false,is_active:true,banner_image:null,banner_preview:null},
-                load(){ window.__campaignVM = this; request('{{ route('campaigns.list') }}').then(d=>this.campaigns=d.data); },
+                load(){ Crud.register('campaign','save',()=>this.saveEdit()); request('{{ route('campaigns.list') }}').then(d=>this.campaigns=d.data); },
                 create(){ const body=new FormData(); Object.entries(this.form).forEach(([key,value])=>{ if(value!==null && value!=='') body.append(key,value) }); request('{{ route('campaigns.store') }}',{method:'POST',body}).then(()=>{ this.form={name:'',description:'',banner_image:null,starts_at:'',ends_at:'',status:'draft'}; this.load(); }); },
                 toggleActive(id){ request('/campaigns/'+id+'/toggle-active',{method:'POST'}).then(()=>this.load()); },
                 select(id){ this.selected=id; request('/campaigns/'+id).then(d=>{ this.selectedData=d.data; this.$nextTick(()=>this.initSortable()); }); },
@@ -174,11 +174,10 @@
                 editEntrySave(item){ if(!this.editingEntryId) return; request('/campaigns/'+this.selected+'/products/'+item.id,{method:'POST',body:JSON.stringify({_method:'PUT',discount_type:this.editEntry.discount_type,discount_value:this.editEntry.discount_value})}).then(()=>{ this.editingEntryId=null; this.select(this.selected); }); },
                 initSortable(){ this.$nextTick(()=>{ const el=document.getElementById('includedProductsList'); if(!el || typeof Sortable==='undefined') return; if(el.__sortable) el.__sortable.destroy(); const vm=this; el.__sortable=Sortable.create(el,{animation:150,handle:'.drag-handle',ghostClass:'sortable-ghost',onEnd:function(){ const ids=Array.from(el.children).filter(c=>c.dataset && c.dataset.id).map(c=>parseInt(c.dataset.id,10)); if(!ids.length) return; request('/campaigns/'+vm.selected+'/products/reorder',{method:'POST',body:JSON.stringify({ordered_ids:ids})}).then(()=>vm.select(vm.selected)); }}); }); },
                 formatDate(iso){ if(!iso) return ''; const d=new Date(iso); return isNaN(d.getTime()) ? '' : d.toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'}); },
-                editCampaign(campaign){ window.__campaignVM = this; this.editForm={id:campaign.id,name:campaign.name??'',description:campaign.description??'',button_text:campaign.button_text??'',priority:campaign.priority??0,status:campaign.status??'draft',starts_at:toLocalInput(campaign.starts_at),ends_at:toLocalInput(campaign.ends_at),is_featured:!!campaign.is_featured,is_active:!!campaign.is_active,banner_image:null,banner_preview:(campaign.banner_image?('/storage/'+campaign.banner_image.replace(/^\//,'')):null),remove_banner:false}; this.$refs.bannerInput.value=''; if(window.openGlobalDrawer) openGlobalDrawer('campaignDrawer','campaignOverlay'); },
+                editCampaign(campaign){ this.editForm={id:campaign.id,name:campaign.name??'',description:campaign.description??'',button_text:campaign.button_text??'',priority:campaign.priority??0,status:campaign.status??'draft',starts_at:toLocalInput(campaign.starts_at),ends_at:toLocalInput(campaign.ends_at),is_featured:!!campaign.is_featured,is_active:!!campaign.is_active,banner_image:null,banner_preview:(campaign.banner_image?('/storage/'+campaign.banner_image.replace(/^\//,'')):null),remove_banner:false}; this.$refs.bannerInput.value=''; if(window.openGlobalDrawer) openGlobalDrawer('campaignDrawer','campaignOverlay'); },
                 removeBanner(){ this.editForm.remove_banner=true; this.editForm.banner_image=null; this.editForm.banner_preview=null; this.$refs.bannerInput.value=''; },
                 saveEdit(){ if(!this.editForm.id) return; const body=new FormData(); ['name','description','button_text','status','priority'].forEach(k=>{ const v=this.editForm[k]; if(v!==null && v!=='') body.append(k,v); }); body.append('is_featured', this.editForm.is_featured?'1':'0'); body.append('is_active', this.editForm.is_active?'1':'0'); ['starts_at','ends_at'].forEach(k=>{ const v=this.editForm[k]; if(v!==null && v!=='') body.append(k,v); }); if(this.editForm.remove_banner) body.append('remove_banner','1'); if(this.editForm.banner_image) body.append('banner_image', this.editForm.banner_image); body.append('_method','PUT'); request('/campaigns/'+this.editForm.id,{method:'POST',body}).then(()=>{ if(window.closeGlobalDrawer) closeGlobalDrawer('campaignDrawer','campaignOverlay'); this.load(); }); }
             };
         }
-        window.saveCampaignForm = function() { if(window.__campaignVM) window.__campaignVM.saveEdit(); };
     </script>
 </x-app-layout>

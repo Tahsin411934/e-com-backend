@@ -77,7 +77,7 @@
     @push('scripts')
     <script>
         // ===== Announcement Bar form fill (called by entity-crud component) =====
-        window.fillAnnouncementbarForm = function(data) {
+Crud.register('announcementbar', 'fill', function (data) {
             $('#announcement_bar_left_text').val(data.left_text || '');
             $('#announcement_bar_center_text').val(data.center_text || '');
             $('#announcement_bar_right_text').val(data.right_text || '');
@@ -87,7 +87,7 @@
             $('#announcement_bar_text_color_hex').val(data.text_color || '#ffffff');
             $('#announcement_bar_sort_order').val(data.sort_order || 0);
             $('#announcement_bar_status').val(data.status);
-        };
+        });
 
         $(document).ready(function() {
             // Sync color picker with hex input

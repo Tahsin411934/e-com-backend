@@ -10,17 +10,17 @@ use Modules\Identity\Http\Controllers\UserController;
 // Public authentication routes
 Route::post('/v1/register', [AuthController::class, 'register']);
 Route::post('/v1/login', [AuthController::class, 'login']);
-Route::post('/v1/forgot-password', [AuthController::class, 'forgotPassword']);
-Route::post('/v1/reset-password', [AuthController::class, 'resetPassword']);
+Route::post('/v1/forgot-password', [AuthController::class, 'forgotPassword'])->name('identity.forgot-password');
+Route::post('/v1/reset-password', [AuthController::class, 'resetPassword'])->name('identity.reset-password');
 
 // Protected routes (require authentication)
 Route::middleware(['convert.auth.cookie', 'auth:sanctum'])->prefix('v1')->group(function () {
     // Auth routes
     Route::post('/logout', [AuthController::class, 'logout']);
     Route::post('/logout-all', [AuthController::class, 'logoutAll']);
-    Route::get('/user', [AuthController::class, 'user']);
-    Route::post('/refresh', [AuthController::class, 'refresh']);
-    Route::post('/change-password', [AuthController::class, 'changePassword']);
+    Route::get('/user', [AuthController::class, 'user'])->name('identity.user');
+    Route::post('/refresh', [AuthController::class, 'refresh'])->name('identity.refresh');
+    Route::post('/change-password', [AuthController::class, 'changePassword'])->name('identity.change-password');
 
     // Identity routes
     Route::apiResource('identities', IdentityController::class)->names('identity');

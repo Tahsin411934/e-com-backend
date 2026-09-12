@@ -29,6 +29,6 @@ Route::middleware(['auth', 'verified', 'admin'])->group(function () {
     Route::delete('/campaigns/{campaign}/products/{campaignProduct}', [CampaignController::class, 'removeProduct'])->name('campaigns.products.remove')->middleware('permission:campaigns.edit');
 
     // Wishlists
-    Route::resource('wishlists', WishlistController::class)->except(['create', 'edit'])->names('wishlists')->middleware('permission:wishlists.view');
+    Route::resource('wishlists', WishlistController::class)->except(['create', 'edit'])->names('wishlists')->middleware('permission:wishlists.*');
     Route::get('/dataTable/wishlists', [WishlistController::class, 'dataTable'])->name('wishlists.dataTable')->middleware('permission:wishlists.view');
 });

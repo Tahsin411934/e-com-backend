@@ -63,23 +63,26 @@
             <x-form-input label="Quantity On Hand" name="quantity_on_hand" id="stock_quantity_on_hand" type="number" min="0" placeholder="0" required />
         </div>
         <div class="mb-4">
-            <x-form-input label="Quantity Reserved" name="quantity_reserved" id="stock_quantity_reserved" type="number" min="0" placeholder="0" required />
+            <x-form-input label="Quantity Reserved" name="quantity_reserved" id="stock_quantity_reserved" type="number" min="0" value="0" placeholder="0" required />
         </div>
         <div class="mb-4">
-            <x-form-input label="Reorder Point" name="reorder_point" id="stock_reorder_point" type="number" min="0" placeholder="0" required />
+            <x-form-input label="Reorder Point" name="reorder_point" id="stock_reorder_point" type="number" min="0" value="5" placeholder="5" required />
+            <p class="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                When available stock reaches this value or below, the system will show Low Stock / Reorder Needed. For example, set it to 10 to receive the alert when stock is 10 or less.
+            </p>
         </div>
     </x-entity-crud>
 
     @push('scripts')
     <script>
-        window.fillInventoryStockForm = function(data) {
+Crud.register('inventorystock', 'fill', function (data) {
             $('#stock_variant_id').val(data.variant_id);
             refreshStockOptions(data.variant_id, data.variant_option_id);
             $('#stock_location_id').val(data.location_id);
             $('#stock_quantity_on_hand').val(data.quantity_on_hand);
             $('#stock_quantity_reserved').val(data.quantity_reserved);
             $('#stock_reorder_point').val(data.reorder_point);
-        };
+        });
 
         function refreshStockOptions(variantId, selectedId = null) {
             const option = $('#stock_variant_id option[value="' + variantId + '"]');

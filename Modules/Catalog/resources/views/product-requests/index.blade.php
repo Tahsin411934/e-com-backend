@@ -37,7 +37,7 @@
     {{-- View Modal --}}
     <div id="viewModal" class="fixed inset-0 z-50 hidden overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
         <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
-            <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" onclick="closeViewModal()"></div>
+            <div class="js-product-request-view-close fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity"></div>
             <span class="hidden sm:inline-block sm:align-middle sm:h-screen">&#8203;</span>
             <div class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
                 <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
@@ -94,7 +94,7 @@
                     </div>
                 </div>
                 <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
-                    <button type="button" onclick="closeViewModal()" class="w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 sm:ml-3 sm:w-auto sm:text-sm">
+                    <button type="button" class="js-product-request-view-close w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 sm:ml-3 sm:w-auto sm:text-sm">
                         Close
                     </button>
                 </div>
@@ -105,7 +105,7 @@
     {{-- Status Modal --}}
     <div id="statusModal" class="fixed inset-0 z-50 hidden overflow-y-auto" role="dialog" aria-modal="true">
         <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
-            <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" onclick="closeStatusModal()"></div>
+            <div class="js-product-request-status-close fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity"></div>
             <span class="hidden sm:inline-block sm:align-middle sm:h-screen">&#8203;</span>
             <div class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-md sm:w-full">
                 <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
@@ -124,7 +124,7 @@
                                     </select>
                                 </div>
                                 <div class="flex justify-end gap-3 pt-2">
-                                    <button type="button" onclick="closeStatusModal()" class="px-4 py-2 text-sm font-medium text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-lg">Cancel</button>
+                                    <button type="button" class="js-product-request-status-close px-4 py-2 text-sm font-medium text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-lg">Cancel</button>
                                     <button type="submit" class="px-4 py-2 text-sm font-medium text-white bg-primary hover:bg-primary rounded-lg">Update Status</button>
                                 </div>
                             </form>
@@ -138,7 +138,7 @@
     {{-- Drawer for Create / Edit --}}
     <x-drawer id="productRequestDrawer" overlayId="productRequestOverlay" title="Product Request" maxWidth="max-w-lg"
         submitBtnId="saveProductRequestBtn" submitBtnText="Save" submitBtnColor="bg-emerald-600 hover:bg-emerald-700"
-        submitOnClick="saveProductRequestForm()">
+        submitEntity="productrequest" submitAction="save">
 
         <form id="productRequestForm" enctype="multipart/form-data">
             <input type="hidden" name="id" id="productRequest_hid">
@@ -191,13 +191,13 @@
                                     <img id="pr_image_preview_img" class="h-24 w-24 object-cover rounded-lg border-2 border-gray-200 shadow-sm" src="" alt="Preview" />
                                 </div>
                                 <div class="flex items-center gap-3">
-                                    <button type="button" onclick="document.getElementById('pr_product_image').click()" class="px-4 py-2.5 bg-white border-2 border-dashed border-gray-300 rounded-lg text-sm text-gray-500 hover:border-primary hover:text-primary transition-colors flex items-center gap-2">
+                                    <button type="button" class="js-product-request-image-picker px-4 py-2.5 bg-white border-2 border-dashed border-gray-300 rounded-lg text-sm text-gray-500 hover:border-primary hover:text-primary transition-colors flex items-center gap-2">
                                         <i class="fa fa-upload"></i>
                                         <span>Choose Image</span>
                                     </button>
                                     <span id="pr_image_name" class="text-xs text-gray-400">No file selected</span>
                                 </div>
-                                <input type="file" name="product_image" id="pr_product_image" accept="image/*" onchange="previewProductRequestImage(this)" class="hidden" />
+                                <input type="file" name="product_image" id="pr_product_image" accept="image/*" class="hidden" />
                             </div>
                         </div>
                     </div>
@@ -484,6 +484,28 @@
                 }
             });
         }
+
+        Crud.register('productrequest', 'view', viewProductRequest);
+        Crud.register('productrequest', 'edit', productRequestEdit);
+        Crud.register('productrequest', 'save', saveProductRequestForm);
+        Crud.register('productrequest', 'delete', productRequestDelete);
+        Crud.register('productrequest', 'status', changeProductRequestStatus);
+        Crud.register('productrequest', 'approve', approveProductRequest);
+
+        $(document).on('click', '.js-product-request-action', function () {
+            var button = $(this);
+            var callback = Crud.get('productrequest', button.data('action'));
+            if (typeof callback === 'function') callback(button.data('id'));
+        });
+
+        $(document).on('click', '.js-product-request-view-close', closeViewModal);
+        $(document).on('click', '.js-product-request-status-close', closeStatusModal);
+        $(document).on('click', '.js-product-request-image-picker', function () {
+            document.getElementById('pr_product_image').click();
+        });
+        $('#pr_product_image').on('change', function () {
+            previewProductRequestImage(this);
+        });
 
         // ========== IMAGE PREVIEW ==========
         function previewProductRequestImage(input) {

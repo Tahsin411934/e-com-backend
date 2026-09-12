@@ -4,6 +4,7 @@ namespace Modules\Order\Http\Controllers;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
+use Modules\Order\Http\Requests\PaymentRequest;
 use Modules\Order\Services\PaymentService;
 
 class PaymentController extends Controller
@@ -20,9 +21,9 @@ class PaymentController extends Controller
         return $this->paymentService->getPaymentDataTable($request);
     }
 
-    public function store(Request $request)
+    public function store(PaymentRequest $request)
     {
-        return $this->paymentService->savePayment($request->all());
+        return $this->paymentService->savePayment($request->validated());
     }
 
     public function show($id)
@@ -30,9 +31,9 @@ class PaymentController extends Controller
         return $this->paymentService->getPaymentById((int) $id);
     }
 
-    public function update(Request $request, int $id)
+    public function update(PaymentRequest $request, int $id)
     {
-        return $this->paymentService->savePayment($request->all() + ['payment_id' => $id]);
+        return $this->paymentService->savePayment($request->validated() + ['payment_id' => $id]);
     }
 
     public function destroy($id)

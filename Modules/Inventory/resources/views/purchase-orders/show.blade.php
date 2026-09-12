@@ -133,7 +133,7 @@
                     <i class="fas fa-money-bill-wave text-emerald-600"></i> Payments
                 </h2>
                 @if($purchase_order->payment_status !== 'paid' && auth()->user()->hasPermission('supplier-payments.create'))
-                    <button onclick="openPaymentDrawer()" class="px-4 py-2 bg-emerald-600 text-white rounded-lg text-sm font-medium hover:bg-emerald-700 transition">
+                    <button type="button" class="js-payment-drawer-open px-4 py-2 bg-emerald-600 text-white rounded-lg text-sm font-medium hover:bg-emerald-700 transition">
                         <i class="fas fa-plus mr-1"></i> Add Payment
                     </button>
                 @endif
@@ -189,11 +189,11 @@
 
     <!-- Add Payment Drawer -->
     <div id="paymentDrawer" class="fixed inset-0 z-50 hidden">
-        <div class="absolute inset-0 bg-black/40" onclick="closePaymentDrawer()"></div>
+        <div class="js-payment-drawer-close absolute inset-0 bg-black/40"></div>
         <div class="absolute right-0 top-0 h-full w-96 bg-white shadow-2xl max-w-[100vw] overflow-y-auto">
             <div class="flex items-center justify-between px-5 py-4 border-b border-gray-100">
                 <h3 class="text-lg font-semibold text-gray-800">Record Payment</h3>
-                <button onclick="closePaymentDrawer()" class="text-gray-400 hover:text-gray-600 text-xl">&times;</button>
+                <button type="button" class="js-payment-drawer-close text-gray-400 hover:text-gray-600 text-xl">&times;</button>
             </div>
             <form id="paymentForm" class="p-5 space-y-4">
                 @csrf
@@ -246,12 +246,17 @@
 
     @push('scripts')
     <script>
-        function openPaymentDrawer() {
-            document.getElementById('paymentDrawer').classList.remove('hidden');
-        }
-        function closePaymentDrawer() {
-            document.getElementById('paymentDrawer').classList.add('hidden');
-        }
+        (function () {
+            var drawer = document.getElementById('paymentDrawer');
+
+            $(document).on('click', '.js-payment-drawer-open', function () {
+                drawer.classList.remove('hidden');
+            });
+
+            $(document).on('click', '.js-payment-drawer-close', function () {
+                drawer.classList.add('hidden');
+            });
+        })();
 
         document.getElementById('paymentForm').addEventListener('submit', function(e) {
             e.preventDefault();

@@ -58,9 +58,8 @@
                                         <input type="hidden" name="gtm_enabled" value="0">
                                         <input type="checkbox" name="gtm_enabled" value="1"
                                             id="gtm_enabled_toggle"
-                                            class="sr-only peer"
-                                            {{ old('gtm_enabled', $item['value'] ?? '0') == '1' ? 'checked' : '' }}
-                                            onchange="document.getElementById('gtm_status_badge').textContent = this.checked ? 'ENABLED' : 'DISABLED'; document.getElementById('gtm_status_badge').className = this.checked ? 'text-xs font-bold px-2.5 py-1 rounded-full ' + 'bg-green-100 text-green-700' : 'text-xs font-bold px-2.5 py-1 rounded-full bg-gray-100 text-gray-500';">
+                                            class="js-gtm-enabled-toggle sr-only peer"
+                                            {{ old('gtm_enabled', $item['value'] ?? '0') == '1' ? 'checked' : '' }}>
                                         <span class="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-green-600"></span>
                                         <span class="ms-3 text-sm font-medium text-gray-600" id="gtm_status_badge"
                                             class="text-xs font-bold px-2.5 py-1 rounded-full {{ old('gtm_enabled', $item['value'] ?? '0') == '1' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500' }}">
@@ -156,6 +155,16 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
 height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 <!-- End Google Tag Manager (noscript) -->`;
         }
+
+        $(document).on('change', '.js-gtm-enabled-toggle', function () {
+            var badge = document.getElementById('gtm_status_badge');
+            var enabled = this.checked;
+
+            badge.textContent = enabled ? 'ENABLED' : 'DISABLED';
+            badge.className = enabled
+                ? 'text-xs font-bold px-2.5 py-1 rounded-full bg-green-100 text-green-700'
+                : 'text-xs font-bold px-2.5 py-1 rounded-full bg-gray-100 text-gray-500';
+        });
     </script>
     @endpush
 </x-app-layout>

@@ -71,7 +71,7 @@
 
     @push('scripts')
     <script>
-        window.fillBrandForm = function(data) {
+        Crud.register('brand', 'fill', function(data) {
             $('#brand_store_id').val(data.store_id);
             $('#brand_name').val(data.name);
             $('#brand_slug').val(data.slug);
@@ -79,7 +79,7 @@
             if (data.logo_url) {
                 $('#brandLogoPreview').removeClass('hidden').find('img').attr('src', data.logo_url);
             }
-        };
+        });
 
         $(document).ready(function() {
             $('#brand_logo').on('change', function() {

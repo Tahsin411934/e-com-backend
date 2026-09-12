@@ -6,7 +6,8 @@
     'submitBtnId' => 'saveBtn',
     'submitBtnText' => 'Save Changes',
     'submitBtnColor' => 'bg-primary hover:bg-primary',
-    'submitOnClick' => 'saveForm()'
+    'submitEntity' => 'shared',
+    'submitAction' => 'submit',
 ])
 
 <div id="{{ e($overlayId) }}" 
@@ -20,7 +21,8 @@
     <div class="px-6 py-5 border-b dark:border-gray-700 bg-gradient-to-r from-primary-light to-primary-light dark:from-gray-700 dark:to-gray-800 flex justify-between items-center">
         <h2 class="text-2xl font-bold text-gray-800 dark:text-gray-100" id="drawerTitle">{{ e($title) }}</h2>
 
-        <button type="button" onclick="closeGlobalDrawer('{{ $id }}', '{{ $overlayId }}')"
+        <button type="button" class="js-global-drawer-close"
+            data-drawer-id="{{ e($id) }}" data-overlay-id="{{ e($overlayId) }}"
             class="text-gray-500 dark:text-gray-400 hover:text-red-600 p-1 hover:bg-red-50 dark:hover:bg-gray-700 rounded-lg transition-colors duration-200">
             <i class="fa-solid fa-times text-2xl"></i>
         </button>
@@ -31,13 +33,15 @@
     </div>
 
     <div class="border-t dark:border-gray-700 bg-gray-50 dark:bg-gray-900 px-6 py-4 flex gap-3">
-        <button type="button" onclick="closeGlobalDrawer('{{ $id }}', '{{ $overlayId }}')"
+        <button type="button" class="js-global-drawer-close"
+            data-drawer-id="{{ e($id) }}" data-overlay-id="{{ e($overlayId) }}"
             class="flex-1 border border-gray-300 dark:border-gray-600 rounded p-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 font-medium transition-colors duration-200">
             Cancel
         </button>
 
-        <button type="button" id="{{ e($submitBtnId) }}" onclick="{{ $submitOnClick }}"
-            class="flex-1 {{ e($submitBtnColor) }} text-white rounded p-2 font-medium flex justify-center gap-2 items-center transition-colors duration-200">
+        <button type="button" id="{{ e($submitBtnId) }}"
+            class="js-drawer-submit flex-1 {{ e($submitBtnColor) }} text-white rounded p-2 font-medium flex justify-center gap-2 items-center transition-colors duration-200"
+            data-crud-entity="{{ e($submitEntity) }}" data-crud-action="{{ e($submitAction) }}">
             <i class="fa fa-save"></i>
             <span id="drawerButtonText">{{ e($submitBtnText) }}</span>
         </button>

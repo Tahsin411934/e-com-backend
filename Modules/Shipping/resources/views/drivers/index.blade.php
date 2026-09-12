@@ -83,7 +83,7 @@
 
     @push('scripts')
     <script>
-        window.fillDeliverydriverForm = function(data) {
+Crud.register('deliverydriver', 'fill', function (data) {
             $('#driver_user_id').val(data.user_id || '');
             $('#driver_store_id').val(data.store_id || '');
             $('#driver_delivery_zone_id').val(data.delivery_zone_id || '');
@@ -99,7 +99,7 @@
             $('#driver_current_latitude').val(data.current_latitude || '');
             $('#driver_current_longitude').val(data.current_longitude || '');
             $('#driver_last_seen_at').val(data.last_seen_at ? data.last_seen_at.substring(0, 16) : '');
-        };
+        });
     </script>
     @endpush
 </x-app-layout>

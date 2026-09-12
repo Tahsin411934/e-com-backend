@@ -79,14 +79,14 @@
 
     @push('scripts')
     <script>
-        window.fillOrderForm = function(data) {
+Crud.register('order', 'fill', function (data) {
             $('#order_order_number').val(data.order_number);
             $('#order_customer_note').val(data.customer_note || '');
             $('#order_source').val(data.source);
             $('#order_status').val(data.status);
             $('#order_payment_status').val(data.payment_status);
             $('#order_fulfillment_status').val(data.fulfillment_status);
-        };
+        });
     </script>
     @endpush
 </x-app-layout>

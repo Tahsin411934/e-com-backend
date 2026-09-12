@@ -304,7 +304,7 @@
     @push('scripts')
     <script>
         // ===== CTA form fill =====
-        window.fillCtaForm = function(data) {
+Crud.register('cta', 'fill', function (data) {
             $('#cta_style').val(data.cta_style || 'style1');
             $('#cta_title').val(data.title || '');
             $('#cta_subtitle').val(data.subtitle || '');
@@ -371,7 +371,7 @@
             } else {
                 $('#ctaBannerImagePreview').addClass('hidden');
             }
-        };
+        });
 
         $(document).ready(function() {
             // Sync color picker with hex input

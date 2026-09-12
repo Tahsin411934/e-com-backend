@@ -58,14 +58,14 @@
 
     @push('scripts')
     <script>
-        window.fillPaymentForm = function(data) {
+Crud.register('payment', 'fill', function (data) {
             $('#payment_order_id').val(data.order_id);
             $('#payment_provider').val(data.provider);
             $('#payment_provider_payment_id').val(data.provider_payment_id || '');
             $('#payment_method').val(data.method);
             $('#payment_status').val(data.status);
             $('#payment_amount').val(data.amount);
-        };
+        });
     </script>
     @endpush
 </x-app-layout>

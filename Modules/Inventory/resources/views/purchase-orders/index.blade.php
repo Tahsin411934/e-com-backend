@@ -34,7 +34,7 @@
             });
         });
 
-        window.updatePoStatus = function(id, value, field = 'status') {
+        function updatePoStatus(id, value, field = 'status') {
             var labels = {
                 'ordered': 'Are you sure you want to mark this order as <strong>Ordered</strong>?',
                 'received': 'Are you sure you want to mark this order as <strong>Received</strong>? This will update inventory stock.',
@@ -89,7 +89,14 @@
                     });
                 }
             });
-        };
+        }
+
+        Crud.register('purchaseorder', 'status', updatePoStatus);
+
+        $(document).on('click', '.js-purchase-order-status', function () {
+            var button = $(this);
+            Crud.get('purchaseorder', 'status')(button.data('id'), button.data('status'));
+        });
     </script>
     @endpush
 </x-app-layout>

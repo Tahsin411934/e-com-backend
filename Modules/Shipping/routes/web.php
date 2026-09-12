@@ -16,6 +16,6 @@ Route::middleware(['auth', 'verified', 'admin'])->group(function () {
     Route::resource('shipments', ShipmentController::class)->except(['create', 'edit'])->names('shipments')->middleware('permission:shipments.*');
     Route::get('/dataTable/shipments', [ShipmentController::class, 'dataTable'])->name('shipments.dataTable')->middleware('permission:shipments.view');
 
-    Route::resource('shipment-events', ShipmentEventController::class)->except(['create', 'edit'])->names('shipment-events')->middleware('permission:shipment-events.view');
+    Route::resource('shipment-events', ShipmentEventController::class)->except(['create', 'edit'])->names('shipment-events')->middleware('permission:shipment-events.*');
     Route::get('/dataTable/shipment-events', [ShipmentEventController::class, 'dataTable'])->name('shipment-events.dataTable')->middleware('permission:shipment-events.view');
 });

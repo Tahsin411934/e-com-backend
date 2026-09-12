@@ -53,7 +53,7 @@
 
     @push('scripts')
     <script>
-        window.fillAccountaccountForm = function(data) {
+Crud.register('accountaccount', 'fill', function (data) {
             $('#accountaccount_name').val(data.name);
             $('#accountaccount_code').val(data.code);
             $('#accountaccount_type').val(data.type);
@@ -65,7 +65,7 @@
             $('#accountaccount_account_holder_name').val(data.account_holder_name);
             $('#accountaccount_is_default').prop('checked', !!data.is_default);
             $('#accountaccount_is_active').prop('checked', !!data.is_active);
-        };
+        });
     </script>
     @endpush
 </x-app-layout>

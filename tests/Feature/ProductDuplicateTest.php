@@ -15,7 +15,7 @@ class ProductDuplicateTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_duplicate_product_preserves_variant_option_stock_and_keeps_one_main_image(): void
+    public function test_duplicate_product_copies_variant_options_without_inventory_and_keeps_one_main_image(): void
     {
         Storage::fake('public');
 
@@ -76,21 +76,30 @@ class ProductDuplicateTest extends TestCase
             'is_main' => false,
         ]);
 
-        $result = app(ProductService::class)->duplicateProduct($source->id, [
+        $response = app(ProductService::class)->duplicateProduct($source->id, [
             'name' => 'Copy of Original Product',
             'price' => 150,
         ]);
 
-        $this->assertSame('success', $result['status']);
-        $this->assertNotNull($result['product']);
-        $this->assertNotSame($source->id, $result['product']->id);
-        $this->assertSame(1, $result['product']->images()->where('is_main', true)->count());
+        $this->assertSame(201, $response->getStatusCode());
 
-        $duplicatedVariant = $result['product']->variants()->first();
+        $result = $response->getData(true);
+        $this->assertSame('success', $result['status']);
+        $this->assertSame('Product duplicated successfully.', $result['message']);
+        $this->assertNotNull($result['data']);
+
+        $duplicatedProduct = Product::findOrFail($result['data']['id']);
+        $this->assertNotSame($source->id, $duplicatedProduct->id);
+        $this->assertSame(1, $duplicatedProduct->images()->where('is_main', true)->count());
+
+        $duplicatedVariant = $duplicatedProduct->variants()->first();
         $this->assertNotNull($duplicatedVariant);
         $this->assertNotSame($variant->sku, $duplicatedVariant->sku);
         $this->assertSame(150.0, (float) $duplicatedVariant->sale_price);
-        $this->assertSame(42, (int) $duplicatedVariant->options()->first()->stock);
+        $duplicatedOption = $duplicatedVariant->options()->first();
+        $this->assertNotNull($duplicatedOption);
+        $this->assertSame('Red', $duplicatedOption->color_name);
+        $this->assertSame(0, (int) $duplicatedOption->stock);
     }
 
     public function test_editing_a_product_can_set_a_later_image_as_main(): void

@@ -69,7 +69,7 @@
 
     @push('scripts')
     <script>
-        window.fillAccountinvestmentForm = function(data) {
+Crud.register('accountinvestment', 'fill', function (data) {
             $('#accountinvestment_account_id').val(data.account_id);
             $('#accountinvestment_investment_type').val(data.investment_type);
             $('#accountinvestment_amount').val(data.amount);
@@ -82,7 +82,7 @@
             $('#accountinvestment_partner_name').val(data.partner_name);
             $('#accountinvestment_reference_no').val(data.reference_no);
             $('#accountinvestment_note').val(data.note);
-        };
+        });
     </script>
     @endpush
 </x-app-layout>

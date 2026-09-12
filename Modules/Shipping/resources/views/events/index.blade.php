@@ -80,7 +80,7 @@
 
     @push('scripts')
     <script>
-        window.fillShipmenteventForm = function(data) {
+Crud.register('shipmentevent', 'fill', function (data) {
             $('#event_shipment_id').val(data.shipment_id);
             $('#event_driver_id').val(data.driver_id || '');
             $('#event_created_by').val(data.created_by || '');
@@ -91,7 +91,7 @@
             $('#event_latitude').val(data.latitude || '');
             $('#event_longitude').val(data.longitude || '');
             $('#event_occurred_at').val(data.occurred_at ? data.occurred_at.substring(0, 16) : '');
-        };
+        });
     </script>
     @endpush
 </x-app-layout>

@@ -58,7 +58,7 @@
 
     @push('scripts')
     <script>
-        window.fillInventoryLocationForm = function(data) {
+Crud.register('inventorylocation', 'fill', function (data) {
             const storeId = data.store_id || (data.store ? data.store.id : '');
             const storeName = data.store ? data.store.name : '';
             const $store = $('#location_store_id');
@@ -72,7 +72,7 @@
             $('#location_name').val(data.name);
             $('#location_type').val(data.location_type).trigger('change');
             $('#location_status').val(data.status).trigger('change');
-        };
+        });
     </script>
     @endpush
 </x-app-layout>

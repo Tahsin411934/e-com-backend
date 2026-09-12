@@ -45,13 +45,13 @@
 
     @push('scripts')
     <script>
-        window.fillRefundForm = function(data) {
+Crud.register('refund', 'fill', function (data) {
             $('#refund_order_id').val(data.order_id);
             $('#refund_payment_id').val(data.payment_id);
             $('#refund_amount').val(data.amount);
             $('#refund_status').val(data.status);
             $('#refund_reason').val(data.reason || '');
-        };
+        });
     </script>
     @endpush
 </x-app-layout>

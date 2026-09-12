@@ -56,13 +56,13 @@
 
     @push('scripts')
     <script>
-        window.fillPosRegisterForm = function(data) {
+Crud.register('posregister', 'fill', function (data) {
             $('#register_store_id').val(data.store_id);
             $('#register_name').val(data.name);
             $('#register_code').val(data.code);
             $('#register_type').val(data.type);
             $('#register_status').val(data.status);
-        };
+        });
     </script>
     @endpush
 </x-app-layout>

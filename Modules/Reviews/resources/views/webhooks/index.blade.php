@@ -41,7 +41,7 @@
     {{-- Webhook drawer (reusable drawer component) --}}
     <x-drawer id="webhookDrawer" overlayId="webhookOverlay" title="Add New Webhook" maxWidth="max-w-lg"
         submitBtnId="saveWebhookBtn" submitBtnText="Save Webhook" submitBtnColor="bg-emerald-600 hover:bg-emerald-700"
-        submitOnClick="saveWebhookForm()">
+        submitEntity="webhook" submitAction="save">
 
         <form id="webhookForm">
             <input type="hidden" name="webhook_id" id="webhook_hid">
@@ -94,7 +94,7 @@
         }
 
         // ========== EDIT (opens the reusable drawer) ==========
-        window.webhookEdit = function (id) {
+        function webhookEdit(id) {
             $.get("{{ route('webhooks.show', ':id') }}".replace(':id', id), function (res) {
                 if (res.status !== 'success') {
                     Swal.fire('Error', res.message || 'Webhook not found.', 'error');
@@ -166,7 +166,7 @@
         }
 
         // ========== DELETE ==========
-        window.webhookDelete = function (id) {
+        function webhookDelete(id) {
             Swal.fire({
                 title: 'Are you sure?',
                 text: 'This webhook and its delivery logs will be deleted!',
@@ -201,6 +201,11 @@
                 });
             });
         };
+
+        Crud.register('webhook', 'edit', webhookEdit);
+        Crud.register('webhook', 'delete', webhookDelete);
+        Crud.register('webhook', 'fill', fillWebhookForm);
+        Crud.register('webhook', 'save', saveWebhookForm);
 
         // ========== INIT ==========
         $(document).ready(function () {

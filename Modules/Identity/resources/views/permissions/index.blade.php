@@ -31,10 +31,10 @@
 
     @push('scripts')
     <script>
-        window.fillPermissionForm = function(data) {
+Crud.register('permission', 'fill', function (data) {
             $('#permission_name').val(data.name);
             $('#permission_description').val(data.description);
-        };
+        });
     </script>
     @endpush
 </x-app-layout>

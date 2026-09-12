@@ -1,5 +1,5 @@
 {
-    "name": "modules/reviews",
+    "name": "nwidart/reviews",
     "description": "",
     "authors": [
         {
@@ -18,6 +18,11 @@
             "Modules\\Reviews\\": "app/",
             "Modules\\Reviews\\Database\\Factories\\": "database/factories/",
             "Modules\\Reviews\\Database\\Seeders\\": "database/seeders/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Modules\\Reviews\\Tests\\": "tests/"
         }
     }
 }

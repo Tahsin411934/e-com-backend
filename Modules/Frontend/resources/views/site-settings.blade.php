@@ -35,8 +35,8 @@
 
                 <div class="flex flex-wrap gap-2 mb-8 pb-6 border-b border-gray-100">
                     @foreach($groups as $group)
-                        <button type="button" class="tab-btn {{ $loop->first ? 'active' : '' }}"
-                            onclick="switchTab('{{ $group }}')">
+                        <button type="button" class="js-site-settings-tab tab-btn {{ $loop->first ? 'active' : '' }}"
+                            data-tab="{{ $group }}">
                             @switch($group)
                                 @case('general') <i class="fas fa-globe"></i> @break
                                 @case('social')  <i class="fas fa-share-nodes"></i> @break
@@ -93,12 +93,12 @@
                                                         <div class="flex flex-wrap items-center gap-3">
                                                             <label class="btn-secondary cursor-pointer">
                                                                 <i class="fas fa-upload"></i> Choose Image
-                                                                <input type="file" name="{{ $item['key'] }}" accept="image/*" class="hidden" onchange="previewLogo(this, 'logo_preview')">
+                                                                <input type="file" name="{{ $item['key'] }}" accept="image/*" class="js-site-settings-logo hidden" data-preview-id="logo_preview">
                                                             </label>
                                                             @if($item['value'])
                                                                 <label class="btn-remove cursor-pointer" style="padding: 12px 24px; background: #fee2e2; color: #b91c1c; border: 1px solid #fecaca; border-radius: 12px; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.2s; display: inline-flex; align-items: center; gap: 6px;">
                                                                     <i class="fas fa-trash"></i> Remove
-                                                                    <input type="checkbox" name="remove_{{ $item['key'] }}" value="1" class="hidden" onchange="removeLogo(this, 'logo_preview')">
+                                                                    <input type="checkbox" name="remove_{{ $item['key'] }}" value="1" class="js-site-settings-logo-remove hidden" data-preview-id="logo_preview">
                                                                 </label>
                                                             @endif
                                                         </div>
@@ -132,8 +132,7 @@
                 @endforeach
 
                 <div class="save-bar">
-                    <a href="{{ route('frontend.site-settings.seed') }}" class="btn-secondary"
-                        onclick="return confirm('This will create any missing default settings. Continue?')">
+                    <a href="{{ route('frontend.site-settings.seed') }}" class="js-site-settings-seed btn-secondary">
                         <i class="fas fa-seedling"></i> Reset Defaults
                     </a>
                     <button type="submit" class="btn-primary">
@@ -150,8 +149,26 @@
             document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
             document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
             document.getElementById('tab-' + tab).classList.add('active');
-            document.querySelector(`.tab-btn[onclick*="'${tab}'"]`).classList.add('active');
+            document.querySelector(`.tab-btn[data-tab="${tab}"]`).classList.add('active');
         }
+
+        $(document).on('click', '.js-site-settings-tab', function () {
+            switchTab($(this).data('tab'));
+        });
+
+        $(document).on('click', '.js-site-settings-seed', function (event) {
+            if (!confirm('This will create any missing default settings. Continue?')) {
+                event.preventDefault();
+            }
+        });
+
+        $(document).on('change', '.js-site-settings-logo', function () {
+            previewLogo(this, $(this).data('preview-id'));
+        });
+
+        $(document).on('change', '.js-site-settings-logo-remove', function () {
+            removeLogo(this, $(this).data('preview-id'));
+        });
         function previewLogo(input, previewId) {
             const preview = document.getElementById(previewId);
             const file = input.files[0];

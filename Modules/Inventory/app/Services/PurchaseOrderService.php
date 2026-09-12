@@ -80,13 +80,13 @@ class PurchaseOrderService
                 // Quick status workflow buttons (inline) — gated by purchase-orders.edit
                 if (auth()->user()->hasPermission('purchase-orders.edit')) {
                     if ($po->status === 'draft') {
-                        $html .= '<button onclick="updatePoStatus('.$po->id.', \'ordered\')" class="bg-blue-600 text-white px-2 py-1 rounded text-xs hover:bg-blue-700 mr-1" title="Mark as Ordered"><i class="fas fa-check"></i> Order</button>';
+                        $html .= '<button type="button" class="js-purchase-order-status bg-blue-600 text-white px-2 py-1 rounded text-xs hover:bg-blue-700 mr-1" data-id="'.$po->id.'" data-status="ordered" title="Mark as Ordered"><i class="fas fa-check"></i> Order</button>';
                     }
                     if (in_array($po->status, ['ordered', 'partially_received'])) {
-                        $html .= '<button onclick="updatePoStatus('.$po->id.', \'received\')" class="bg-green-600 text-white px-2 py-1 rounded text-xs hover:bg-green-700 mr-1" title="Mark as Received"><i class="fas fa-check-double"></i> Receive</button>';
+                        $html .= '<button type="button" class="js-purchase-order-status bg-green-600 text-white px-2 py-1 rounded text-xs hover:bg-green-700 mr-1" data-id="'.$po->id.'" data-status="received" title="Mark as Received"><i class="fas fa-check-double"></i> Receive</button>';
                     }
                     if (in_array($po->status, ['draft', 'ordered'])) {
-                        $html .= '<button onclick="updatePoStatus('.$po->id.', \'cancelled\')" class="bg-red-500 text-white px-2 py-1 rounded text-xs hover:bg-red-600 mr-1" title="Cancel Order"><i class="fas fa-times"></i></button>';
+                        $html .= '<button type="button" class="js-purchase-order-status bg-red-500 text-white px-2 py-1 rounded text-xs hover:bg-red-600 mr-1" data-id="'.$po->id.'" data-status="cancelled" title="Cancel Order"><i class="fas fa-times"></i></button>';
                     }
                 }
                 if ($po->payment_status !== 'paid' && $po->status !== 'cancelled' && auth()->user()->hasPermission('supplier-payments.create')) {
@@ -100,8 +100,8 @@ class PurchaseOrderService
 
                 // Standard action buttons (hide edit/delete for locked statuses)
                 $html .= view('components.action-buttons', [
-                'permission' => 'purchase-orders',
-                'entityLabel' => 'Purchase Order',
+                    'permission' => 'purchase-orders',
+                    'entityLabel' => 'Purchase Order',
                     'id' => $po->id,
                     'show' => true,
                     'showUrl' => route('purchase-orders.show', ':id'),

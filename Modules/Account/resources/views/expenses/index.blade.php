@@ -48,7 +48,7 @@
 
     @push('scripts')
     <script>
-        window.fillAccountexpenseForm = function(data) {
+Crud.register('accountexpense', 'fill', function (data) {
             $('#accountexpense_account_id').val(data.account_id);
             $('#accountexpense_category_id').val(data.category_id);
             $('#accountexpense_amount').val(data.amount);
@@ -57,7 +57,7 @@
             $('#accountexpense_vendor_name').val(data.vendor_name);
             $('#accountexpense_reference_no').val(data.reference_no);
             $('#accountexpense_note').val(data.note);
-        };
+        });
     </script>
     @endpush
 </x-app-layout>

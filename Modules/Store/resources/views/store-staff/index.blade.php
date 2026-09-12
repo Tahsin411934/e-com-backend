@@ -61,13 +61,13 @@
 
     @push('scripts')
     <script>
-        window.fillStoreStaffForm = function(data) {
+Crud.register('storestaff', 'fill', function (data) {
             $('#staff_store_id').val(data.store_id);
             $('#staff_user_id').val(data.user_id);
             $('#staff_code').val(data.staff_code);
             $('#staff_status').val(data.status);
             if (data.hired_at) $('#staff_hired_at').val(data.hired_at);
-        };
+        });
     </script>
     @endpush
 </x-app-layout>

@@ -38,10 +38,10 @@
 
     @push('scripts')
 <script>
-    window.fillSizeGroupForm = function(data) {
+Crud.register('sizegroup', 'fill', function (data) {
         $('#size_group_name_input').val(data.name);
         $('#size_group_status').val(data.status);
-    };
+    });
 </script>
     @endpush
 </x-app-layout>

@@ -70,7 +70,7 @@
 
     @push('scripts')
     <script>
-        window.fillDeliveryzoneForm = function(data) {
+Crud.register('deliveryzone', 'fill', function (data) {
             $('#zone_store_id').val(data.store_id || '');
             $('#zone_name').val(data.name);
             $('#zone_code').val(data.code);
@@ -85,7 +85,7 @@
             $('#zone_estimated_min_days').val(data.estimated_min_days);
             $('#zone_estimated_max_days').val(data.estimated_max_days);
             $('#zone_status').val(data.status);
-        };
+        });
     </script>
     @endpush
 </x-app-layout>

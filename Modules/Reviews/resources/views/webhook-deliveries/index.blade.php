@@ -48,7 +48,7 @@
     {{-- Delivery details drawer (reusable drawer component, read-only) --}}
     <x-drawer id="webhookDeliveryDrawer" overlayId="webhookDeliveryOverlay" title="Delivery Details" maxWidth="max-w-2xl"
         submitBtnId="deliveryDrawerAction" submitBtnText="Close" submitBtnColor="bg-gray-500 hover:bg-gray-600"
-        submitOnClick="closeGlobalDrawer('webhookDeliveryDrawer', 'webhookDeliveryOverlay')">
+        submitEntity="webhookdelivery" submitAction="close">
         <div id="deliveryDetailsContent" class="space-y-4">
             <div class="text-sm text-gray-400">No delivery selected.</div>
         </div>
@@ -87,7 +87,7 @@
         }
 
         // ========== VIEW (opens the reusable details drawer) ==========
-        window.webhookDeliveryView = function (id, btn) {
+        function webhookDeliveryView(id, btn) {
             const row = getTable().row($(btn).closest('tr')).data();
             if (!row) return;
 
@@ -124,7 +124,7 @@
         };
 
         // ========== DELETE ==========
-        window.webhookDeliveryDelete = function (id) {
+        function webhookDeliveryDelete(id) {
             Swal.fire({
                 title: 'Are you sure?',
                 text: 'This delivery log will be deleted!',
@@ -159,6 +159,18 @@
                 });
             });
         };
+
+        Crud.register('webhookdelivery', 'view', webhookDeliveryView);
+        Crud.register('webhookdelivery', 'delete', webhookDeliveryDelete);
+        Crud.register('webhookdelivery', 'close', function () {
+            closeGlobalDrawer('webhookDeliveryDrawer', 'webhookDeliveryOverlay');
+        });
+
+        $(document).on('click', '.js-webhook-delivery-action', function () {
+            var button = $(this);
+            var callback = Crud.get('webhookdelivery', button.data('action'));
+            if (typeof callback === 'function') callback(button.data('id'), this);
+        });
 
         // ========== INIT ==========
         $(document).ready(function () {

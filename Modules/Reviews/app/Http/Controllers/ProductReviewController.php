@@ -5,6 +5,7 @@ namespace Modules\Reviews\Http\Controllers;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Modules\Catalog\Models\Product;
+use Modules\Reviews\Http\Requests\ProductReviewRequest;
 use Modules\Reviews\Services\ProductReviewService;
 
 class ProductReviewController extends Controller
@@ -23,9 +24,9 @@ class ProductReviewController extends Controller
         return $this->service->getReviewDataTable($request);
     }
 
-    public function store(Request $request)
+    public function store(ProductReviewRequest $request)
     {
-        return $this->service->saveReview($request->all());
+        return $this->service->saveReview($request->validated());
     }
 
     public function show($id)
@@ -33,9 +34,9 @@ class ProductReviewController extends Controller
         return $this->service->getReviewById((int) $id);
     }
 
-    public function update(Request $request, $id)
+    public function update(ProductReviewRequest $request, $id)
     {
-        return $this->service->saveReview($request->all() + ['review_id' => $id]);
+        return $this->service->saveReview($request->validated() + ['review_id' => $id]);
     }
 
     public function destroy($id)

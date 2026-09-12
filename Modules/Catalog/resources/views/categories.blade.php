@@ -85,7 +85,7 @@
 
     @push('scripts')
     <script>
-        window.fillCategoryForm = function(data) {
+        Crud.register('category', 'fill', function(data) {
             $('#category_store_id').val(data.store_id);
             $('#category_parent_id').val(data.parent_id || '');
             $('#category_name').val(data.name);
@@ -101,7 +101,7 @@
             } else {
                 $('#categoryImagePreview').addClass('hidden');
             }
-        };
+        });
 
         $(document).ready(function() {
             $('#category_name').on('input', function() {

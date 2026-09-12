@@ -7,7 +7,7 @@
                 <h1 class="text-xl font-bold text-gray-800">{{ $title }}</h1>
                 <p class="text-sm text-gray-500">Reports module · date range, store, product/category/brand filters & CSV export.</p>
             </div>
-            <button type="button" onclick="reports.reload()"
+            <button type="button" class="js-reports-reload"
                 class="bg-primary text-white px-4 py-2 rounded-lg text-sm font-semibold">
                 <i class="fa fa-rotate mr-1"></i> Refresh
             </button>
@@ -56,7 +56,7 @@
                      data-title="{{ $section['title'] }}">
                     <div class="px-4 py-3 border-b border-gray-200 flex items-center justify-between">
                         <h2 class="font-semibold text-gray-800">{{ $section['title'] }}</h2>
-                        <a href="#" class="export-btn text-xs text-primary hover:underline" onclick="return reports.export(this)">
+                        <a href="#" class="js-reports-export export-btn text-xs text-primary hover:underline">
                             <i class="fa fa-download mr-1"></i> Export CSV
                         </a>
                     </div>
@@ -75,7 +75,7 @@
 
     @push('scripts')
     <script>
-        window.reports = (function () {
+        (function () {
             const API_BASE = '/api/v1/reports';
 
             function queryString() {
@@ -179,12 +179,17 @@
                 const section = btn.closest('.report-section');
                 if (!section) return false;
                 const qs = queryString();
-                window.location = API_BASE + '/' + section.dataset.category + '/' + section.dataset.method + '/export' + (qs ? '?' + qs : '');
+                location.href = API_BASE + '/' + section.dataset.category + '/' + section.dataset.method + '/export' + (qs ? '?' + qs : '');
                 return false;
             }
 
+            $(document).on('click', '.js-reports-reload', load);
+            $(document).on('click', '.js-reports-export', function (event) {
+                event.preventDefault();
+                exportCsv(this);
+            });
+
             load();
-            return { load, reload: load, export: exportCsv };
         })();
     </script>
     @endpush

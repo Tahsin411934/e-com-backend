@@ -4,6 +4,7 @@ namespace Modules\Cart\Http\Controllers;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
+use Modules\Cart\Http\Requests\CampaignRequest;
 use Modules\Cart\Models\Campaign;
 use Modules\Cart\Services\CampaignService;
 
@@ -21,20 +22,9 @@ class CampaignController extends Controller
         return $this->campaignService->list();
     }
 
-    public function store(Request $request)
+    public function store(CampaignRequest $request)
     {
-        $data = $request->validate([
-            'name' => 'required|string|max:160',
-            'description' => 'nullable|string',
-            'banner_image' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:5120',
-            'button_text' => 'nullable|string|max:60',
-            'priority' => 'nullable|integer|min:0',
-            'is_featured' => 'nullable|boolean',
-            'is_active' => 'nullable|boolean',
-            'status' => 'required|in:draft,active,paused',
-            'starts_at' => 'nullable|date',
-            'ends_at' => 'nullable|date|after:starts_at',
-        ]);
+        $data = $request->validated();
 
         if ($request->hasFile('banner_image')) {
             $data['banner_image_file'] = $request->file('banner_image');
@@ -49,20 +39,10 @@ class CampaignController extends Controller
         return $this->campaignService->show($campaign);
     }
 
-    public function update(Request $request, Campaign $campaign)
+    public function update(CampaignRequest $request, Campaign $campaign)
     {
-        $data = $request->validate([
-            'name' => 'sometimes|required|string|max:160',
-            'description' => 'nullable|string',
-            'banner_image' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:5120',
-            'button_text' => 'nullable|string|max:60',
-            'priority' => 'nullable|integer|min:0',
-            'is_featured' => 'nullable|boolean',
-            'is_active' => 'sometimes|nullable|boolean',
-            'status' => 'sometimes|required|in:draft,active,paused',
-            'starts_at' => 'nullable|date',
-            'ends_at' => 'nullable|date|after:starts_at',
-        ]);
+        $data = $request->validated();
+        unset($data['remove_banner']);
 
         if ($request->hasFile('banner_image')) {
             $data['banner_image_file'] = $request->file('banner_image');

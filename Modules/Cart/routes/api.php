@@ -7,8 +7,8 @@ use Modules\Cart\Http\Controllers\WishlistController;
 use Modules\Order\Http\Controllers\CheckoutController;
 
 Route::prefix('v1')->group(function () {
-    Route::get('campaigns', [CampaignApiController::class, 'index']);
-    Route::get('campaigns/{slug}', [CampaignApiController::class, 'show']);
+    Route::get('campaigns', [CampaignApiController::class, 'index'])->name('cart.campaigns.index');
+    Route::get('campaigns/{slug}', [CampaignApiController::class, 'show'])->name('cart.campaigns.show');
 
     // Public guest checkout — lets logged-out visitors place an order
     // with name + delivery details + cart items (no auth required).

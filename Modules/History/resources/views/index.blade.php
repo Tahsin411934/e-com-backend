@@ -58,7 +58,7 @@
     {{-- Details drawer (reusable drawer component) --}}
     <x-drawer id="historyDrawer" overlayId="historyOverlay" title="History Details" maxWidth="max-w-2xl"
         submitBtnId="restoreHistoryBtn" submitBtnText="Restore Record" submitBtnColor="bg-primary hover:bg-primary"
-        submitOnClick="restoreFromDrawer()">
+        submitEntity="history" submitAction="restore">
         <div id="historyDetailsContent" class="space-y-4">
             <div class="text-sm text-gray-400">No record selected.</div>
         </div>
@@ -133,7 +133,7 @@
         let currentHistoryId = null;
 
         // Details: open the reusable drawer with the row's full data.
-        window.openHistoryDetails = function (id, btn) {
+        function openHistoryDetails(id, btn) {
             const row = getTable().row($(btn).closest('tr')).data();
             if (!row) return;
 
@@ -182,7 +182,7 @@
         }
 
         // Restore straight from the row button.
-        window.restoreHistory = function (id) {
+        function restoreHistory(id) {
             doRestore(id);
         };
 
@@ -190,6 +190,18 @@
         function restoreFromDrawer() {
             if (currentHistoryId) doRestore(currentHistoryId);
         }
+
+        Crud.register('history', 'details', openHistoryDetails);
+        Crud.register('history', 'restore', restoreFromDrawer);
+
+        $(document).on('click', '.js-history-action', function () {
+            var button = $(this);
+            var action = button.data('history-action');
+            var callback = Crud.get('history', action);
+            if (typeof callback === 'function') {
+                callback(button.data('history-id'), this);
+            }
+        });
 
         $(document).ready(function () {
             $('#resetHistoryFilters').on('click', function () {

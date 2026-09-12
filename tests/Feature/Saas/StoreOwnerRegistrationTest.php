@@ -66,6 +66,64 @@ class StoreOwnerRegistrationTest extends TestCase
         $response->assertJsonValidationErrors('store_name');
     }
 
+    public function test_registration_returns_json_validation_errors_without_accept_header(): void
+    {
+        $this->post('/api/v1/register/store-owner', [])
+            ->assertStatus(422)
+            ->assertJsonPath('status', 'error')
+            ->assertJsonValidationErrors(['first_name', 'last_name', 'email', 'password', 'store_name']);
+
+        $this->assertDatabaseCount('users', 0);
+        $this->assertDatabaseCount('stores', 0);
+    }
+
+    public function test_registration_works_without_seeded_roles_or_optional_fields(): void
+    {
+        Role::where('name', User::STORE_OWNER_ROLE)->forceDelete();
+        unset($this->payload['phone'], $this->payload['currency_code'], $this->payload['timezone']);
+
+        $this->postJson('/api/v1/register/store-owner', $this->payload)
+            ->assertCreated()
+            ->assertJsonPath('data.store.currency_code', 'USD')
+            ->assertJsonPath('data.store.timezone', 'UTC');
+
+        $user = User::where('email', $this->payload['email'])->firstOrFail();
+        $this->assertTrue($user->hasAdminAccess());
+        $this->assertTrue($user->roles->pluck('name')->contains(User::STORE_OWNER_ROLE));
+        $this->assertGuest('web');
+    }
+
+    public function test_duplicate_email_is_rejected_without_creating_another_store(): void
+    {
+        $this->postJson('/api/v1/register/store-owner', $this->payload)->assertCreated();
+        $this->payload['phone'] = '01799887766';
+
+        $this->postJson('/api/v1/register/store-owner', $this->payload)
+            ->assertStatus(422)
+            ->assertJsonValidationErrors('email');
+
+        $this->assertDatabaseCount('users', 1);
+        $this->assertDatabaseCount('stores', 1);
+    }
+
+    public function test_password_confirmation_must_match(): void
+    {
+        $this->payload['password_confirmation'] = 'different1234';
+
+        $this->postJson('/api/v1/register/store-owner', $this->payload)
+            ->assertStatus(422)
+            ->assertJsonValidationErrors('password');
+
+        $this->assertDatabaseCount('users', 0);
+        $this->assertDatabaseCount('stores', 0);
+    }
+
+    public function test_old_web_registration_endpoints_are_removed(): void
+    {
+        $this->get('/register/store-owner')->assertNotFound();
+        $this->post('/register/store-owner', $this->payload)->assertNotFound();
+    }
+
     public function test_duplicate_store_names_receive_unique_slugs(): void
     {
         $this->postJson('/api/v1/register/store-owner', $this->payload)->assertCreated();

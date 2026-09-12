@@ -42,7 +42,7 @@ class StoreRegistrationService
     }
 
     /**
-     * Core tenant creation shared by the API and web registration flows:
+     * Core tenant creation for public API registration:
      * user + "Store Owner" role + their store, inside one transaction.
      *
      * NOTE: Only the default role is assigned here. Permissions are

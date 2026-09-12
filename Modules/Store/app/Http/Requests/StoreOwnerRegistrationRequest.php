@@ -2,12 +2,20 @@
 
 namespace Modules\Store\Http\Requests;
 
+use App\Helpers\ApiResponse;
+use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Http\Exceptions\HttpResponseException;
 use Illuminate\Validation\Rule;
 use Modules\Identity\Models\User;
 
 class StoreOwnerRegistrationRequest extends FormRequest
 {
+    protected function failedValidation(Validator $validator): void
+    {
+        throw new HttpResponseException(ApiResponse::validationError($validator->errors()));
+    }
+
     /**
      * Public SaaS registration endpoint - always authorized.
      */

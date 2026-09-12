@@ -188,6 +188,19 @@
         });
     </script>
 
+    <script>
+        window.Crud = window.Crud || {
+            callbacks: {},
+            register: function (entity, action, callback) {
+                this.callbacks[entity] = this.callbacks[entity] || {};
+                this.callbacks[entity][action] = callback;
+            },
+            get: function (entity, action) {
+                return this.callbacks[entity]?.[action] ?? null;
+            }
+        };
+    </script>
+
     @stack('scripts')
 
 </body>

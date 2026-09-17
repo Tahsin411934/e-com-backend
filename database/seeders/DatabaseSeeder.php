@@ -18,20 +18,20 @@ class DatabaseSeeder extends Seeder
         $this->command->info('====================================');
 
         // Order matters for foreign key dependencies
-        // $this->call(IdentityDatabaseSeeder::class);
+        $this->call(IdentityDatabaseSeeder::class);
         $this->call(AdditionalPermissionsSeeder::class);
         $this->call(\Modules\Inventory\Database\Seeders\InventoryPermissionsSeeder::class);
         $this->call(\Modules\Reports\Database\Seeders\ReportsPermissionsSeeder::class);
         $this->call(\Modules\Identity\Database\Seeders\SystemPermissionsSeeder::class);
-        // $this->call(\Modules\Account\Database\Seeders\AccountDatabaseSeeder::class);
-        // $this->call(\Modules\Store\Database\Seeders\StoreDatabaseSeeder::class);
-        // $this->call(\Modules\Catalog\Database\Seeders\CatalogDatabaseSeeder::class);
-        // $this->call(\Modules\Frontend\Database\Seeders\FrontendDatabaseSeeder::class);
-        // $this->call(\Modules\Inventory\Database\Seeders\InventoryDatabaseSeeder::class);
-        // $this->call(\Modules\Cart\Database\Seeders\CartDatabaseSeeder::class);
-        // $this->call(\Modules\Order\Database\Seeders\OrderDatabaseSeeder::class);
-        // $this->call(\Modules\Pos\Database\Seeders\PosDatabaseSeeder::class);
-        // $this->call(\Modules\Reviews\Database\Seeders\ReviewsDatabaseSeeder::class);
+        $this->call(\Modules\Account\Database\Seeders\AccountDatabaseSeeder::class);
+        $this->call(\Modules\Store\Database\Seeders\StoreDatabaseSeeder::class);
+        $this->call(\Modules\Catalog\Database\Seeders\CatalogDatabaseSeeder::class);
+        $this->call(\Modules\Frontend\Database\Seeders\FrontendDatabaseSeeder::class);
+        $this->call(\Modules\Inventory\Database\Seeders\InventoryDatabaseSeeder::class);
+        $this->call(\Modules\Cart\Database\Seeders\CartDatabaseSeeder::class);
+        $this->call(\Modules\Order\Database\Seeders\OrderDatabaseSeeder::class);
+        $this->call(\Modules\Pos\Database\Seeders\PosDatabaseSeeder::class);
+        $this->call(\Modules\Reviews\Database\Seeders\ReviewsDatabaseSeeder::class);
 
         $this->command->info('====================================');
         $this->command->info('   ALL DATABASE SEEDING COMPLETED');

@@ -9,13 +9,30 @@ use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Modules\Frontend\Models\Banner;
+use Modules\Identity\Models\User;
 use Yajra\DataTables\DataTables;
 
 class BannerService
 {
     public function getBannerDataTable(Request $request)
     {
-        $query = Banner::query()->orderByDesc('created_at');
+        $query = Banner::query()->with('store')->orderByDesc('created_at');
+
+        // Store Owner → only their own store's banners. Platform staff → all
+        // banners, optionally filtered by a specific store (or "global").
+        $ownedStoreId = $this->resolveStoreScope($request->user());
+
+        if ($ownedStoreId !== null) {
+            $query->where('store_id', $ownedStoreId);
+        } elseif ($request->filled('store_id')) {
+            $filter = $request->input('store_id');
+
+            if ($filter === 'global') {
+                $query->whereNull('store_id');
+            } elseif (is_numeric($filter)) {
+                $query->where('store_id', (int) $filter);
+            }
+        }
 
         return DataTables::of($query)
             ->editColumn('banner_image', function (Banner $banner) {
@@ -26,6 +43,9 @@ class BannerService
                 }
 
                 return '-';
+            })
+            ->addColumn('store_name', function (Banner $banner) {
+                return $banner->store?->name ?? 'Global (Platform)';
             })
             ->editColumn('status', function (Banner $banner) {
                 return ucfirst($banner->status);
@@ -43,23 +63,79 @@ class BannerService
             ->make(true);
     }
 
+    /**
+     * Resolve the banner scope for the acting user:
+     *  - Store Owner (with a store)  → their owned store id
+     *  - Store Owner (without store) → 0 (matches nothing)
+     *  - Everyone else (platform)    → null (unrestricted)
+     */
+    private function resolveStoreScope(?User $user): ?int
+    {
+        if (! $user || ! $user->isStoreOwner()) {
+            return null;
+        }
+
+        $store = $user->ownedStore()->first(['id']);
+
+        return $store ? (int) $store->id : 0;
+    }
+
+    /**
+     * Ownership check for a single banner. Returns true when the acting user
+     * is restricted to a store that does not own the banner.
+     */
+    private function accessDenied(Banner $banner): bool
+    {
+        $ownedStoreId = $this->resolveStoreScope(auth()->user());
+
+        return $ownedStoreId !== null && (int) $banner->store_id !== $ownedStoreId;
+    }
+
     public function saveBanner(array $data): JsonResponse
     {
         try {
-            return DB::transaction(function () use ($data) {
+            $ownedStoreId = $this->resolveStoreScope(auth()->user());
+
+            if ($ownedStoreId === 0) {
+                return ApiResponse::error('No store is associated with your account, so banners cannot be managed.', 403);
+            }
+
+            return DB::transaction(function () use ($data, $ownedStoreId) {
                 $bannerId = $data['banner_id'] ?? null;
                 $data['sort_order'] = $data['sort_order'] ?? 0;
                 $data['status'] = $data['status'] ?? 'active';
                 unset($data['banner_id']);
 
+                // Store assignment is always resolved server-side.
+                if ($ownedStoreId !== null) {
+                    // Store Owner: banner always belongs to their own store.
+                    $data['store_id'] = $ownedStoreId;
+                } else {
+                    // Platform staff: explicit store selection, or null for a global banner.
+                    $data['store_id'] = (isset($data['store_id']) && $data['store_id'] !== '' && $data['store_id'] !== null)
+                        ? (int) $data['store_id']
+                        : null;
+                }
+
+                $banner = null;
+
+                if ($bannerId) {
+                    $banner = Banner::find($bannerId);
+
+                    if (! $banner) {
+                        return ApiResponse::notFound('Banner not found.');
+                    }
+
+                    if ($this->accessDenied($banner)) {
+                        return ApiResponse::error('You are not allowed to modify this banner.', 403);
+                    }
+                }
+
                 // Handle image upload
                 if (isset($data['banner_image']) && $data['banner_image'] instanceof UploadedFile) {
                     // Delete old image if updating
-                    if ($bannerId) {
-                        $oldBanner = Banner::find($bannerId);
-                        if ($oldBanner && $oldBanner->banner_image) {
-                            Storage::disk('public')->delete($oldBanner->banner_image);
-                        }
+                    if ($banner && $banner->banner_image) {
+                        Storage::disk('public')->delete($banner->banner_image);
                     }
                     $data['banner_image'] = $data['banner_image']->store('banners', 'public');
                 } else {
@@ -67,8 +143,7 @@ class BannerService
                     unset($data['banner_image']);
                 }
 
-                if ($bannerId) {
-                    $banner = Banner::findOrFail($bannerId);
+                if ($banner) {
                     $banner->update($data);
                     $message = 'Banner updated successfully.';
                 } else {
@@ -88,6 +163,10 @@ class BannerService
         try {
             $banner = Banner::findOrFail($id);
 
+            if ($this->accessDenied($banner)) {
+                return ApiResponse::error('You are not allowed to view this banner.', 403);
+            }
+
             // Add full image URL for the form
             $bannerArray = $banner->toArray();
             if ($banner->banner_image) {
@@ -105,6 +184,10 @@ class BannerService
         try {
             return DB::transaction(function () use ($id) {
                 $banner = Banner::findOrFail($id);
+
+                if ($this->accessDenied($banner)) {
+                    return ApiResponse::error('You are not allowed to delete this banner.', 403);
+                }
 
                 // Delete image file
                 if ($banner->banner_image) {

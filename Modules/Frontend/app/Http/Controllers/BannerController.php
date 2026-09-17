@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use Modules\Frontend\Http\Requests\StoreBannerRequest;
 use Modules\Frontend\Http\Requests\UpdateBannerRequest;
 use Modules\Frontend\Services\BannerService;
+use Modules\Store\Models\Store;
 
 class BannerController extends Controller
 {
@@ -14,7 +15,18 @@ class BannerController extends Controller
 
     public function index()
     {
-        return view('frontend::banners');
+        $user = auth()->user();
+        $isStoreOwner = $user->isStoreOwner();
+
+        // Store Owner only manages their own store; platform staff can pick any store.
+        $stores = $isStoreOwner
+            ? collect($user->ownedStore ? [$user->ownedStore] : [])
+            : Store::query()->orderBy('name')->get(['id', 'name']);
+
+        return view('frontend::banners', [
+            'isStoreOwner' => $isStoreOwner,
+            'stores' => $stores,
+        ]);
     }
 
     public function dataTable(Request $request)

@@ -28,6 +28,7 @@ class StoreBannerRequest extends FormRequest
             'secondary_btn_text_color' => 'nullable|string|max:50',
             'sort_order' => 'nullable|integer|min:0',
             'status' => 'required|in:active,inactive',
+            'store_id' => 'nullable|integer|exists:stores,id',
         ];
     }
 
@@ -39,6 +40,7 @@ class StoreBannerRequest extends FormRequest
             'banner_image.mimes' => 'Supported formats: jpeg, png, jpg, gif, svg, webp.',
             'banner_image.max' => 'Image size must not exceed 2MB.',
             'status.in' => 'Status must be active or inactive.',
+            'store_id.exists' => 'The selected store does not exist.',
         ];
     }
 }

@@ -5,22 +5,53 @@
         </h2>
     </x-slot>
 
+    @php
+        // Admin sees every banner + a Store column/filter; Store Owner is
+        // scoped server-side to their own store only.
+        if ($isStoreOwner) {
+            $bannerColumns = ['Image','Title','Subtitle','Badge','Sort Order','Status','Created At','Action'];
+            $bannerDtColumns = [
+                ['data' => 'banner_image', 'orderable' => false, 'searchable' => false],
+                ['data' => 'title'],
+                ['data' => 'subtitle'],
+                ['data' => 'smtag'],
+                ['data' => 'sort_order'],
+                ['data' => 'status'],
+                ['data' => 'created_at'],
+                ['data' => 'action', 'orderable' => false, 'searchable' => false],
+            ];
+            $bannerOrder = [[6, 'desc']];
+            $bannerFilters = [];
+        } else {
+            $bannerColumns = ['Image','Store','Title','Subtitle','Badge','Sort Order','Status','Created At','Action'];
+            $bannerDtColumns = [
+                ['data' => 'banner_image', 'orderable' => false, 'searchable' => false],
+                ['data' => 'store_name', 'orderable' => false, 'searchable' => false],
+                ['data' => 'title'],
+                ['data' => 'subtitle'],
+                ['data' => 'smtag'],
+                ['data' => 'sort_order'],
+                ['data' => 'status'],
+                ['data' => 'created_at'],
+                ['data' => 'action', 'orderable' => false, 'searchable' => false],
+            ];
+            $bannerOrder = [[7, 'desc']];
+            $bannerFilters = ['store_id' => [
+                'label' => 'Store',
+                'options' => '<option value="">All Stores</option><option value="global">Global (Platform)</option>'
+                    . $stores->map(fn ($store) => '<option value="'.e($store->id).'">'.e($store->name).'</option>')->implode(''),
+            ]];
+        }
+    @endphp
+
     <x-entity-crud
         id="banner"
         createPermission="frontend.banners"
         title="Banners"
         icon="fa-solid fa-images"
-        :columns="['Image','Title','Subtitle','Badge','Sort Order','Status','Created At','Action']"
-        :dtColumns="[
-            ['data' => 'banner_image', 'orderable' => false, 'searchable' => false],
-            ['data' => 'title'],
-            ['data' => 'subtitle'],
-            ['data' => 'smtag'],
-            ['data' => 'sort_order'],
-            ['data' => 'status'],
-            ['data' => 'created_at'],
-            ['data' => 'action', 'orderable' => false, 'searchable' => false],
-        ]"
+        :columns="$bannerColumns"
+        :dtColumns="$bannerDtColumns"
+        :filters="$bannerFilters"
         ajaxUrl="{{ route('frontend.banners.dataTable') }}"
         storeUrl="{{ route('frontend.banners.store') }}"
         updateUrl="{{ route('frontend.banners.update', ':id') }}"
@@ -29,8 +60,25 @@
         drawerTitle="Banner"
         dataKey="data"
         idField="banner_id"
-        :order="[[6, 'desc']]"
+        :order="$bannerOrder"
     >
+        @if ($isStoreOwner)
+        <div class="mb-4">
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Store</label>
+            <div class="w-full border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 rounded-lg px-3 py-2 text-sm text-gray-600 dark:text-gray-300">
+                {{ $stores->first()?->name ?? 'No store assigned' }}
+            </div>
+            <p class="text-xs text-gray-400 dark:text-gray-500 mt-1">Banners you create will belong to this store.</p>
+        </div>
+        @else
+        <div class="mb-4">
+            <x-form-select label="Store" name="store_id" id="banner_store_id" placeholder="Global (Platform)">
+                @foreach ($stores as $store)
+                    <option value="{{ $store->id }}">{{ $store->name }}</option>
+                @endforeach
+            </x-form-select>
+        </div>
+        @endif
         <div class="mb-4">
             <x-form-input label="Title" name="title" id="banner_title" placeholder="Banner Title" required />
         </div>
@@ -155,6 +203,7 @@ Crud.register('banner', 'fill', function (data) {
             $('#banner_secondary_btn_text_color_hex').val(secondaryTextColor);
             $('#banner_sort_order').val(data.sort_order || 0);
             $('#banner_status').val(data.status);
+            $('#banner_store_id').val(data.store_id || '');
 
             // Show image preview if available
             if (data.banner_image_url) {

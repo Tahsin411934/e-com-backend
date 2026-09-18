@@ -1,0 +1,57 @@
+app\actions\product-request.ts:37: headerList.get("x-store-host") ?? headerList.get("host")
+app\actions\product-request.ts:43: ...(storefrontHost ? { headers: { "X-Store-Host": storefrontHost } } : {}),
+config\revalidate.ts:5: *   api(endpoint, { revalidate: REVALIDATE.X })   // services layer
+hooks\useSyncDeliveryCharges.ts:34: syncCartApi(backendItems)
+lib\api-url.ts:6: const baseHasApiPrefix = /\/api(?:\/v\d+)?$/i.test(normalizedBaseUrl);
+lib\api-url.ts:7: if (baseHasApiPrefix && /^\/api(?:\/v\d+)?/i.test(endpoint)) {
+lib\api-url.ts:8: return `${normalizedBaseUrl}${endpoint.replace(/^\/api(?:\/v\d+)?/i, "")}`;
+lib\api-url.ts:18: * `X-Store-Host` header (the visitor's storefront hostname) so the backend can
+lib\api-url.ts:23: export function isStorefrontEndpoint(path: string): boolean {
+lib\api-url.ts:31: export function toStorefrontPath(path: string): string {
+lib\api-url.ts:33: return isStorefrontEndpoint(endpoint) ? endpoint : `/storefront${endpoint}`;
+lib\api.ts:1: import { buildApiUrl, isStorefrontEndpoint } from "@/lib/api-url";
+lib\api.ts:81: export async function api<T>(
+lib\api.ts:98: if (isStorefrontEndpoint(endpoint)) {
+lib\api.ts:101: headers["X-Store-Host"] = host;
+lib\asset-url.ts:28: process.env.NEXT_PUBLIC_API_URL?.replace(/\/api(?:\/v\d+)?$/i, "") ||
+lib\proxy.ts:3: import { buildApiUrl, isStorefrontEndpoint } from "@/lib/api-url";
+lib\proxy.ts:21: * storefront hostname via `X-Store-Host` so the backend can resolve the store.
+lib\proxy.ts:48: if (isStorefrontEndpoint(endpoint) && request) {
+lib\proxy.ts:50: request.headers.get("x-store-host") ?? request.headers.get("host")
+lib\proxy.ts:53: headers["X-Store-Host"] = host;
+lib\storefront-host.ts:10: * `X-Store-Host` header and the backend falls back to its configured
+lib\storefront-host.ts:22: const host = (headerList.get("x-store-host") ?? headerList.get("host"))?.trim();
+services\announcement-bar.service.ts:10: const res = await api<ApiEnvelope<AnnouncementBar>>("/storefront/announcement-bars", {
+services\banner.service.ts:11: const res = await api<ApiEnvelope<Banner>>("/storefront/banners", {
+services\brands.service.ts:13: const res = await api<BrandsRawResponse>(`/storefront/brands?${query.toString()}`, {
+services\campaign.service.ts:33: (await api<{ data: Campaign[] }>("/storefront/campaigns", {
+services\cart.service.ts:41: export async function checkoutApi(data: {
+services\cart.service.ts:68: export async function syncCartApi(items: Array<{ product_id: number; variant_id?: number; variant_option_id?: number; quantity: number }>): Promise<CartResponse> {
+services\cart.service.ts:86: export async function guestCheckoutApi(data: {
+services\category-products.service.ts:39: const res = await api<CategoryProductsRawResponse>(endpoint, {
+services\category.service.ts:10: const res = await api<ApiEnvelope<Category>>("/storefront/categories", {
+services\category.service.ts:19: const res = await api<ApiEnvelope<Category>>(`/storefront/categories/${slug}`, {
+services\home.service.ts:19: const res = await api<HomeApiResponse>(endpoint, {
+services\navbar.service.ts:10: const res = await api<ApiEnvelope<NavbarItem>>("/storefront/navbar-items", {
+services\product-detail.service.ts:9: const res = await api<ProductDetailResponse>(`/storefront/products/${slug}`, {
+services\product-request.service.ts:26: "X-Store-Host": getClientStorefrontHost(),
+services\product.service.ts:19: const res = await api<ApiEnvelope<ProductSearchResult>>(`/storefront/products/search?${params.toString()}`, {
+services\review.service.ts:10: const res = await api<ApiEnvelope<Review>>(`/products/${productId}/reviews`, {
+services\review.service.ts:24: const res = await api<ApiEnvelope<Review>>(`/products/${productId}/reviews`, {
+services\settings.service.ts:10: const res = await api<ApiEnvelope<SettingsPayload>>("/storefront/settings", {
+services\sitemap.service.ts:40: const res = await api<ApiEnvelope<SitemapCountData>>("/storefront/sitemap/products-count", {
+services\sitemap.service.ts:58: const res = await api<ApiEnvelope<SitemapProductsData>>(
+services\subnavbar.service.ts:29: const res = await api<SubnavbarProductsResponse>(endpoint, {
+services\wishlist.service.ts:3: async function wishlistApi<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
+services\wishlist.service.ts:23: return wishlistApi<WishlistApiResponse>("/api/wishlists");
+services\wishlist.service.ts:27: return wishlistApi<ToggleWishlistResponse>("/api/wishlists/toggle", {
+services\wishlist.service.ts:34: return wishlistApi<RemoveWishlistResponse>(`/api/wishlists/${productId}`, {
+app\campaigns\[slug]\page.tsx:20: // Multi-tenant storefront endpoint: api() sends the visitor's hostname via
+app\campaigns\[slug]\page.tsx:21: // X-Store-Host, so only campaigns visible on this storefront resolve — and
+app\campaigns\[slug]\page.tsx:23: const { data: campaign } = await api<{ data: Campaign }>(`/storefront/campaigns/${slug}`, {
+app\campaigns\[slug]\page.tsx:79: // Multi-tenant storefront endpoint (X-Store-Host auto-attached by api()).
+app\campaigns\[slug]\page.tsx:83: (await api<{ data: Campaign }>(`/storefront/campaigns/${slug}`, {
+app\checkout\page.tsx:98: const syncResult = await import("@/services/cart.service").then(module => module.syncCartApi(cartItems));
+app\checkout\page.tsx:109: result = await checkoutApi({
+app\checkout\page.tsx:120: result = await guestCheckoutApi({
+components\ui\carousel.tsx:102: setApi(api);

@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\DB;
 use Modules\Store\Http\Requests\StoreDomainRequest;
 use Modules\Store\Models\StoreDomain;
 use Modules\Store\Support\CurrentStore;
+use Modules\Store\Support\StoreDomainResolver;
 
 class StoreDomainController extends Controller
 {
@@ -153,7 +154,7 @@ class StoreDomainController extends Controller
      */
     private function verifyDns(string $domain): bool
     {
-        $suffix = strtolower((string) config('storefront.domain_suffix'));
+        $suffix = strtolower(StoreDomainResolver::primarySuffix());
 
         $records = @dns_get_record($domain, DNS_CNAME) ?: [];
 
@@ -186,7 +187,7 @@ class StoreDomainController extends Controller
 
     private function dnsInstructions(): array
     {
-        $suffix = (string) config('storefront.domain_suffix');
+        $suffix = (string) StoreDomainResolver::primarySuffix();
         $serverIp = config('storefront.server_ip');
 
         if ($serverIp) {

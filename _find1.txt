@@ -1,0 +1,1 @@
+﻿D:\ecomarce-frontend\src\lib\storefront-host.ts

@@ -14,6 +14,7 @@ use Modules\Storefront\Http\Controllers\ProductRequestController;
 use Modules\Storefront\Http\Controllers\ProductSearchController;
 use Modules\Storefront\Http\Controllers\SettingsController;
 use Modules\Storefront\Http\Controllers\SitemapController;
+use Modules\Storefront\Http\Controllers\StoreResolveController;
 use Modules\Storefront\Http\Controllers\SubnavbarController;
 
 /*
@@ -77,3 +78,9 @@ Route::middleware(['storefront.tenant', 'auth:sanctum'])->prefix('v1/storefront'
     Route::get('/orders', [OrderController::class, 'index'])->name('orders.index');
     Route::get('/orders/{order}', [OrderController::class, 'show'])->name('orders.show');
 });
+
+// Tenant discovery - intentionally OUTSIDE the storefront.tenant group so an
+// unregistered host gets a structured answer ({registered: false, reason})
+// instead of the middleware's hard 404. Consumed by the frontend proxy to
+// route unregistered subdomains to a friendly "no store here" page.
+Route::get('v1/storefront/resolve', [StoreResolveController::class, 'show'])->name('resolve.show');

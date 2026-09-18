@@ -17,14 +17,32 @@ return [
 
     /*
     |--------------------------------------------------------------------------
-    | Wildcard tenant domain
+    | Wildcard tenant domains
     |--------------------------------------------------------------------------
     |
     | Every store automatically gets {store_slug}.{domain_suffix} on
     | registration (e.g. rahim-electronics.shopio.test).
     |
+    | Accepts a COMMA SEPARATED list so one backend can serve tenants on more
+    | than one parent domain (e.g. "aftsoftandlimited.com,onehaatbd.com").
+    | The FIRST entry is the primary suffix — it is the domain new stores get
+    | on registration; the rest remain resolvable for existing tenants.
+    |
     */
-    'domain_suffix' => env('STOREFRONT_DOMAIN_SUFFIX', env('STOREFRONT_CENTRAL_DOMAIN', 'onehaatbd.com')),
+    'domain_suffix' => env('STOREFRONT_DOMAIN_SUFFIX', 'aftsoftandlimited.com'),
+
+    /*
+    |--------------------------------------------------------------------------
+    | Additional platform hosts (never tenants)
+    |--------------------------------------------------------------------------
+    |
+    | Comma separated list of hosts that must always render the central
+    | website instead of a tenant storefront, in addition to central_domain
+    | and api_domain above. Useful when the platform itself also runs on a
+    | subdomain of a tenant suffix.
+    |
+    */
+    'extra_platform_hosts' => env('STOREFRONT_EXTRA_PLATFORM_HOSTS'),
 
     /*
     |--------------------------------------------------------------------------
@@ -47,11 +65,11 @@ return [
     | hostname (www, api, admin...) must never resolve to a tenant.
     |
     */
-    'reserved_subdomains' => [
+    'reserved_subdomains' => array_values(array_unique(array_merge([
         'www', 'api', 'admin', 'app', 'dashboard', 'mail', 'smtp', 'ftp',
         'cdn', 'static', 'assets', 'img', 'media', 'status', 'docs',
         'staging', 'dev', 'test', 'webmail', 'ns1', 'ns2', 'localhost',
-    ],
+    ], array_filter(array_map('trim', explode(',', (string) env('STOREFRONT_RESERVED_SUBDOMAINS', ''))))))),
 
     /*
     |--------------------------------------------------------------------------

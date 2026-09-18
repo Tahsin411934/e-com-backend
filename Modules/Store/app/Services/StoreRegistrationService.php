@@ -107,7 +107,7 @@ class StoreRegistrationService
     private function createSubdomain(Store $store): StoreDomain
     {
         return $store->domains()->create([
-            'domain' => $store->slug.'.'.config('storefront.domain_suffix'),
+            'domain' => $store->slug.'.'.StoreDomainResolver::primarySuffix(),
             'type' => 'subdomain',
             'is_primary' => true,
             'ssl_status' => 'active',

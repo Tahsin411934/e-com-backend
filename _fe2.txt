@@ -1,0 +1,9 @@
+public
+src
+app
+components
+config
+hooks
+lib
+services
+types

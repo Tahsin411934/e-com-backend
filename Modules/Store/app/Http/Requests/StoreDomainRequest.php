@@ -5,6 +5,7 @@ namespace Modules\Store\Http\Requests;
 use Closure;
 use Illuminate\Foundation\Http\FormRequest;
 use Modules\Store\Models\StoreDomain;
+use Modules\Store\Support\StoreDomainResolver;
 
 class StoreDomainRequest extends FormRequest
 {
@@ -22,7 +23,7 @@ class StoreDomainRequest extends FormRequest
 
     public function rules(): array
     {
-        $suffix = strtolower((string) config('storefront.domain_suffix'));
+        $suffix = strtolower(StoreDomainResolver::primarySuffix());
 
         return [
             'domain' => [

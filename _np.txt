@@ -1,0 +1,5 @@
+﻿D:\ecomarce-frontend\node_modules\next\dist\docs\01-app\01-getting-started\16-proxy.md
+D:\ecomarce-frontend\node_modules\next\dist\docs\01-app\03-api-reference\03-file-conventions\proxy.md
+D:\ecomarce-frontend\node_modules\next\dist\docs\01-app\03-api-reference\05-config\01-next-config-js\proxyClientMaxBodySize.md
+D:\ecomarce-frontend\node_modules\next\dist\docs\02-pages\04-api-reference\02-file-conventions\proxy.md
+D:\ecomarce-frontend\node_modules\next\dist\docs\02-pages\04-api-reference\04-config\01-next-config-js\proxyClientMaxBodySize.md

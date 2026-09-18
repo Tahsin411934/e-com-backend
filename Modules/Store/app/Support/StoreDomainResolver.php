@@ -66,11 +66,17 @@ class StoreDomainResolver
         return $scheme.'://'.strtolower($domain);
     }
 
-    private static function resolve(): ?Store
+    /**
+     * Resolve a store for an explicit host (defaults to the current request
+     * host). Public so discovery endpoints (GET /v1/storefront/resolve) can
+     * ask "is this host registered?" without the tenant middleware's hard
+     * 404 — an unregistered host is an expected answer, not an error.
+     */
+    public static function resolveForHost(?string $host = null): ?Store
     {
-        $host = self::host();
+        $host = self::normalize((string) ($host ?? self::host() ?? ''));
 
-        if ($host === null) {
+        if ($host === '') {
             return null;
         }
 
@@ -81,14 +87,17 @@ class StoreDomainResolver
             }
         }
 
-        // 1) Wildcard subdomain: {store_slug}.{domain_suffix}
-        $suffix = self::normalize((string) config('storefront.domain_suffix'));
+        // 1) Wildcard subdomains: {store_slug}.{domain_suffix}. Suffixes are
+        //    longest-first, so overlapping suffixes resolve deterministically.
+        foreach (self::suffixes() as $suffix) {
+            if ($suffix === '' || ! str_ends_with($host, '.'.$suffix)) {
+                continue;
+            }
 
-        if ($suffix !== '' && str_ends_with($host, '.'.$suffix)) {
             $label = substr($host, 0, -\strlen($suffix) - 1);
             $slug = explode('.', $label)[0];
 
-            if (in_array($slug, (array) config('storefront.reserved_subdomains', []), true)) {
+            if (in_array($slug, self::reservedSubdomains(), true)) {
                 return null;
             }
 
@@ -113,6 +122,11 @@ class StoreDomainResolver
         return self::isActive($store) ? $store : null;
     }
 
+    private static function resolve(): ?Store
+    {
+        return self::resolveForHost(self::host());
+    }
+
     /**
      * Development convenience: when the host cannot be resolved (localhost,
      * Next.js dev server, build-time ISR) and STOREFRONT_FALLBACK_STORE is
@@ -132,13 +146,118 @@ class StoreDomainResolver
     }
 
     /**
+     * Wildcard storefront suffixes (longest first). `STOREFRONT_DOMAIN_SUFFIX`
+     * accepts a comma separated list so one backend can serve tenants on more
+     * than one parent domain; the first entry is the primary suffix new
+     * stores are registered on.
+     *
+     * @return list<string>
+     */
+    public static function suffixes(): array
+    {
+        $raw = config('storefront.domain_suffix');
+        $raw = is_array($raw) ? $raw : explode(',', (string) $raw);
+
+        $suffixes = array_values(array_filter(array_map(
+            fn (mixed $suffix) => self::normalize((string) $suffix),
+            $raw,
+        )));
+
+        usort($suffixes, fn (string $a, string $b) => \strlen($b) <=> \strlen($a));
+
+        return array_values(array_unique($suffixes));
+    }
+
+    /**
+     * Primary wildcard suffix — the suffix new stores get on registration.
+     */
+    public static function primarySuffix(): string
+    {
+        return self::suffixes()[0] ?? '';
+    }
+
+    /**
+     * True when the host looks like a tenant storefront: it sits under one of
+     * the configured wildcard suffixes and is not a platform (central/api)
+     * host. Unknown domains (localhost, preview hosts, unrelated domains)
+     * return false so callers can render normally instead of blocking.
+     */
+    public static function isStorefrontHost(?string $host = null): bool
+    {
+        $host = self::normalize((string) ($host ?? self::host() ?? ''));
+
+        if ($host === '') {
+            return false;
+        }
+
+        foreach (self::platformHosts() as $platformHost) {
+            if ($host === $platformHost || ($platformHost !== '' && $host === 'www.'.$platformHost)) {
+                return false;
+            }
+        }
+
+        foreach (self::suffixes() as $suffix) {
+            if ($suffix !== '' && str_ends_with($host, '.'.$suffix)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * The reserved subdomain label this host maps to (`www.foo.bar` → `www`),
+     * or null when the host is not a reserved infrastructure hostname.
+     */
+    public static function reservedLabel(?string $host = null): ?string
+    {
+        $host = self::normalize((string) ($host ?? self::host() ?? ''));
+
+        foreach (self::suffixes() as $suffix) {
+            if ($suffix === '' || ! str_ends_with($host, '.'.$suffix)) {
+                continue;
+            }
+
+            $slug = explode('.', substr($host, 0, -\strlen($suffix) - 1))[0];
+
+            return in_array($slug, self::reservedSubdomains(), true) ? $slug : null;
+        }
+
+        return null;
+    }
+
+    /**
+     * Platform (central website / API) hosts — never tenants.
+     *
      * @return list<string>
      */
     private static function platformHosts(): array
     {
+        $raw = config('storefront.extra_platform_hosts');
+        $extra = is_array($raw) ? $raw : ($raw !== null ? explode(',', (string) $raw) : []);
+
+        $hosts = array_merge(
+            [config('storefront.central_domain'), config('storefront.api_domain')],
+            $extra,
+        );
+
         return array_values(array_filter(array_map(
             fn (mixed $host) => self::normalize((string) $host),
-            [config('storefront.central_domain'), config('storefront.api_domain')],
+            $hosts,
+        )));
+    }
+
+    /**
+     * Reserved infrastructure subdomains (www, api, admin...). A store slug
+     * colliding with one of these must never resolve to a tenant.
+     *
+     * @return list<string>
+     */
+    private static function reservedSubdomains(): array
+    {
+        return array_values(array_filter(array_map(
+            fn (mixed $subdomain) => self::normalize((string) $subdomain),
+            (array) config('storefront.reserved_subdomains', []),
         )));
     }
 

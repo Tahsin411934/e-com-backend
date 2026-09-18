@@ -1,0 +1,5 @@
+Placeholder so the Storefront module ships the same directory structure as
+every other module. nwidart registers `Modules/Storefront/resources/views`
+as a view namespace, and `php artisan view:cache` / `optimize` fails with
+"directory does not exist" when it is missing. Delete when real views are
+added.

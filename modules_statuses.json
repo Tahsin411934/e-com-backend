@@ -11,5 +11,6 @@
     "Store": true,
     "Account": true,
     "Reports": true,
-    "History": true
+    "History": true,
+    "Storefront": true
 }

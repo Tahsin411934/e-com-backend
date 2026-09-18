@@ -15,6 +15,7 @@ class ProductRequest extends Model
     protected $table = 'product_requests';
 
     protected $fillable = [
+        'store_id',
         'user_id',
         'customer_name',
         'customer_email',

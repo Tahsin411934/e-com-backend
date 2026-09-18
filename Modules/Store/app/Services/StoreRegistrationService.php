@@ -10,6 +10,8 @@ use Illuminate\Support\Str;
 use Modules\Identity\Models\Role;
 use Modules\Identity\Models\User;
 use Modules\Store\Models\Store;
+use Modules\Store\Models\StoreDomain;
+use Modules\Store\Support\StoreDomainResolver;
 
 class StoreRegistrationService
 {
@@ -66,7 +68,11 @@ class StoreRegistrationService
                 'timezone' => $data['timezone'] ?? 'UTC',
             ]);
 
-            return ['user' => $user, 'store' => $store];
+            // Provision the free wildcard subdomain ({slug}.{suffix}) right
+            // away — it is always trusted and needs no DNS verification.
+            $storeDomain = $this->createSubdomain($store);
+
+            return ['user' => $user, 'store' => $store, 'store_domain' => $storeDomain];
         });
     }
 
@@ -76,13 +82,14 @@ class StoreRegistrationService
     public function registerStoreOwner(array $data): JsonResponse
     {
         try {
-            ['user' => $user, 'store' => $store] = $this->createStoreOwner($data);
+            ['user' => $user, 'store' => $store, 'store_domain' => $storeDomain] = $this->createStoreOwner($data);
 
             $token = $user->createToken('auth_token')->plainTextToken;
 
             return ApiResponse::created([
                 'user' => $user->load('roles'),
                 'store' => $store->fresh(),
+                'store_url' => StoreDomainResolver::urlForDomain($storeDomain->domain),
                 'token' => $token,
             ], 'Store owner registration successful.');
         } catch (\Throwable $e) {
@@ -90,6 +97,22 @@ class StoreRegistrationService
 
             return ApiResponse::error('Registration failed. Please try again.', 500);
         }
+    }
+
+    /**
+     * Provision the free wildcard subdomain for a store. It resolves
+     * immediately (wildcard DNS + wildcard certificate) and needs no
+     * DNS ownership verification.
+     */
+    private function createSubdomain(Store $store): StoreDomain
+    {
+        return $store->domains()->create([
+            'domain' => $store->slug.'.'.config('storefront.domain_suffix'),
+            'type' => 'subdomain',
+            'is_primary' => true,
+            'ssl_status' => 'active',
+            'verified_at' => now(),
+        ]);
     }
 
     /**

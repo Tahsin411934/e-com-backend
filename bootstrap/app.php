@@ -7,6 +7,7 @@ use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 use Modules\Identity\Http\Middleware\CheckPermission;
 use Modules\Identity\Http\Middleware\CheckRole;
+use Modules\Store\Http\Middleware\ResolveStorefrontTenant;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -21,6 +22,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'role' => CheckRole::class,
             'permission' => CheckPermission::class,
             'convert.auth.cookie' => ConvertAuthTokenCookieToBearerHeader::class,
+            'storefront.tenant' => ResolveStorefrontTenant::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

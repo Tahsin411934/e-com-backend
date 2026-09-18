@@ -30,6 +30,11 @@ class Store extends Model
         return $this->hasMany(StoreStaff::class);
     }
 
+    public function domains()
+    {
+        return $this->hasMany(StoreDomain::class);
+    }
+
     public function owner()
     {
         return $this->belongsTo(User::class, 'owner_id');

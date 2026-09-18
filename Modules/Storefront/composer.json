@@ -1,0 +1,16 @@
+{
+    "name": "nwidart/storefront",
+    "description": "Multi-tenant storefront API module",
+    "autoload": {
+        "psr-4": {
+            "Modules\\Storefront\\": "app/",
+            "Modules\\Storefront\\Database\\Factories\\": "database/factories/",
+            "Modules\\Storefront\\Database\\Seeders\\": "database/seeders/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Modules\\Storefront\\Tests\\": "tests/"
+        }
+    }
+}

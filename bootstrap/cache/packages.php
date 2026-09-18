@@ -66,6 +66,13 @@
       0 => 'Nwidart\\Modules\\LaravelModulesServiceProvider',
     ),
   ),
+  'spatie/eloquent-sortable' => 
+  array (
+    'providers' => 
+    array (
+      0 => 'Spatie\\EloquentSortable\\EloquentSortableServiceProvider',
+    ),
+  ),
   'yajra/laravel-datatables-oracle' => 
   array (
     'aliases' => 

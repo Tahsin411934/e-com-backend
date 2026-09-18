@@ -1,0 +1,11 @@
+{
+    "name": "Storefront",
+    "alias": "storefront",
+    "description": "Multi-tenant storefront API - serves per-store (tenant) data resolved from the request host",
+    "keywords": [],
+    "priority": 0,
+    "providers": [
+        "Modules\\Storefront\\Providers\\StorefrontServiceProvider"
+    ],
+    "files": []
+}

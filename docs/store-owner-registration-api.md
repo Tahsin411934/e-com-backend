@@ -37,22 +37,24 @@ No lookup endpoint is needed for this form. Send `BDT` and `Asia/Dhaka` explicit
 if those are the frontend defaults.
 
 Successful registration returns HTTP **201** with `status: "success"`,
-`message: "Store owner registration successful."`, and `data` containing
-`user` (with roles), `store`, and `token` (a Sanctum bearer token).
+`message: "Store owner registration successful. Please login with your credentials."`,
+and `data` containing `user` (with roles) and `store`.
 The account receives the `Store Owner` role and an active store. Store names
 are formatted and generated slugs get a numeric suffix when needed.
 The API does not create a backend web login session or mark the email verified.
-Keep the token server-side or in a secure HttpOnly cookie if implementing login.
+After registration, the frontend should redirect the user to the login page
+where they can authenticate with their email and password to receive a
+Sanctum bearer token.
 
 Validation failures return HTTP **422**, including when `Accept` is omitted:
 
 ```json
 {
-  "status": "error",
-  "message": "Validation failed",
-  "errors": {
-    "email": ["The email has already been taken."]
-  }
+    "status": "error",
+    "message": "Validation failed",
+    "errors": {
+        "email": ["The email has already been taken."]
+    }
 }
 ```
 
@@ -60,5 +62,5 @@ Map `errors` to the form fields in the server action. Unexpected registration
 failures return HTTP **500** with `status: "error"` and a generic `message`.
 Handle network failures separately.
 
-If authenticated store context is needed after registration, use
-`GET /api/v1/store` with `Authorization: Bearer <token>`; this endpoint is protected.
+After login, use `GET /api/v1/store` with `Authorization: Bearer <token>`;
+this endpoint is protected.

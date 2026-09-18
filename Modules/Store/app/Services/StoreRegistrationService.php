@@ -84,14 +84,11 @@ class StoreRegistrationService
         try {
             ['user' => $user, 'store' => $store, 'store_domain' => $storeDomain] = $this->createStoreOwner($data);
 
-            $token = $user->createToken('auth_token')->plainTextToken;
-
             return ApiResponse::created([
                 'user' => $user->load('roles'),
                 'store' => $store->fresh(),
                 'store_url' => StoreDomainResolver::urlForDomain($storeDomain->domain),
-                'token' => $token,
-            ], 'Store owner registration successful.');
+            ], 'Store owner registration successful. Please login with your credentials.');
         } catch (\Throwable $e) {
             report($e);
 

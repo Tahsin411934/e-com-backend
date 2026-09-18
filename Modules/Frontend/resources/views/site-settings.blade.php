@@ -14,6 +14,14 @@
             <span class="text-gray-800 font-medium">Site Settings</span>
         </div>
 
+        @if(! $isStoreOwner)
+            <div class="mb-4">
+                <a href="{{ route('frontend.site-settings.index') }}" class="text-sm text-primary hover:text-primary-hover">
+                    <i class="fas fa-arrow-left mr-1"></i> Back to Settings Table
+                </a>
+            </div>
+        @endif
+
         @if(session('success'))
             <div class="mb-6 p-4 bg-green-50 border border-green-200 rounded-xl text-green-700 text-sm flex items-center gap-3">
                 <i class="fas fa-check-circle text-green-500"></i> {{ session('success') }}

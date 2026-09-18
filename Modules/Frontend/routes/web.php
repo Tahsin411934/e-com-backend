@@ -55,8 +55,11 @@ Route::middleware(['auth', 'verified', 'admin'])->group(function () {
 
     // Site Settings routes
     Route::get('/site-settings', [SiteSettingController::class, 'index'])->name('frontend.site-settings.index')->middleware('permission:frontend.settings.view');
+    Route::get('/site-settings/edit', [SiteSettingController::class, 'edit'])->name('frontend.site-settings.edit')->middleware('permission:frontend.settings.view');
+    Route::get('/dataTable/site-settings', [SiteSettingController::class, 'dataTable'])->name('frontend.site-settings.dataTable')->middleware('permission:frontend.settings.view');
     Route::put('/site-settings', [SiteSettingController::class, 'update'])->name('frontend.site-settings.update')->middleware('permission:frontend.settings.edit');
     Route::get('/site-settings/seed', [SiteSettingController::class, 'seed'])->name('frontend.site-settings.seed')->middleware('permission:frontend.settings.edit');
+    Route::delete('/site-settings/{id}', [SiteSettingController::class, 'destroy'])->name('frontend.site-settings.destroy')->middleware('permission:frontend.settings.edit');
 
     // Marketing - Google Tag Manager (GTM) settings
     Route::get('/marketing/gtm', [SiteSettingController::class, 'marketingGtm'])->name('frontend.marketing.gtm.index')->middleware('permission:marketing.gtm.view');

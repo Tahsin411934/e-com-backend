@@ -2,10 +2,15 @@
 
 namespace Modules\Frontend\Services;
 
+use App\Helpers\ApiResponse;
+use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 use Modules\Frontend\Models\Setting;
 use Modules\Identity\Models\User;
+use Yajra\DataTables\DataTables;
 
 class SettingService
 {
@@ -197,6 +202,98 @@ class SettingService
                 ['key' => $setting['key'], 'store_id' => $scope],
                 $setting + ['store_id' => $scope]
             );
+        }
+    }
+
+    /**
+     * Platform-staff DataTable: every settings row across the platform —
+     * global definitions (store_id NULL) and per-store overrides — with a
+     * store column and optional store filter.
+     */
+    public function getSettingsDataTable(Request $request)
+    {
+        $query = Setting::query()->with('store');
+
+        // Store Owner → only their own store's rows (the table view is
+        // admin-only in practice, but stays safe if reached). Platform staff
+        // → all rows, optionally filtered by store (or "global").
+        $ownedStoreId = $this->resolveStoreScope($request->user());
+
+        if ($ownedStoreId !== null) {
+            $query->where('store_id', $ownedStoreId);
+        } elseif ($request->filled('store_id')) {
+            $filter = $request->input('store_id');
+
+            if ($filter === 'global') {
+                $query->whereNull('store_id');
+            } elseif (is_numeric($filter)) {
+                $query->where('store_id', (int) $filter);
+            }
+        }
+
+        $query->orderBy('group')->orderBy('sort_order');
+
+        return DataTables::of($query)
+            ->addColumn('store_name', function (Setting $setting) {
+                return $setting->store?->name ?? 'Global (Platform)';
+            })
+            ->editColumn('group', function (Setting $setting) {
+                return ucfirst($setting->group);
+            })
+            ->editColumn('value', function (Setting $setting) {
+                return Str::limit((string) ($setting->value ?? '-'), 60);
+            })
+            ->editColumn('created_at', function (Setting $setting) {
+                return $setting->created_at?->format('d M Y H:i');
+            })
+            ->addColumn('action', function (Setting $setting) {
+                $editUrl = $setting->store_id
+                    ? route('frontend.site-settings.edit', ['store_id' => $setting->store_id])
+                    : route('frontend.site-settings.edit');
+
+                $buttons = '<a href="'.$editUrl.'" class="bg-blue-900 text-white px-2 py-1 rounded text-sm hover:bg-blue-600 mr-2" title="Edit in form">'
+                    .'<i class="fa fa-pencil"></i></a>';
+
+                // Only store-scoped rows can be deleted (removes the override
+                // so the key falls back to the global value).
+                if ($setting->store_id !== null) {
+                    $buttons .= '<button onclick="siteSettingDelete('.$setting->id.')" class="bg-red-500 text-white px-2 py-1 rounded text-sm hover:bg-red-600" title="Delete override (revert to global)">'
+                        .'<i class="fa fa-trash"></i></button>';
+                }
+
+                return '<div class="flex space-x-2 justify-center">'.$buttons.'</div>';
+            })
+            ->rawColumns(['action'])
+            ->make(true);
+    }
+
+    /**
+     * Delete a settings row. Global definitions are protected — only
+     * per-store overrides may be deleted (reverting that key to the global
+     * value).
+     */
+    public function deleteSetting(int $id)
+    {
+        try {
+            return DB::transaction(function () use ($id) {
+                $setting = Setting::findOrFail($id);
+
+                if ($setting->store_id === null) {
+                    return ApiResponse::error('Global settings cannot be deleted. Edit them instead.', 403);
+                }
+
+                $ownedStoreId = $this->resolveStoreScope(auth()->user());
+
+                if ($ownedStoreId !== null && (int) $setting->store_id !== $ownedStoreId) {
+                    return ApiResponse::error('You are not allowed to delete this setting.', 403);
+                }
+
+                $setting->delete();
+
+                return ApiResponse::success(null, 'Setting override deleted — this key now falls back to the global value.');
+            });
+        } catch (\Exception $e) {
+            return ApiResponse::notFound('Setting not found.');
         }
     }
 }

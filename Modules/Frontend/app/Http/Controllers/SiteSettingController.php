@@ -29,10 +29,6 @@ class SiteSettingController extends Controller
 
     public function index()
     {
-        $requestedStoreId = $this->requestedStoreId();
-        $grouped = $this->settingService->getGrouped($requestedStoreId);
-        $groups = ['general', 'social', 'contact', 'seo', 'marketing'];
-
         $user = auth()->user();
         $isStoreOwner = $user->isStoreOwner();
 
@@ -41,9 +37,62 @@ class SiteSettingController extends Controller
             ? collect($user->ownedStore ? [$user->ownedStore] : [])
             : Store::query()->orderBy('name')->get(['id', 'name']);
 
-        $selectedStoreId = $isStoreOwner ? null : $requestedStoreId;
+        // Store Owner → the existing form-based settings page (unchanged UX).
+        if ($isStoreOwner) {
+            $grouped = $this->settingService->getGrouped();
+            $groups = ['general', 'social', 'contact', 'seo', 'marketing'];
 
-        return view('frontend::site-settings', compact('grouped', 'groups', 'isStoreOwner', 'stores', 'selectedStoreId'));
+            return view('frontend::site-settings', [
+                'grouped' => $grouped,
+                'groups' => $groups,
+                'isStoreOwner' => true,
+                'stores' => $stores,
+                'selectedStoreId' => null,
+            ]);
+        }
+
+        // Platform staff → DataTable overview of every settings row
+        // (global definitions + per-store overrides).
+        return view('frontend::settings-table', [
+            'stores' => $stores,
+        ]);
+    }
+
+    /**
+     * Form-based editor for platform staff (opened from the settings table).
+     * Renders the same form page owners use, optionally scoped to a store
+     * via ?store_id=.
+     */
+    public function edit()
+    {
+        $user = auth()->user();
+
+        if ($user->isStoreOwner()) {
+            return redirect()->route('frontend.site-settings.index');
+        }
+
+        $requestedStoreId = $this->requestedStoreId();
+        $grouped = $this->settingService->getGrouped($requestedStoreId);
+        $groups = ['general', 'social', 'contact', 'seo', 'marketing'];
+        $stores = Store::query()->orderBy('name')->get(['id', 'name']);
+
+        return view('frontend::site-settings', [
+            'grouped' => $grouped,
+            'groups' => $groups,
+            'isStoreOwner' => false,
+            'stores' => $stores,
+            'selectedStoreId' => $requestedStoreId,
+        ]);
+    }
+
+    public function dataTable(Request $request)
+    {
+        return $this->settingService->getSettingsDataTable($request);
+    }
+
+    public function destroy($id)
+    {
+        return $this->settingService->deleteSetting((int) $id);
     }
 
     public function update(Request $request): RedirectResponse
@@ -116,13 +165,19 @@ class SiteSettingController extends Controller
             $this->settingService->updateBulk($updateData, $this->requestedStoreId());
         }
 
-        // Redirect back to the originating settings page (marketing or general),
-        // preserving the selected store context if any.
+        // Redirect back to the originating settings page (marketing, the
+        // admin form editor, or the index), preserving the selected store
+        // context if any.
         $redirectParams = $this->requestedStoreId() ? ['store_id' => $this->requestedStoreId()] : [];
         $referer = $request->headers->get('referer', '');
         if (str_contains($referer, 'marketing/gtm')) {
             return redirect()->route('frontend.marketing.gtm.index', $redirectParams)
                 ->with('success', 'GTM settings updated successfully!');
+        }
+
+        if (str_contains($referer, '/site-settings/edit')) {
+            return redirect()->route('frontend.site-settings.edit', $redirectParams)
+                ->with('success', 'Site settings updated successfully!');
         }
 
         return redirect()->route('frontend.site-settings.index', $redirectParams)
@@ -146,6 +201,13 @@ class SiteSettingController extends Controller
         $this->settingService->seedDefaults($this->requestedStoreId());
 
         $redirectParams = $this->requestedStoreId() ? ['store_id' => $this->requestedStoreId()] : [];
+
+        // Land back on the page the user came from (admin form editor or index).
+        $referer = $request->headers->get('referer', '');
+        if (str_contains($referer, '/site-settings/edit')) {
+            return redirect()->route('frontend.site-settings.edit', $redirectParams)
+                ->with('success', 'Default settings have been created!');
+        }
 
         return redirect()->route('frontend.site-settings.index', $redirectParams)
             ->with('success', 'Default settings have been created!');

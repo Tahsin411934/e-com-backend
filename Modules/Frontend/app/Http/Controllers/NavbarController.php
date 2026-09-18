@@ -10,6 +10,7 @@ use Modules\Frontend\Http\Requests\StoreSubnavbarItemRequest;
 use Modules\Frontend\Http\Requests\UpdateNavbarItemRequest;
 use Modules\Frontend\Http\Requests\UpdateSubnavbarItemRequest;
 use Modules\Frontend\Services\NavbarService;
+use Modules\Store\Models\Store;
 
 class NavbarController extends Controller
 {
@@ -20,7 +21,18 @@ class NavbarController extends Controller
      */
     public function index()
     {
-        return view('frontend::nav-items');
+        $user = auth()->user();
+        $isStoreOwner = $user->isStoreOwner();
+
+        // Store Owner only manages their own store; platform staff can pick any store.
+        $stores = $isStoreOwner
+            ? collect($user->ownedStore ? [$user->ownedStore] : [])
+            : Store::query()->orderBy('name')->get(['id', 'name']);
+
+        return view('frontend::nav-items', [
+            'isStoreOwner' => $isStoreOwner,
+            'stores' => $stores,
+        ]);
     }
 
     /**
@@ -28,7 +40,18 @@ class NavbarController extends Controller
      */
     public function subnavbarIndex()
     {
-        return view('frontend::sub-nav-items');
+        $user = auth()->user();
+        $isStoreOwner = $user->isStoreOwner();
+
+        // Store Owner only manages their own store; platform staff can pick any store.
+        $stores = $isStoreOwner
+            ? collect($user->ownedStore ? [$user->ownedStore] : [])
+            : Store::query()->orderBy('name')->get(['id', 'name']);
+
+        return view('frontend::sub-nav-items', [
+            'isStoreOwner' => $isStoreOwner,
+            'stores' => $stores,
+        ]);
     }
 
     // ===== Navbar Items =====

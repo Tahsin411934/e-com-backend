@@ -57,6 +57,7 @@ class UpdateHomepageCtaRequest extends FormRequest
             'content_margin_right' => 'nullable|integer',
             'sort_order' => 'nullable|integer|min:0',
             'status' => 'nullable|in:active,inactive',
+            'store_id' => 'nullable|integer|exists:stores,id',
         ];
     }
 

@@ -20,6 +20,12 @@
             </div>
         @endif
 
+        @if(session('error'))
+            <div class="mb-6 p-4 bg-red-50 border border-red-200 rounded-xl text-red-600 text-sm flex items-center gap-3">
+                <i class="fas fa-exclamation-circle text-red-500"></i> {{ session('error') }}
+            </div>
+        @endif
+
         @if($errors->any())
             <div class="mb-6 p-4 bg-red-50 border border-red-200 rounded-xl text-red-600 text-sm">
                 <ul class="list-disc pl-4 space-y-1">
@@ -28,10 +34,36 @@
             </div>
         @endif
 
+        {{-- Store context: admin can switch which store's settings they edit; owner is fixed to their store. --}}
+        @if($isStoreOwner)
+            <div class="mb-6 p-4 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-sm text-gray-600 dark:text-gray-300">
+                <i class="fas fa-store text-primary mr-2"></i>
+                Editing settings for: <strong>{{ $stores->first()?->name ?? 'No store assigned' }}</strong>
+                <span class="text-xs text-gray-400 ml-2">Your values override the platform defaults.</span>
+            </div>
+        @else
+            <div class="mb-6 p-4 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl">
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    <i class="fas fa-store text-primary mr-1"></i> Editing settings scope
+                </label>
+                <select id="settingsStoreScope" data-local-select2
+                    class="w-full md:w-1/2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                    <option value="">Global (Platform)</option>
+                    @foreach($stores as $store)
+                        <option value="{{ $store->id }}" {{ $selectedStoreId == $store->id ? 'selected' : '' }}>{{ $store->name }}</option>
+                    @endforeach
+                </select>
+                <p class="text-xs text-gray-400 mt-2">Select a store to view/edit its own settings (overriding the global values). Leave as Global to manage platform defaults.</p>
+            </div>
+        @endif
+
         <div class="settings-card p-6 lg:p-8">
             <form method="POST" action="{{ route('frontend.site-settings.update') }}" enctype="multipart/form-data">
                 @csrf
                 @method('PUT')
+                @if(! $isStoreOwner && $selectedStoreId)
+                    <input type="hidden" name="store_id" value="{{ $selectedStoreId }}">
+                @endif
 
                 <div class="flex flex-wrap gap-2 mb-8 pb-6 border-b border-gray-100">
                     @foreach($groups as $group)
@@ -57,7 +89,7 @@
                             <div class="empty-state">
                                 <div class="text-4xl mb-3">📭</div>
                                 <p>No settings in this section yet.</p>
-                                <a href="{{ route('frontend.site-settings.seed') }}" class="btn-secondary mt-4">
+                                <a href="{{ route('frontend.site-settings.seed', $selectedStoreId ? ['store_id' => $selectedStoreId] : []) }}" class="btn-secondary mt-4">
                                     <i class="fas fa-seedling"></i> Seed Defaults
                                 </a>
                             </div>
@@ -132,7 +164,7 @@
                 @endforeach
 
                 <div class="save-bar">
-                    <a href="{{ route('frontend.site-settings.seed') }}" class="js-site-settings-seed btn-secondary">
+                    <a href="{{ route('frontend.site-settings.seed', $selectedStoreId ? ['store_id' => $selectedStoreId] : []) }}" class="js-site-settings-seed btn-secondary">
                         <i class="fas fa-seedling"></i> Reset Defaults
                     </a>
                     <button type="submit" class="btn-primary">
@@ -168,6 +200,19 @@
 
         $(document).on('change', '.js-site-settings-logo-remove', function () {
             removeLogo(this, $(this).data('preview-id'));
+        });
+
+        // Switch the settings scope (Global / a specific store) — reloads the
+        // page with ?store_id= so the server renders that scope's settings.
+        $(document).on('change', '#settingsStoreScope', function () {
+            const value = $(this).val();
+            const url = new URL(window.location.href);
+            if (value) {
+                url.searchParams.set('store_id', value);
+            } else {
+                url.searchParams.delete('store_id');
+            }
+            window.location.href = url.toString();
         });
         function previewLogo(input, previewId) {
             const preview = document.getElementById(previewId);

@@ -20,6 +20,7 @@ class StoreNavbarItemRequest extends FormRequest
             'icon' => 'nullable|string|max:255',
             'sort_order' => 'nullable|integer|min:0',
             'status' => 'required|in:active,inactive',
+            'store_id' => 'nullable|integer|exists:stores,id',
         ];
     }
 
@@ -30,6 +31,7 @@ class StoreNavbarItemRequest extends FormRequest
             'slug.required' => 'Slug is required.',
             'slug.unique' => 'This slug is already taken.',
             'status.in' => 'Status must be active or inactive.',
+            'store_id.exists' => 'The selected store does not exist.',
         ];
     }
 }

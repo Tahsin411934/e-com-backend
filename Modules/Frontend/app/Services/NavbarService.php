@@ -8,15 +8,35 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Modules\Frontend\Models\NavbarItem;
 use Modules\Frontend\Models\SubnavbarItem;
+use Modules\Identity\Models\User;
 use Yajra\DataTables\DataTables;
 
 class NavbarService
 {
     public function getNavbarDataTable(Request $request)
     {
-        $query = NavbarItem::query()->withCount('subnavbarItems')->orderByDesc('created_at');
+        $query = NavbarItem::query()->with('store')->withCount('subnavbarItems')->orderByDesc('created_at');
+
+        // Store Owner → only their own store's navbar items. Platform staff →
+        // all items, optionally filtered by a specific store (or "global").
+        $ownedStoreId = $this->resolveStoreScope($request->user());
+
+        if ($ownedStoreId !== null) {
+            $query->where('store_id', $ownedStoreId);
+        } elseif ($request->filled('store_id')) {
+            $filter = $request->input('store_id');
+
+            if ($filter === 'global') {
+                $query->whereNull('store_id');
+            } elseif (is_numeric($filter)) {
+                $query->where('store_id', (int) $filter);
+            }
+        }
 
         return DataTables::of($query)
+            ->addColumn('store_name', function (NavbarItem $item) {
+                return $item->store?->name ?? 'Global (Platform)';
+            })
             ->editColumn('status', function (NavbarItem $item) {
                 return ucfirst($item->status);
             })
@@ -37,11 +57,28 @@ class NavbarService
 
     public function getSubnavbarDataTable(Request $request)
     {
-        $query = SubnavbarItem::query()->with('navbarItem');
+        $query = SubnavbarItem::query()->with('navbarItem.store');
 
         // Filter by navbar_item_id if provided
         if ($request->filled('navbar_item_id')) {
             $query->where('navbar_item_id', $request->navbar_item_id);
+        }
+
+        // Subnavbar items inherit their parent navbar item's store scope.
+        $ownedStoreId = $this->resolveStoreScope($request->user());
+
+        if ($ownedStoreId !== null) {
+            $query->whereHas('navbarItem', function ($q) use ($ownedStoreId) {
+                $q->where('store_id', $ownedStoreId);
+            });
+        } elseif ($request->filled('store_id')) {
+            $filter = $request->input('store_id');
+
+            if ($filter === 'global') {
+                $query->whereHas('navbarItem', fn ($q) => $q->whereNull('store_id'));
+            } elseif (is_numeric($filter)) {
+                $query->whereHas('navbarItem', fn ($q) => $q->where('store_id', (int) $filter));
+            }
         }
 
         $query->orderByDesc('created_at');
@@ -49,6 +86,9 @@ class NavbarService
         return DataTables::of($query)
             ->addColumn('parent_navbar', function (SubnavbarItem $item) {
                 return $item->navbarItem?->name ?? '-';
+            })
+            ->addColumn('store_name', function (SubnavbarItem $item) {
+                return $item->navbarItem?->store?->name ?? 'Global (Platform)';
             })
             ->editColumn('status', function (SubnavbarItem $item) {
                 return ucfirst($item->status);
@@ -69,20 +109,104 @@ class NavbarService
             ->make(true);
     }
 
+    /**
+     * Resolve the navbar scope for the acting user:
+     *  - Store Owner (with a store)  → their owned store id
+     *  - Store Owner (without store) → 0 (matches nothing)
+     *  - Everyone else (platform)    → null (unrestricted)
+     */
+    private function resolveStoreScope(?User $user): ?int
+    {
+        if (! $user || ! $user->isStoreOwner()) {
+            return null;
+        }
+
+        $store = $user->ownedStore()->first(['id']);
+
+        return $store ? (int) $store->id : 0;
+    }
+
+    /**
+     * Ownership check for a single navbar item. Returns true when the acting
+     * user is restricted to a store that does not own the item.
+     */
+    private function navbarItemAccessDenied(NavbarItem $item): bool
+    {
+        $ownedStoreId = $this->resolveStoreScope(auth()->user());
+
+        return $ownedStoreId !== null && (int) $item->store_id !== $ownedStoreId;
+    }
+
+    /**
+     * Ownership check for a subnavbar item — derived from its parent navbar item.
+     */
+    private function subnavbarItemAccessDenied(SubnavbarItem $item): bool
+    {
+        $ownedStoreId = $this->resolveStoreScope(auth()->user());
+
+        return $ownedStoreId !== null && (int) ($item->navbarItem?->store_id) !== $ownedStoreId;
+    }
+
+    /**
+     * Ownership check for a parent navbar item id (used when creating/moving
+     * subnavbar items). Returns true when the acting owner does not own it.
+     */
+    private function parentNavbarAccessDenied(int $navbarItemId): bool
+    {
+        $ownedStoreId = $this->resolveStoreScope(auth()->user());
+
+        if ($ownedStoreId === null) {
+            return false;
+        }
+
+        $parent = NavbarItem::find($navbarItemId);
+
+        return ! $parent || (int) $parent->store_id !== $ownedStoreId;
+    }
+
     public function saveNavbarItem(array $data): JsonResponse
     {
         try {
-            return DB::transaction(function () use ($data) {
+            $ownedStoreId = $this->resolveStoreScope(auth()->user());
+
+            if ($ownedStoreId === 0) {
+                return ApiResponse::error('No store is associated with your account, so navbar items cannot be managed.', 403);
+            }
+
+            return DB::transaction(function () use ($data, $ownedStoreId) {
                 $itemId = $data['navbar_item_id'] ?? null;
                 $data['sort_order'] = $data['sort_order'] ?? 0;
                 $data['status'] = $data['status'] ?? 'active';
-                unset($data['navbar_item_id']);
+
+                // Store assignment is always resolved server-side.
+                if ($ownedStoreId !== null) {
+                    // Store Owner: navbar item always belongs to their own store.
+                    $data['store_id'] = $ownedStoreId;
+                } else {
+                    // Platform staff: explicit store selection, or null for a global item.
+                    $data['store_id'] = (isset($data['store_id']) && $data['store_id'] !== '' && $data['store_id'] !== null)
+                        ? (int) $data['store_id']
+                        : null;
+                }
+
+                $item = null;
 
                 if ($itemId) {
-                    $item = NavbarItem::findOrFail($itemId);
+                    $item = NavbarItem::find($itemId);
+
+                    if (! $item) {
+                        return ApiResponse::notFound('Navbar item not found.');
+                    }
+
+                    if ($this->navbarItemAccessDenied($item)) {
+                        return ApiResponse::error('You are not allowed to modify this navbar item.', 403);
+                    }
+
+                    unset($data['navbar_item_id']);
                     $item->update($data);
                     $message = 'Navbar item updated successfully.';
                 } else {
+                    unset($data['navbar_item_id']);
                     $item = NavbarItem::create($data);
                     $message = 'Navbar item created successfully.';
                 }
@@ -97,14 +221,35 @@ class NavbarService
     public function saveSubnavbarItem(array $data): JsonResponse
     {
         try {
-            return DB::transaction(function () use ($data) {
+            $ownedStoreId = $this->resolveStoreScope(auth()->user());
+
+            if ($ownedStoreId === 0) {
+                return ApiResponse::error('No store is associated with your account, so subnavbar items cannot be managed.', 403);
+            }
+
+            return DB::transaction(function () use ($data, $ownedStoreId) {
                 $itemId = $data['subnavbar_item_id'] ?? null;
                 $data['sort_order'] = $data['sort_order'] ?? 0;
                 $data['status'] = $data['status'] ?? 'active';
                 unset($data['subnavbar_item_id']);
 
+                // A subnavbar item always lives under a parent navbar item —
+                // owners may only attach to navbar items of their own store.
+                if ($ownedStoreId !== null && $this->parentNavbarAccessDenied((int) $data['navbar_item_id'])) {
+                    return ApiResponse::error('The selected parent navbar item does not belong to your store.', 403);
+                }
+
                 if ($itemId) {
-                    $item = SubnavbarItem::findOrFail($itemId);
+                    $item = SubnavbarItem::with('navbarItem')->find($itemId);
+
+                    if (! $item) {
+                        return ApiResponse::notFound('Subnavbar item not found.');
+                    }
+
+                    if ($this->subnavbarItemAccessDenied($item)) {
+                        return ApiResponse::error('You are not allowed to modify this subnavbar item.', 403);
+                    }
+
                     $item->update($data);
                     $message = 'Subnavbar item updated successfully.';
                 } else {
@@ -124,6 +269,10 @@ class NavbarService
         try {
             $item = NavbarItem::findOrFail($id);
 
+            if ($this->navbarItemAccessDenied($item)) {
+                return ApiResponse::error('You are not allowed to view this navbar item.', 403);
+            }
+
             return ApiResponse::success($item);
         } catch (\Exception $e) {
             return ApiResponse::notFound('Navbar item not found.');
@@ -134,6 +283,10 @@ class NavbarService
     {
         try {
             $item = SubnavbarItem::with('navbarItem')->findOrFail($id);
+
+            if ($this->subnavbarItemAccessDenied($item)) {
+                return ApiResponse::error('You are not allowed to view this subnavbar item.', 403);
+            }
 
             return ApiResponse::success($item);
         } catch (\Exception $e) {
@@ -146,6 +299,11 @@ class NavbarService
         try {
             return DB::transaction(function () use ($id) {
                 $item = NavbarItem::findOrFail($id);
+
+                if ($this->navbarItemAccessDenied($item)) {
+                    return ApiResponse::error('You are not allowed to delete this navbar item.', 403);
+                }
+
                 $item->delete();
 
                 return ApiResponse::success(null, 'Navbar item deleted successfully.');
@@ -159,7 +317,12 @@ class NavbarService
     {
         try {
             return DB::transaction(function () use ($id) {
-                $item = SubnavbarItem::findOrFail($id);
+                $item = SubnavbarItem::with('navbarItem')->findOrFail($id);
+
+                if ($this->subnavbarItemAccessDenied($item)) {
+                    return ApiResponse::error('You are not allowed to delete this subnavbar item.', 403);
+                }
+
                 $item->delete();
 
                 return ApiResponse::success(null, 'Subnavbar item deleted successfully.');
@@ -169,12 +332,19 @@ class NavbarService
         }
     }
 
-    public function getAllNavbarItems(): JsonResponse
+    public function getAllNavbarItems()
     {
-        return NavbarItem::where('status', 'active')
+        $query = NavbarItem::where('status', 'active')
             ->orderBy('sort_order')
-            ->orderBy('name')
-            ->get()
-            ->toArray();
+            ->orderBy('name');
+
+        // Store Owner → only their own store's items (used by the parent dropdown).
+        $ownedStoreId = $this->resolveStoreScope(auth()->user());
+
+        if ($ownedStoreId !== null) {
+            $query->where('store_id', $ownedStoreId);
+        }
+
+        return $query->get()->toArray();
     }
 }

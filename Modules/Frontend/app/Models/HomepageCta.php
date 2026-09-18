@@ -3,8 +3,11 @@
 namespace Modules\Frontend\Models;
 
 use App\Traits\CustomSoftDeletes;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Modules\Store\Models\Store;
 
 class HomepageCta extends Model
 {
@@ -14,6 +17,7 @@ class HomepageCta extends Model
     protected $table = 'homepage_ctas';
 
     protected $fillable = [
+        'store_id',
         'cta_style',
         'title',
         'subtitle',
@@ -57,4 +61,17 @@ class HomepageCta extends Model
         'sort_order',
         'status',
     ];
+
+    /**
+     * NULL store_id = global/platform CTA.
+     */
+    public function store(): BelongsTo
+    {
+        return $this->belongsTo(Store::class, 'store_id');
+    }
+
+    public function scopeForStore(Builder $query, int $storeId): Builder
+    {
+        return $query->where('store_id', $storeId);
+    }
 }

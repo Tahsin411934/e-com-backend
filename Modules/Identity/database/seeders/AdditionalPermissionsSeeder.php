@@ -372,7 +372,7 @@ class AdditionalPermissionsSeeder extends Seeder
             'products.*', 'categories.*', 'brands.*',
             'units.view', 'sizes.view', 'size-groups.view', 'tax-rates.view', 'barcode-print.view',
             'orders.view', 'stores.view',
-            'frontend.banners.*',
+            'frontend.banners.*', 'frontend.navbar.*', 'frontend.announcements.*', 'frontend.ctas.*', 'frontend.settings.*',
             'reports.view',
         ],
     ];

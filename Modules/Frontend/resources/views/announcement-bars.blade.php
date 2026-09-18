@@ -5,22 +5,53 @@
         </h2>
     </x-slot>
 
+    @php
+        // Admin sees every announcement bar + a Store column/filter; Store Owner
+        // is scoped server-side to their own store only.
+        if ($isStoreOwner) {
+            $barColumns = ['Left Text','Center Text','Right Text','Background','Sort Order','Status','Created At','Action'];
+            $barDtColumns = [
+                ['data' => 'left_text'],
+                ['data' => 'center_text'],
+                ['data' => 'right_text'],
+                ['data' => 'background_color', 'orderable' => false, 'searchable' => false],
+                ['data' => 'sort_order'],
+                ['data' => 'status'],
+                ['data' => 'created_at'],
+                ['data' => 'action', 'orderable' => false, 'searchable' => false],
+            ];
+            $barOrder = [[4, 'asc']];
+            $barFilters = [];
+        } else {
+            $barColumns = ['Store','Left Text','Center Text','Right Text','Background','Sort Order','Status','Created At','Action'];
+            $barDtColumns = [
+                ['data' => 'store_name', 'orderable' => false, 'searchable' => false],
+                ['data' => 'left_text'],
+                ['data' => 'center_text'],
+                ['data' => 'right_text'],
+                ['data' => 'background_color', 'orderable' => false, 'searchable' => false],
+                ['data' => 'sort_order'],
+                ['data' => 'status'],
+                ['data' => 'created_at'],
+                ['data' => 'action', 'orderable' => false, 'searchable' => false],
+            ];
+            $barOrder = [[5, 'asc']];
+            $barFilters = ['store_id' => [
+                'label' => 'Store',
+                'options' => '<option value="">All Stores</option><option value="global">Global (Platform)</option>'
+                    . $stores->map(fn ($store) => '<option value="'.e($store->id).'">'.e($store->name).'</option>')->implode(''),
+            ]];
+        }
+    @endphp
+
     <x-entity-crud
         id="announcement_bar"
         createPermission="frontend.announcements"
         title="Announcement Bars"
         icon="fa-solid fa-rectangle-ad"
-        :columns="['Left Text','Center Text','Right Text','Background','Sort Order','Status','Created At','Action']"
-        :dtColumns="[
-            ['data' => 'left_text'],
-            ['data' => 'center_text'],
-            ['data' => 'right_text'],
-            ['data' => 'background_color', 'orderable' => false, 'searchable' => false],
-            ['data' => 'sort_order'],
-            ['data' => 'status'],
-            ['data' => 'created_at'],
-            ['data' => 'action', 'orderable' => false, 'searchable' => false],
-        ]"
+        :columns="$barColumns"
+        :dtColumns="$barDtColumns"
+        :filters="$barFilters"
         ajaxUrl="{{ route('frontend.announcement-bars.dataTable') }}"
         storeUrl="{{ route('frontend.announcement-bars.store') }}"
         updateUrl="{{ route('frontend.announcement-bars.update', ':id') }}"
@@ -29,8 +60,25 @@
         drawerTitle="Announcement Bar"
         dataKey="data"
         idField="announcement_bar_id"
-        :order="[[4, 'asc']]"
+        :order="$barOrder"
     >
+        @if ($isStoreOwner)
+        <div class="mb-4">
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Store</label>
+            <div class="w-full border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 rounded-lg px-3 py-2 text-sm text-gray-600 dark:text-gray-300">
+                {{ $stores->first()?->name ?? 'No store assigned' }}
+            </div>
+            <p class="text-xs text-gray-400 dark:text-gray-500 mt-1">Announcement bars you create will belong to this store.</p>
+        </div>
+        @else
+        <div class="mb-4">
+            <x-form-select label="Store" name="store_id" id="announcement_bar_store_id" placeholder="Global (Platform)">
+                @foreach ($stores as $store)
+                    <option value="{{ $store->id }}">{{ $store->name }}</option>
+                @endforeach
+            </x-form-select>
+        </div>
+        @endif
         <div class="mb-4">
             <x-form-input label="Left Text" name="left_text" id="announcement_bar_left_text" placeholder="e.g. 🚚 Free Shipping on Orders Over ৳99" />
         </div>
@@ -87,6 +135,7 @@ Crud.register('announcementbar', 'fill', function (data) {
             $('#announcement_bar_text_color_hex').val(data.text_color || '#ffffff');
             $('#announcement_bar_sort_order').val(data.sort_order || 0);
             $('#announcement_bar_status').val(data.status);
+            $('#announcement_bar_store_id').val(data.store_id || '');
         });
 
         $(document).ready(function() {

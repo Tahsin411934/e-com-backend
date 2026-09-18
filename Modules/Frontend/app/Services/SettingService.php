@@ -5,6 +5,7 @@ namespace Modules\Frontend\Services;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
 use Modules\Frontend\Models\Setting;
+use Modules\Identity\Models\User;
 
 class SettingService
 {
@@ -45,10 +46,72 @@ class SettingService
         ];
     }
 
-    public function getAll(): array
+    /**
+     * Resolve the settings scope for the acting user:
+     *  - Store Owner (with a store)  → their owned store id
+     *  - Store Owner (without store) → 0 (owns nothing; read-only global view)
+     *  - Everyone else (platform)    → null (global settings)
+     */
+    private function resolveStoreScope(?User $user): ?int
     {
-        return Setting::orderBy('group')->orderBy('sort_order')->get()
-            ->keyBy('key')
+        if (! $user || ! $user->isStoreOwner()) {
+            return null;
+        }
+
+        $store = $user->ownedStore()->first(['id']);
+
+        return $store ? (int) $store->id : 0;
+    }
+
+    /**
+     * Final write/read target scope: Store Owners are always forced to their
+     * own store; platform staff may explicitly target a store (or global/null).
+     */
+    private function targetScope(?int $requestedStoreId): ?int
+    {
+        $ownedStoreId = $this->resolveStoreScope(auth()->user());
+
+        if ($ownedStoreId !== null) {
+            return $ownedStoreId > 0 ? $ownedStoreId : null;
+        }
+
+        return $requestedStoreId > 0 ? (int) $requestedStoreId : null;
+    }
+
+    /**
+     * Whether the acting user may write settings (owners need a store).
+     */
+    public function canManage(?int $requestedStoreId = null): bool
+    {
+        if ($this->resolveStoreScope(auth()->user()) === 0) {
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
+     * All settings visible to the acting user, keyed by setting key.
+     * Global rows (store_id NULL) are the base; the target store's rows
+     * override them per key.
+     */
+    public function getAll(?int $requestedStoreId = null): array
+    {
+        $base = Setting::whereNull('store_id')
+            ->orderBy('group')->orderBy('sort_order')
+            ->get()
+            ->keyBy('key');
+
+        $scope = $this->targetScope($requestedStoreId);
+
+        if ($scope !== null) {
+            Setting::where('store_id', $scope)
+                ->orderBy('group')->orderBy('sort_order')
+                ->get()
+                ->each(fn (Setting $override) => $base->put($override->key, $override));
+        }
+
+        return $base
             ->map(fn (Setting $s) => [
                 'id' => $s->id,
                 'group' => $s->group,
@@ -61,9 +124,9 @@ class SettingService
             ->all();
     }
 
-    public function getGrouped(): array
+    public function getGrouped(?int $requestedStoreId = null): array
     {
-        $all = $this->getAll();
+        $all = $this->getAll($requestedStoreId);
         $grouped = [];
         foreach ($all as $setting) {
             $grouped[$setting['group']][] = $setting;
@@ -79,10 +142,42 @@ class SettingService
         return $all[$key]['value'] ?? $default;
     }
 
-    public function updateBulk(array $settings): void
+    /**
+     * Bulk-update settings in the acting user's scope. Store Owners always
+     * write to their own store's rows (created on demand from the global
+     * definition); platform staff write to the requested store or global.
+     */
+    public function updateBulk(array $settings, ?int $requestedStoreId = null): void
     {
+        $scope = $this->targetScope($requestedStoreId);
+
         foreach ($settings as $key => $value) {
-            Setting::where('key', $key)->update(['value' => $value]);
+            $row = Setting::where('key', $key)
+                ->where('store_id', $scope)
+                ->first();
+
+            if ($row) {
+                $row->update(['value' => $value]);
+
+                continue;
+            }
+
+            // No scoped row yet — clone the global definition for this scope.
+            $definition = Setting::where('key', $key)->whereNull('store_id')->first();
+
+            if (! $definition) {
+                continue;
+            }
+
+            Setting::create([
+                'store_id' => $scope,
+                'group' => $definition->group,
+                'key' => $definition->key,
+                'value' => $value,
+                'type' => $definition->type,
+                'label' => $definition->label,
+                'sort_order' => $definition->sort_order,
+            ]);
         }
     }
 
@@ -93,12 +188,14 @@ class SettingService
         return Storage::url($path);
     }
 
-    public function seedDefaults(): void
+    public function seedDefaults(?int $requestedStoreId = null): void
     {
+        $scope = $this->targetScope($requestedStoreId);
+
         foreach (self::getDefaults() as $setting) {
             Setting::firstOrCreate(
-                ['key' => $setting['key']],
-                $setting
+                ['key' => $setting['key'], 'store_id' => $scope],
+                $setting + ['store_id' => $scope]
             );
         }
     }

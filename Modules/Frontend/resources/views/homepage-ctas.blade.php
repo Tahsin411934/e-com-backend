@@ -5,22 +5,53 @@
         </h2>
     </x-slot>
 
+    @php
+        // Admin sees every CTA + a Store column/filter; Store Owner is scoped
+        // server-side to their own store only.
+        if ($isStoreOwner) {
+            $ctaColumns = ['Image','Title','Style','Button Text','Sort Order','Status','Created At','Action'];
+            $ctaDtColumns = [
+                ['data' => 'image', 'orderable' => false, 'searchable' => false],
+                ['data' => 'title'],
+                ['data' => 'cta_style'],
+                ['data' => 'button_text'],
+                ['data' => 'sort_order'],
+                ['data' => 'status'],
+                ['data' => 'created_at'],
+                ['data' => 'action', 'orderable' => false, 'searchable' => false],
+            ];
+            $ctaOrder = [[5, 'asc']];
+            $ctaFilters = [];
+        } else {
+            $ctaColumns = ['Image','Store','Title','Style','Button Text','Sort Order','Status','Created At','Action'];
+            $ctaDtColumns = [
+                ['data' => 'image', 'orderable' => false, 'searchable' => false],
+                ['data' => 'store_name', 'orderable' => false, 'searchable' => false],
+                ['data' => 'title'],
+                ['data' => 'cta_style'],
+                ['data' => 'button_text'],
+                ['data' => 'sort_order'],
+                ['data' => 'status'],
+                ['data' => 'created_at'],
+                ['data' => 'action', 'orderable' => false, 'searchable' => false],
+            ];
+            $ctaOrder = [[6, 'asc']];
+            $ctaFilters = ['store_id' => [
+                'label' => 'Store',
+                'options' => '<option value="">All Stores</option><option value="global">Global (Platform)</option>'
+                    . $stores->map(fn ($store) => '<option value="'.e($store->id).'">'.e($store->name).'</option>')->implode(''),
+            ]];
+        }
+    @endphp
+
     <x-entity-crud
         id="cta"
         createPermission="frontend.ctas"
         title="Homepage CTAs"
         icon="fa-solid fa-bullhorn"
-        :columns="['Image','Title','Style','Button Text','Sort Order','Status','Created At','Action']"
-        :dtColumns="[
-            ['data' => 'image', 'orderable' => false, 'searchable' => false],
-            ['data' => 'title'],
-            ['data' => 'cta_style'],
-            ['data' => 'button_text'],
-            ['data' => 'sort_order'],
-            ['data' => 'status'],
-            ['data' => 'created_at'],
-            ['data' => 'action', 'orderable' => false, 'searchable' => false],
-        ]"
+        :columns="$ctaColumns"
+        :dtColumns="$ctaDtColumns"
+        :filters="$ctaFilters"
         ajaxUrl="{{ route('frontend.ctas.dataTable') }}"
         storeUrl="{{ route('frontend.ctas.store') }}"
         updateUrl="{{ route('frontend.ctas.update', ':id') }}"
@@ -29,8 +60,25 @@
         drawerTitle="CTA"
         dataKey="data"
         idField="cta_id"
-        :order="[[5, 'asc']]"
+        :order="$ctaOrder"
     >
+        @if ($isStoreOwner)
+        <div class="mb-4">
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Store</label>
+            <div class="w-full border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 rounded-lg px-3 py-2 text-sm text-gray-600 dark:text-gray-300">
+                {{ $stores->first()?->name ?? 'No store assigned' }}
+            </div>
+            <p class="text-xs text-gray-400 dark:text-gray-500 mt-1">CTAs you create will belong to this store.</p>
+        </div>
+        @else
+        <div class="mb-4">
+            <x-form-select label="Store" name="store_id" id="cta_store_id" placeholder="Global (Platform)">
+                @foreach ($stores as $store)
+                    <option value="{{ $store->id }}">{{ $store->name }}</option>
+                @endforeach
+            </x-form-select>
+        </div>
+        @endif
         <!-- CTA Style Selector -->
         <div class="mb-4">
             <x-form-select label="CTA Style" name="cta_style" id="cta_style">
@@ -355,6 +403,7 @@ Crud.register('cta', 'fill', function (data) {
 
             $('#cta_sort_order').val(data.sort_order || 0);
             $('#cta_status').val(data.status);
+            $('#cta_store_id').val(data.store_id || '');
 
             // Show image preview if available
             if (data.image_url) {

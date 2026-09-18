@@ -5,22 +5,53 @@
         </h2>
     </x-slot>
 
+    @php
+        // Admin sees every navbar item + a Store column/filter; Store Owner is
+        // scoped server-side to their own store only.
+        if ($isStoreOwner) {
+            $navColumns = ['Name','Slug','URL','Icon','Sort Order','Status','Created At','Action'];
+            $navDtColumns = [
+                ['data' => 'name'],
+                ['data' => 'slug'],
+                ['data' => 'url'],
+                ['data' => 'icon'],
+                ['data' => 'sort_order'],
+                ['data' => 'status'],
+                ['data' => 'created_at'],
+                ['data' => 'action', 'orderable' => false, 'searchable' => false],
+            ];
+            $navOrder = [[6, 'desc']];
+            $navFilters = [];
+        } else {
+            $navColumns = ['Store','Name','Slug','URL','Icon','Sort Order','Status','Created At','Action'];
+            $navDtColumns = [
+                ['data' => 'store_name', 'orderable' => false, 'searchable' => false],
+                ['data' => 'name'],
+                ['data' => 'slug'],
+                ['data' => 'url'],
+                ['data' => 'icon'],
+                ['data' => 'sort_order'],
+                ['data' => 'status'],
+                ['data' => 'created_at'],
+                ['data' => 'action', 'orderable' => false, 'searchable' => false],
+            ];
+            $navOrder = [[7, 'desc']];
+            $navFilters = ['store_id' => [
+                'label' => 'Store',
+                'options' => '<option value="">All Stores</option><option value="global">Global (Platform)</option>'
+                    . $stores->map(fn ($store) => '<option value="'.e($store->id).'">'.e($store->name).'</option>')->implode(''),
+            ]];
+        }
+    @endphp
+
     <x-entity-crud
         id="navbar_item"
         createPermission="frontend.navbar"
         title="Navbar Items"
         icon="fa-solid fa-bars"
-        :columns="['Name','Slug','URL','Icon','Sort Order','Status','Created At','Action']"
-        :dtColumns="[
-            ['data' => 'name'],
-            ['data' => 'slug'],
-            ['data' => 'url'],
-            ['data' => 'icon'],
-            ['data' => 'sort_order'],
-            ['data' => 'status'],
-            ['data' => 'created_at'],
-            ['data' => 'action', 'orderable' => false, 'searchable' => false],
-        ]"
+        :columns="$navColumns"
+        :dtColumns="$navDtColumns"
+        :filters="$navFilters"
         ajaxUrl="{{ route('frontend.nav-items.navbar.dataTable') }}"
         storeUrl="{{ route('frontend.nav-items.navbar.store') }}"
         updateUrl="{{ route('frontend.nav-items.navbar.update', ':id') }}"
@@ -29,8 +60,25 @@
         drawerTitle="Navbar Item"
         dataKey="data"
         idField="navbar_item_id"
-        :order="[[6, 'desc']]"
+        :order="$navOrder"
     >
+        @if ($isStoreOwner)
+        <div class="mb-4">
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Store</label>
+            <div class="w-full border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 rounded-lg px-3 py-2 text-sm text-gray-600 dark:text-gray-300">
+                {{ $stores->first()?->name ?? 'No store assigned' }}
+            </div>
+            <p class="text-xs text-gray-400 dark:text-gray-500 mt-1">Navbar items you create will belong to this store.</p>
+        </div>
+        @else
+        <div class="mb-4">
+            <x-form-select label="Store" name="store_id" id="navbar_item_store_id" placeholder="Global (Platform)">
+                @foreach ($stores as $store)
+                    <option value="{{ $store->id }}">{{ $store->name }}</option>
+                @endforeach
+            </x-form-select>
+        </div>
+        @endif
         <div class="mb-4">
             <x-form-input label="Name" name="name" id="navbar_item_name" placeholder="Item Name" required />
         </div>
@@ -64,6 +112,7 @@ Crud.register('navbaritem', 'fill', function (data) {
             $('#navbar_item_icon').val(data.icon || '');
             $('#navbar_item_sort_order').val(data.sort_order || 0);
             $('#navbar_item_status').val(data.status);
+            $('#navbar_item_store_id').val(data.store_id || '');
         });
 
         $(document).ready(function() {

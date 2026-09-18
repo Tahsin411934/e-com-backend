@@ -11,23 +11,55 @@
         </a>
     </div>
 
+    @php
+        // Subnavbar items inherit their parent navbar item's store.
+        // Admin gets a Store column + filter; Store Owner is scoped server-side.
+        if ($isStoreOwner) {
+            $subnavColumns = ['Parent','Name','Slug','URL','Icon','Sort Order','Status','Created At','Action'];
+            $subnavDtColumns = [
+                ['data' => 'parent_navbar'],
+                ['data' => 'name'],
+                ['data' => 'slug'],
+                ['data' => 'url'],
+                ['data' => 'icon'],
+                ['data' => 'sort_order'],
+                ['data' => 'status'],
+                ['data' => 'created_at'],
+                ['data' => 'action', 'orderable' => false, 'searchable' => false],
+            ];
+            $subnavOrder = [[7, 'desc']];
+            $subnavFilters = [];
+        } else {
+            $subnavColumns = ['Parent','Store','Name','Slug','URL','Icon','Sort Order','Status','Created At','Action'];
+            $subnavDtColumns = [
+                ['data' => 'parent_navbar'],
+                ['data' => 'store_name', 'orderable' => false, 'searchable' => false],
+                ['data' => 'name'],
+                ['data' => 'slug'],
+                ['data' => 'url'],
+                ['data' => 'icon'],
+                ['data' => 'sort_order'],
+                ['data' => 'status'],
+                ['data' => 'created_at'],
+                ['data' => 'action', 'orderable' => false, 'searchable' => false],
+            ];
+            $subnavOrder = [[8, 'desc']];
+            $subnavFilters = ['store_id' => [
+                'label' => 'Store',
+                'options' => '<option value="">All Stores</option><option value="global">Global (Platform)</option>'
+                    . $stores->map(fn ($store) => '<option value="'.e($store->id).'">'.e($store->name).'</option>')->implode(''),
+            ]];
+        }
+    @endphp
+
     <x-entity-crud
         id="subnavbar_item"
         createPermission="frontend.navbar"
         title="Subnavbar Items"
         icon="fa-solid fa-list"
-        :columns="['Parent','Name','Slug','URL','Icon','Sort Order','Status','Created At','Action']"
-        :dtColumns="[
-            ['data' => 'parent_navbar'],
-            ['data' => 'name'],
-            ['data' => 'slug'],
-            ['data' => 'url'],
-            ['data' => 'icon'],
-            ['data' => 'sort_order'],
-            ['data' => 'status'],
-            ['data' => 'created_at'],
-            ['data' => 'action', 'orderable' => false, 'searchable' => false],
-        ]"
+        :columns="$subnavColumns"
+        :dtColumns="$subnavDtColumns"
+        :filters="$subnavFilters"
         ajaxUrl="{{ route('frontend.nav-items.subnavbar.dataTable') }}{{ request('navbar_item_id') ? '?navbar_item_id=' . request('navbar_item_id') : '' }}"
         storeUrl="{{ route('frontend.nav-items.subnavbar.store') }}"
         updateUrl="{{ route('frontend.nav-items.subnavbar.update', ':id') }}"
@@ -36,7 +68,7 @@
         drawerTitle="Subnavbar Item"
         dataKey="data"
         idField="subnavbar_item_id"
-        :order="[[7, 'desc']]"
+        :order="$subnavOrder"
     >
         <div class="mb-4">
             <x-form-select label="Parent Navbar Item" name="navbar_item_id" id="subnavbar_item_navbar_item_id" required>

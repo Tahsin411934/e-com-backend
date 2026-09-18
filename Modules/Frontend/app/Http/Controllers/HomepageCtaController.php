@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use Modules\Frontend\Http\Requests\StoreHomepageCtaRequest;
 use Modules\Frontend\Http\Requests\UpdateHomepageCtaRequest;
 use Modules\Frontend\Services\HomepageCtaService;
+use Modules\Store\Models\Store;
 
 class HomepageCtaController extends Controller
 {
@@ -14,7 +15,18 @@ class HomepageCtaController extends Controller
 
     public function index()
     {
-        return view('frontend::homepage-ctas');
+        $user = auth()->user();
+        $isStoreOwner = $user->isStoreOwner();
+
+        // Store Owner only manages their own store; platform staff can pick any store.
+        $stores = $isStoreOwner
+            ? collect($user->ownedStore ? [$user->ownedStore] : [])
+            : Store::query()->orderBy('name')->get(['id', 'name']);
+
+        return view('frontend::homepage-ctas', [
+            'isStoreOwner' => $isStoreOwner,
+            'stores' => $stores,
+        ]);
     }
 
     public function dataTable(Request $request)

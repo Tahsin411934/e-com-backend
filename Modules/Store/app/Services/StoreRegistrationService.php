@@ -12,9 +12,12 @@ use Modules\Identity\Models\User;
 use Modules\Store\Models\Store;
 use Modules\Store\Models\StoreDomain;
 use Modules\Store\Support\StoreDomainResolver;
+use Modules\Store\Services\StoreDemoDataSeeder;
 
 class StoreRegistrationService
 {
+    public function __construct(private StoreDemoDataSeeder $demoDataSeeder) {}
+
     /**
      * Create the owner's user account with the default "Store Owner" role.
      * Used by both public registration and admin-side store creation.
@@ -67,6 +70,9 @@ class StoreRegistrationService
                 'currency_code' => strtoupper($data['currency_code'] ?? 'USD'),
                 'timezone' => $data['timezone'] ?? 'UTC',
             ]);
+
+            // Seed demo data for the new store
+            $this->demoDataSeeder->seed($store->id);
 
             // Provision the free wildcard subdomain ({slug}.{suffix}) right
             // away — it is always trusted and needs no DNS verification.

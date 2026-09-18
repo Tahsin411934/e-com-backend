@@ -77,7 +77,7 @@ class StorefrontTenantApiTest extends TestCase
 
         StoreDomain::create([
             'store_id' => $store->id,
-            'domain' => $slug.'.shopio.test',
+            'domain' => $slug.'.onehaatbd.com',
             'type' => 'subdomain',
             'is_primary' => true,
             'ssl_status' => 'active',
@@ -104,13 +104,13 @@ class StorefrontTenantApiTest extends TestCase
 
     public function test_subdomain_host_serves_only_that_store_and_global_content(): void
     {
-        $a = $this->servedBy('store-a.shopio.test');
+        $a = $this->servedBy('store-a.onehaatbd.com');
 
         $a->getJson('/api/v1/storefront/products/store-a-only')->assertOk();
         $a->getJson('/api/v1/storefront/products/global-product')->assertOk();
         $a->getJson('/api/v1/storefront/products/store-b-only')->assertNotFound();
 
-        $b = $this->servedBy('store-b.shopio.test');
+        $b = $this->servedBy('store-b.onehaatbd.com');
 
         $b->getJson('/api/v1/storefront/products/store-b-only')->assertOk();
         $b->getJson('/api/v1/storefront/products/store-a-only')->assertNotFound();
@@ -150,7 +150,7 @@ class StorefrontTenantApiTest extends TestCase
 
     public function test_central_reserved_and_unknown_hosts_are_rejected(): void
     {
-        foreach (['shopio.test', 'www.shopio.test', 'api.shopio.test', 'admin.shopio.test', 'unknown-host.example.com', 'localhost'] as $host) {
+        foreach (['onehaatbd.com', 'www.onehaatbd.com', 'api.onehaatbd.com', 'admin.onehaatbd.com', 'unknown-host.example.com', 'localhost'] as $host) {
             $this->servedBy($host)
                 ->getJson('/api/v1/storefront/products/store-a-only')
                 ->assertNotFound();
@@ -171,12 +171,12 @@ class StorefrontTenantApiTest extends TestCase
         Banner::create(['banner_image' => 'banners/platform.jpg', 'title' => 'Platform banner', 'status' => 'active']);
         $other = Banner::create(['store_id' => $this->storeB->id, 'banner_image' => 'banners/b.jpg', 'title' => 'B banner', 'status' => 'active']);
 
-        $this->servedBy('store-a.shopio.test')
+        $this->servedBy('store-a.onehaatbd.com')
             ->getJson('/api/v1/storefront/banners')
             ->assertOk()
             ->assertJsonCount(2, 'data.items');
 
-        $this->servedBy('store-a.shopio.test')
+        $this->servedBy('store-a.onehaatbd.com')
             ->getJson('/api/v1/storefront/banners/'.$other->id)
             ->assertNotFound();
     }
@@ -186,12 +186,12 @@ class StorefrontTenantApiTest extends TestCase
         Setting::create(['group' => 'general', 'key' => 'site_name', 'value' => 'Platform', 'type' => 'text', 'label' => 'Site name', 'sort_order' => 0]);
         Setting::create(['store_id' => $this->storeA->id, 'group' => 'general', 'key' => 'site_name', 'value' => 'Store A', 'type' => 'text', 'label' => 'Site name', 'sort_order' => 0]);
 
-        $this->servedBy('store-a.shopio.test')
+        $this->servedBy('store-a.onehaatbd.com')
             ->getJson('/api/v1/storefront/settings')
             ->assertOk()
             ->assertJsonPath('data.site_name', 'Store A');
 
-        $this->servedBy('store-b.shopio.test')
+        $this->servedBy('store-b.onehaatbd.com')
             ->getJson('/api/v1/storefront/settings')
             ->assertOk()
             ->assertJsonPath('data.site_name', 'Platform');
@@ -199,7 +199,7 @@ class StorefrontTenantApiTest extends TestCase
 
     public function test_product_request_is_stamped_with_the_resolved_store(): void
     {
-        $this->servedBy('store-a.shopio.test')
+        $this->servedBy('store-a.onehaatbd.com')
             ->postJson('/api/v1/storefront/product-requests', [
                 'customer_name' => 'Karim',
                 'customer_email' => 'karim@example.com',
@@ -215,13 +215,13 @@ class StorefrontTenantApiTest extends TestCase
 
     public function test_sitemap_feed_is_isolated_per_store(): void
     {
-        $this->servedBy('store-a.shopio.test')
+        $this->servedBy('store-a.onehaatbd.com')
             ->getJson('/api/v1/storefront/sitemap/products-count')
             ->assertOk()
             ->assertJsonPath('data.total', 2);
 
         $slugs = collect(
-            $this->servedBy('store-a.shopio.test')
+            $this->servedBy('store-a.onehaatbd.com')
                 ->getJson('/api/v1/storefront/sitemap/products')
                 ->assertOk()
                 ->json('data.items')
@@ -230,5 +230,19 @@ class StorefrontTenantApiTest extends TestCase
         $this->assertContains('store-a-only', $slugs);
         $this->assertContains('global-product', $slugs);
         $this->assertNotContains('store-b-only', $slugs);
+    }
+
+    public function test_storefront_fallback_store_serves_when_host_is_unresolvable(): void
+    {
+        config(['storefront.fallback_store' => 'store-a']);
+
+        // An unresolvable host (no matching subdomain, no verified custom
+        // domain) falls back to the configured dev store.
+        $served = $this->servedBy('totally-unknown-host.example.com');
+
+        $served->getJson('/api/v1/storefront/products/store-a-only')->assertOk();
+        $served->getJson('/api/v1/storefront/products/store-b-only')->assertNotFound();
+
+        config(['storefront.fallback_store' => null]);
     }
 }

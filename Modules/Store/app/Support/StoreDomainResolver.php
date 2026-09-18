@@ -105,10 +105,28 @@ class StoreDomainResolver
             ->first();
 
         if ($domain === null) {
-            return null;
+            return self::fallbackStore();
         }
 
         $store = $domain->store;
+
+        return self::isActive($store) ? $store : null;
+    }
+
+    /**
+     * Development convenience: when the host cannot be resolved (localhost,
+     * Next.js dev server, build-time ISR) and STOREFRONT_FALLBACK_STORE is
+     * configured, serve that store. Unset in production → strict 404.
+     */
+    private static function fallbackStore(): ?Store
+    {
+        $slug = trim((string) config('storefront.fallback_store'));
+
+        if ($slug === '') {
+            return null;
+        }
+
+        $store = Store::query()->where('slug', $slug)->first();
 
         return self::isActive($store) ? $store : null;
     }

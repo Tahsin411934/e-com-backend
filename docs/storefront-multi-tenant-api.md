@@ -7,14 +7,14 @@ untouched and stay tenant-free.
 ## Endpoint
 
 ```
-https://api.yourdomain.com/api/v1/storefront/...
+https://admin.onehaatbd.com/api/v1/storefront/...
 ```
 
 The Next.js storefront must pass the visitor's hostname on every API call
 (the API lives on its own host, so the original host can't be inferred):
 
 ```
-X-Store-Host: rahim-electronics.yourdomain.com   (wildcard subdomain)
+X-Store-Host: rahim-electronics.onehaatbd.com   (wildcard subdomain)
 X-Store-Host: myshop.com.bd                      (owner's custom domain)
 ```
 
@@ -42,14 +42,14 @@ GET    home/products-by-category
 GET    subnavbar/{slug}/products
 POST   product-requests            (store_id stamped from the host, never the payload)
 GET    sitemap/products-count | sitemap/products?page=&limit=   (per-store cache)
-GET    orders, orders/{order}      (auth:sanctum — scoped to user + tenant store)
+GET    orders, orders/{order}      (auth:sanctum â€” scoped to user + tenant store)
 ```
 
-Tenant not resolvable → `404 { "status": "error", "message": "Store not found..." }`.
+Tenant not resolvable â†’ `404 { "status": "error", "message": "Store not found..." }`.
 
 ## Scoping convention
 
-`Modules\Storefront\Support\StorefrontScope::apply($query)` — store rows +
+`Modules\Storefront\Support\StorefrontScope::apply($query)` â€” store rows +
 global platform rows (`store_id IS NULL`). Settings: store row overrides the
 global value per key. Sitemap cache keys are namespaced per store.
 
@@ -58,26 +58,26 @@ global value per key. Sitemap cache keys are namespaced per store.
 ```
 GET    /v1/store/domains
 POST   /v1/store/domains                { domain: "myshop.com.bd" }
-POST   /v1/store/domains/{id}/verify    (CNAME → suffix, or A → STOREFRONT_SERVER_IP)
+POST   /v1/store/domains/{id}/verify    (CNAME â†’ suffix, or A â†’ STOREFRONT_SERVER_IP)
 POST   /v1/store/domains/{id}/primary
 DELETE /v1/store/domains/{id}
 ```
 
-DNS record `CNAME myshop.com.bd → yourdomain.com` দিলে verify হবে।
+DNS record `CNAME myshop.com.bd â†’ onehaatbd.com` à¦¦à¦¿à¦²à§‡ verify à¦¹à¦¬à§‡à¥¤
 
 ## Config (`.env`)
 
 ```
-STOREFRONT_CENTRAL_DOMAIN=yourdomain.com
-STOREFRONT_API_DOMAIN=api.yourdomain.com
-STOREFRONT_DOMAIN_SUFFIX=yourdomain.com      # wildcard *.yourdomain.com
+STOREFRONT_CENTRAL_DOMAIN=onehaatbd.com
+STOREFRONT_API_DOMAIN=admin.onehaatbd.com
+STOREFRONT_DOMAIN_SUFFIX=onehaatbd.com      # wildcard *.onehaatbd.com
 STOREFRONT_SERVER_IP=1.2.3.4                 # optional: A-record verification
 ```
 
 ## Local dev
 
-Wildcard DNS ছাড়া টেস্ট করতে শুধু `X-Store-Host` header পাঠান (Postman/Insomnia),
-অথবা `*.lvh.me` ব্যবহার করুন (127.0.0.1 resolve করে)।
+Wildcard DNS à¦›à¦¾à¦¡à¦¼à¦¾ à¦Ÿà§‡à¦¸à§à¦Ÿ à¦•à¦°à¦¤à§‡ à¦¶à§à¦§à§ `X-Store-Host` header à¦ªà¦¾à¦ à¦¾à¦¨ (Postman/Insomnia),
+à¦…à¦¥à¦¬à¦¾ `*.lvh.me` à¦¬à§à¦¯à¦¬à¦¹à¦¾à¦° à¦•à¦°à§à¦¨ (127.0.0.1 resolve à¦•à¦°à§‡)à¥¤
 
 ## Tests
 

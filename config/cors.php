@@ -41,6 +41,10 @@ return [
     'allowed_origins' => $allowedOrigins ?: ['http://localhost:3000', 'https://onehaatbd.com'],
 
     'allowed_origins_patterns' => [
+        // Every storefront subdomain (store-a.onehaatbd.com, www, ...) may
+        // call the API from the browser.
+        '#^https?://([a-zA-Z0-9-]+\.)*onehaatbd\.com$#i',
+        // Legacy platform domain — kept so old admin panels keep working.
         '#^https?://([a-zA-Z0-9-]+\.)*aftsoftandlimited\.com$#i',
         '#^http://localhost(:\d+)?$#',
     ],

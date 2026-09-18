@@ -11,8 +11,8 @@ use Modules\Store\Support\CurrentStore;
  * Tenant-scoped storefront search.
  *
  * Reuses the Frontend module's fuzzy-search algorithm untouched — only the
- * candidate queries are post-filtered, so the search never leaves the
- * current tenant's catalog (plus global platform products, store_id NULL).
+ * candidate queries are post-filtered, so the search only shows the
+ * current tenant's catalog (store-specific products only).
  */
 class ProductSearchService extends BaseProductSearchService
 {
@@ -40,9 +40,7 @@ class ProductSearchService extends BaseProductSearchService
 
         $visibleIds = Product::query()
             ->whereIn('id', $candidates->pluck('id'))
-            ->where(function ($query) use ($storeId) {
-                $query->whereNull('store_id')->orWhere('store_id', $storeId);
-            })
+            ->where('store_id', $storeId)
             ->pluck('id');
 
         return $candidates

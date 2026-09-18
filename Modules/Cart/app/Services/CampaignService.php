@@ -186,7 +186,8 @@ class CampaignService
 
         $campaign->setRelation('products', $campaign->products
             ->filter(fn ($entry) => $entry->product !== null
-                && ($entry->product->store_id === null || (int) $entry->product->store_id === (int) $storeId))
+                && $entry->product->store_id !== null
+                && (int) $entry->product->store_id === (int) $storeId)
             ->values());
 
         return $campaign;

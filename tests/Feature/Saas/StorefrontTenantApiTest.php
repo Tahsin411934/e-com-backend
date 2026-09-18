@@ -5,8 +5,11 @@ namespace Tests\Feature\Saas;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
+use Modules\Cart\Models\Campaign;
+use Modules\Cart\Models\CampaignProduct;
 use Modules\Catalog\Models\Product;
 use Modules\Catalog\Models\ProductRequest;
+use Modules\Catalog\Models\ProductVariant;
 use Modules\Frontend\Models\Banner;
 use Modules\Frontend\Models\Setting;
 use Modules\Identity\Models\Role;
@@ -230,6 +233,56 @@ class StorefrontTenantApiTest extends TestCase
         $this->assertContains('store-a-only', $slugs);
         $this->assertContains('global-product', $slugs);
         $this->assertNotContains('store-b-only', $slugs);
+    }
+
+    public function test_campaigns_are_scoped_to_the_resolved_store(): void
+    {
+        $productA = Product::where('slug', 'store-a-only')->firstOrFail();
+        $productB = Product::where('slug', 'store-b-only')->firstOrFail();
+
+        $storeACampaign = Campaign::create([
+            'store_id' => $this->storeA->id,
+            'name' => 'A Eid Sale',
+            'slug' => 'a-eid-sale',
+            'status' => 'active',
+            'is_active' => true,
+        ]);
+
+        foreach ([['product' => $productA, 'sku' => 'VAR-A-1'], ['product' => $productB, 'sku' => 'VAR-B-1']] as $entry) {
+            $variant = ProductVariant::create([
+                'product_id' => $entry['product']->id,
+                'sku' => $entry['sku'],
+                'name' => 'Default',
+                'sale_price' => 100,
+            ]);
+            CampaignProduct::create([
+                'campaign_id' => $storeACampaign->id,
+                'product_id' => $entry['product']->id,
+                'variant_id' => $variant->id,
+                'discount_type' => 'percentage',
+                'discount_value' => 10,
+            ]);
+        }
+
+        Campaign::create(['name' => 'Platform Sale', 'slug' => 'platform-sale', 'status' => 'active', 'is_active' => true]);
+        Campaign::create(['store_id' => $this->storeB->id, 'name' => 'B Sale', 'slug' => 'b-sale', 'status' => 'active', 'is_active' => true]);
+
+        $a = $this->servedBy('store-a.onehaatbd.com');
+
+        $slugs = collect($a->getJson('/api/v1/storefront/campaigns')->assertOk()->json('data'))->pluck('slug');
+        $this->assertContains('a-eid-sale', $slugs);
+        $this->assertContains('platform-sale', $slugs);
+        $this->assertNotContains('b-sale', $slugs);
+
+        // Another store's product hidden inside A's campaign must never leak.
+        $detail = $a->getJson('/api/v1/storefront/campaigns/a-eid-sale')->assertOk()->json('data');
+        $productSlugs = collect($detail['products'])->pluck('slug');
+        $this->assertContains('store-a-only', $productSlugs);
+        $this->assertNotContains('store-b-only', $productSlugs);
+
+        $this->servedBy('store-b.onehaatbd.com')
+            ->getJson('/api/v1/storefront/campaigns/a-eid-sale')
+            ->assertNotFound();
     }
 
     public function test_storefront_fallback_store_serves_when_host_is_unresolvable(): void

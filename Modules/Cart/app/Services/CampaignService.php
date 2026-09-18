@@ -8,6 +8,8 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Modules\Cart\Models\Campaign;
 use Modules\Catalog\Models\Product;
+use Modules\Store\Support\CurrentStore;
+use Modules\Storefront\Support\StorefrontScope;
 
 class CampaignService
 {
@@ -17,7 +19,9 @@ class CampaignService
 
     public function list(): JsonResponse
     {
-        return ApiResponse::success(Campaign::withCount('products')->latest()->get());
+        // forCurrentStore: platform admins see every campaign, a signed-in
+        // store owner only sees their own (store_id NULL rows are platform-wide).
+        return ApiResponse::success(Campaign::withCount('products')->forCurrentStore()->latest()->get());
     }
 
     public function store(array $data): JsonResponse
@@ -130,6 +134,62 @@ class CampaignService
             ->firstOrFail();
 
         return ApiResponse::success($this->serialize($campaign), 'Campaign retrieved successfully.');
+    }
+
+    // ===== Storefront API (multi-tenant) =====
+    //
+    // Same payload shape as the legacy methods, scoped to the storefront the
+    // request is served from: this store's campaigns + global platform
+    // campaigns (store_id IS NULL), and only products visible on that storefront.
+
+    public function liveCampaignsForStorefront(): JsonResponse
+    {
+        $query = Campaign::live()
+            ->with(['products.product.images', 'products.product.variants'])
+            ->orderByDesc('is_featured')
+            ->orderByDesc('priority');
+
+        StorefrontScope::apply($query);
+
+        $campaigns = $query->get();
+
+        return ApiResponse::success(
+            $campaigns->map(fn (Campaign $campaign) => $this->serialize($this->scopedProducts($campaign)))->values(),
+            'Campaigns retrieved successfully.'
+        );
+    }
+
+    public function liveCampaignBySlugForStorefront(string $slug): JsonResponse
+    {
+        $query = Campaign::live()
+            ->where('slug', $slug)
+            ->with(['products.product.images', 'products.product.variants']);
+
+        StorefrontScope::apply($query);
+
+        $campaign = $query->first();
+
+        if (! $campaign) {
+            return ApiResponse::notFound('Campaign not found.');
+        }
+
+        return ApiResponse::success($this->serialize($this->scopedProducts($campaign)), 'Campaign retrieved successfully.');
+    }
+
+    /**
+     * Drop campaign products that are not visible on the current storefront,
+     * so one store's campaign can never leak another store's products.
+     */
+    private function scopedProducts(Campaign $campaign): Campaign
+    {
+        $storeId = CurrentStore::id();
+
+        $campaign->setRelation('products', $campaign->products
+            ->filter(fn ($entry) => $entry->product !== null
+                && ($entry->product->store_id === null || (int) $entry->product->store_id === (int) $storeId))
+            ->values());
+
+        return $campaign;
     }
 
     // ===== Helpers =====

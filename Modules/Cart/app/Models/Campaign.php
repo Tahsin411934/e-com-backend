@@ -2,15 +2,17 @@
 
 namespace Modules\Cart\Models;
 
+use App\Traits\BelongsToStore;
 use App\Traits\CustomSoftDeletes;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 
 class Campaign extends Model
 {
+    use BelongsToStore;
     use CustomSoftDeletes;
 
-    protected $fillable = ['name', 'slug', 'description', 'banner_image', 'button_text', 'priority', 'is_featured', 'is_active', 'status', 'starts_at', 'ends_at'];
+    protected $fillable = ['store_id', 'name', 'slug', 'description', 'banner_image', 'button_text', 'priority', 'is_featured', 'is_active', 'status', 'starts_at', 'ends_at'];
 
     protected $casts = ['is_featured' => 'boolean', 'is_active' => 'boolean', 'starts_at' => 'datetime', 'ends_at' => 'datetime'];
 

@@ -4,6 +4,7 @@ use Illuminate\Support\Facades\Route;
 use Modules\Storefront\Http\Controllers\AnnouncementBarController;
 use Modules\Storefront\Http\Controllers\BannerController;
 use Modules\Storefront\Http\Controllers\BrandController;
+use Modules\Storefront\Http\Controllers\CampaignController;
 use Modules\Storefront\Http\Controllers\CategoryController;
 use Modules\Storefront\Http\Controllers\HomeController;
 use Modules\Storefront\Http\Controllers\NavbarController;
@@ -49,6 +50,8 @@ Route::middleware('storefront.tenant')->prefix('v1/storefront')->group(function 
 
     // Brands / Categories / Products
     Route::get('/brands', [BrandController::class, 'index'])->name('brands.index');
+    Route::get('/campaigns', [CampaignController::class, 'index'])->name('campaigns.index');
+    Route::get('/campaigns/{slug}', [CampaignController::class, 'show'])->name('campaigns.show');
     Route::get('/categories', [CategoryController::class, 'index'])->name('categories.index');
     Route::get('/categories/{slug}', [CategoryController::class, 'show'])->name('categories.show');
     Route::get('/categories/{slug}/products', [CategoryController::class, 'products'])->name('categories.products');

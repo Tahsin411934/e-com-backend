@@ -12,9 +12,14 @@ class BannerResource extends JsonResource
      */
     public function toArray(Request $request): array
     {
+        $image = $this->banner_image;
+        $imageUrl = $image && filter_var($image, FILTER_VALIDATE_URL)
+            ? $image
+            : ($image ? asset('storage/'.ltrim($image, '/')) : null);
+
         return [
             'id' => $this->id,
-            'banner_image' => $this->banner_image ? asset('storage/'.$this->banner_image) : null,
+            'banner_image' => $imageUrl,
             'title' => $this->title,
             'subtitle' => $this->subtitle,
             'smtag' => $this->smtag,

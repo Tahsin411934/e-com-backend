@@ -14,7 +14,9 @@ class CategoryResource extends JsonResource
     {
         $imageUrl = null;
         if ($this->image) {
-            $imageUrl = asset('storage/'.$this->image);
+            $imageUrl = filter_var($this->image, FILTER_VALIDATE_URL)
+                ? $this->image
+                : asset('storage/'.ltrim($this->image, '/'));
         } elseif ($this->image_url) {
             $imageUrl = $this->image_url;
         }

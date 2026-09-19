@@ -587,7 +587,7 @@ class StoreDemoDataSeeder
         $banners = [
             [
                 'store_id' => $storeId,
-                'banner_image' => 'https://admin.onehaatbd.com/storage/banners/WmJdlq5NlQQLuf4yFWKwszxCHbfQa9lMA7r0F9nR.png',
+                'banner_image' => 'https://admin.onehaatbd.com/storage/banners/7CVCKbhuLnKEN6LGJ62ZDQSqIJcCZntYvoCpdYIi.png',
                 'title' => 'Discover your next favourite',
                 'subtitle' => 'Explore our latest products, selected for everyday living.',
                 'smtag' => 'Featured collection',

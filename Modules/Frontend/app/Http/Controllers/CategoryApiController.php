@@ -151,7 +151,9 @@ class CategoryApiController extends Controller
         // Build category data
         $categoryImage = null;
         if ($category->image) {
-            $categoryImage = asset('storage/'.$category->image);
+            $categoryImage = filter_var($category->image, FILTER_VALIDATE_URL)
+                ? $category->image
+                : asset('storage/'.ltrim($category->image, '/'));
         } elseif ($category->image_url) {
             $categoryImage = $category->image_url;
         }

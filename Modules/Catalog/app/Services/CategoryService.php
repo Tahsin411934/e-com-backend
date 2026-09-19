@@ -73,7 +73,9 @@ class CategoryService
     public function getCategoryImageUrl(Category $category): ?string
     {
         if ($category->image) {
-            return asset('storage/'.$category->image);
+            return filter_var($category->image, FILTER_VALIDATE_URL)
+                ? $category->image
+                : asset('storage/'.ltrim($category->image, '/'));
         }
         if ($category->image_url) {
             return $category->image_url;

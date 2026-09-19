@@ -283,6 +283,16 @@
         });
     };
     Crud.register(CFG.safeId, 'delete', deleteHandler);
+    // Keep legacy inline DataTable actions working while new actions use the
+    // delegated .js-crud-action handler.
+    window[CFG.safeId + 'Edit'] = editHandler;
+    window[CFG.safeId + 'Delete'] = deleteHandler;
+    if (CFG.safeId === 'announcementbar') window.announcement_barEdit = editHandler;
+    if (CFG.safeId === 'announcementbar') window.announcement_barDelete = deleteHandler;
+    if (CFG.safeId === 'navbaritem') window.navbar_itemEdit = editHandler;
+    if (CFG.safeId === 'navbaritem') window.navbar_itemDelete = deleteHandler;
+    if (CFG.safeId === 'subnavbaritem') window.subnavbar_itemEdit = editHandler;
+    if (CFG.safeId === 'subnavbaritem') window.subnavbar_itemDelete = deleteHandler;
 
     // Init
     $(function() {

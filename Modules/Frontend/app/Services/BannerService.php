@@ -54,8 +54,8 @@ class BannerService
                 return $banner->created_at->format('d M Y H:i');
             })
             ->addColumn('action', function (Banner $banner) {
-                $editBtn = '<button onclick="bannerEdit('.$banner->id.')" class="bg-blue-900 text-white px-2 py-1 rounded text-sm hover:bg-blue-600 mr-2"><i class="fa fa-pencil"></i></button>';
-                $deleteBtn = '<button onclick="bannerDelete('.$banner->id.')" class="bg-red-500 text-white px-2 py-1 rounded text-sm hover:bg-red-600"><i class="fa fa-trash"></i></button>';
+                $editBtn = '<button class="js-crud-action bg-blue-900 text-white px-2 py-1 rounded text-sm hover:bg-blue-600 mr-2" data-crud-action="edit" data-crud-callback="bannerEdit" data-crud-id="'.$banner->id.'"><i class="fa fa-pencil"></i></button>';
+                $deleteBtn = '<button class="js-crud-action bg-red-500 text-white px-2 py-1 rounded text-sm hover:bg-red-600" data-crud-action="delete" data-crud-callback="bannerDelete" data-crud-id="'.$banner->id.'"><i class="fa fa-trash"></i></button>';
 
                 return '<div class="flex space-x-2 justify-center">'.$editBtn.$deleteBtn.'</div>';
             })

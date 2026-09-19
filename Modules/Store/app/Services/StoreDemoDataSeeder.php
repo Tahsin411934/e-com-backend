@@ -552,6 +552,7 @@ class StoreDemoDataSeeder
             $product = Product::create(array_merge($productData, [
                 'store_id' => $storeId,
                 'published_at' => now(),
+                'is_homepage' => true,
             ]));
 
             if (!empty($categorySlugs)) {

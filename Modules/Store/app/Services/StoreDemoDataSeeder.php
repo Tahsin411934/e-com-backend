@@ -95,12 +95,12 @@ class StoreDemoDataSeeder
     {
         $storeSlug = Store::find($storeId)?->slug ?? 'store';
         $categories = [
-            ['name' => 'Electronics', 'slug' => 'electronics', 'description' => 'Electronic devices and accessories', 'status' => 'active', 'sort_order' => 1],
-            ['name' => 'Clothing', 'slug' => 'clothing', 'description' => 'Apparel and fashion items', 'status' => 'active', 'sort_order' => 2],
-            ['name' => 'Home & Kitchen', 'slug' => 'home-kitchen', 'description' => 'Home appliances and kitchenware', 'status' => 'active', 'sort_order' => 3],
-            ['name' => 'Sports & Outdoors', 'slug' => 'sports-outdoors', 'description' => 'Sports equipment and outdoor gear', 'status' => 'active', 'sort_order' => 4],
-            ['name' => 'Beauty & Health', 'slug' => 'beauty-health', 'description' => 'Beauty products and health supplements', 'status' => 'active', 'sort_order' => 5],
-            ['name' => 'Books & Media', 'slug' => 'books-media', 'description' => 'Books, movies, and digital media', 'status' => 'active', 'sort_order' => 6],
+            ['name' => 'Electronics', 'slug' => 'electronics', 'image' => 'storage/demo/categories/electronics.png', 'description' => 'Electronic devices and accessories', 'status' => 'active', 'sort_order' => 1],
+            ['name' => 'Clothing', 'slug' => 'clothing', 'image' => 'storage/demo/categories/clothing.png', 'description' => 'Apparel and fashion items', 'status' => 'active', 'sort_order' => 2],
+            ['name' => 'Home & Kitchen', 'slug' => 'home-kitchen', 'image' => 'storage/demo/categories/home-kitchen.png', 'description' => 'Home appliances and kitchenware', 'status' => 'active', 'sort_order' => 3],
+            ['name' => 'Sports & Outdoors', 'slug' => 'sports-outdoors', 'image' => 'storage/demo/categories/sports-outdoors.png', 'description' => 'Sports equipment and outdoor gear', 'status' => 'active', 'sort_order' => 4],
+            ['name' => 'Beauty & Health', 'slug' => 'beauty-health', 'image' => 'storage/demo/categories/beauty-health.png', 'description' => 'Beauty products and health supplements', 'status' => 'active', 'sort_order' => 5],
+            ['name' => 'Books & Media', 'slug' => 'books-media', 'image' => 'storage/demo/categories/books-media.png', 'description' => 'Books, movies, and digital media', 'status' => 'active', 'sort_order' => 6],
         ];
 
         $categoryIds = [];

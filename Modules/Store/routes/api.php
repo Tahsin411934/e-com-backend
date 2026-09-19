@@ -5,6 +5,8 @@ use Modules\Store\Http\Controllers\StoreAuthController;
 use Modules\Store\Http\Controllers\StoreDomainController;
 
 // Public SaaS registration for store owners (tenants)
+Route::get('/v1/register/store-slug-availability', [StoreAuthController::class, 'slugAvailability'])
+    ->name('api.store.register-slug-availability');
 Route::post('/v1/register/store-owner', [StoreAuthController::class, 'register'])
     ->name('api.store.register-owner');
 
@@ -26,4 +28,3 @@ Route::middleware(['convert.auth.cookie', 'auth:sanctum'])
         Route::post('/store/domains/{storeDomain}/primary', [StoreDomainController::class, 'primary'])->name('api.store.domains.primary');
         Route::delete('/store/domains/{storeDomain}', [StoreDomainController::class, 'destroy'])->name('api.store.domains.destroy');
     });
-

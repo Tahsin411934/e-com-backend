@@ -75,7 +75,7 @@ class CategoryService
         if ($category->image) {
             return filter_var($category->image, FILTER_VALIDATE_URL)
                 ? $category->image
-                : asset('storage/'.ltrim($category->image, '/'));
+                : asset('storage/'.preg_replace('#^storage/#', '', ltrim($category->image, '/')));
         }
         if ($category->image_url) {
             return $category->image_url;

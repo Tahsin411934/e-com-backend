@@ -172,7 +172,7 @@ class BannerService
             if ($banner->banner_image) {
                 $bannerArray['banner_image_url'] = filter_var($banner->banner_image, FILTER_VALIDATE_URL)
                     ? $banner->banner_image
-                    : asset('storage/'.ltrim($banner->banner_image, '/'));
+                    : asset('storage/'.preg_replace('#^storage/#', '', ltrim($banner->banner_image, '/')));
             }
 
             return ApiResponse::success($bannerArray);

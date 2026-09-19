@@ -112,7 +112,7 @@ class HomeController extends Controller
             if ($category->image) {
                 $categoryImage = filter_var($category->image, FILTER_VALIDATE_URL)
                     ? $category->image
-                    : asset('storage/'.ltrim($category->image, '/'));
+                    : asset('storage/'.preg_replace('#^storage/#', '', ltrim($category->image, '/')));
             } elseif ($category->image_url) {
                 $categoryImage = $category->image_url;
             }

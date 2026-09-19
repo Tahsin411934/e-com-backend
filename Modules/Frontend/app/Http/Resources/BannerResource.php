@@ -15,7 +15,7 @@ class BannerResource extends JsonResource
         $image = $this->banner_image;
         $imageUrl = $image && filter_var($image, FILTER_VALIDATE_URL)
             ? $image
-            : ($image ? asset('storage/'.ltrim($image, '/')) : null);
+            : ($image ? asset('storage/'.preg_replace('#^storage/#', '', ltrim($image, '/'))) : null);
 
         return [
             'id' => $this->id,

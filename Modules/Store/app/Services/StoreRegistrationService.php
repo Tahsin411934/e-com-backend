@@ -98,7 +98,7 @@ class StoreRegistrationService
         } catch (\Throwable $e) {
             report($e);
 
-            return ApiResponse::error('Registration failed. Please try again.', 500);
+            return ApiResponse::error('Registration failed: '.$e->getMessage(), 500);
         }
     }
 

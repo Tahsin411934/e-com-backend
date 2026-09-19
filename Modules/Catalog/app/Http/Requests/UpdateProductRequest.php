@@ -2,10 +2,10 @@
 
 namespace Modules\Catalog\Http\Requests;
 
-use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
+use Modules\Catalog\Models\Product;
 
-class UpdateProductRequest extends FormRequest
+class UpdateProductRequest extends StoreProductRequest
 {
     public function authorize(): bool
     {
@@ -14,7 +14,9 @@ class UpdateProductRequest extends FormRequest
 
     public function rules(): array
     {
-        $productId = $this->route('product') ?? $this->route('id');
+        $routeProduct = $this->route('product') ?? $this->route('id');
+        $productId = $routeProduct instanceof Product ? $routeProduct->id : $routeProduct;
+        $product = Product::forCurrentStore()->findOrFail($productId);
 
         return [
             'store_id' => 'nullable|integer|exists:stores,id',
@@ -31,7 +33,7 @@ class UpdateProductRequest extends FormRequest
                 'required',
                 'string',
                 'max:240',
-                Rule::unique('products', 'slug')->ignore($productId),
+                Rule::unique('products', 'slug')->where('store_id', $this->slugStoreId($product))->ignore($product),
             ],
             'short_description' => 'nullable|string|max:500',
             'description' => 'nullable|string',
@@ -81,7 +83,7 @@ class UpdateProductRequest extends FormRequest
         return [
             'name.required' => 'Product name is required.',
             'slug.required' => 'Product slug is required.',
-            'slug.unique' => 'Product slug must be unique.',
+            'slug.unique' => 'Product slug must be unique within this store.',
             'product_type.in' => 'Product type is invalid.',
             'status.in' => 'Product status is invalid.',
             'visibility.in' => 'Product visibility is invalid.',

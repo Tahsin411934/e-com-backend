@@ -3,6 +3,8 @@
 namespace Modules\Frontend\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
+use Modules\Store\Support\CurrentStore;
 
 class StoreSubnavbarItemRequest extends FormRequest
 {
@@ -16,7 +18,7 @@ class StoreSubnavbarItemRequest extends FormRequest
         return [
             'navbar_item_id' => 'required|exists:navbar_items,id',
             'name' => 'required|string|max:160',
-            'slug' => 'required|string|max:180|unique:subnavbar_items,slug',
+            'slug' => ['required', 'string', 'max:180', Rule::unique('subnavbar_items', 'slug')->where('store_id', $this->input('store_id') ?: CurrentStore::id())],
             'url' => 'nullable|string|max:500',
             'icon' => 'nullable|string|max:255',
             'sort_order' => 'nullable|integer|min:0',

@@ -4,6 +4,7 @@ namespace Modules\Frontend\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
+use Modules\Frontend\Models\SubnavbarItem;
 
 class UpdateSubnavbarItemRequest extends FormRequest
 {
@@ -15,6 +16,7 @@ class UpdateSubnavbarItemRequest extends FormRequest
     public function rules(): array
     {
         $subnavbarItemId = $this->route('subnavbar_item') ?? $this->route('id');
+        $subnavbarItem = SubnavbarItem::findOrFail($subnavbarItemId);
 
         return [
             'navbar_item_id' => 'required|exists:navbar_items,id',
@@ -23,7 +25,7 @@ class UpdateSubnavbarItemRequest extends FormRequest
                 'required',
                 'string',
                 'max:180',
-                Rule::unique('subnavbar_items', 'slug')->ignore($subnavbarItemId),
+                Rule::unique('subnavbar_items', 'slug')->where('store_id', $subnavbarItem->store_id)->ignore($subnavbarItem),
             ],
             'url' => 'nullable|string|max:500',
             'icon' => 'nullable|string|max:255',

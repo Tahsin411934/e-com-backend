@@ -4,6 +4,7 @@ namespace Modules\Frontend\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
+use Modules\Frontend\Models\NavbarItem;
 
 class UpdateNavbarItemRequest extends FormRequest
 {
@@ -15,6 +16,7 @@ class UpdateNavbarItemRequest extends FormRequest
     public function rules(): array
     {
         $navbarItemId = $this->route('navbar_item') ?? $this->route('id');
+        $navbarItem = NavbarItem::findOrFail($navbarItemId);
 
         return [
             'name' => 'required|string|max:160',
@@ -22,7 +24,7 @@ class UpdateNavbarItemRequest extends FormRequest
                 'required',
                 'string',
                 'max:180',
-                Rule::unique('navbar_items', 'slug')->ignore($navbarItemId),
+                Rule::unique('navbar_items', 'slug')->where('store_id', $navbarItem->store_id)->ignore($navbarItem),
             ],
             'url' => 'nullable|string|max:500',
             'icon' => 'nullable|string|max:255',

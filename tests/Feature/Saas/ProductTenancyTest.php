@@ -173,4 +173,57 @@ class ProductTenancyTest extends TestCase
 
         $this->assertSame(2, Product::count());
     }
+
+    public function test_same_slug_is_allowed_in_different_stores_but_not_the_same_store(): void
+    {
+        $this->makeProduct($this->storeA, 'Shared', ['slug' => 'shared']);
+        $this->makeProduct($this->storeB, 'Shared', ['slug' => 'shared']);
+
+        $this->expectException(\Illuminate\Database\QueryException::class);
+        $this->makeProduct($this->storeA, 'Duplicate', ['slug' => 'shared']);
+    }
+
+    public function test_create_slug_validation_uses_owner_store_despite_tampered_payload(): void
+    {
+        $this->makeProduct($this->storeA, 'Existing', ['slug' => 'existing']);
+        $this->makeProduct($this->storeB, 'Other', ['slug' => 'other']);
+        $this->actingAs($this->ownerA);
+        CurrentStore::reset();
+
+        $request = \Modules\Catalog\Http\Requests\StoreProductRequest::create('/', 'POST', ['store_id' => $this->storeB->id]);
+        $request->setUserResolver(fn () => $this->ownerA);
+        $rules = ['slug' => $request->rules()['slug']];
+
+        $this->assertTrue(\Illuminate\Support\Facades\Validator::make(['slug' => 'other'], $rules)->passes());
+        $this->assertFalse(\Illuminate\Support\Facades\Validator::make(['slug' => 'existing'], $rules)->passes());
+    }
+
+    public function test_update_slug_validation_uses_admin_destination_store_and_ignores_current_product(): void
+    {
+        $product = $this->makeProduct($this->storeA, 'Shared', ['slug' => 'shared']);
+        $this->makeProduct($this->storeB, 'Shared', ['slug' => 'shared']);
+        $this->actingAs($this->superAdmin);
+        CurrentStore::reset();
+
+        $request = \Modules\Catalog\Http\Requests\UpdateProductRequest::create('/', 'PUT');
+        $request->setUserResolver(fn () => $this->superAdmin);
+        $route = new \Illuminate\Routing\Route('PUT', 'products/{id}', fn () => null);
+        $route->bind(\Illuminate\Http\Request::create('/products/'.$product->id, 'PUT'));
+        $request->setRouteResolver(fn () => $route);
+
+        $this->assertTrue(\Illuminate\Support\Facades\Validator::make(['slug' => 'shared'], ['slug' => $request->rules()['slug']])->passes());
+        $request->merge(['store_id' => $this->storeB->id]);
+        $this->assertFalse(\Illuminate\Support\Facades\Validator::make(['slug' => 'shared'], ['slug' => $request->rules()['slug']])->passes());
+    }
+
+    public function test_duplicate_slug_generation_only_checks_source_store(): void
+    {
+        $source = $this->makeProduct($this->storeA, 'Source', ['slug' => 'source']);
+        $this->makeProduct($this->storeB, 'Copy', ['slug' => 'copy']);
+        CurrentStore::set($this->storeA->id);
+
+        $response = app(ProductService::class)->duplicateProduct($source->id, ['name' => 'Copy']);
+        $this->assertSame(201, $response->status());
+        $this->assertTrue(Product::where('store_id', $this->storeA->id)->where('slug', 'copy')->exists());
+    }
 }

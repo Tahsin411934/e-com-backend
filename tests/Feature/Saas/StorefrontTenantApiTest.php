@@ -298,4 +298,25 @@ class StorefrontTenantApiTest extends TestCase
 
         config(['storefront.fallback_store' => null]);
     }
+
+    public function test_shared_product_slug_resolves_to_requested_store(): void
+    {
+        $a = $this->createProduct($this->storeA, 'shared-slug');
+        $b = $this->createProduct($this->storeB, 'shared-slug');
+
+        $this->servedBy('store-a.onehaatbd.com')->getJson('/api/v1/storefront/products/shared-slug')
+            ->assertOk()->assertJsonPath('data.id', $a->id);
+        $this->servedBy('store-b.onehaatbd.com')->getJson('/api/v1/storefront/products/shared-slug')
+            ->assertOk()->assertJsonPath('data.id', $b->id);
+    }
+
+    public function test_legacy_product_lookup_rejects_ambiguous_slug_without_store(): void
+    {
+        $this->createProduct($this->storeA, 'ambiguous-slug');
+        $this->createProduct($this->storeB, 'ambiguous-slug');
+
+        $this->getJson('/api/v1/products/ambiguous-slug')->assertNotFound();
+        StoreDomainResolver::reset();
+        $this->servedBy('store-b.onehaatbd.com')->getJson('/api/v1/products/ambiguous-slug')->assertOk();
+    }
 }

@@ -354,7 +354,7 @@ class ProductService
                     'size_id' => $source->size_id,
                     'tax_rate_id' => $source->tax_rate_id,
                     'name' => $name,
-                    'slug' => $this->generateUniqueProductSlug($name),
+                    'slug' => $this->generateUniqueProductSlug($name, $source->store_id),
                     'short_description' => $source->short_description,
                     'description' => $source->description,
                     'product_type' => $source->product_type,
@@ -435,7 +435,7 @@ class ProductService
     /**
      * Generate a unique product slug based on the given name.
      */
-    private function generateUniqueProductSlug(string $name): string
+    private function generateUniqueProductSlug(string $name, ?int $storeId): string
     {
         $base = Str::slug($name);
         if ($base === '') {
@@ -444,7 +444,7 @@ class ProductService
 
         $slug = $base;
         $counter = 2;
-        while (Product::withTrashed()->where('slug', $slug)->exists()) {
+        while (Product::withTrashed()->where('store_id', $storeId)->where('slug', $slug)->exists()) {
             $slug = $base.'-'.$counter++;
         }
 

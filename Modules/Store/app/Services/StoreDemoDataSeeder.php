@@ -16,6 +16,7 @@ use Modules\Frontend\Models\NavbarItem;
 use Modules\Frontend\Models\Setting;
 use Modules\Frontend\Models\SubnavbarItem;
 use Modules\Cart\Models\Campaign;
+use Modules\Store\Models\Store;
 
 class StoreDemoDataSeeder
 {
@@ -37,11 +38,13 @@ class StoreDemoDataSeeder
 
     private function seedAnnouncementBar(int $storeId): void
     {
+        $store = Store::find($storeId);
+        $currency = $store?->currency_code === 'BDT' ? '৳5,000' : '$50';
         AnnouncementBar::create([
             'store_id' => $storeId,
-            'left_text' => 'Free Shipping on orders over $50',
-            'center_text' => 'Welcome to Our Store!',
-            'right_text' => 'Support: 24/7 Live Chat',
+            'left_text' => "Free shipping on orders over {$currency}",
+            'center_text' => 'Welcome to '.($store?->name ?? 'Our Store'),
+            'right_text' => 'Secure checkout and reliable support',
             'background_color' => '#1f2937',
             'text_color' => '#ffffff',
             'sort_order' => 1,
@@ -51,15 +54,16 @@ class StoreDemoDataSeeder
 
     private function seedSiteSettings(int $storeId): void
     {
+        $store = Store::find($storeId);
         $settings = [
-            ['group' => 'general', 'key' => 'site_name', 'value' => 'My Awesome Store', 'type' => 'text', 'label' => 'Site Name', 'sort_order' => 1],
-            ['group' => 'general', 'key' => 'site_description', 'value' => 'Your one-stop shop for amazing products', 'type' => 'textarea', 'label' => 'Site Description', 'sort_order' => 2],
-            ['group' => 'general', 'key' => 'site_keywords', 'value' => 'shop, ecommerce, online store', 'type' => 'text', 'label' => 'Site Keywords', 'sort_order' => 3],
+            ['group' => 'general', 'key' => 'site_name', 'value' => $store?->name ?? 'Your Store', 'type' => 'text', 'label' => 'Site Name', 'sort_order' => 1],
+            ['group' => 'general', 'key' => 'site_description', 'value' => 'A curated selection of quality products with dependable service.', 'type' => 'textarea', 'label' => 'Site Description', 'sort_order' => 2],
+            ['group' => 'general', 'key' => 'site_keywords', 'value' => 'online shop, quality products, ecommerce', 'type' => 'text', 'label' => 'Site Keywords', 'sort_order' => 3],
             ['group' => 'appearance', 'key' => 'primary_color', 'value' => '#0D9488', 'type' => 'color', 'label' => 'Primary Color', 'sort_order' => 1],
             ['group' => 'appearance', 'key' => 'secondary_color', 'value' => '#0F766E', 'type' => 'color', 'label' => 'Secondary Color', 'sort_order' => 2],
-            ['group' => 'contact', 'key' => 'contact_email', 'value' => 'support@store.com', 'type' => 'email', 'label' => 'Contact Email', 'sort_order' => 1],
-            ['group' => 'contact', 'key' => 'contact_phone', 'value' => '+1 234 567 890', 'type' => 'text', 'label' => 'Contact Phone', 'sort_order' => 2],
-            ['group' => 'contact', 'key' => 'contact_address', 'value' => '123 Store Street, City, Country', 'type' => 'textarea', 'label' => 'Contact Address', 'sort_order' => 3],
+            ['group' => 'contact', 'key' => 'contact_email', 'value' => $store?->email ?? '', 'type' => 'email', 'label' => 'Contact Email', 'sort_order' => 1],
+            ['group' => 'contact', 'key' => 'contact_phone', 'value' => $store?->phone ?? '', 'type' => 'text', 'label' => 'Contact Phone', 'sort_order' => 2],
+            ['group' => 'contact', 'key' => 'contact_address', 'value' => '', 'type' => 'textarea', 'label' => 'Contact Address', 'sort_order' => 3],
             ['group' => 'social', 'key' => 'facebook_url', 'value' => 'https://facebook.com', 'type' => 'url', 'label' => 'Facebook URL', 'sort_order' => 1],
             ['group' => 'social', 'key' => 'twitter_url', 'value' => 'https://twitter.com', 'type' => 'url', 'label' => 'Twitter URL', 'sort_order' => 2],
             ['group' => 'social', 'key' => 'instagram_url', 'value' => 'https://instagram.com', 'type' => 'url', 'label' => 'Instagram URL', 'sort_order' => 3],
@@ -72,6 +76,7 @@ class StoreDemoDataSeeder
     
     private function seedBrands(int $storeId): array
     {
+        $storeSlug = Store::find($storeId)?->slug ?? 'store';
         $brands = [
             ['name' => 'TechBrand', 'slug' => 'techbrand', 'status' => 'active'],
             ['name' => 'FashionCo', 'slug' => 'fashionco', 'status' => 'active'],
@@ -81,13 +86,14 @@ class StoreDemoDataSeeder
         $brandIds = [];
         foreach ($brands as $brandData) {
             $brand = Brand::create(array_merge($brandData, ['store_id' => $storeId]));
-            $brandIds[$brandData['slug']] = $brand->id;
+            $brandIds[str_replace('-' . $storeSlug, '', $brandData['slug'])] = $brand->id;
         }
         return $brandIds;
     }
 
     private function seedCategories(int $storeId): array
     {
+        $storeSlug = Store::find($storeId)?->slug ?? 'store';
         $categories = [
             ['name' => 'Electronics', 'slug' => 'electronics', 'description' => 'Electronic devices and accessories', 'status' => 'active', 'sort_order' => 1],
             ['name' => 'Clothing', 'slug' => 'clothing', 'description' => 'Apparel and fashion items', 'status' => 'active', 'sort_order' => 2],
@@ -100,7 +106,7 @@ class StoreDemoDataSeeder
         $categoryIds = [];
         foreach ($categories as $catData) {
             $cat = Category::create(array_merge($catData, ['store_id' => $storeId]));
-            $categoryIds[$catData['slug']] = $cat->id;
+            $categoryIds[str_replace('-' . $storeSlug, '', $catData['slug'])] = $cat->id;
         }
         return $categoryIds;
     }
@@ -540,9 +546,7 @@ class StoreDemoDataSeeder
             ]));
 
             if (!empty($categorySlugs)) {
-                $catIds = Category::whereIn('slug', $categorySlugs)
-                    ->where('store_id', $storeId)
-                    ->pluck('id')->toArray();
+                $catIds = array_values(array_intersect_key($categoryIds, array_flip($categorySlugs)));
                 $product->categories()->syncWithoutDetaching($catIds);
             }
 
@@ -558,7 +562,7 @@ class StoreDemoDataSeeder
                 unset($variantData['sku_suffix']);
 
                 $product->variants()->create(array_merge($variantData, [
-                    'sku' => strtoupper(Str::slug($product->slug)) . '-' . $skuSuffix,
+                    'sku' => strtoupper(Str::slug($product->slug)) . '-' . $storeId . '-' . $skuSuffix,
                     'barcode' => (string) Str::uuid(),
                     'cost_price' => (int) round(($variantData['sale_price'] ?? 0) * 0.7),
                     'status' => 'active',
@@ -574,15 +578,15 @@ class StoreDemoDataSeeder
             [
                 'store_id' => $storeId,
                 'banner_image' => 'https://admin.onehaatbd.com/storage/banners/WmJdlq5NlQQLuf4yFWKwszxCHbfQa9lMA7r0F9nR.png',
-                'title' => 'rfdsf',
-                'subtitle' => 'afdsfa',
-                'smtag' => 'adfasdf',
-                'primary_btn' => 'sadfdsa',
-                'primary_btn_url' => 'afdasf',
+                'title' => 'Discover your next favourite',
+                'subtitle' => 'Explore our latest products, selected for everyday living.',
+                'smtag' => 'Featured collection',
+                'primary_btn' => 'Shop now',
+                'primary_btn_url' => '/products',
                 'primary_btn_color' => '#1a462f',
                 'primary_btn_text_color' => '#ffffff',
-                'secondary_btn' => 'asdfasf',
-                'secondary_btn_url' => 'afdsafa',
+                'secondary_btn' => 'Browse categories',
+                'secondary_btn_url' => '/categories',
                 'secondary_btn_color' => '#ffffff',
                 'secondary_btn_text_color' => '#1f2937',
                 'sort_order' => 0,
@@ -652,7 +656,7 @@ class StoreDemoDataSeeder
                 'store_id' => $storeId,
                 'cta_style' => 'style2',
                 'title' => 'New Collection',
-                'subtitle' => 'Spring 2024 Arrivals',
+                'subtitle' => 'Explore the latest arrivals',
                 'description' => 'Check out our latest fashion collection',
                 'button_text' => 'Shop Collection',
                 'button_link' => '/categories/clothing',
@@ -672,39 +676,41 @@ class StoreDemoDataSeeder
 
     private function seedNavbarItems(int $storeId, array $categoryIds): array
     {
+        $storeSlug = Store::find($storeId)?->slug ?? 'store';
         $navItems = [
-            ['store_id' => $storeId, 'label' => 'Home', 'url' => '/', 'sort_order' => 1, 'status' => 'active', 'target_blank' => false],
-            ['store_id' => $storeId, 'label' => 'Shop', 'url' => '/products', 'sort_order' => 2, 'status' => 'active', 'target_blank' => false],
-            ['store_id' => $storeId, 'label' => 'Categories', 'url' => '/categories', 'sort_order' => 3, 'status' => 'active', 'target_blank' => false],
-            ['store_id' => $storeId, 'label' => 'About Us', 'url' => '/about', 'sort_order' => 4, 'status' => 'active', 'target_blank' => false],
-            ['store_id' => $storeId, 'label' => 'Contact', 'url' => '/contact', 'sort_order' => 5, 'status' => 'active', 'target_blank' => false],
+            ['store_id' => $storeId, 'name' => 'Home', 'slug' => 'home-' . $storeSlug, 'url' => '/', 'sort_order' => 1, 'status' => 'active'],
+            ['store_id' => $storeId, 'name' => 'Shop', 'slug' => 'shop-' . $storeSlug, 'url' => '/products', 'sort_order' => 2, 'status' => 'active'],
+            ['store_id' => $storeId, 'name' => 'Categories', 'slug' => 'categories-' . $storeSlug, 'url' => '/categories', 'sort_order' => 3, 'status' => 'active'],
+            ['store_id' => $storeId, 'name' => 'About Us', 'slug' => 'about-us-' . $storeSlug, 'url' => '/about', 'sort_order' => 4, 'status' => 'active'],
+            ['store_id' => $storeId, 'name' => 'Contact', 'slug' => 'contact-' . $storeSlug, 'url' => '/contact', 'sort_order' => 5, 'status' => 'active'],
         ];
 
         $navbarIds = [];
         foreach ($navItems as $itemData) {
             $navItem = NavbarItem::create($itemData);
-            $navbarIds[$navItem->label] = $navItem->id;
+            $navbarIds[$navItem->name] = $navItem->id;
         }
         return $navbarIds;
     }
 
     private function seedSubnavbarItems(int $storeId, array $navbarIds): void
     {
+        $storeSlug = Store::find($storeId)?->slug ?? 'store';
         $subItems = [
             'Shop' => [
-                ['name' => 'New Arrivals', 'slug' => 'new-arrivals', 'url' => '/products?filter=new', 'sort_order' => 1],
-                ['name' => 'Best Sellers', 'slug' => 'best-sellers', 'url' => '/products?filter=bestselling', 'sort_order' => 2],
-                ['name' => 'On Sale', 'slug' => 'on-sale', 'url' => '/products?filter=sale', 'sort_order' => 3],
+                ['name' => 'New Arrivals', 'slug' => 'new-arrivals-' . $storeSlug, 'url' => '/products?filter=new', 'sort_order' => 1],
+                ['name' => 'Best Sellers', 'slug' => 'best-sellers-' . $storeSlug, 'url' => '/products?filter=bestselling', 'sort_order' => 2],
+                ['name' => 'On Sale', 'slug' => 'on-sale-' . $storeSlug, 'url' => '/products?filter=sale', 'sort_order' => 3],
             ],
             'Categories' => [
-                ['name' => 'Electronics', 'slug' => 'electronics', 'url' => '/categories/electronics', 'sort_order' => 1],
-                ['name' => 'Clothing', 'slug' => 'clothing', 'url' => '/categories/clothing', 'sort_order' => 2],
-                ['name' => 'Home & Kitchen', 'slug' => 'home-kitchen', 'url' => '/categories/home-kitchen', 'sort_order' => 3],
+                ['name' => 'Electronics', 'slug' => 'electronics-' . $storeSlug, 'url' => '/categories/electronics', 'sort_order' => 1],
+                ['name' => 'Clothing', 'slug' => 'clothing-' . $storeSlug, 'url' => '/categories/clothing', 'sort_order' => 2],
+                ['name' => 'Home & Kitchen', 'slug' => 'home-kitchen-' . $storeSlug, 'url' => '/categories/home-kitchen', 'sort_order' => 3],
             ],
             'About Us' => [
-                ['name' => 'Our Story', 'slug' => 'our-story', 'url' => '/about/story', 'sort_order' => 1],
-                ['name' => 'Team', 'slug' => 'team', 'url' => '/about/team', 'sort_order' => 2],
-                ['name' => 'Careers', 'slug' => 'careers', 'url' => '/about/careers', 'sort_order' => 3],
+                ['name' => 'Our Story', 'slug' => 'our-story-' . $storeSlug, 'url' => '/about/story', 'sort_order' => 1],
+                ['name' => 'Team', 'slug' => 'team-' . $storeSlug, 'url' => '/about/team', 'sort_order' => 2],
+                ['name' => 'Careers', 'slug' => 'careers-' . $storeSlug, 'url' => '/about/careers', 'sort_order' => 3],
             ],
         ];
 

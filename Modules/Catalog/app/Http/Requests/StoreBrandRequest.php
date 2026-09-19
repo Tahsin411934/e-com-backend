@@ -3,6 +3,8 @@
 namespace Modules\Catalog\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
+use Modules\Store\Support\CurrentStore;
 
 class StoreBrandRequest extends FormRequest
 {
@@ -16,7 +18,7 @@ class StoreBrandRequest extends FormRequest
         return [
             'store_id' => 'nullable|integer|exists:stores,id',
             'name' => 'required|string|max:160',
-            'slug' => 'required|string|max:180|unique:brands,slug',
+            'slug' => ['required', 'string', 'max:180', Rule::unique('brands', 'slug')->where('store_id', $this->input('store_id') ?: CurrentStore::id())],
             'logo' => 'nullable|image|max:2048',
             'status' => 'required|in:active,inactive',
         ];
@@ -27,7 +29,7 @@ class StoreBrandRequest extends FormRequest
         return [
             'name.required' => 'Brand name is required.',
             'slug.required' => 'Brand slug is required.',
-            'slug.unique' => 'Brand slug must be unique.',
+            'slug.unique' => 'Brand slug must be unique within this store.',
             'logo.image' => 'Brand logo must be a valid image.',
             'logo.max' => 'Brand logo may not be greater than 2 MB.',
             'status.in' => 'Brand status is invalid.',

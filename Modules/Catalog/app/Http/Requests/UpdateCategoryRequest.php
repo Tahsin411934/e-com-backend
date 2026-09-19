@@ -4,6 +4,7 @@ namespace Modules\Catalog\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
+use Modules\Catalog\Models\Category;
 
 class UpdateCategoryRequest extends FormRequest
 {
@@ -17,6 +18,7 @@ class UpdateCategoryRequest extends FormRequest
         // Category routes use {id} (e.g. PUT categories/{id}) — fall back to 'id'
         // so the unique-slug rule can ignore the CURRENT row on update.
         $categoryId = $this->route('category') ?? $this->route('id');
+        $category = Category::findOrFail($categoryId);
 
         return [
             'store_id' => 'nullable|integer|exists:stores,id',
@@ -26,7 +28,7 @@ class UpdateCategoryRequest extends FormRequest
                 'required',
                 'string',
                 'max:180',
-                Rule::unique('categories', 'slug')->ignore($categoryId),
+                Rule::unique('categories', 'slug')->where('store_id', $category->store_id)->ignore($category),
             ],
             'description' => 'nullable|string',
             'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg,webp|max:2048',
@@ -41,7 +43,7 @@ class UpdateCategoryRequest extends FormRequest
         return [
             'name.required' => 'Category name is required.',
             'slug.required' => 'Category slug is required.',
-            'slug.unique' => 'Category slug must be unique.',
+            'slug.unique' => 'Category slug must be unique within this store.',
             'status.in' => 'Category status is invalid.',
         ];
     }

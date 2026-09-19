@@ -3,6 +3,9 @@
 namespace Modules\Catalog\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
+use Modules\Catalog\Models\Product;
+use Modules\Store\Support\CurrentStore;
 
 class StoreProductRequest extends FormRequest
 {
@@ -24,7 +27,7 @@ class StoreProductRequest extends FormRequest
             'navbar_item_id' => 'nullable|integer|exists:navbar_items,id',
             'subnavbar_item_id' => 'nullable|integer|exists:subnavbar_items,id',
             'name' => 'required|string|max:220',
-            'slug' => 'required|string|max:240|unique:products,slug',
+            'slug' => ['required', 'string', 'max:240', Rule::unique('products', 'slug')->where('store_id', $this->slugStoreId())],
             'short_description' => 'nullable|string|max:500',
             'description' => 'nullable|string',
             'product_type' => 'required|in:physical,digital,service,bundle',
@@ -67,12 +70,27 @@ class StoreProductRequest extends FormRequest
         ];
     }
 
+    protected function slugStoreId(?Product $product = null): ?int
+    {
+        $actor = $this->user();
+        $canAssignStore = $actor && ($actor->hasRole('Super Admin') || $actor->hasRole('Admin'));
+
+        if ($canAssignStore && $this->exists('store_id')) {
+            $storeId = $this->input('store_id');
+
+            // Creation falls back to CurrentStore in BelongsToStore.
+            return $storeId ? (int) $storeId : ($product ? null : CurrentStore::id());
+        }
+
+        return $product ? $product->store_id : CurrentStore::id();
+    }
+
     public function messages(): array
     {
         return [
             'name.required' => 'Product name is required.',
             'slug.required' => 'Product slug is required.',
-            'slug.unique' => 'Product slug must be unique.',
+            'slug.unique' => 'Product slug must be unique within this store.',
             'product_type.in' => 'Product type is invalid.',
             'status.in' => 'Product status is invalid.',
             'visibility.in' => 'Product visibility is invalid.',

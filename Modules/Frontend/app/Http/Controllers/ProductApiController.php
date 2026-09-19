@@ -9,6 +9,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Modules\Catalog\Models\Product;
 use Modules\Frontend\Http\Resources\ProductDetailResource;
+use Modules\Store\Support\StoreDomainResolver;
 
 class ProductApiController extends Controller
 {
@@ -29,7 +30,9 @@ class ProductApiController extends Controller
      */
     public function show(string $slug, Request $request): JsonResponse
     {
-        $product = Product::where('slug', $slug)
+        $store = StoreDomainResolver::resolveForHost();
+        $products = Product::where('slug', $slug)
+            ->when($store, fn ($query) => $query->where('store_id', $store->id))
             ->where('status', 'active')
             ->where('visibility', 'public')
             ->with([
@@ -46,7 +49,10 @@ class ProductApiController extends Controller
                     $q->where('status', 'approved')->with('user');
                 },
             ])
-            ->first();
+            ->limit(2)->get();
+
+        // Without tenant context, an ambiguous slug must never select an arbitrary store.
+        $product = $products->count() === 1 ? $products->first() : null;
 
         if (! $product) {
             return ApiResponse::notFound('Product not found.');
@@ -70,6 +76,7 @@ class ProductApiController extends Controller
         $relatedProducts = collect();
         if (! empty($relatedIds)) {
             $relatedProducts = Product::whereIn('id', $relatedIds)
+                ->where('store_id', $product->store_id)
                 ->where('status', 'active')
                 ->where('visibility', 'public')
                 ->with(['images', 'variants' => fn ($q) => $q->whereNull('deleted_at')->where('status', 'active')])

@@ -155,7 +155,9 @@ class WishlistService
                         'id' => $product->id,
                         'name' => $product->name,
                         'slug' => $product->slug,
-                        'main_image' => $mainImage?->image_url ? asset('storage/'.ltrim($mainImage->image_url, '/')) : null,
+                        'main_image' => $mainImage?->image_url
+                            ? asset('storage/'.preg_replace('#^(?:storage/)+#', '', ltrim($mainImage->image_url, '/')))
+                            : null,
                         'price' => $priceInfo['price'],
                         'regular_price' => $priceInfo['regular_price'],
                         'discount_percent' => $priceInfo['discount_percent'],

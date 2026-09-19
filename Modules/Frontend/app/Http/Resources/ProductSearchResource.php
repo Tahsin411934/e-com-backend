@@ -24,9 +24,7 @@ class ProductSearchResource extends JsonResource
             return $path;
         }
         $clean = ltrim($path, '/');
-        if (str_starts_with($clean, 'storage/')) {
-            $clean = substr($clean, 8);
-        }
+        $clean = preg_replace('#^(?:storage/)+#', '', $clean);
 
         return $clean ? asset('storage/'.$clean) : null;
     }

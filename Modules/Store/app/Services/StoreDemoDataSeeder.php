@@ -113,6 +113,15 @@ class StoreDemoDataSeeder
 
     private function seedProducts(int $storeId, array $brandIds, array $categoryIds): void
     {
+        $imageByCategory = [
+            'electronics' => 'storage/demo/products/electronics.png',
+            'clothing' => 'storage/demo/products/clothing.png',
+            'home-kitchen' => 'storage/demo/products/home-kitchen.png',
+            'sports-outdoors' => 'storage/demo/products/sports-outdoors.png',
+            'beauty-health' => 'storage/demo/products/beauty-health.png',
+            'books-media' => 'storage/demo/products/books-media.png',
+        ];
+
         $products = [
             // Electronics (4 products)
             [
@@ -551,7 +560,8 @@ class StoreDemoDataSeeder
             }
 
             $product->images()->create([
-                'image_url' => 'https://via.placeholder.com/600x600?text=' . urlencode($product->name),
+                'image_url' => $imageByCategory[$categorySlugs[0] ?? '']
+                    ?? 'storage/demo/products/default.svg',
                 'alt_text' => $product->name,
                 'sort_order' => 0,
             ]);

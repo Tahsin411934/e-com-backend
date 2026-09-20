@@ -161,6 +161,12 @@
                 <option value="inactive">Inactive</option>
             </x-form-select>
         </div>
+        <div class="mb-4">
+            <x-form-select label="Show on Central Website?" name="is_central_banner" id="banner_is_central_banner">
+                <option value="0">No</option>
+                <option value="1">Yes</option>
+            </x-form-select>
+        </div>
     </x-entity-crud>
 
     @push('scripts')
@@ -203,6 +209,7 @@ Crud.register('banner', 'fill', function (data) {
             $('#banner_secondary_btn_text_color_hex').val(secondaryTextColor);
             $('#banner_sort_order').val(data.sort_order || 0);
             $('#banner_status').val(data.status);
+            $('#banner_is_central_banner').val(data.is_central_banner ? '1' : '0');
             $('#banner_store_id').val(data.store_id || '');
 
             // Show image preview if available

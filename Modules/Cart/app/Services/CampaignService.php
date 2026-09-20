@@ -114,7 +114,7 @@ class CampaignService
 
     public function liveCampaigns(): JsonResponse
     {
-        $campaigns = Campaign::live()
+        $campaigns = Campaign::live()->where('is_central_campaign', true)
             ->with(['products.product.images', 'products.product.variants'])
             ->orderByDesc('is_featured')
             ->orderByDesc('priority')
@@ -128,7 +128,7 @@ class CampaignService
 
     public function liveCampaignBySlug(string $slug): JsonResponse
     {
-        $campaign = Campaign::live()
+        $campaign = Campaign::live()->where('is_central_campaign', true)
             ->where('slug', $slug)
             ->with(['products.product.images', 'products.product.variants'])
             ->firstOrFail();

@@ -12,9 +12,9 @@ class Campaign extends Model
     use BelongsToStore;
     use CustomSoftDeletes;
 
-    protected $fillable = ['store_id', 'name', 'slug', 'description', 'banner_image', 'button_text', 'priority', 'is_featured', 'is_active', 'status', 'starts_at', 'ends_at'];
+    protected $fillable = ['store_id', 'name', 'slug', 'description', 'banner_image', 'button_text', 'priority', 'is_featured', 'is_active', 'is_central_campaign', 'status', 'starts_at', 'ends_at'];
 
-    protected $casts = ['is_featured' => 'boolean', 'is_active' => 'boolean', 'starts_at' => 'datetime', 'ends_at' => 'datetime'];
+    protected $casts = ['is_featured' => 'boolean', 'is_active' => 'boolean', 'is_central_campaign' => 'boolean', 'starts_at' => 'datetime', 'ends_at' => 'datetime'];
 
     public function products()
     {

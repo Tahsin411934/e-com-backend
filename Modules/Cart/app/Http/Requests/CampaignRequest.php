@@ -23,6 +23,7 @@ class CampaignRequest extends FormRequest
             'priority' => ['nullable', 'integer', 'min:0'],
             'is_featured' => ['nullable', 'boolean'],
             'is_active' => ['nullable', 'boolean'],
+            'is_central_campaign' => ['nullable', 'boolean'],
             'status' => [$presence, 'in:draft,active,paused'],
             'starts_at' => ['nullable', 'date'],
             'ends_at' => ['nullable', 'date', 'after:starts_at'],

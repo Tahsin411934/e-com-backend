@@ -4,6 +4,7 @@ namespace Modules\Storefront\Services;
 
 use Modules\Frontend\Models\Setting;
 use Modules\Store\Support\CurrentStore;
+use Modules\Store\Models\Store;
 
 class StorefrontSettingService
 {
@@ -18,18 +19,15 @@ class StorefrontSettingService
      */
     public function flat(): array
     {
+        $storeId = CurrentStore::id();
         $settings = Setting::query()
-            ->where(function ($query) {
-                $query->whereNull('store_id')
-                    ->orWhere('store_id', CurrentStore::id());
-            })
+            ->where('store_id', $storeId)
             ->orderBy('sort_order')
             ->get();
 
-        // Global rows first (base layer), store overrides last (win).
         $flat = [];
 
-        foreach ($settings->sortBy(fn (Setting $setting) => $setting->store_id === null ? 0 : 1) as $setting) {
+        foreach ($settings as $setting) {
             $value = $setting->value;
 
             if ($setting->type === 'image' && $value && ! str_starts_with($value, 'http')) {
@@ -37,6 +35,12 @@ class StorefrontSettingService
             }
 
             $flat[$setting->key] = $value;
+        }
+
+        // A store always has a name fallback, but never inherit global
+        // settings. The uploaded store logo remains optional.
+        if (blank($flat['site_name'] ?? null)) {
+            $flat['site_name'] = Store::find($storeId)?->name;
         }
 
         return $flat;

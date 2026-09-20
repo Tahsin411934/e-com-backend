@@ -56,7 +56,7 @@ class AnnouncementBarService
                 return $bar->created_at->format('d M Y H:i');
             })
             ->addColumn('action', function (AnnouncementBar $bar) {
-                $editBtn = '<button class="js-crud-action" data-crud-action="edit" data-crud-callback="announcement_barEdit" data-crud-id="'.$bar->id.'" class="bg-blue-900 text-white px-2 py-1 rounded text-sm hover:bg-blue-600 mr-2"><i class="fa fa-pencil"></i></button>';
+                $editBtn = '<button class="js-crud-action btn-primary px-2 py-1 rounded text-sm mr-2" data-crud-action="edit" data-crud-callback="announcement_barEdit" data-crud-id="'.$bar->id.'" title="Edit"><i class="fa fa-pencil"></i></button>';
                 $deleteBtn = '<button class="js-crud-action" data-crud-action="delete" data-crud-callback="announcement_barDelete" data-crud-id="'.$bar->id.'" class="bg-red-500 text-white px-2 py-1 rounded text-sm hover:bg-red-600"><i class="fa fa-trash"></i></button>';
 
                 return '<div class="flex space-x-2 justify-center">'.$editBtn.$deleteBtn.'</div>';

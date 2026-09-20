@@ -251,7 +251,7 @@ class SettingService
                     ? route('frontend.site-settings.edit', ['store_id' => $setting->store_id])
                     : route('frontend.site-settings.edit');
 
-                $buttons = '<a href="'.$editUrl.'" class="bg-blue-900 text-white px-2 py-1 rounded text-sm hover:bg-blue-600 mr-2" title="Edit in form">'
+                $buttons = '<a href="'.$editUrl.'" class="btn-primary px-2 py-1 rounded text-sm mr-2" title="Edit in form">'
                     .'<i class="fa fa-pencil"></i></a>';
 
                 // Only store-scoped rows can be deleted (removes the override

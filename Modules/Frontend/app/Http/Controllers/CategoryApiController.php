@@ -30,6 +30,7 @@ class CategoryApiController extends Controller
 
         $query = Category::withCount('products')
             ->where('status', $status)
+            ->where('is_central_category', true)
             ->orderBy('sort_order')
             ->orderBy('name');
 
@@ -68,6 +69,7 @@ class CategoryApiController extends Controller
     {
         $category = Category::where('slug', $slug)
             ->where('status', 'active')
+            ->where('is_central_category', true)
             ->withCount('products')
             ->first();
 
@@ -100,6 +102,7 @@ class CategoryApiController extends Controller
         // Find category by slug
         $category = Category::where('slug', $slug)
             ->where('status', 'active')
+            ->where('is_central_category', true)
             ->withCount('products')
             ->first();
 

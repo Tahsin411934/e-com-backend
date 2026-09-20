@@ -45,6 +45,7 @@ class HomeApiController extends Controller
     {
         // 1. Get active categories with products
         $categories = Category::where('status', 'active')
+            ->where('is_central_category', true)
             ->withCount('products')
             ->having('products_count', '>', 0)
             ->orderBy('sort_order')

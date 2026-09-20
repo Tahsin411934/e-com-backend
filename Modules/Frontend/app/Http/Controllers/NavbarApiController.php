@@ -32,6 +32,7 @@ class NavbarApiController extends Controller
             $q->orderBy('sort_order')->orderBy('name');
         }])
             ->where('status', $status)
+            ->where('is_central_navbar_item', true)
             ->orderBy('sort_order')
             ->orderBy('name');
 
@@ -62,7 +63,7 @@ class NavbarApiController extends Controller
      */
     public function show($id): JsonResponse
     {
-        $navbarItem = NavbarItem::with(['subnavbarItems' => function ($q) {
+        $navbarItem = NavbarItem::where('is_central_navbar_item', true)->with(['subnavbarItems' => function ($q) {
             $q->where('status', 'active')->orderBy('sort_order')->orderBy('name');
         }])->find((int) $id);
 
@@ -78,7 +79,9 @@ class NavbarApiController extends Controller
      */
     public function children(int $navbarItemId): JsonResponse
     {
-        $navbarItem = NavbarItem::find($navbarItemId);
+        $navbarItem = NavbarItem::where('id', $navbarItemId)
+            ->where('is_central_navbar_item', true)
+            ->first();
 
         if (! $navbarItem) {
             return ApiResponse::notFound('Navbar item not found.');

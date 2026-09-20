@@ -32,6 +32,11 @@ class Banner extends Model
         'secondary_btn_text_color',
         'sort_order',
         'status',
+        'is_central_banner',
+    ];
+
+    protected $casts = [
+        'is_central_banner' => 'boolean',
     ];
 
     /**

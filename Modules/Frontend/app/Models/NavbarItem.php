@@ -16,7 +16,11 @@ class NavbarItem extends Model
 
     protected $table = 'navbar_items';
 
-    protected $fillable = ['store_id', 'name', 'slug', 'url', 'icon', 'sort_order', 'status'];
+    protected $fillable = ['store_id', 'name', 'slug', 'url', 'icon', 'sort_order', 'status', 'is_central_navbar_item'];
+
+    protected $casts = [
+        'is_central_navbar_item' => 'boolean',
+    ];
 
     /**
      * NULL store_id = global/platform navbar item.

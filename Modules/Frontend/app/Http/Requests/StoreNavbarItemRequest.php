@@ -23,6 +23,7 @@ class StoreNavbarItemRequest extends FormRequest
             'sort_order' => 'nullable|integer|min:0',
             'status' => 'required|in:active,inactive',
             'store_id' => 'nullable|integer|exists:stores,id',
+            'is_central_navbar_item' => 'nullable|boolean',
         ];
     }
 

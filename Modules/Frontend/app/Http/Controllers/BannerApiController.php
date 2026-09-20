@@ -25,6 +25,7 @@ class BannerApiController extends Controller
         $perPage = $request->has('per_page') ? min((int) $request->query('per_page', 10), 100) : null;
 
         $query = Banner::where('status', $status)
+            ->where('is_central_banner', true)
             ->orderBy('sort_order')
             ->orderByDesc('created_at');
 
@@ -55,7 +56,9 @@ class BannerApiController extends Controller
      */
     public function show($id): JsonResponse
     {
-        $banner = Banner::find($id);
+        $banner = Banner::where('id', $id)
+            ->where('is_central_banner', true)
+            ->first();
 
         if (! $banner) {
             return ApiResponse::notFound('Banner not found.');

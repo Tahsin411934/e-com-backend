@@ -15,7 +15,11 @@ class Category extends Model
 
     protected $table = 'categories';
 
-    protected $fillable = ['store_id', 'parent_id', 'name', 'slug', 'image', 'description', 'image_url', 'sort_order', 'status'];
+    protected $fillable = ['store_id', 'parent_id', 'name', 'slug', 'image', 'description', 'image_url', 'sort_order', 'status', 'is_central_category'];
+
+    protected $casts = [
+        'is_central_category' => 'boolean',
+    ];
 
     public function store()
     {

@@ -8,6 +8,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Modules\Cart\Models\Wishlist;
 use Modules\Frontend\Services\ProductPricingService;
+use Modules\Catalog\Models\Product;
+use Modules\Store\Support\CurrentStore;
 use Yajra\DataTables\DataTables;
 
 class WishlistService
@@ -98,6 +100,11 @@ class WishlistService
                     return ApiResponse::error('Please login to add to wishlist.', 500);
                 }
 
+                $product = Product::forCurrentStore()->find($productId);
+                if (! $product) {
+                    return ApiResponse::notFound('Product not found.');
+                }
+
                 $existing = Wishlist::withTrashed()
                     ->where('user_id', $userId)
                     ->where('product_id', $productId)
@@ -137,6 +144,7 @@ class WishlistService
 
             $items = Wishlist::with(['product.images', 'product.variants' => fn ($q) => $q->where('status', 'active')])
                 ->where('user_id', $userId)
+                ->whereHas('product', fn ($q) => $q->forCurrentStore())
                 ->orderByDesc('created_at')
                 ->get();
 

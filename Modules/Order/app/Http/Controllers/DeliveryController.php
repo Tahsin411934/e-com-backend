@@ -8,6 +8,7 @@ use Illuminate\Http\Request;
 use Modules\Identity\Models\User;
 use Modules\Order\Models\Delivery;
 use Modules\Order\Models\Order;
+use Modules\Store\Support\CurrentStore;
 
 class DeliveryController extends Controller
 {
@@ -15,6 +16,9 @@ class DeliveryController extends Controller
     {
         $query = Delivery::with(['order', 'user', 'deliveryBoy'])
             ->orderByDesc('created_at');
+        if (($storeId = CurrentStore::id()) !== null) {
+            $query->whereHas('order', fn ($q) => $q->where('store_id', $storeId));
+        }
 
         // Filter by status
         if ($request->has('status')) {
@@ -38,7 +42,9 @@ class DeliveryController extends Controller
 
     public function show($id)
     {
-        $delivery = Delivery::with(['order.items', 'user', 'deliveryBoy'])->findOrFail((int) $id);
+        $delivery = Delivery::with(['order.items', 'user', 'deliveryBoy'])
+            ->when(CurrentStore::id() !== null, fn ($q) => $q->whereHas('order', fn ($o) => $o->where('store_id', CurrentStore::id())))
+            ->findOrFail((int) $id);
 
         // Check authorization
         if (! auth()->user()->hasRole('admin') &&
@@ -56,7 +62,9 @@ class DeliveryController extends Controller
             'delivery_boy_id' => 'required|integer|exists:users,id',
         ]);
 
-        $delivery = Delivery::findOrFail($id);
+        $delivery = Delivery::query()
+            ->when(CurrentStore::id() !== null, fn ($q) => $q->whereHas('order', fn ($o) => $o->where('store_id', CurrentStore::id())))
+            ->findOrFail($id);
 
         // Check if user is delivery boy
         $deliveryBoy = User::findOrFail($request->delivery_boy_id);
@@ -79,7 +87,9 @@ class DeliveryController extends Controller
             'status' => 'required|in:pending,assigned,picked,delivered,cancelled',
         ]);
 
-        $delivery = Delivery::findOrFail($id);
+        $delivery = Delivery::query()
+            ->when(CurrentStore::id() !== null, fn ($q) => $q->whereHas('order', fn ($o) => $o->where('store_id', CurrentStore::id())))
+            ->findOrFail($id);
 
         $updateData = ['status' => $request->status];
 

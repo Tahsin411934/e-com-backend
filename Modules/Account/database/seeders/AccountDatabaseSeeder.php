@@ -2,7 +2,7 @@
 
 namespace Modules\Account\Database\Seeders;
 
-use App\Models\User;
+use Modules\Identity\Models\User;
 use Illuminate\Database\Seeder;
 use Modules\Account\Models\AccountAccount;
 use Modules\Account\Models\AccountCategory;

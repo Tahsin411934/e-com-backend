@@ -50,8 +50,8 @@ class StoreDatabaseSeeder extends Seeder
 
         // ===== Store Staff =====
         $adminUser = User::where('email', 'admin@example.com')->first();
-        $staffUser = User::where('email', 'staff@example.com')->first();
-        $managerUser = User::where('email', 'manager@example.com')->first();
+        $staffUser = User::where('email', 'staff1@onehaatbd.com')->first();
+        $managerUser = User::where('email', 'manager1@onehaatbd.com')->first();
         $mainStore = Store::where('slug', 'main-store-dhaka')->first();
 
         if ($mainStore && $adminUser) {

@@ -16,7 +16,7 @@ class PosSaleRequest extends FormRequest
         return [
             'register_id' => 'required|exists:pos_registers,id',
             'shift_id' => 'required|exists:pos_shifts,id',
-            'user_id' => 'required|exists:users,id',
+            'user_id' => 'nullable|exists:users,id',
             'subtotal' => 'nullable|numeric|min:0',
             'tax_amount' => 'nullable|numeric|min:0',
             'discount_amount' => 'nullable|numeric|min:0',
@@ -24,6 +24,7 @@ class PosSaleRequest extends FormRequest
             'cash_amount' => 'nullable|numeric|min:0',
             'card_amount' => 'nullable|numeric|min:0',
             'other_amount' => 'nullable|numeric|min:0',
+            'change_amount' => 'nullable|numeric|min:0',
             'payment_status' => 'nullable|in:paid,partial,pending,refunded',
             'status' => 'nullable|in:completed,voided,refunded',
             'notes' => 'nullable|string|max:1000',

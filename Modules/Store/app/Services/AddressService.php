@@ -7,6 +7,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Modules\Store\Models\Address;
+use Modules\Store\Support\CurrentStore;
 use Yajra\DataTables\DataTables;
 
 class AddressService
@@ -14,6 +15,9 @@ class AddressService
     public function getAddressDataTable(Request $request)
     {
         $query = Address::with(['user', 'store', 'country'])->orderByDesc('created_at');
+        if (($storeId = CurrentStore::id()) !== null) {
+            $query->where('store_id', $storeId);
+        }
 
         return DataTables::of($query)
             ->addColumn('user_name', function (Address $address) {
@@ -50,9 +54,15 @@ class AddressService
             return DB::transaction(function () use ($data) {
                 $addressId = $data['address_id'] ?? null;
                 unset($data['address_id']);
+                $storeId = CurrentStore::id();
+                if ($storeId !== null) {
+                    $data['store_id'] = $storeId;
+                }
 
                 if ($addressId) {
-                    $address = Address::findOrFail($addressId);
+                    $address = Address::query()
+                        ->when($storeId !== null, fn ($q) => $q->where('store_id', $storeId))
+                        ->findOrFail($addressId);
                     $address->update($data);
                     $message = 'Address updated successfully.';
                 } else {
@@ -70,7 +80,9 @@ class AddressService
     public function getAddressById(int $id): JsonResponse
     {
         try {
-            $address = Address::with(['user', 'store', 'country'])->findOrFail($id);
+            $address = Address::with(['user', 'store', 'country'])
+                ->when(CurrentStore::id() !== null, fn ($q) => $q->where('store_id', CurrentStore::id()))
+                ->findOrFail($id);
 
             return ApiResponse::success($address);
         } catch (\Exception $e) {
@@ -82,7 +94,9 @@ class AddressService
     {
         try {
             return DB::transaction(function () use ($id) {
-                $address = Address::findOrFail($id);
+                $address = Address::query()
+                    ->when(CurrentStore::id() !== null, fn ($q) => $q->where('store_id', CurrentStore::id()))
+                    ->findOrFail($id);
                 $address->delete();
 
                 return ApiResponse::success(null, 'Address deleted successfully.');

@@ -6,6 +6,8 @@ use Illuminate\Database\Seeder;
 use Illuminate\Support\Collection;
 use Modules\Identity\Models\Permission;
 use Modules\Identity\Models\Role;
+use Modules\Store\Models\Store;
+use Modules\Store\Models\StoreStaff;
 
 class AdditionalPermissionsSeeder extends Seeder
 {
@@ -66,6 +68,12 @@ class AdditionalPermissionsSeeder extends Seeder
             'store-staff.create' => 'Create store staff',
             'store-staff.edit' => 'Edit store staff',
             'store-staff.delete' => 'Delete store staff',
+        ],
+        'store_roles' => [
+            'store-roles.view' => 'View store roles',
+            'store-roles.create' => 'Create store roles',
+            'store-roles.edit' => 'Edit store roles',
+            'store-roles.delete' => 'Delete store roles',
         ],
         'countries' => [
             'countries.view' => 'View countries',
@@ -372,8 +380,36 @@ class AdditionalPermissionsSeeder extends Seeder
             'products.*', 'categories.*', 'brands.*',
             'units.view', 'sizes.view', 'size-groups.view', 'tax-rates.view', 'barcode-print.view',
             'orders.view', 'stores.view',
+            'store-staff.*', 'store-roles.*',
             'frontend.banners.*', 'frontend.navbar.*', 'frontend.announcements.*', 'frontend.ctas.*', 'frontend.settings.*',
             'reports.view',
+        ],
+        'Store Admin' => [
+            'dashboard.view',
+            'products.*', 'categories.*', 'brands.*', 'units.*', 'sizes.*', 'size-groups.*', 'tax-rates.*',
+            'orders.*', 'payments.*', 'deliveries.*', 'refunds.*',
+            'inventory.*', 'inventory-stock.*', 'inventory-locations.*', 'inventory-movements.*',
+            'pos.*', 'reports.*', 'frontend.*', 'settings.*', 'store-staff.*', 'store-roles.*',
+        ],
+        'Store Staff' => [
+            'dashboard.view',
+            'products.view', 'categories.view', 'brands.view',
+            'orders.view', 'payments.view', 'deliveries.view',
+            'inventory.view', 'inventory-stock.view',
+            'pos.view', 'pos.sell', 'pos-registers.view', 'pos-shifts.view', 'pos-sales.view',
+            'reports.view',
+        ],
+        'POS Admin' => [
+            'dashboard.view',
+            'pos.*', 'reports.view',
+        ],
+        'Cashier' => [
+            'dashboard.view', 'pos.sell', 'pos-registers.view', 'pos-shifts.view', 'pos-sales.view',
+        ],
+        'Inventory Manager' => [
+            'dashboard.view',
+            'inventory.*', 'inventory-stock.*', 'inventory-locations.*', 'inventory-movements.*',
+            'purchase-orders.*', 'suppliers.*', 'reports.inventory',
         ],
     ];
 
@@ -413,6 +449,39 @@ class AdditionalPermissionsSeeder extends Seeder
                 ->pluck('id');
 
             $role->permissions()->syncWithoutDetaching($ids);
+        }
+
+        // Create/update the default role templates inside each store. These
+        // roles are independent from platform roles and can be customized by
+        // the store administrator.
+        $storeRoleNames = ['Store Admin', 'Store Staff', 'POS Admin', 'Cashier', 'Inventory Manager'];
+        foreach (Store::query()->pluck('id') as $storeId) {
+            foreach ($storeRoleNames as $roleName) {
+                $role = Role::firstOrCreate(
+                    ['name' => $roleName, 'scope' => 'store', 'store_id' => $storeId],
+                    ['description' => $roleName.' role for store #'.$storeId]
+                );
+                $patterns = self::ROLE_GRANTS[$roleName] ?? [];
+                $ids = collect($patterns)
+                    ->flatMap(fn ($pattern) => $this->matchingPermissions($pattern))
+                    ->unique()
+                    ->pluck('id');
+                $role->permissions()->sync($ids);
+            }
+        }
+
+        foreach (StoreStaff::whereNull('deleted_at')->get() as $staff) {
+            if ($staff->roles()->exists()) {
+                continue;
+            }
+
+            $defaultRole = Role::where('scope', 'store')
+                ->where('store_id', $staff->store_id)
+                ->where('name', 'Store Staff')
+                ->first();
+            if ($defaultRole) {
+                $staff->roles()->sync([$defaultRole->id]);
+            }
         }
 
         $this->command->info('Additional permissions seeded successfully!');

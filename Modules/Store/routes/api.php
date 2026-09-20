@@ -8,6 +8,7 @@ use Modules\Store\Http\Controllers\StoreDomainController;
 Route::get('/v1/register/store-slug-availability', [StoreAuthController::class, 'slugAvailability'])
     ->name('api.store.register-slug-availability');
 Route::post('/v1/register/store-owner', [StoreAuthController::class, 'register'])
+    ->middleware('throttle:5,1')
     ->name('api.store.register-owner');
 
 // Authenticated store context (platform staff may inspect, owners read their own store)

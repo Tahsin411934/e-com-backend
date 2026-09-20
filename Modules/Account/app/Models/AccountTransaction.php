@@ -14,6 +14,7 @@ class AccountTransaction extends Model
     protected $table = 'account_transactions';
 
     protected $fillable = [
+        'store_id',
         'transaction_no',
         'type',
         'status',

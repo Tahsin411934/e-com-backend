@@ -5,6 +5,7 @@ namespace Modules\Identity\Models;
 use App\Traits\CustomSoftDeletes;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Modules\Store\Models\StoreStaff;
 
 class Role extends Model
 {
@@ -16,6 +17,8 @@ class Role extends Model
     protected $fillable = [
         'name',
         'description',
+        'scope',
+        'store_id',
     ];
 
     public function permissions()
@@ -28,6 +31,13 @@ class Role extends Model
     public function users()
     {
         return $this->belongsToMany(User::class, 'user_roles')
+            ->withTimestamps()
+            ->withPivot('deleted_at');
+    }
+
+    public function storeStaff()
+    {
+        return $this->belongsToMany(StoreStaff::class, 'store_staff_roles')
             ->withTimestamps()
             ->withPivot('deleted_at');
     }

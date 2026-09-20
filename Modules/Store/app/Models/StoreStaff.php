@@ -6,6 +6,7 @@ use App\Traits\CustomSoftDeletes;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Modules\Identity\Models\User;
+use Modules\Identity\Models\Role;
 
 class StoreStaff extends Model
 {
@@ -34,5 +35,12 @@ class StoreStaff extends Model
     public function user()
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function roles()
+    {
+        return $this->belongsToMany(Role::class, 'store_staff_roles')
+            ->withTimestamps()
+            ->withPivot('deleted_at');
     }
 }

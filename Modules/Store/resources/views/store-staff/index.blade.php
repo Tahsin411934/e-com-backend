@@ -42,10 +42,34 @@
             </x-form-select>
         </div>
         <div class="mb-4">
-            <x-form-input label="User ID" name="user_id" id="staff_user_id" placeholder="User ID" required />
+            <x-form-input label="Existing User ID (optional)" name="user_id" id="staff_user_id" placeholder="Use existing user account" />
+        </div>
+        <div class="mb-4">
+            <p class="text-xs text-gray-500 mb-2">Leave User ID empty to create a new login account.</p>
+            <x-form-input label="First Name" name="first_name" id="staff_first_name" placeholder="New staff first name" />
+        </div>
+        <div class="mb-4">
+            <x-form-input label="Last Name" name="last_name" id="staff_last_name" placeholder="New staff last name" />
+        </div>
+        <div class="mb-4">
+            <x-form-input label="Email" name="email" id="staff_email" type="email" placeholder="New staff email" />
+        </div>
+        <div class="mb-4">
+            <x-form-input label="Password" name="password" id="staff_password" type="password" placeholder="Minimum 8 characters" />
         </div>
         <div class="mb-4">
             <x-form-input label="Staff Code" name="staff_code" id="staff_code" placeholder="Optional staff code" />
+        </div>
+        <div class="mb-4">
+            <label class="block text-sm font-medium text-gray-700 mb-2">Store Roles</label>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-2">
+                @foreach ($roles as $role)
+                    <label class="inline-flex items-center gap-2 text-sm">
+                        <input type="checkbox" name="role_ids[]" value="{{ $role->id }}" class="staff-role-checkbox">
+                        <span>{{ $role->name }}</span>
+                    </label>
+                @endforeach
+            </div>
         </div>
         <div class="mb-4">
             <x-form-select label="Status" name="status" id="staff_status">
@@ -64,7 +88,12 @@
 Crud.register('storestaff', 'fill', function (data) {
             $('#staff_store_id').val(data.store_id);
             $('#staff_user_id').val(data.user_id);
+            $('#staff_first_name, #staff_last_name, #staff_email, #staff_password').val('');
             $('#staff_code').val(data.staff_code);
+            $('.staff-role-checkbox').prop('checked', false);
+            (data.roles || []).forEach(function (role) {
+                $('.staff-role-checkbox[value="' + role.id + '"]').prop('checked', true);
+            });
             $('#staff_status').val(data.status);
             if (data.hired_at) $('#staff_hired_at').val(data.hired_at);
         });

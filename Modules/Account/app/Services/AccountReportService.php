@@ -5,6 +5,7 @@ namespace Modules\Account\Services;
 use Illuminate\Http\Request;
 use Modules\Account\Models\AccountProductProfitSnapshot;
 use Modules\Account\Models\AccountTransaction;
+use Modules\Store\Support\CurrentStore;
 use Yajra\DataTables\DataTables;
 
 class AccountReportService
@@ -15,6 +16,9 @@ class AccountReportService
             ->with(['lines.account', 'lines.category'])
             ->orderByDesc('transaction_date')
             ->orderByDesc('id');
+        if (($storeId = CurrentStore::id()) !== null) {
+            $query->where('store_id', $storeId);
+        }
 
         return DataTables::of($query)
             ->editColumn('type', fn (AccountTransaction $transaction) => ucfirst(str_replace('_', ' ', $transaction->type)))
@@ -40,6 +44,9 @@ class AccountReportService
             ->selectRaw('COALESCE(SUM(gross_profit), 0) as gross_profit')
             ->selectRaw('CASE WHEN SUM(net_sales) > 0 THEN (SUM(gross_profit) / SUM(net_sales)) * 100 ELSE 0 END as profit_margin')
             ->groupBy('product_id', 'variant_id', 'product_name', 'variant_name', 'sku');
+        if (($storeId = CurrentStore::id()) !== null) {
+            $query->where('store_id', $storeId);
+        }
 
         if ($request->filled('from')) {
             $query->whereDate('sold_at', '>=', $request->input('from'));

@@ -8,6 +8,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Modules\Account\Models\AccountAccount;
+use Modules\Store\Support\CurrentStore;
 use Yajra\DataTables\DataTables;
 
 class AccountAccountService
@@ -15,6 +16,9 @@ class AccountAccountService
     public function getDataTable(Request $request)
     {
         $query = AccountAccount::query()->orderByDesc('created_at');
+        if (($storeId = CurrentStore::id()) !== null) {
+            $query->where('store_id', $storeId);
+        }
 
         return DataTables::of($query)
             ->editColumn('type', fn (AccountAccount $account) => Str::headline($account->type))
@@ -49,17 +53,24 @@ class AccountAccountService
                 $data['currency_code'] = strtoupper($data['currency_code'] ?? 'BDT');
                 $data['is_default'] = (bool) ($data['is_default'] ?? false);
                 $data['is_active'] = (bool) ($data['is_active'] ?? true);
+                if (($storeId = CurrentStore::id()) !== null) {
+                    $data['store_id'] = $storeId;
+                }
 
                 if (empty($data['code'])) {
                     $data['code'] = strtoupper(Str::slug($data['name'], '-'));
                 }
 
                 if ($data['is_default']) {
-                    AccountAccount::where('type', $data['type'])->update(['is_default' => false]);
+                    AccountAccount::where('type', $data['type'])
+                        ->when(CurrentStore::id() !== null, fn ($q) => $q->where('store_id', CurrentStore::id()))
+                        ->update(['is_default' => false]);
                 }
 
                 if ($id) {
-                    $account = AccountAccount::findOrFail($id);
+                    $account = AccountAccount::query()
+                        ->when(CurrentStore::id() !== null, fn ($q) => $q->where('store_id', CurrentStore::id()))
+                        ->findOrFail($id);
                     $account->update($data);
 
                     return ApiResponse::success($account->fresh(), 'Account updated successfully.');
@@ -79,7 +90,9 @@ class AccountAccountService
     public function find(int $id): JsonResponse
     {
         try {
-            return ApiResponse::success(AccountAccount::findOrFail($id));
+            return ApiResponse::success(AccountAccount::query()
+                ->when(CurrentStore::id() !== null, fn ($q) => $q->where('store_id', CurrentStore::id()))
+                ->findOrFail($id));
         } catch (\Exception) {
             return ApiResponse::notFound('Account not found.');
         }
@@ -89,7 +102,9 @@ class AccountAccountService
     {
         try {
             return DB::transaction(function () use ($id) {
-                $account = AccountAccount::findOrFail($id);
+                $account = AccountAccount::query()
+                    ->when(CurrentStore::id() !== null, fn ($q) => $q->where('store_id', CurrentStore::id()))
+                    ->findOrFail($id);
                 if ($account->transactionLines()->exists() || $account->expenses()->exists()) {
                     return ApiResponse::error('This account has transactions and cannot be deleted. Deactivate it instead.', 500);
                 }
@@ -104,6 +119,9 @@ class AccountAccountService
 
     public function activeOptions()
     {
-        return AccountAccount::where('is_active', true)->orderBy('name')->get();
+        return AccountAccount::query()
+            ->where('is_active', true)
+            ->when(CurrentStore::id() !== null, fn ($q) => $q->where('store_id', CurrentStore::id()))
+            ->orderBy('name')->get();
     }
 }

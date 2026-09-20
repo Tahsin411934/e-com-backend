@@ -11,6 +11,7 @@ use Modules\Cart\Models\CartItem;
 use Modules\Cart\Models\Coupon;
 use Modules\Catalog\Models\ProductVariant;
 use Modules\Catalog\Models\VariantOption;
+use Modules\Store\Support\CurrentStore;
 use Yajra\DataTables\DataTables;
 
 class CartService
@@ -109,7 +110,9 @@ class CartService
 
     public function getOrCreateCart(int $userId, ?int $storeId = null): Cart
     {
+        $storeId ??= CurrentStore::id();
         $cart = Cart::where('user_id', $userId)
+            ->where('store_id', $storeId)
             ->where('status', 'active')
             ->first();
 
@@ -155,7 +158,7 @@ class CartService
      */
     public function freshPricedCart(int $userId): Cart
     {
-        $cart = $this->getOrCreateCart($userId);
+        $cart = $this->getOrCreateCart($userId, CurrentStore::id());
         $this->refreshCartPrices($cart);
 
         return $cart->fresh()->load('items.variant.product', 'items.variantOption');
@@ -168,7 +171,8 @@ class CartService
                 $cart = $this->getOrCreateCart($data['user_id'], $data['store_id'] ?? null);
 
                 // Find the variant - using direct class reference since import removed
-                $variant = ProductVariant::findOrFail($data['variant_id']);
+                $variant = ProductVariant::whereHas('product', fn ($q) => $q->forCurrentStore())
+                    ->findOrFail($data['variant_id']);
 
                 // Resolve the selected variant option (must belong to the variant)
                 $variantOptionId = $data['variant_option_id'] ?? null;

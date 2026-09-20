@@ -523,6 +523,7 @@ class AccountTransactionService
             'transaction_no' => $this->generateTransactionNo(strtoupper(substr($data['type'], 0, 4))),
             'type' => $data['type'],
             'status' => 'posted',
+            'store_id' => AccountAccount::find($data['account_id'])?->store_id,
             'source_type' => isset($data['source']) ? $data['source']::class : null,
             'source_id' => $data['source']->id ?? null,
             'currency_code' => $data['currency_code'] ?? 'BDT',

@@ -5,6 +5,9 @@ namespace Modules\Store\Http\Controllers;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Modules\Store\Http\Requests\StoreStaffRequest;
+use Modules\Identity\Models\Role;
+use Modules\Store\Models\Store;
+use Modules\Store\Support\CurrentStore;
 use Modules\Store\Services\StoreService;
 use Modules\Store\Services\StoreStaffService;
 
@@ -14,9 +17,18 @@ class StoreStaffController extends Controller
 
     public function index()
     {
-        $stores = $this->storeService->getAllActiveStores();
+        $stores = CurrentStore::id()
+            ? Store::whereKey(CurrentStore::id())->where('status', 'active')->get()->map(fn ($store) => [
+                'id' => $store->id,
+                'name' => $store->name,
+            ])->all()
+            : $this->storeService->getAllActiveStores();
+        $roles = Role::where('scope', 'store')
+            ->where('store_id', CurrentStore::id())
+            ->orderBy('name')
+            ->get(['id', 'name']);
 
-        return view('store::store-staff.index', compact('stores'));
+        return view('store::store-staff.index', compact('stores', 'roles'));
     }
 
     public function dataTable(Request $request)

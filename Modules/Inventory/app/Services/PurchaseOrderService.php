@@ -12,6 +12,7 @@ use Modules\Catalog\Models\ProductVariant;
 use Modules\Inventory\Models\InventoryLocation;
 use Modules\Inventory\Models\InventoryMovement;
 use Modules\Inventory\Models\InventoryStock;
+use Modules\Store\Support\CurrentStore;
 use Modules\Inventory\Models\PurchaseOrder;
 use Yajra\DataTables\DataTables;
 
@@ -134,9 +135,12 @@ class PurchaseOrderService
                 }
 
                 $data['created_by'] = auth()->id();
+                if (($storeId = CurrentStore::id()) !== null) {
+                    $data['store_id'] = $storeId;
+                }
 
                 if ($poId) {
-                    $po = PurchaseOrder::findOrFail($poId);
+                    $po = PurchaseOrder::forCurrentStore()->findOrFail($poId);
                     $po->update($data);
                     $message = 'Purchase order updated successfully.';
                 } else {
@@ -188,7 +192,7 @@ class PurchaseOrderService
     {
         try {
             return ApiResponse::success(
-                PurchaseOrder::with(['supplier', 'store', 'items.variant.product', 'creator'])->findOrFail($id)
+                PurchaseOrder::forCurrentStore()->with(['supplier', 'store', 'items.variant.product', 'creator'])->findOrFail($id)
             );
         } catch (\Exception) {
             return ApiResponse::notFound('Purchase order not found.');
@@ -199,7 +203,7 @@ class PurchaseOrderService
     {
         try {
             return DB::transaction(function () use ($id) {
-                $po = PurchaseOrder::findOrFail($id);
+                $po = PurchaseOrder::forCurrentStore()->findOrFail($id);
                 // Received orders are locked — deleting them would orphan stock.
                 // Create a purchase return instead.
                 if (in_array($po->status, ['received', 'partially_received', 'returned'], true)) {
@@ -218,7 +222,7 @@ class PurchaseOrderService
     {
         try {
             return DB::transaction(function () use ($id, $status, $paymentStatus) {
-                $po = PurchaseOrder::findOrFail($id);
+                $po = PurchaseOrder::forCurrentStore()->findOrFail($id);
 
                 if (! $status && ! $paymentStatus) {
                     return ApiResponse::error('Nothing to update.', 500);

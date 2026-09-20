@@ -146,7 +146,7 @@
 
         @endif
 
-        @if(auth()->user()->hasAnyPermission(['stores.view','store-staff.view','countries.view','addresses.view','app-settings.view']))
+        @if(auth()->user()->hasAnyPermission(['stores.view','store-staff.view','store-roles.view','countries.view','addresses.view','app-settings.view']))
         <!-- Store & Location -->
         <div class="mb-0.5">
             <button
@@ -167,6 +167,12 @@
                 <a href="{{ route('store-staff.index') }}"
                     class="flex items-center gap-2.5 pl-9 pr-3 py-1.5 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-50 text-[13px] transition-colors {{ request()->routeIs('store-staff.*') ? 'text-primary bg-primary-light font-medium' : '' }}">
                     <i class="fas fa-users w-3.5 text-center"></i><span>Staff</span>
+                </a>
+                @endif
+                @if(auth()->user()->hasPermission('store-roles.view'))
+                <a href="{{ route('store-roles.index') }}"
+                    class="flex items-center gap-2.5 pl-9 pr-3 py-1.5 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-50 text-[13px] transition-colors {{ request()->routeIs('store-roles.*') ? 'text-primary bg-primary-light font-medium' : '' }}">
+                    <i class="fas fa-user-shield w-3.5 text-center"></i><span>Store Roles</span>
                 </a>
                 @endif
                 @if(auth()->user()->hasPermission('countries.view'))

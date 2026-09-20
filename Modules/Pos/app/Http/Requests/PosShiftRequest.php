@@ -16,7 +16,7 @@ class PosShiftRequest extends FormRequest
         return [
             'register_id' => 'required|exists:pos_registers,id',
             'user_id' => 'required|exists:users,id',
-            'opened_at' => 'nullable|date',
+            'opened_at' => 'nullable|date|before_or_equal:now',
             'opening_balance' => 'nullable|numeric|min:0',
             'notes' => 'nullable|string|max:500',
         ];

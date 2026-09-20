@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Modules\Account\Services\AccountTransactionService;
 use Modules\Order\Models\Payment;
+use Modules\Store\Support\CurrentStore;
 use Yajra\DataTables\DataTables;
 
 class PaymentService
@@ -16,6 +17,9 @@ class PaymentService
     public function getPaymentDataTable(Request $request)
     {
         $query = Payment::with('order')->orderByDesc('created_at');
+        if (($storeId = CurrentStore::id()) !== null) {
+            $query->whereHas('order', fn ($q) => $q->where('store_id', $storeId));
+        }
 
         return DataTables::of($query)
             ->addColumn('order_number', function (Payment $payment) {
@@ -57,7 +61,9 @@ class PaymentService
                 unset($data['payment_id']);
 
                 if ($paymentId) {
-                    $payment = Payment::findOrFail($paymentId);
+                    $payment = Payment::query()
+                        ->when(CurrentStore::id() !== null, fn ($q) => $q->whereHas('order', fn ($o) => $o->where('store_id', CurrentStore::id())))
+                        ->findOrFail($paymentId);
                     $payment->update($data);
                     $message = 'Payment updated successfully.';
                 } else {
@@ -79,7 +85,9 @@ class PaymentService
     public function getPaymentById(int $id): JsonResponse
     {
         try {
-            $payment = Payment::with('order')->findOrFail($id);
+            $payment = Payment::with('order')
+                ->when(CurrentStore::id() !== null, fn ($q) => $q->whereHas('order', fn ($o) => $o->where('store_id', CurrentStore::id())))
+                ->findOrFail($id);
 
             return ApiResponse::success($payment);
         } catch (\Exception $e) {
@@ -91,7 +99,9 @@ class PaymentService
     {
         try {
             return DB::transaction(function () use ($id) {
-                $payment = Payment::findOrFail($id);
+                $payment = Payment::query()
+                    ->when(CurrentStore::id() !== null, fn ($q) => $q->whereHas('order', fn ($o) => $o->where('store_id', CurrentStore::id())))
+                    ->findOrFail($id);
                 $payment->delete();
 
                 return ApiResponse::success(null, 'Payment deleted successfully.');

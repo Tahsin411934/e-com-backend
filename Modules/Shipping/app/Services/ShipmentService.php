@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\DB;
 use Modules\Shipping\Models\DeliveryDriver;
 use Modules\Shipping\Models\Shipment;
 use Modules\Shipping\Models\ShipmentEvent;
+use Modules\Store\Support\CurrentStore;
 use Yajra\DataTables\DataTables;
 
 class ShipmentService
@@ -16,6 +17,9 @@ class ShipmentService
     public function getShipmentDataTable(Request $request)
     {
         $query = Shipment::with(['order', 'store', 'zone', 'driver'])->orderByDesc('created_at');
+        if (($storeId = CurrentStore::id()) !== null) {
+            $query->where('store_id', $storeId);
+        }
 
         return DataTables::of($query)
             ->addColumn('order_number', fn (Shipment $shipment) => $shipment->order?->order_number ?? '-')
@@ -54,7 +58,9 @@ class ShipmentService
                 }
 
                 if ($shipmentId) {
-                    $shipment = Shipment::findOrFail($shipmentId);
+                    $shipment = Shipment::query()
+                        ->when(CurrentStore::id() !== null, fn ($q) => $q->where('store_id', CurrentStore::id()))
+                        ->findOrFail($shipmentId);
                     $oldStatus = $shipment->status;
                     $oldDriverId = $shipment->driver_id;
                     $shipment->update($data);
@@ -85,7 +91,9 @@ class ShipmentService
     {
         try {
             return ApiResponse::success(
-                Shipment::with(['order', 'store', 'zone', 'driver', 'shippingAddress', 'events'])->findOrFail($id)
+                Shipment::with(['order', 'store', 'zone', 'driver', 'shippingAddress', 'events'])
+                    ->when(CurrentStore::id() !== null, fn ($q) => $q->where('store_id', CurrentStore::id()))
+                    ->findOrFail($id)
             );
         } catch (\Exception) {
             return ApiResponse::notFound('Shipment not found.');
@@ -96,7 +104,9 @@ class ShipmentService
     {
         try {
             return DB::transaction(function () use ($id) {
-                $shipment = Shipment::findOrFail($id);
+                $shipment = Shipment::query()
+                    ->when(CurrentStore::id() !== null, fn ($q) => $q->where('store_id', CurrentStore::id()))
+                    ->findOrFail($id);
                 $driverId = $shipment->driver_id;
                 $shipment->delete();
                 $this->freeDriverIfIdle($driverId);

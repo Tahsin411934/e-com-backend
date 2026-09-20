@@ -18,7 +18,7 @@ class ProductReviewApiController extends Controller
      */
     public function index(Request $request, int $productId): JsonResponse
     {
-        Product::findOrFail($productId);
+        Product::forCurrentStore()->findOrFail($productId);
 
         $reviews = ProductReview::where('product_id', $productId)
             ->where('status', 'approved')
@@ -50,7 +50,7 @@ class ProductReviewApiController extends Controller
      */
     public function store(SubmitProductReviewRequest $request, int $productId): JsonResponse
     {
-        Product::findOrFail($productId);
+        $product = Product::forCurrentStore()->findOrFail($productId);
 
         $validated = $request->validated();
 
@@ -81,7 +81,7 @@ class ProductReviewApiController extends Controller
                 '%s left a %d★ review on %s: %s',
                 $request->user()->name ?? 'A customer',
                 $review->rating,
-                Product::find($productId)?->name ?? ('Product #'.$productId),
+                $product->name,
                 $review->title
             ),
             ['review_id' => $review->id, 'product_id' => $productId, 'url' => '/product-reviews'],

@@ -6,6 +6,7 @@ use Modules\Store\Http\Controllers\AppSettingController;
 use Modules\Store\Http\Controllers\CountryController;
 use Modules\Store\Http\Controllers\StoreController;
 use Modules\Store\Http\Controllers\StoreStaffController;
+use Modules\Store\Http\Controllers\StoreRoleController;
 
 Route::middleware(['auth', 'verified', 'admin'])->group(function () {
     // Stores
@@ -15,6 +16,9 @@ Route::middleware(['auth', 'verified', 'admin'])->group(function () {
     // Store Staff
     Route::resource('store-staff', StoreStaffController::class)->except(['create', 'edit'])->names('store-staff')->middleware('permission:store-staff.*');
     Route::get('/dataTable/store-staff', [StoreStaffController::class, 'dataTable'])->name('store-staff.dataTable')->middleware('permission:store-staff.view');
+
+    Route::resource('store-roles', StoreRoleController::class)->except(['create', 'edit'])->names('store-roles')->middleware('permission:store-roles.*');
+    Route::get('/dataTable/store-roles', [StoreRoleController::class, 'dataTable'])->name('store-roles.dataTable')->middleware('permission:store-roles.view');
 
     // Countries
     Route::resource('countries', CountryController::class)->except(['create', 'edit'])->names('countries')->middleware('permission:countries.*');

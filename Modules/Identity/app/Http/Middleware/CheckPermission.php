@@ -22,29 +22,32 @@ class CheckPermission
             return redirect()->route('login');
         }
 
-        // Super Admin has all permissions
-        if ($user->roles->contains('name', 'Super Admin')) {
-            return $next($request);
-        }
-
-        // Get all permission names from user's roles
-        $userPermissions = $user->roles
-            ->flatMap->permissions
-            ->pluck('name')
-            ->unique();
+        $userPermissions = method_exists($user, 'hasPermission')
+            ? null
+            : collect($user->roles ?? [])
+                ->flatMap(fn ($role) => $role->permissions ?? [])
+                ->pluck('name')
+                ->unique();
 
         // Resource wildcards resolve to the permission required by the current
         // controller action. A user with only `products.view` must never pass
         // an update or destroy route protected by `products.*`.
-        $hasPermission = collect($permissions)->contains(function ($permission) use ($request, $userPermissions) {
+        $hasPermission = collect($permissions)->contains(function ($permission) use ($request, $user, $userPermissions) {
             if (str_ends_with($permission, '.*')) {
                 $ability = $this->abilityForAction($request->route()?->getActionMethod());
 
-                return $ability !== null
-                    && $userPermissions->contains(substr($permission, 0, -1).$ability);
+                $required = $ability !== null ? substr($permission, 0, -1).$ability : null;
+
+                return $required !== null && (
+                    method_exists($user, 'hasPermission')
+                        ? $user->hasPermission($required)
+                        : $userPermissions->contains($required)
+                );
             }
 
-            return $userPermissions->contains($permission);
+            return method_exists($user, 'hasPermission')
+                ? $user->hasPermission($permission)
+                : $userPermissions->contains($permission);
         });
 
         if (! $hasPermission) {

@@ -9,6 +9,7 @@ use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Modules\Catalog\Models\ProductRequest;
+use Modules\Store\Support\CurrentStore;
 use Yajra\DataTables\DataTables;
 
 class ProductRequestService
@@ -16,6 +17,9 @@ class ProductRequestService
     public function getProductRequestDataTable(Request $request)
     {
         $query = ProductRequest::query()->orderByDesc('created_at');
+        if (($storeId = CurrentStore::id()) !== null) {
+            $query->where('store_id', $storeId);
+        }
 
         if ($request->status) {
             $query->where('status', $request->status);
@@ -62,7 +66,9 @@ class ProductRequestService
     public function getProductRequestById(int $id): JsonResponse
     {
         try {
-            $productRequest = ProductRequest::with(['user', 'product'])->findOrFail($id);
+            $productRequest = ProductRequest::with(['user', 'product'])
+                ->when(CurrentStore::id() !== null, fn ($q) => $q->where('store_id', CurrentStore::id()))
+                ->findOrFail($id);
 
             return ApiResponse::success($productRequest);
         } catch (\Exception $e) {
@@ -73,7 +79,9 @@ class ProductRequestService
     public function updateStatus(int $id, string $status): JsonResponse
     {
         try {
-            $productRequest = ProductRequest::findOrFail($id);
+            $productRequest = ProductRequest::query()
+                ->when(CurrentStore::id() !== null, fn ($q) => $q->where('store_id', CurrentStore::id()))
+                ->findOrFail($id);
             $productRequest->update(['status' => $status]);
 
             return ApiResponse::success($productRequest->fresh(), 'Status updated successfully.');
@@ -92,6 +100,10 @@ class ProductRequestService
                     $data['product_image'] = $path;
                 }
 
+                if (($storeId = CurrentStore::id()) !== null) {
+                    $data['store_id'] = $storeId;
+                }
+
                 $productRequest = ProductRequest::create($data);
 
                 return ApiResponse::success($productRequest, 'Product request created successfully.');
@@ -105,7 +117,9 @@ class ProductRequestService
     {
         try {
             return DB::transaction(function () use ($id, $data) {
-                $productRequest = ProductRequest::findOrFail($id);
+                $productRequest = ProductRequest::query()
+                    ->when(CurrentStore::id() !== null, fn ($q) => $q->where('store_id', CurrentStore::id()))
+                    ->findOrFail($id);
 
                 if (isset($data['product_image']) && $data['product_image'] instanceof UploadedFile) {
                     // Delete old image
@@ -131,7 +145,9 @@ class ProductRequestService
     public function destroy(int $id): JsonResponse
     {
         try {
-            $productRequest = ProductRequest::findOrFail($id);
+            $productRequest = ProductRequest::query()
+                ->when(CurrentStore::id() !== null, fn ($q) => $q->where('store_id', CurrentStore::id()))
+                ->findOrFail($id);
             if ($productRequest->product_image) {
                 Storage::disk('public')->delete($productRequest->product_image);
             }
@@ -152,6 +168,10 @@ class ProductRequestService
                     $fileName = 'product-request-'.time().'.'.$data['product_image']->getClientOriginalExtension();
                     $path = $data['product_image']->storeAs('product-requests', $fileName, 'public');
                     $data['product_image'] = $path;
+                }
+
+                if (($storeId = CurrentStore::id()) !== null) {
+                    $data['store_id'] = $storeId;
                 }
 
                 $productRequest = ProductRequest::create($data);

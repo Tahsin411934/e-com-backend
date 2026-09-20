@@ -10,6 +10,7 @@ use Illuminate\Support\Str;
 use Modules\Account\Models\AccountAccount;
 use Modules\Account\Models\AccountCategory;
 use Modules\Account\Models\AccountExpense;
+use Modules\Store\Support\CurrentStore;
 use Yajra\DataTables\DataTables;
 
 class AccountExpenseService
@@ -19,6 +20,9 @@ class AccountExpenseService
     public function getDataTable(Request $request)
     {
         $query = AccountExpense::with(['account', 'category'])->orderByDesc('expense_date')->orderByDesc('id');
+        if (($storeId = CurrentStore::id()) !== null) {
+            $query->whereHas('account', fn ($q) => $q->where('store_id', $storeId));
+        }
 
         return DataTables::of($query)
             ->addColumn('account_name', fn (AccountExpense $expense) => $expense->account?->name ?? '-')
@@ -52,10 +56,13 @@ class AccountExpenseService
 
                 $data['expense_no'] = $this->generateExpenseNo();
                 $data['created_by'] = auth()->id();
+                $account = AccountAccount::query()
+                    ->when(CurrentStore::id() !== null, fn ($q) => $q->where('store_id', CurrentStore::id()))
+                    ->findOrFail($data['account_id']);
                 $expense = AccountExpense::create($data);
                 $transaction = $this->transactionService->postExpense(
                     $expense,
-                    AccountAccount::findOrFail($data['account_id']),
+                    $account,
                     AccountCategory::findOrFail($data['category_id']),
                     (float) $data['amount']
                 );
@@ -71,7 +78,9 @@ class AccountExpenseService
     public function find(int $id): JsonResponse
     {
         try {
-            return ApiResponse::success(AccountExpense::findOrFail($id));
+            return ApiResponse::success(AccountExpense::query()
+                ->when(CurrentStore::id() !== null, fn ($q) => $q->whereHas('account', fn ($a) => $a->where('store_id', CurrentStore::id())))
+                ->findOrFail($id));
         } catch (\Exception) {
             return ApiResponse::notFound('Expense not found.');
         }

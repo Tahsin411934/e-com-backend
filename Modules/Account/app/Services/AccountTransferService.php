@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Modules\Account\Models\AccountAccount;
 use Modules\Account\Models\AccountTransfer;
+use Modules\Store\Support\CurrentStore;
 use Yajra\DataTables\DataTables;
 
 class AccountTransferService
@@ -18,6 +19,9 @@ class AccountTransferService
     public function getDataTable(Request $request)
     {
         $query = AccountTransfer::with(['fromAccount', 'toAccount'])->orderByDesc('transferred_at')->orderByDesc('id');
+        if (($storeId = CurrentStore::id()) !== null) {
+            $query->whereHas('fromAccount', fn ($q) => $q->where('store_id', $storeId));
+        }
 
         return DataTables::of($query)
             ->addColumn('from_account', fn (AccountTransfer $transfer) => $transfer->fromAccount?->name ?? '-')
@@ -38,8 +42,12 @@ class AccountTransferService
                     return ApiResponse::error('Posted transfers cannot be edited.', 500);
                 }
 
-                $from = AccountAccount::findOrFail($data['from_account_id']);
-                $to = AccountAccount::findOrFail($data['to_account_id']);
+                $from = AccountAccount::query()
+                    ->when(CurrentStore::id() !== null, fn ($q) => $q->where('store_id', CurrentStore::id()))
+                    ->findOrFail($data['from_account_id']);
+                $to = AccountAccount::query()
+                    ->when(CurrentStore::id() !== null, fn ($q) => $q->where('store_id', CurrentStore::id()))
+                    ->findOrFail($data['to_account_id']);
                 $amountOut = (float) $data['amount'] + (float) ($data['transfer_fee'] ?? 0);
 
                 if ((float) $from->current_balance < $amountOut) {

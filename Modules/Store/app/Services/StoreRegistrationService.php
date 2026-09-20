@@ -67,8 +67,8 @@ class StoreRegistrationService
                 'email' => $data['email'],
                 'phone' => $data['phone'] ?? null,
                 'status' => 'active',
-                'currency_code' => strtoupper($data['currency_code'] ?? 'USD'),
-                'timezone' => $data['timezone'] ?? 'UTC',
+                'currency_code' => strtoupper($data['currency_code'] ?? 'BDT'),
+                'timezone' => $data['timezone'] ?? 'Asia/Dhaka',
             ]);
 
             // Seed demo data for the new store
@@ -98,7 +98,7 @@ class StoreRegistrationService
         } catch (\Throwable $e) {
             report($e);
 
-            return ApiResponse::error('Registration failed: '.$e->getMessage(), 500);
+            return ApiResponse::error('Registration failed. Please try again later.', 500);
         }
     }
 

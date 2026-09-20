@@ -8,6 +8,8 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Support\Collection;
 use Laravel\Sanctum\HasApiTokens;
 use Modules\Store\Models\Store;
+use Modules\Store\Models\StoreStaff;
+use Modules\Store\Support\CurrentStore;
 
 class User extends Authenticatable
 {
@@ -55,12 +57,36 @@ class User extends Authenticatable
         return $this->hasMany(UserSession::class);
     }
 
+    public function customerProfile()
+    {
+        return $this->hasOne(CustomerProfile::class);
+    }
+
     /**
      * Store owned by this user (SaaS tenant relationship).
      */
     public function ownedStore()
     {
         return $this->hasOne(Store::class, 'owner_id');
+    }
+
+    public function storeStaffMemberships()
+    {
+        return $this->hasMany(StoreStaff::class, 'user_id');
+    }
+
+    public function currentStoreStaff(): ?StoreStaff
+    {
+        $storeId = CurrentStore::id();
+        if ($storeId === null) {
+            return null;
+        }
+
+        return $this->storeStaffMemberships()
+            ->where('store_id', $storeId)
+            ->where('status', 'active')
+            ->with('roles.permissions')
+            ->first();
     }
 
     /**
@@ -114,9 +140,13 @@ class User extends Authenticatable
      */
     public function hasAdminAccess(): bool
     {
-        return $this->roles->contains(function ($role) {
+        if ($this->roles->contains(function ($role) {
             return $role->name !== self::CUSTOMER_ROLE;
-        });
+        })) {
+            return true;
+        }
+
+        return $this->storeStaffMemberships()->where('status', 'active')->exists();
     }
 
     /**
@@ -129,9 +159,25 @@ class User extends Authenticatable
             return true;
         }
 
+        $matches = static function ($permission) use ($permissionName): bool {
+            return $permission->name === $permissionName
+                || (str_ends_with($permission->name, '.*')
+                    && str_starts_with($permissionName, substr($permission->name, 0, -1)));
+        };
+
+        if ($staff = $this->currentStoreStaff()) {
+            $hasStorePermission = $staff->roles
+                ->flatMap->permissions
+                ->contains($matches);
+
+            if ($hasStorePermission) {
+                return true;
+            }
+        }
+
         return $this->roles
             ->flatMap->permissions
-            ->contains('name', $permissionName);
+            ->contains($matches);
     }
 
     /**

@@ -8,6 +8,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Password;
 use Illuminate\Support\Str;
+use Illuminate\Support\Facades\DB;
 use Modules\Identity\Http\Requests\ForgotPasswordRequest;
 use Modules\Identity\Http\Requests\LoginRequest;
 use Modules\Identity\Http\Requests\RegisterRequest;
@@ -24,7 +25,8 @@ class AuthController extends Controller
     {
         $data = $request->validated();
 
-        $user = User::create([
+        $user = DB::transaction(function () use ($data) {
+            $user = User::create([
             'public_id' => (string) Str::uuid(),
             'first_name' => $data['first_name'],
             'last_name' => $data['last_name'],
@@ -32,13 +34,18 @@ class AuthController extends Controller
             'phone' => $data['phone'] ?? null,
             'password_hash' => Hash::make($data['password']),
             'status' => 'active',
-        ]);
+            ]);
 
         // Assign the default customer role. Roles can never be set from
         // public registration input (prevents privilege escalation).
-        if ($customerRole = Role::where('name', User::CUSTOMER_ROLE)->first()) {
-            $user->roles()->attach($customerRole->id);
-        }
+            if ($customerRole = Role::where('name', User::CUSTOMER_ROLE)->first()) {
+                $user->roles()->attach($customerRole->id);
+            }
+
+            $user->customerProfile()->create();
+
+            return $user;
+        });
 
         // Create token
         $token = $user->createToken('auth_token')->plainTextToken;

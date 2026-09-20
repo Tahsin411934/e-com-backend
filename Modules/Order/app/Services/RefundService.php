@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Modules\Account\Services\AccountTransactionService;
 use Modules\Order\Models\Refund;
+use Modules\Store\Support\CurrentStore;
 use Yajra\DataTables\DataTables;
 
 class RefundService
@@ -16,6 +17,9 @@ class RefundService
     public function getRefundDataTable(Request $request)
     {
         $query = Refund::with(['order', 'payment'])->orderByDesc('created_at');
+        if (($storeId = CurrentStore::id()) !== null) {
+            $query->whereHas('order', fn ($q) => $q->where('store_id', $storeId));
+        }
 
         return DataTables::of($query)
             ->addColumn('order_number', function (Refund $refund) {
@@ -54,7 +58,9 @@ class RefundService
                 unset($data['refund_id']);
 
                 if ($refundId) {
-                    $refund = Refund::findOrFail($refundId);
+                    $refund = Refund::query()
+                        ->when(CurrentStore::id() !== null, fn ($q) => $q->whereHas('order', fn ($o) => $o->where('store_id', CurrentStore::id())))
+                        ->findOrFail($refundId);
                     $refund->update($data);
                     $message = 'Refund updated successfully.';
                 } else {
@@ -76,7 +82,9 @@ class RefundService
     public function getRefundById(int $id): JsonResponse
     {
         try {
-            $refund = Refund::with(['order', 'payment'])->findOrFail($id);
+            $refund = Refund::with(['order', 'payment'])
+                ->when(CurrentStore::id() !== null, fn ($q) => $q->whereHas('order', fn ($o) => $o->where('store_id', CurrentStore::id())))
+                ->findOrFail($id);
 
             return ApiResponse::success($refund);
         } catch (\Exception $e) {
@@ -88,7 +96,9 @@ class RefundService
     {
         try {
             return DB::transaction(function () use ($id) {
-                $refund = Refund::findOrFail($id);
+                $refund = Refund::query()
+                    ->when(CurrentStore::id() !== null, fn ($q) => $q->whereHas('order', fn ($o) => $o->where('store_id', CurrentStore::id())))
+                    ->findOrFail($id);
                 $refund->delete();
 
                 return ApiResponse::success(null, 'Refund deleted successfully.');

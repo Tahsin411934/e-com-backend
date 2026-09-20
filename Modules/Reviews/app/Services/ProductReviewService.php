@@ -7,6 +7,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Modules\Reviews\Models\ProductReview;
+use Modules\Store\Support\CurrentStore;
 use Yajra\DataTables\DataTables;
 
 class ProductReviewService
@@ -16,6 +17,9 @@ class ProductReviewService
     public function getReviewDataTable(Request $request)
     {
         $query = ProductReview::query()->with(['product', 'user'])->orderByDesc('created_at');
+        if (($storeId = CurrentStore::id()) !== null) {
+            $query->whereHas('product', fn ($q) => $q->where('store_id', $storeId));
+        }
 
         return DataTables::of($query)
             ->filter(function ($query) use ($request) {
@@ -69,7 +73,9 @@ class ProductReviewService
                 unset($data['review_id']);
 
                 if ($id) {
-                    $item = ProductReview::findOrFail($id);
+                    $item = ProductReview::query()
+                        ->when(CurrentStore::id() !== null, fn ($q) => $q->whereHas('product', fn ($p) => $p->where('store_id', CurrentStore::id())))
+                        ->findOrFail($id);
                     $item->update($data);
 
                     return ApiResponse::success($item->fresh()->load(['product', 'user']), 'Review updated.');
@@ -101,7 +107,11 @@ class ProductReviewService
     public function getReviewById(int $id): JsonResponse
     {
         try {
-            return ApiResponse::success(ProductReview::with(['product', 'user'])->findOrFail($id));
+            $item = ProductReview::with(['product', 'user'])
+                ->when(CurrentStore::id() !== null, fn ($q) => $q->whereHas('product', fn ($p) => $p->where('store_id', CurrentStore::id())))
+                ->findOrFail($id);
+
+            return ApiResponse::success($item);
         } catch (\Exception) {
             return ApiResponse::notFound('Review not found.');
         }
@@ -110,7 +120,10 @@ class ProductReviewService
     public function deleteReview(int $id): JsonResponse
     {
         try {
-            ProductReview::findOrFail($id)->delete();
+            ProductReview::query()
+                ->when(CurrentStore::id() !== null, fn ($q) => $q->whereHas('product', fn ($p) => $p->where('store_id', CurrentStore::id())))
+                ->findOrFail($id)
+                ->delete();
 
             return ApiResponse::success(null, 'Review deleted.');
         } catch (\Exception $e) {
@@ -121,7 +134,10 @@ class ProductReviewService
     public function approveReview(int $id): JsonResponse
     {
         try {
-            ProductReview::findOrFail($id)->update(['status' => 'approved']);
+            ProductReview::query()
+                ->when(CurrentStore::id() !== null, fn ($q) => $q->whereHas('product', fn ($p) => $p->where('store_id', CurrentStore::id())))
+                ->findOrFail($id)
+                ->update(['status' => 'approved']);
 
             return ApiResponse::success(null, 'Review approved.');
         } catch (\Exception $e) {

@@ -61,12 +61,16 @@ class OrderService
             return DB::transaction(function () use ($data) {
                 $orderId = $data['order_id'] ?? null;
                 unset($data['order_id']);
+                $scopedQuery = Order::forCurrentStore();
 
                 if ($orderId) {
-                    $order = Order::findOrFail($orderId);
+                    $order = $scopedQuery->findOrFail($orderId);
                     $order->update($data);
                     $message = 'Order updated successfully.';
                 } else {
+                    if (($storeId = \Modules\Store\Support\CurrentStore::id()) !== null) {
+                        $data['store_id'] = $storeId;
+                    }
                     if (! isset($data['order_number'])) {
                         $data['order_number'] = 'ORD-'.strtoupper(uniqid());
                     }

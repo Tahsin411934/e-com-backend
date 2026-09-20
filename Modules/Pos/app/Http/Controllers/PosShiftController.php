@@ -50,6 +50,11 @@ class PosShiftController extends Controller
 
     public function closeShift(Request $request, $id)
     {
-        return $this->shiftService->closeShift((int) $id, $request->only(['declared_cash', 'notes']));
+        $data = $request->validate([
+            'declared_cash' => 'required|numeric|min:0',
+            'notes' => 'nullable|string|max:500',
+        ]);
+
+        return $this->shiftService->closeShift((int) $id, $data);
     }
 }

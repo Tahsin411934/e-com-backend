@@ -14,6 +14,7 @@ class AccountAccount extends Model
     protected $table = 'account_accounts';
 
     protected $fillable = [
+        'store_id',
         'name',
         'code',
         'type',

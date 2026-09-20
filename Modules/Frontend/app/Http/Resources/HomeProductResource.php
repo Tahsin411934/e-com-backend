@@ -22,7 +22,9 @@ class HomeProductResource extends JsonResource
         }
 
         if (str_starts_with($path, 'http://') || str_starts_with($path, 'https://')) {
-            return $path;
+            // Some legacy records persisted an already absolute URL with the
+            // storage prefix duplicated. Normalize it before returning it.
+            return preg_replace('#/storage(?:/storage)+/#', '/storage/', $path);
         }
 
         $clean = ltrim($path, '/');

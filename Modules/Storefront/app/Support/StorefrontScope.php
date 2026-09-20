@@ -8,14 +8,16 @@ use Modules\Store\Support\CurrentStore;
 class StorefrontScope
 {
     /**
-     * "Visible on this storefront" filter: rows owned ONLY by the resolved
-     * store. Global/platform rows (store_id IS NULL) are NOT included.
+     * "Visible on this storefront" filter: store-owned rows take part in the
+     * storefront, together with global/platform rows used as fallback content.
      */
     public static function apply(Builder $query, ?int $storeId = null): Builder
     {
         $storeId ??= CurrentStore::id();
         $column = $query->getModel()->qualifyColumn('store_id');
 
-        return $query->where($column, $storeId);
+        return $query->where(function (Builder $query) use ($column, $storeId) {
+            $query->where($column, $storeId)->orWhereNull($column);
+        });
     }
 }

@@ -96,12 +96,12 @@ class StoreDemoDataSeeder
     {
         $storeSlug = Store::find($storeId)?->slug ?? 'store';
         $categories = [
-            ['name' => 'Electronics', 'slug' => 'electronics', 'image' => 'storage/demo/categories/electronics.png', 'description' => 'Electronic devices and accessories', 'status' => 'active', 'sort_order' => 1],
-            ['name' => 'Clothing', 'slug' => 'clothing', 'image' => 'storage/demo/categories/clothing.png', 'description' => 'Apparel and fashion items', 'status' => 'active', 'sort_order' => 2],
-            ['name' => 'Home & Kitchen', 'slug' => 'home-kitchen', 'image' => 'storage/demo/categories/home-kitchen.png', 'description' => 'Home appliances and kitchenware', 'status' => 'active', 'sort_order' => 3],
-            ['name' => 'Sports & Outdoors', 'slug' => 'sports-outdoors', 'image' => 'storage/demo/categories/sports-outdoors.png', 'description' => 'Sports equipment and outdoor gear', 'status' => 'active', 'sort_order' => 4],
-            ['name' => 'Beauty & Health', 'slug' => 'beauty-health', 'image' => 'storage/demo/categories/beauty-health.png', 'description' => 'Beauty products and health supplements', 'status' => 'active', 'sort_order' => 5],
-            ['name' => 'Books & Media', 'slug' => 'books-media', 'image' => 'storage/demo/categories/books-media.png', 'description' => 'Books, movies, and digital media', 'status' => 'active', 'sort_order' => 6],
+            ['name' => 'Electronics', 'slug' => 'electronics', 'image' => 'demo/categories/electronics.png', 'description' => 'Electronic devices and accessories', 'status' => 'active', 'sort_order' => 1],
+            ['name' => 'Clothing', 'slug' => 'clothing', 'image' => 'demo/categories/clothing.png', 'description' => 'Apparel and fashion items', 'status' => 'active', 'sort_order' => 2],
+            ['name' => 'Home & Kitchen', 'slug' => 'home-kitchen', 'image' => 'demo/categories/home-kitchen.png', 'description' => 'Home appliances and kitchenware', 'status' => 'active', 'sort_order' => 3],
+            ['name' => 'Sports & Outdoors', 'slug' => 'sports-outdoors', 'image' => 'demo/categories/sports-outdoors.png', 'description' => 'Sports equipment and outdoor gear', 'status' => 'active', 'sort_order' => 4],
+            ['name' => 'Beauty & Health', 'slug' => 'beauty-health', 'image' => 'demo/categories/beauty-health.png', 'description' => 'Beauty products and health supplements', 'status' => 'active', 'sort_order' => 5],
+            ['name' => 'Books & Media', 'slug' => 'books-media', 'image' => 'demo/categories/books-media.png', 'description' => 'Books, movies, and digital media', 'status' => 'active', 'sort_order' => 6],
         ];
 
         $categoryIds = [];
@@ -115,12 +115,12 @@ class StoreDemoDataSeeder
     private function seedProducts(int $storeId, array $brandIds, array $categoryIds): void
     {
         $imageByCategory = [
-            'electronics' => 'storage/demo/products/electronics.png',
-            'clothing' => 'storage/demo/products/clothing.png',
-            'home-kitchen' => 'storage/demo/products/home-kitchen.png',
-            'sports-outdoors' => 'storage/demo/products/sports-outdoors.png',
-            'beauty-health' => 'storage/demo/products/beauty-health.png',
-            'books-media' => 'storage/demo/products/books-media.png',
+            'electronics' => 'demo/products/electronics.png',
+            'clothing' => 'demo/products/clothing.png',
+            'home-kitchen' => 'demo/products/home-kitchen.png',
+            'sports-outdoors' => 'demo/products/sports-outdoors.png',
+            'beauty-health' => 'demo/products/beauty-health.png',
+            'books-media' => 'demo/products/books-media.png',
         ];
 
         $products = [
@@ -563,7 +563,7 @@ class StoreDemoDataSeeder
 
             $product->images()->create([
                 'image_url' => $imageByCategory[$categorySlugs[0] ?? '']
-                    ?? 'storage/demo/products/default.svg',
+                    ?? 'demo/products/default.svg',
                 'alt_text' => $product->name,
                 'sort_order' => 0,
             ]);
@@ -589,7 +589,7 @@ class StoreDemoDataSeeder
         $banners = [
             [
                 'store_id' => $storeId,
-                'banner_image' => 'https://admin.onehaatbd.com/storage/banners/7CVCKbhuLnKEN6LGJ62ZDQSqIJcCZntYvoCpdYIi.png',
+                'banner_image' => 'banners/7CVCKbhuLnKEN6LGJ62ZDQSqIJcCZntYvoCpdYIi.png',
                 'title' => 'Discover your next favourite',
                 'subtitle' => 'Explore our latest products, selected for everyday living.',
                 'smtag' => 'Featured collection',
@@ -606,7 +606,7 @@ class StoreDemoDataSeeder
             ],
             [
                 'store_id' => $storeId,
-                'banner_image' => 'https://admin.onehaatbd.com/storage/banners/cUgMETtch0m9yYFiWJgiEne1ZljIgkyUKJAcINdt.jpg',
+                'banner_image' => 'banners/cUgMETtch0m9yYFiWJgiEne1ZljIgkyUKJAcINdt.jpg',
                 'title' => 'Elevate Your Audio Experience',
                 'subtitle' => 'Explore premium TWS Earbuds, Over-Ear Headphones, and Wireless Neckbands built for high-performance sound.',
                 'smtag' => 'Special Offer',
@@ -623,7 +623,7 @@ class StoreDemoDataSeeder
             ],
             [
                 'store_id' => $storeId,
-                'banner_image' => 'https://admin.onehaatbd.com/storage/banners/vbsOQqAZUQamS3lWshHMy9eJv1lvGBJNjTncXAuE.jpg',
+                'banner_image' => 'banners/vbsOQqAZUQamS3lWshHMy9eJv1lvGBJNjTncXAuE.jpg',
                 'title' => 'Ultimate Tech Essentials',
                 'subtitle' => 'Upgrade your daily setup with modern smartwatches, wireless earbuds, high-speed power banks, and desk accessories.',
                 'smtag' => 'Get Yours Today',

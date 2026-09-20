@@ -139,8 +139,7 @@ class CampaignService
     // ===== Storefront API (multi-tenant) =====
     //
     // Same payload shape as the legacy methods, scoped to the storefront the
-    // request is served from: this store's campaigns + global platform
-    // campaigns (store_id IS NULL), and only products visible on that storefront.
+    // request is served from: only this store's campaigns and products.
 
     public function liveCampaignsForStorefront(): JsonResponse
     {

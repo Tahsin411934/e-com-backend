@@ -27,8 +27,8 @@ use Modules\Storefront\Http\Controllers\SubnavbarController;
 | and binds it as the CurrentStore for the request.
 |
 | The endpoints mirror the legacy /api/v1 frontend APIs, except every
-| query is scoped to: rows owned by the resolved store + global platform
-| rows (store_id IS NULL). The legacy APIs remain untouched.
+| query is scoped exclusively to rows owned by the resolved store. The legacy
+| APIs remain untouched.
 |
 */
 

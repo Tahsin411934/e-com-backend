@@ -9,8 +9,8 @@ use Modules\Store\Support\CurrentStore;
 class StorefrontScope
 {
     /**
-     * "Visible on this storefront" filter: store-owned rows take part in the
-     * storefront, together with global/platform rows used as fallback content.
+     * "Visible on this storefront" filter: only rows owned by the resolved
+     * store are visible. Global/platform rows never leak into a tenant.
      */
     public static function apply(Builder|Relation $query, ?int $storeId = null): Builder|Relation
     {
@@ -18,8 +18,6 @@ class StorefrontScope
         $model = $query instanceof Builder ? $query->getModel() : $query->getRelated();
         $column = $model->qualifyColumn('store_id');
 
-        return $query->where(function ($query) use ($column, $storeId) {
-            $query->where($column, $storeId)->orWhereNull($column);
-        });
+        return $query->where($column, $storeId);
     }
 }

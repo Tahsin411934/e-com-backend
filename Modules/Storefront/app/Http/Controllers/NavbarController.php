@@ -16,7 +16,7 @@ class NavbarController extends Controller
 {
     /**
      * Get all active navbar items with their subnavbar items — scoped to
-     * the current storefront (store rows + global platform rows).
+     * the current storefront.
      */
     public function index(Request $request): JsonResponse
     {

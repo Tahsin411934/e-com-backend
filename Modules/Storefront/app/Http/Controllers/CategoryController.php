@@ -18,8 +18,8 @@ use Modules\Storefront\Support\StorefrontScope;
  * Storefront category API.
  *
  * Same response shapes as the legacy Frontend module endpoints, except every
- * query is scoped to the resolved tenant (store rows + global platform rows)
- * and category product counts only include products visible on this storefront.
+ * query is scoped exclusively to the resolved tenant and category product
+ * counts only include products visible on this storefront.
  */
 class CategoryController extends Controller
 {
@@ -101,7 +101,7 @@ class CategoryController extends Controller
             return ApiResponse::notFound('Category not found.');
         }
 
-        // Only products that belong to this storefront (or the platform catalog).
+        // Only products that belong to this storefront.
         $query = $category->products()
             ->where('products.status', 'active')
             ->where('products.visibility', 'public')

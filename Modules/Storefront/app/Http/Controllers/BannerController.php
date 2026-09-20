@@ -50,7 +50,7 @@ class BannerController extends Controller
     }
 
     /**
-     * Get a single banner by ID (must belong to this storefront or be global).
+     * Get a single banner by ID that belongs to this storefront.
      */
     public function show($id): JsonResponse
     {

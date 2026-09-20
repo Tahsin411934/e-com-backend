@@ -16,8 +16,7 @@ use Modules\Storefront\Support\StorefrontScope;
  * Storefront home page API.
  *
  * Mirrors the legacy /v1/home/products-by-category payload (category sections
- * interleaved with CTA sections), but only for the resolved tenant: this
- * store's categories/CTAs first, falling back to global platform content.
+ * interleaved with CTA sections), but only for the resolved tenant.
  */
 class HomeController extends Controller
 {

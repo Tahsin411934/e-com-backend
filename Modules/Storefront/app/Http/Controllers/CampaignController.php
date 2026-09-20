@@ -10,8 +10,7 @@ use Modules\Cart\Services\CampaignService;
  * Storefront campaign API.
  *
  * Same response shape as the legacy /api/v1/campaigns endpoints, scoped to
- * the resolved tenant: this store's campaigns + global platform campaigns,
- * and only products visible on this storefront.
+ * the resolved tenant, with only products visible on this storefront.
  */
 class CampaignController extends Controller
 {

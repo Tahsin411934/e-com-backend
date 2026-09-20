@@ -16,6 +16,7 @@ use Modules\Frontend\Models\NavbarItem;
 use Modules\Frontend\Models\Setting;
 use Modules\Frontend\Models\SubnavbarItem;
 use Modules\Cart\Models\Campaign;
+use Modules\Cart\Models\CampaignProduct;
 use Modules\Store\Models\Store;
 
 class StoreDemoDataSeeder
@@ -742,41 +743,43 @@ class StoreDemoDataSeeder
 
     private function seedCampaigns(int $storeId): void
     {
-        $campaigns = [
+        $storeSlug = Store::findOrFail($storeId)->slug;
+        $campaign = Campaign::updateOrCreate(
+            ['slug' => $storeSlug.'-welcome-discount'],
             [
                 'store_id' => $storeId,
                 'name' => 'Welcome Discount',
-                'slug' => 'welcome-discount',
                 'description' => 'Get 10% off on your first order',
                 'banner_image' => 'https://via.placeholder.com/800x400/22c55e/ffffff?text=Welcome+10%25+Off',
                 'button_text' => 'Claim Offer',
-                'button_url' => '/products?discount=welcome',
                 'priority' => 1,
                 'is_featured' => true,
                 'is_active' => true,
                 'status' => 'active',
                 'starts_at' => now(),
                 'ends_at' => now()->addDays(30),
-            ],
-            [
-                'store_id' => $storeId,
-                'name' => 'Weekend Special',
-                'slug' => 'weekend-special',
-                'description' => 'Special weekend deals on electronics',
-                'banner_image' => 'https://via.placeholder.com/800x400/3b82f6/ffffff?text=Weekend+Deals',
-                'button_text' => 'Shop Now',
-                'button_url' => '/categories/electronics',
-                'priority' => 2,
-                'is_featured' => false,
-                'is_active' => true,
-                'status' => 'active',
-                'starts_at' => now(),
-                'ends_at' => now()->addDays(7),
-            ],
-        ];
+            ]
+        );
 
-        foreach ($campaigns as $campaignData) {
-            Campaign::create($campaignData);
+        $products = Product::query()
+            ->where('store_id', $storeId)
+            ->orderBy('id')
+            ->limit(2)
+            ->get(['id']);
+
+        foreach ($products as $index => $product) {
+            CampaignProduct::updateOrCreate(
+                [
+                    'campaign_id' => $campaign->id,
+                    'product_id' => $product->id,
+                    'variant_id' => null,
+                ],
+                [
+                    'discount_type' => 'percentage',
+                    'discount_value' => 10,
+                    'sort_order' => $index,
+                ]
+            );
         }
     }
 }

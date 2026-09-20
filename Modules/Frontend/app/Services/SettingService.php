@@ -102,6 +102,47 @@ class SettingService
      */
     public function getAll(?int $requestedStoreId = null): array
     {
+        // Store owners must only see settings belonging to their own store.
+        // Do not fall back to platform/global (store_id = NULL) settings.
+        $ownerScope = $this->resolveStoreScope(auth()->user());
+        if ($ownerScope !== null) {
+            if ($ownerScope === 0) {
+                return [];
+            }
+
+            return Setting::where('store_id', $ownerScope)
+                ->orderBy('group')->orderBy('sort_order')
+                ->get()
+                ->map(fn (Setting $setting) => [
+                    'id' => $setting->id,
+                    'group' => $setting->group,
+                    'key' => $setting->key,
+                    'value' => $setting->value,
+                    'type' => $setting->type,
+                    'label' => $setting->label,
+                    'sort_order' => $setting->sort_order,
+                ])
+                ->all();
+        }
+
+        // Platform admin editing a selected store must read only that store's
+        // rows. A NULL store_id is not treated as a fallback/global setting.
+        if ($requestedStoreId !== null && $requestedStoreId > 0) {
+            return Setting::where('store_id', $requestedStoreId)
+                ->orderBy('group')->orderBy('sort_order')
+                ->get()
+                ->map(fn (Setting $setting) => [
+                    'id' => $setting->id,
+                    'group' => $setting->group,
+                    'key' => $setting->key,
+                    'value' => $setting->value,
+                    'type' => $setting->type,
+                    'label' => $setting->label,
+                    'sort_order' => $setting->sort_order,
+                ])
+                ->all();
+        }
+
         $base = Setting::whereNull('store_id')
             ->orderBy('group')->orderBy('sort_order')
             ->get()

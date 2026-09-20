@@ -79,6 +79,11 @@
             </x-form-select>
         </div>
         <div class="mb-4">
+            <x-form-select label="Show on Central Website?" name="is_central_category" id="category_is_central_category">
+                <option value="0">No</option><option value="1">Yes</option>
+            </x-form-select>
+        </div>
+        <div class="mb-4">
             <x-form-textarea label="Description" name="description" id="category_description" placeholder="Category description" rows="4" />
         </div>
     </x-entity-crud>
@@ -91,7 +96,8 @@
             $('#category_name').val(data.name);
             $('#category_slug').val(data.slug);
             $('#category_sort_order').val(data.sort_order || '');
-            $('#category_status').val(data.status);
+        $('#category_status').val(data.status);
+        $('#category_is_central_category').val(data.is_central_category ? '1' : '0');
             $('#category_description').val(data.description || '');
 
             // Show image preview if available

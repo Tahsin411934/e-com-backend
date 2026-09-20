@@ -100,6 +100,11 @@
                 <option value="inactive">Inactive</option>
             </x-form-select>
         </div>
+        <div class="mb-4">
+            <x-form-select label="Show on Central Website?" name="is_central_navbar_item" id="navbar_item_is_central">
+                <option value="0">No</option><option value="1">Yes</option>
+            </x-form-select>
+        </div>
     </x-entity-crud>
 
     @push('scripts')
@@ -112,6 +117,7 @@ Crud.register('navbaritem', 'fill', function (data) {
             $('#navbar_item_icon').val(data.icon || '');
             $('#navbar_item_sort_order').val(data.sort_order || 0);
             $('#navbar_item_status').val(data.status);
+            $('#navbar_item_is_central').val(data.is_central_navbar_item ? '1' : '0');
             $('#navbar_item_store_id').val(data.store_id || '');
         });
 

@@ -110,19 +110,30 @@ class SettingService
                 return [];
             }
 
-            return Setting::where('store_id', $ownerScope)
+            // Use global rows only as field definitions. Never copy their
+            // values into the owner's form; only the owner's own value may
+            // be displayed (especially for site_logo).
+            $definitions = Setting::whereNull('store_id')
                 ->orderBy('group')->orderBy('sort_order')
                 ->get()
-                ->map(fn (Setting $setting) => [
-                    'id' => $setting->id,
-                    'group' => $setting->group,
-                    'key' => $setting->key,
-                    'value' => $setting->value,
-                    'type' => $setting->type,
-                    'label' => $setting->label,
-                    'sort_order' => $setting->sort_order,
-                ])
-                ->all();
+                ->keyBy('key');
+            $owned = Setting::where('store_id', $ownerScope)
+                ->get()
+                ->keyBy('key');
+
+            return $definitions->map(function (Setting $definition) use ($owned) {
+                $setting = $owned->get($definition->key);
+
+                return [
+                    'id' => $setting?->id ?? $definition->id,
+                    'group' => $definition->group,
+                    'key' => $definition->key,
+                    'value' => $setting?->value,
+                    'type' => $definition->type,
+                    'label' => $definition->label,
+                    'sort_order' => $definition->sort_order,
+                ];
+            })->values()->all();
         }
 
         // Platform admin editing a selected store must read only that store's

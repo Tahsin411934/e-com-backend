@@ -48,7 +48,7 @@ class StoreRoleAccessTest extends TestCase
             'status' => 'active',
         ])->roles()->sync([$role->id]);
 
-        $this->post('/login', [
+        $this->post('/', [
             'email' => 'store-role-admin@example.com',
             'password' => 'secret1234',
         ])->assertRedirect();

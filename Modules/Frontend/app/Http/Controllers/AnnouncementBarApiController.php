@@ -24,7 +24,7 @@ class AnnouncementBarApiController extends Controller
         $status = $request->query('status', 'active');
         $perPage = $request->has('per_page') ? min((int) $request->query('per_page', 10), 100) : null;
 
-        $query = AnnouncementBar::where('status', $status)
+        $query = AnnouncementBar::where('status', $status)->where('is_central_announcement', true)
             ->orderBy('sort_order')
             ->orderByDesc('created_at');
 
@@ -55,7 +55,7 @@ class AnnouncementBarApiController extends Controller
      */
     public function show($id): JsonResponse
     {
-        $announcementBar = AnnouncementBar::find($id);
+        $announcementBar = AnnouncementBar::where('id', $id)->where('is_central_announcement', true)->first();
 
         if (! $announcementBar) {
             return ApiResponse::notFound('Announcement bar not found.');

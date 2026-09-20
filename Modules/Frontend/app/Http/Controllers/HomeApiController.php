@@ -54,7 +54,7 @@ class HomeApiController extends Controller
             ->get();
 
         // 2. Get active CTAs sorted by sort_order
-        $ctas = HomepageCta::where('status', 'active')
+        $ctas = HomepageCta::where('status', 'active')->where('is_central_cta', true)
             ->orderBy('sort_order')
             ->orderBy('id')
             ->get();

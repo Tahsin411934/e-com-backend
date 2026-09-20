@@ -18,6 +18,7 @@ class HomepageCta extends Model
 
     protected $fillable = [
         'store_id',
+        'is_central_cta',
         'cta_style',
         'title',
         'subtitle',
@@ -61,6 +62,8 @@ class HomepageCta extends Model
         'sort_order',
         'status',
     ];
+
+    protected $casts = ['is_central_cta' => 'boolean'];
 
     /**
      * NULL store_id = global/platform CTA.

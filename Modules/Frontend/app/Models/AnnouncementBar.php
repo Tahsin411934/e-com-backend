@@ -18,6 +18,7 @@ class AnnouncementBar extends Model
 
     protected $fillable = [
         'store_id',
+        'is_central_announcement',
         'left_text',
         'center_text',
         'right_text',
@@ -29,6 +30,7 @@ class AnnouncementBar extends Model
 
     protected $casts = [
         'sort_order' => 'integer',
+        'is_central_announcement' => 'boolean',
     ];
 
     /**

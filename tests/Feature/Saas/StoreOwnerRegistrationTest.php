@@ -84,8 +84,8 @@ class StoreOwnerRegistrationTest extends TestCase
 
         $this->postJson('/api/v1/register/store-owner', $this->payload)
             ->assertCreated()
-            ->assertJsonPath('data.store.currency_code', 'USD')
-            ->assertJsonPath('data.store.timezone', 'UTC');
+            ->assertJsonPath('data.store.currency_code', 'BDT')
+            ->assertJsonPath('data.store.timezone', 'Asia/Dhaka');
 
         $user = User::where('email', $this->payload['email'])->firstOrFail();
         $this->assertTrue($user->hasAdminAccess());

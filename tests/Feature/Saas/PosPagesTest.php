@@ -12,6 +12,8 @@ use Modules\Catalog\Models\ProductVariant;
 use Modules\Catalog\Models\VariantOption;
 use Modules\Identity\Models\Role;
 use Modules\Identity\Models\User;
+use Modules\Inventory\Models\InventoryLocation;
+use Modules\Inventory\Models\InventoryStock;
 use Modules\Pos\Models\PosRegister;
 use Modules\Pos\Models\PosSaleItem;
 use Modules\Pos\Models\PosShift;
@@ -195,6 +197,20 @@ class PosPagesTest extends TestCase
             'status' => 'active',
         ]);
 
+        $location = InventoryLocation::create([
+            'store_id' => $store->id,
+            'name' => 'Test Warehouse',
+            'location_type' => 'warehouse',
+            'status' => 'active',
+        ]);
+        InventoryStock::create([
+            'location_id' => $location->id,
+            'variant_id' => $variant->id,
+            'variant_option_id' => $option->id,
+            'quantity_on_hand' => 20,
+            'quantity_reserved' => 0,
+        ]);
+
         $shift = PosShift::create([
             'register_id' => $register->id,
             'user_id' => $admin->id,
@@ -298,6 +314,20 @@ class PosPagesTest extends TestCase
             'code' => 'REG-C',
             'type' => 'cash',
             'status' => 'active',
+        ]);
+
+        $location = InventoryLocation::create([
+            'store_id' => $store->id,
+            'name' => 'Campaign Warehouse',
+            'location_type' => 'warehouse',
+            'status' => 'active',
+        ]);
+        InventoryStock::create([
+            'location_id' => $location->id,
+            'variant_id' => $variant->id,
+            'variant_option_id' => $option->id,
+            'quantity_on_hand' => 20,
+            'quantity_reserved' => 0,
         ]);
 
         $shift = PosShift::create([

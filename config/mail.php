@@ -41,7 +41,11 @@ return [
             'transport' => 'smtp',
             // Symfony Mailer schemes are smtp/smtps. STARTTLS on port 587
             // is negotiated automatically by the smtp transport.
-            'scheme' => env('MAIL_SCHEME', 'smtp'),
+            // Symfony Mailer accepts only smtp/smtps as schemes. STARTTLS on
+            // port 587 is handled by the smtp transport.
+            'scheme' => in_array(env('MAIL_SCHEME', 'smtp'), ['smtp', 'smtps'], true)
+                ? env('MAIL_SCHEME', 'smtp')
+                : 'smtp',
             'url' => env('MAIL_URL'),
             'host' => env('MAIL_HOST', '127.0.0.1'),
             'port' => env('MAIL_PORT', 2525),

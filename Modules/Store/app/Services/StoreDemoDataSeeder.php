@@ -549,6 +549,22 @@ class StoreDemoDataSeeder
             ],
         ];
 
+        // Keep demo stores intentionally small and curated. The first two
+        // products are electronics; one product comes from each of the next
+        // selected categories. All remaining catalogue definitions stay
+        // available in code for future expansion but are not seeded.
+        $demoProductSlugs = [
+            'wireless-headphones-pro',
+            'smartphone-x-pro-max',
+            'classic-cotton-tshirt',
+            'smart-led-desk-lamp',
+            'yoga-mat-premium',
+        ];
+        $products = array_values(array_filter(
+            $products,
+            fn (array $product) => in_array($product['slug'], $demoProductSlugs, true)
+        ));
+
         foreach ($products as $productData) {
             $categorySlugs = $productData['categories'] ?? [];
             $variants = $productData['variants'] ?? [];
@@ -755,7 +771,7 @@ class StoreDemoDataSeeder
         $products = Product::query()
             ->where('store_id', $storeId)
             ->orderBy('id')
-            ->limit(2)
+            ->limit(3)
             ->get(['id']);
 
         foreach ($products as $index => $product) {

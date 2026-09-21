@@ -68,6 +68,81 @@ Common status codes: `401` unauthenticated, `403` forbidden, `404` not found,
 Login and registration are rate-limited. Never store the returned token in a
 URL or expose it in server logs.
 
+### Customer registration
+
+`POST /v1/register`
+
+```json
+{
+  "first_name": "Karim",
+  "last_name": "Hasan",
+  "email": "karim@example.com",
+  "phone": "+8801711223344",
+  "password": "secret1234",
+  "password_confirmation": "secret1234"
+}
+```
+
+The public registration endpoint always assigns the Customer role. Roles must
+never be accepted from public input. A successful response contains the user
+payload and a bearer token. Customer registration does not create a store.
+
+### Login
+
+`POST /v1/login`
+
+```json
+{
+  "email": "karim@example.com",
+  "password": "secret1234"
+}
+```
+
+Successful response:
+
+```json
+{
+  "status": "success",
+  "message": "Login successful.",
+  "data": {
+    "user": { "id": 12, "email": "karim@example.com", "roles": [] },
+    "token": "1|sanctum-token"
+  }
+}
+```
+
+Store owners whose email is not verified receive HTTP `403` with
+`email_verification_required: true`. The frontend should show a resend button
+instead of clearing the login form.
+
+### Password reset
+
+```http
+POST /v1/forgot-password
+Content-Type: application/json
+
+{"email":"karim@example.com"}
+```
+
+```http
+POST /v1/reset-password
+Content-Type: application/json
+
+{"email":"karim@example.com","token":"...","password":"newsecret123","password_confirmation":"newsecret123"}
+```
+
+### Password change
+
+`POST /v1/change-password` requires a bearer token:
+
+```json
+{
+  "current_password": "oldsecret123",
+  "password": "newsecret123",
+  "password_confirmation": "newsecret123"
+}
+```
+
 ## Store owner registration and plans
 
 | Method | Endpoint | Auth | Purpose |
@@ -101,6 +176,30 @@ Example:
 }
 ```
 
+### Registration validation
+
+| Field | Required | Rules |
+| --- | --- | --- |
+| `first_name` | Yes | String, max 255 |
+| `last_name` | Yes | String, max 255 |
+| `email` | Yes | Valid email, unique, max 255 |
+| `phone` | Yes | 7–20 characters; digits, spaces, `+`, `-`, `(`, `)`; unique |
+| `password` | Yes | Minimum 8 characters; confirmation required |
+| `store_name` | Yes | 2–160 characters; professional business punctuation only; unique |
+| `store_slug` | Yes | 2–180 characters; alpha-numeric, dash or underscore; unique |
+| `plan_slug` | Yes | Must be active and public, e.g. `free-trial` |
+| `currency_code` | No | Exactly 3 alphabetic characters, e.g. `BDT` |
+| `timezone` | No | Valid PHP timezone, e.g. `Asia/Dhaka` |
+
+The backend normalizes the slug before checking availability. Reserved
+subdomains such as `admin`, `api` and `www` cannot be used. A validation error
+does not create a partial user, store or subscription.
+
+Successful registration returns HTTP `201`. The owner must verify the email
+before login. The verification URL is signed and rate-limited. After
+verification, the owner is redirected to the frontend success page and receives
+the storefront and admin URLs by email.
+
 ## Store domain management
 
 | Method | Endpoint | Auth | Purpose |
@@ -110,6 +209,39 @@ Example:
 | POST | `/v1/store/domains/{id}/verify` | Owner/admin | Verify DNS records |
 | POST | `/v1/store/domains/{id}/primary` | Owner/admin | Set primary domain |
 | DELETE | `/v1/store/domains/{id}` | Owner/admin | Remove domain |
+
+### Add custom domain
+
+```http
+POST /v1/store/domains
+Authorization: Bearer <owner-token>
+Content-Type: application/json
+
+{"domain":"shop.example.com"}
+```
+
+The response includes the domain row and DNS instructions. The domain starts
+with `ssl_status: pending` and is not usable until DNS verification succeeds.
+
+### DNS verification response
+
+```json
+{
+  "status": "success",
+  "data": {
+    "id": 4,
+    "domain": "shop.example.com",
+    "type": "custom",
+    "is_primary": false,
+    "ssl_status": "provisioning",
+    "verified_at": "2026-09-22T10:30:00+00:00"
+  }
+}
+```
+
+If DNS is not ready, the endpoint returns HTTP `422` and includes the required
+CNAME or A-record instructions. A domain owner can only access domain rows
+belonging to their own store; another store's domain returns `404`.
 
 ## Storefront tenant API
 
@@ -148,6 +280,62 @@ If `/v1/storefront/resolve` returns `registered: false` with reason
 `host_not_registered`, the frontend must show the store-not-found page and link
 the visitor to `https://aftsoftandlimited.com/store-register`.
 
+### Host resolution example
+
+```http
+GET /api/v1/storefront/resolve
+X-Store-Host: rahim-electronics.aftsoftandlimited.com
+Accept: application/json
+```
+
+Registered response:
+
+```json
+{
+  "status": "success",
+  "data": {
+    "registered": true,
+    "host": "rahim-electronics.aftsoftandlimited.com",
+    "store": { "id": 7, "name": "Rahim Electronics", "slug": "rahim-electronics" }
+  }
+}
+```
+
+Unregistered response:
+
+```json
+{
+  "status": "success",
+  "data": {
+    "registered": false,
+    "host": "unknown.aftsoftandlimited.com",
+    "reason": "host_not_registered"
+  }
+}
+```
+
+### Storefront query parameters
+
+| Endpoint | Parameters |
+| --- | --- |
+| `products/search` | `q`, optional `page`, `per_page`, `category`, `brand`, `sort` |
+| `categories/{slug}/products` | optional `page`, `per_page`, `sort`, `min_price`, `max_price` |
+| `sitemap/products` | `page`, `limit` (server applies a safe maximum) |
+| `subnavbar/{slug}/products` | optional `page`, `per_page` |
+
+Product detail responses include the primary product image and ordered gallery
+images. The image with `is_main: true` is used for cards and the complete
+ordered collection is used by the detail-page slider.
+
+### Tenant isolation rules
+
+- The tenant is resolved from `X-Store-Host` or the request host.
+- Client input cannot override the resolved `store_id`.
+- Product, category, campaign, banner, setting and order queries are scoped to
+  the resolved store.
+- Customer orders are additionally scoped to the authenticated customer.
+- Unknown, central, reserved and unverified hosts are rejected.
+
 ## Admin API resource groups
 
 Admin API resources are protected by Sanctum plus role/permission middleware.
@@ -169,6 +357,84 @@ update`, and `DELETE destroy` unless noted otherwise.
 
 The browser admin panel should use the web routes where server-rendered pages
 are provided, and the API routes for asynchronous tables/forms.
+
+### Permission naming convention
+
+Admin resources follow the permission pattern:
+
+```text
+<resource>.view
+<resource>.create
+<resource>.edit
+<resource>.delete
+```
+
+Examples:
+
+| Action | Required permission |
+| --- | --- |
+| View products | `products.view` |
+| Create products | `products.create` |
+| Update products | `products.edit` |
+| Delete products | `products.delete` |
+| View orders | `orders.view` |
+| Update delivery | `deliveries.edit` |
+| Manage plans | `plans.view`, `plans.create`, `plans.edit`, `plans.delete` |
+
+The Super Admin role is reserved for platform administration. Store Owner and
+Store Staff access must remain limited to their own store context.
+
+### Pagination and table endpoints
+
+Admin data-table endpoints accept the standard table parameters used by the
+panel, such as `page`, `per_page`, `search`, `sort`, `direction` and filters.
+Clients should not assume a fixed page size. The backend response should be
+treated as the source of truth for `current_page`, `last_page`, `total` and
+`per_page`.
+
+## cURL smoke tests
+
+Check plan availability:
+
+```bash
+curl -sS -H "Accept: application/json" \
+  https://admin.aftsoftandlimited.com/api/v1/plans
+```
+
+Resolve a storefront:
+
+```bash
+curl -sS -H "Accept: application/json" \
+  -H "X-Store-Host: demo.aftsoftandlimited.com" \
+  https://admin.aftsoftandlimited.com/api/v1/storefront/resolve
+```
+
+Read store settings:
+
+```bash
+curl -sS -H "Accept: application/json" \
+  -H "X-Store-Host: demo.aftsoftandlimited.com" \
+  https://admin.aftsoftandlimited.com/api/v1/storefront/settings
+```
+
+Authenticated request:
+
+```bash
+curl -sS -H "Accept: application/json" \
+  -H "Authorization: Bearer $TOKEN" \
+  https://admin.aftsoftandlimited.com/api/v1/store
+```
+
+## Security checklist for API consumers
+
+- Use HTTPS only in production.
+- Do not put bearer tokens in query strings or local logs.
+- Send the tenant host on every storefront API request.
+- Display field-level `422` errors without discarding submitted form values.
+- Handle `401` by clearing the session and redirecting to login.
+- Handle `403` as an authorization or email-verification state, not as a retry.
+- Back off on `429` responses and respect the response headers.
+- Treat all server response data as untrusted input when rendering HTML.
 
 ## Operational requirements
 

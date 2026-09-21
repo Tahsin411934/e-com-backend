@@ -32,7 +32,7 @@ class StoreRegisteredMail extends Mailable
             view: 'emails.store-registered',
             with: [
                 'storeUrl' => StoreDomainResolver::urlForDomain($this->storeDomain->domain),
-                'loginUrl' => rtrim((string) config('app.frontend_url', config('app.url')), '/').'/login',
+                'loginUrl' => rtrim((string) config('app.admin_url', config('app.url')), '/').'/login',
                 'logoUrl' => (string) env('MAIL_LOGO_URL', 'https://aftsoftandlimited.com/aft-navbar-logo-clean.png'),
             ],
         );

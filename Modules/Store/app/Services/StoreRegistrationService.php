@@ -106,7 +106,15 @@ class StoreRegistrationService
         } catch (\Throwable $e) {
             report($e);
 
-            return ApiResponse::error('Registration failed. Please try again later.', 500);
+            $message = config('app.debug')
+                ? 'Registration failed: '.$e->getMessage()
+                : 'Registration failed. Please try again later.';
+
+            return ApiResponse::error($message, 500, config('app.debug') ? [
+                'exception' => class_basename($e),
+                'file' => basename($e->getFile()),
+                'line' => $e->getLine(),
+            ] : []);
         }
     }
 

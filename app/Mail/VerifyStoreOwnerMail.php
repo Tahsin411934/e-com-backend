@@ -3,17 +3,14 @@
 namespace App\Mail;
 
 use Illuminate\Mail\Mailable;
-use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
 use Illuminate\Queue\SerializesModels;
 use Modules\Identity\Models\User;
 
-class VerifyStoreOwnerMail extends Mailable implements ShouldQueue
+class VerifyStoreOwnerMail extends Mailable
 {
     use SerializesModels;
-
-    public bool $afterCommit = true;
 
     public function __construct(public User $user, public string $verificationUrl) {}
 

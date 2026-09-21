@@ -3,7 +3,6 @@
 namespace App\Mail;
 
 use Illuminate\Mail\Mailable;
-use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
 use Illuminate\Queue\SerializesModels;
@@ -12,7 +11,7 @@ use Modules\Store\Models\Store;
 use Modules\Store\Models\StoreDomain;
 use Modules\Store\Support\StoreDomainResolver;
 
-class StoreRegisteredMail extends Mailable implements ShouldQueue
+class StoreRegisteredMail extends Mailable
 {
     use SerializesModels;
 

@@ -101,7 +101,10 @@ class StoreRegistrationService
                 now()->addHours(24),
                 ['id' => $user->id, 'hash' => sha1($user->email)]
             );
-            Mail::to($user->email)->queue(new VerifyStoreOwnerMail($user, $verificationUrl));
+            // Send the verification message immediately. This is intentional:
+            // public registration must not depend on a separately managed
+            // queue worker before the owner receives the first login email.
+            Mail::to($user->email)->send(new VerifyStoreOwnerMail($user, $verificationUrl));
 
             return ApiResponse::created([
                 'user' => $user->load('roles'),
@@ -132,7 +135,7 @@ class StoreRegistrationService
             ['id' => $user->id, 'hash' => sha1($user->email)]
         );
 
-        Mail::to($user->email)->queue(new VerifyStoreOwnerMail($user, $verificationUrl));
+        Mail::to($user->email)->send(new VerifyStoreOwnerMail($user, $verificationUrl));
     }
 
     /**

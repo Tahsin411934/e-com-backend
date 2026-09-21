@@ -58,7 +58,7 @@ class StoreEmailVerificationController extends Controller
         if ($verifiedNow) {
             if ($primaryDomain) {
                 try {
-                    Mail::to($user->email)->queue(new StoreRegisteredMail($user, $store, $primaryDomain));
+                    Mail::to($user->email)->send(new StoreRegisteredMail($user, $store, $primaryDomain));
                     $welcomeSent = true;
                 } catch (\Throwable $exception) {
                     report($exception);

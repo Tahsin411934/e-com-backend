@@ -55,8 +55,8 @@ return [
     'url' => env('APP_URL', 'http://localhost'),
 
     // Common admin dashboard URL used in customer-facing emails.
-    'admin_url' => env('ADMIN_URL', 'http://localhost:3000'),
-    'public_site_url' => env('PUBLIC_SITE_URL', 'http://localhost:3000'),
+    'admin_url' => env('ADMIN_URL', 'https://admin.aftsoftandlimited.com'),
+    'public_site_url' => env('PUBLIC_SITE_URL', 'https://aftsoftandlimited.com'),
 
     /*
     |--------------------------------------------------------------------------

@@ -134,6 +134,7 @@ class StoreDemoDataSeeder
                 'name' => 'Wireless Headphones Pro',
                 'slug' => 'wireless-headphones-pro',
                 'image' => 'demo/products/wireless-headphones-pro.jpg',
+                'gallery' => ['demo/products/wireless-headphones-pro-gallery-2.jpg'],
                 'short_description' => 'Premium noise-cancelling headphones',
                 'description' => 'High-quality wireless headphones with active noise cancellation and 30-hour battery life.',
                 'product_type' => 'physical',
@@ -151,6 +152,7 @@ class StoreDemoDataSeeder
                 'name' => 'Smartphone X Pro Max',
                 'slug' => 'smartphone-x-pro-max',
                 'image' => 'demo/products/smartphone-x-pro-max.jpg',
+                'gallery' => ['demo/products/smartphone-x-pro-max-gallery-2.jpg'],
                 'short_description' => 'Latest flagship smartphone',
                 'description' => 'Cutting-edge smartphone with 200MP camera, 120Hz display, and 5G connectivity.',
                 'product_type' => 'physical',
@@ -203,6 +205,7 @@ class StoreDemoDataSeeder
                 'name' => 'Classic Cotton T-Shirt',
                 'slug' => 'classic-cotton-tshirt',
                 'image' => 'demo/products/classic-cotton-tshirt.jpg',
+                'gallery' => ['demo/products/classic-cotton-tshirt-gallery-2.jpg'],
                 'short_description' => 'Comfortable everyday t-shirt',
                 'description' => '100% organic cotton t-shirt available in multiple colors and sizes.',
                 'product_type' => 'physical',
@@ -296,6 +299,7 @@ class StoreDemoDataSeeder
                 'name' => 'Smart LED Desk Lamp',
                 'slug' => 'smart-led-desk-lamp',
                 'image' => 'demo/products/smart-led-desk-lamp.jpg',
+                'gallery' => ['demo/products/smart-led-desk-lamp-gallery-2.jpg'],
                 'short_description' => 'Adjustable smart desk lamp',
                 'description' => 'Touch-controlled LED desk lamp with adjustable brightness and color temperature.',
                 'product_type' => 'physical',
@@ -361,6 +365,7 @@ class StoreDemoDataSeeder
                 'name' => 'Yoga Mat Premium',
                 'slug' => 'yoga-mat-premium',
                 'image' => 'demo/products/yoga-mat-premium.jpg',
+                'gallery' => ['demo/products/yoga-mat-premium-gallery-2.jpg'],
                 'short_description' => 'Non-slip exercise yoga mat',
                 'description' => 'Extra thick 6mm eco-friendly TPE yoga mat with alignment lines and carrying strap.',
                 'product_type' => 'physical',
@@ -574,8 +579,9 @@ class StoreDemoDataSeeder
             $categorySlugs = $productData['categories'] ?? [];
             $variants = $productData['variants'] ?? [];
             $productImage = $productData['image'] ?? null;
+            $productGallery = $productData['gallery'] ?? [];
             unset($productData['categories'], $productData['variants']);
-            unset($productData['image']);
+            unset($productData['image'], $productData['gallery']);
 
             $product = Product::create(array_merge($productData, [
                 'store_id' => $storeId,
@@ -588,14 +594,22 @@ class StoreDemoDataSeeder
                 $product->categories()->syncWithoutDetaching($catIds);
             }
 
-            $productImageExists = $productImage
-                && is_file(storage_path('app/public/'.$productImage));
+            $gallery = array_values(array_filter(array_merge([$productImage], $productGallery), function (?string $image): bool {
+                return $image && is_file(storage_path('app/public/'.$image));
+            }));
 
-            $product->images()->create([
-                'image_url' => $productImageExists ? $productImage : 'demo/products/default.svg',
-                'alt_text' => $product->name,
-                'sort_order' => 0,
-            ]);
+            if ($gallery === []) {
+                $gallery = ['demo/products/default.svg'];
+            }
+
+            foreach ($gallery as $sortOrder => $image) {
+                $product->images()->create([
+                    'image_url' => $image,
+                    'alt_text' => $product->name.' - image '.($sortOrder + 1),
+                    'sort_order' => $sortOrder,
+                    'is_main' => $sortOrder === 0,
+                ]);
+            }
 
             foreach ($variants as $i => $variantData) {
                 $variantData['sku_suffix'] ??= '';

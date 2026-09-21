@@ -21,7 +21,7 @@
     <div class="shrink-0 px-4 py-4 sm:px-6 sm:py-5 border-b dark:border-gray-700 bg-gradient-to-r from-primary-light to-primary-light dark:from-gray-700 dark:to-gray-800 flex justify-between items-center gap-3">
         <h2 class="min-w-0 break-words text-xl sm:text-2xl font-bold text-gray-800 dark:text-gray-100" id="drawerTitle">{{ e($title) }}</h2>
 
-        <button type="button"
+        <button type="button" class="js-global-drawer-close"
             data-drawer-id="{{ e($id) }}" data-overlay-id="{{ e($overlayId) }}"
             class="shrink-0 text-gray-500 dark:text-gray-400 hover:text-red-600 p-1 hover:bg-red-50 dark:hover:bg-gray-700 rounded-lg transition-colors duration-200">
             <i class="fa-solid fa-times text-2xl"></i>

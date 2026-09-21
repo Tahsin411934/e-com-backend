@@ -29,6 +29,16 @@
 
             <!-- Campaign list -->
             <div class="lg:col-span-2 space-y-3">
+                <div class="flex flex-col gap-2 rounded-xl border bg-white p-3 sm:flex-row">
+                    <input x-model="filters.search" @input.debounce.300ms="loadCampaigns()" placeholder="Search campaigns..." class="flex-1 rounded-lg border-gray-300 text-sm">
+                    <select x-model="filters.store_id" @change="loadCampaigns()" class="rounded-lg border-gray-300 text-sm">
+                        <option value="">All stores</option>
+                        <template x-for="store in stores" :key="store.id"><option :value="store.id" x-text="store.name"></option></template>
+                    </select>
+                    <select x-model="filters.status" @change="loadCampaigns()" class="rounded-lg border-gray-300 text-sm">
+                        <option value="">All statuses</option><option value="active">Active</option><option value="draft">Draft</option><option value="paused">Paused</option>
+                    </select>
+                </div>
                 <template x-for="campaign in campaigns" :key="campaign.id">
                     <div class="bg-white border rounded-xl p-4">
                         <div class="flex justify-between items-start gap-3">
@@ -169,10 +179,11 @@
             const request = (url, options={}) => { const isForm = options.body instanceof FormData; return fetch(url,{headers:{'X-CSRF-TOKEN':csrf,'Accept':'application/json',...(isForm ? {} : {'Content-Type':'application/json'})},...options}).then(r=>r.json()) };
             const toLocalInput = (iso) => { if(!iso) return ''; const d=new Date(iso); if(isNaN(d.getTime())) return ''; const p=n=>String(n).padStart(2,'0'); return d.getFullYear()+'-'+p(d.getMonth()+1)+'-'+p(d.getDate())+'T'+p(d.getHours())+':'+p(d.getMinutes()); };
             return {
-                campaigns:[], selected:null, selectedData:null, searchResults:[], discount_type:'percentage', discount_value:'', editingEntryId:null, editEntry:{discount_type:'percentage',discount_value:''},
+                campaigns:[], stores:[], filters:{search:'',store_id:'',status:''}, selected:null, selectedData:null, searchResults:[], discount_type:'percentage', discount_value:'', editingEntryId:null, editEntry:{discount_type:'percentage',discount_value:''},
                 form:{name:'',description:'',banner_image:null,starts_at:'',ends_at:'',status:'draft',is_central_campaign:'0'},
                 editForm:{id:null,name:'',description:'',button_text:'',priority:0,status:'draft',starts_at:'',ends_at:'',is_featured:false,is_active:true,is_central_campaign:'0',banner_image:null,banner_preview:null},
-                load(){ Crud.register('campaign','save',()=>this.saveEdit()); request('{{ route('campaigns.list') }}').then(d=>this.campaigns=d.data); },
+                load(){ Crud.register('campaign','save',()=>this.saveEdit()); request('{{ route('campaigns.stores') }}').then(d=>this.stores=d.data||[]); this.loadCampaigns(); },
+                loadCampaigns(){ const params=new URLSearchParams(); Object.entries(this.filters).forEach(([key,value])=>{ if(value) params.set(key,value); }); request('{{ route('campaigns.list') }}?'+params.toString()).then(d=>this.campaigns=d.data||[]); },
                 create(){ const body=new FormData(); Object.entries(this.form).forEach(([key,value])=>{ if(value!==null && value!=='') body.append(key,value) }); request('{{ route('campaigns.store') }}',{method:'POST',body}).then(()=>{ this.form={name:'',description:'',banner_image:null,starts_at:'',ends_at:'',status:'draft'}; this.load(); }); },
                 toggleActive(id){ request('/campaigns/'+id+'/toggle-active',{method:'POST'}).then(()=>this.load()); },
                 select(id){ this.selected=id; request('/campaigns/'+id).then(d=>{ this.selectedData=d.data; this.$nextTick(()=>this.initSortable()); }); },
@@ -184,9 +195,9 @@
                 editEntrySave(item){ if(!this.editingEntryId) return; request('/campaigns/'+this.selected+'/products/'+item.id,{method:'POST',body:JSON.stringify({_method:'PUT',discount_type:this.editEntry.discount_type,discount_value:this.editEntry.discount_value})}).then(()=>{ this.editingEntryId=null; this.select(this.selected); }); },
                 initSortable(){ this.$nextTick(()=>{ const el=document.getElementById('includedProductsList'); if(!el || typeof Sortable==='undefined') return; if(el.__sortable) el.__sortable.destroy(); const vm=this; el.__sortable=Sortable.create(el,{animation:150,handle:'.drag-handle',ghostClass:'sortable-ghost',onEnd:function(){ const ids=Array.from(el.children).filter(c=>c.dataset && c.dataset.id).map(c=>parseInt(c.dataset.id,10)); if(!ids.length) return; request('/campaigns/'+vm.selected+'/products/reorder',{method:'POST',body:JSON.stringify({ordered_ids:ids})}).then(()=>vm.select(vm.selected)); }}); }); },
                 formatDate(iso){ if(!iso) return ''; const d=new Date(iso); return isNaN(d.getTime()) ? '' : d.toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'}); },
-                editCampaign(campaign){ this.editForm={id:campaign.id,name:campaign.name??'',description:campaign.description??'',button_text:campaign.button_text??'',priority:campaign.priority??0,status:campaign.status??'draft',starts_at:toLocalInput(campaign.starts_at),ends_at:toLocalInput(campaign.ends_at),is_featured:!!campaign.is_featured,is_active:!!campaign.is_active,is_central_campaign:campaign.is_central_campaign?'1':'0',banner_image:null,banner_preview:(campaign.banner_image?('/storage/'+campaign.banner_image.replace(/^\//,'')):null),remove_banner:false}; this.$refs.bannerInput.value=''; if(window.openGlobalDrawer) openGlobalDrawer('campaignDrawer','campaignOverlay'); },
+                editCampaign(campaign){ this.editForm={id:campaign.id,name:campaign.name??'',description:campaign.description??'',button_text:campaign.button_text??'',priority:campaign.priority??0,status:campaign.status??'draft',starts_at:toLocalInput(campaign.starts_at),ends_at:toLocalInput(campaign.ends_at),is_featured:!!campaign.is_featured,is_active:!!campaign.is_active,is_central_campaign:campaign.is_central_campaign?'1':'0',banner_image:null,banner_preview:campaign.banner_image??null,remove_banner:false}; this.$refs.bannerInput.value=''; if(window.openGlobalDrawer) openGlobalDrawer('campaignDrawer','campaignOverlay'); },
                 removeBanner(){ this.editForm.remove_banner=true; this.editForm.banner_image=null; this.editForm.banner_preview=null; this.$refs.bannerInput.value=''; },
-                saveEdit(){ if(!this.editForm.id) return; const body=new FormData(); ['name','description','button_text','status','priority'].forEach(k=>{ const v=this.editForm[k]; if(v!==null && v!=='') body.append(k,v); }); body.append('is_featured', this.editForm.is_featured?'1':'0'); body.append('is_active', this.editForm.is_active?'1':'0'); ['starts_at','ends_at'].forEach(k=>{ const v=this.editForm[k]; if(v!==null && v!=='') body.append(k,v); }); if(this.editForm.remove_banner) body.append('remove_banner','1'); if(this.editForm.banner_image) body.append('banner_image', this.editForm.banner_image); body.append('_method','PUT'); request('/campaigns/'+this.editForm.id,{method:'POST',body}).then(()=>{ if(window.closeGlobalDrawer) closeGlobalDrawer('campaignDrawer','campaignOverlay'); this.load(); }); }
+                saveEdit(){ if(!this.editForm.id) return; const body=new FormData(); ['name','description','button_text','status','priority'].forEach(k=>{ const v=this.editForm[k]; if(v!==null && v!=='') body.append(k,v); }); body.append('is_featured', this.editForm.is_featured?'1':'0'); body.append('is_active', this.editForm.is_active?'1':'0'); body.append('is_central_campaign', this.editForm.is_central_campaign==='1'?'1':'0'); ['starts_at','ends_at'].forEach(k=>{ const v=this.editForm[k]; if(v!==null && v!=='') body.append(k,v); }); if(this.editForm.remove_banner) body.append('remove_banner','1'); if(this.editForm.banner_image) body.append('banner_image', this.editForm.banner_image); body.append('_method','PUT'); request('/campaigns/'+this.editForm.id,{method:'POST',body}).then(()=>{ if(window.closeGlobalDrawer) closeGlobalDrawer('campaignDrawer','campaignOverlay'); this.loadCampaigns(); }); }
             };
         }
     </script>

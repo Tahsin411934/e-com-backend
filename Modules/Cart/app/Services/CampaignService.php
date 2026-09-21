@@ -17,11 +17,27 @@ class CampaignService
 
     // ===== Admin (web) =====
 
-    public function list(): JsonResponse
+    public function list(\Illuminate\Http\Request $request): JsonResponse
     {
         // forCurrentStore: platform admins see every campaign, a signed-in
         // store owner only sees their own (store_id NULL rows are platform-wide).
-        return ApiResponse::success(Campaign::withCount('products')->forCurrentStore()->latest()->get());
+        $query = Campaign::with('store:id,name')->withCount('products')->forCurrentStore();
+
+        if ($request->filled('store_id') && CurrentStore::id() === null) {
+            $query->where('store_id', (int) $request->input('store_id'));
+        }
+
+        if ($request->filled('search')) {
+            $search = trim((string) $request->input('search'));
+            $query->where(fn ($q) => $q->where('name', 'like', "%{$search}%")
+                ->orWhere('description', 'like', "%{$search}%"));
+        }
+
+        if ($request->filled('status') && in_array($request->input('status'), ['draft', 'active', 'paused'], true)) {
+            $query->where('status', $request->input('status'));
+        }
+
+        return ApiResponse::success($query->latest()->get());
     }
 
     public function store(array $data): JsonResponse
@@ -34,11 +50,13 @@ class CampaignService
 
     public function show(Campaign $campaign): JsonResponse
     {
+        $this->ensureCampaignAccess($campaign);
         return ApiResponse::success($campaign->load('products.product'));
     }
 
     public function update(Campaign $campaign, array $data, bool $removeBanner = false): JsonResponse
     {
+        $this->ensureCampaignAccess($campaign);
         $data = $this->replaceBanner($campaign, $data, $removeBanner);
         $campaign->update($data);
 
@@ -47,6 +65,7 @@ class CampaignService
 
     public function destroy(Campaign $campaign): JsonResponse
     {
+        $this->ensureCampaignAccess($campaign);
         $campaign->delete();
 
         return ApiResponse::success(null, 'Campaign deleted successfully.');
@@ -54,6 +73,7 @@ class CampaignService
 
     public function toggleActive(Campaign $campaign): JsonResponse
     {
+        $this->ensureCampaignAccess($campaign);
         $campaign->is_active = ! $campaign->is_active;
         $campaign->save();
 
@@ -62,8 +82,13 @@ class CampaignService
 
     public function searchProducts(string $q): JsonResponse
     {
+        $query = Product::where('status', 'active');
+        if (CurrentStore::id() !== null) {
+            $query->where('store_id', CurrentStore::id());
+        }
+
         return ApiResponse::success(
-            Product::where('status', 'active')
+            $query
                 ->where(fn ($query) => $query->where('name', 'like', "%{$q}%")->orWhere('slug', 'like', "%{$q}%"))
                 ->with('variants:id,product_id,name,sku,sale_price')
                 ->limit(20)
@@ -74,6 +99,7 @@ class CampaignService
 
     public function addProduct(Campaign $campaign, array $data): JsonResponse
     {
+        $this->ensureCampaignAccess($campaign);
         $entry = $campaign->products()->firstOrNew(['product_id' => $data['product_id'], 'variant_id' => $data['variant_id'] ?? null]);
         if (! $entry->exists) {
             $entry->sort_order = ((int) $campaign->products()->max('sort_order')) + 1;
@@ -86,6 +112,7 @@ class CampaignService
 
     public function updateProduct(Campaign $campaign, int $campaignProduct, array $data): JsonResponse
     {
+        $this->ensureCampaignAccess($campaign);
         $entry = $campaign->products()->whereKey($campaignProduct)->firstOrFail();
         $entry->update($data);
 
@@ -94,6 +121,7 @@ class CampaignService
 
     public function reorderProducts(Campaign $campaign, array $orderedIds): JsonResponse
     {
+        $this->ensureCampaignAccess($campaign);
         foreach ($orderedIds as $i => $id) {
             $campaign->products()->whereKey($id)->update(['sort_order' => $i + 1]);
         }
@@ -104,6 +132,7 @@ class CampaignService
 
     public function removeProduct(Campaign $campaign, int $campaignProduct): JsonResponse
     {
+        $this->ensureCampaignAccess($campaign);
         $entry = $campaign->products()->whereKey($campaignProduct)->firstOrFail();
         $entry->delete();
 
@@ -220,6 +249,13 @@ class CampaignService
         unset($data['banner_image_file'], $data['remove_banner']);
 
         return $data;
+    }
+
+    private function ensureCampaignAccess(Campaign $campaign): void
+    {
+        if (CurrentStore::id() !== null && (int) $campaign->store_id !== CurrentStore::id()) {
+            abort(404, 'Campaign not found.');
+        }
     }
 
     private function serialize(Campaign $campaign): array

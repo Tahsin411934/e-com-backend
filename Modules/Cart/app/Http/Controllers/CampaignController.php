@@ -7,6 +7,8 @@ use Illuminate\Http\Request;
 use Modules\Cart\Http\Requests\CampaignRequest;
 use Modules\Cart\Models\Campaign;
 use Modules\Cart\Services\CampaignService;
+use Modules\Store\Models\Store;
+use Modules\Store\Support\CurrentStore;
 
 class CampaignController extends Controller
 {
@@ -17,9 +19,19 @@ class CampaignController extends Controller
         return view('cart::campaigns.index');
     }
 
-    public function list()
+    public function list(Request $request)
     {
-        return $this->campaignService->list();
+        return $this->campaignService->list($request);
+    }
+
+    public function stores()
+    {
+        $query = Store::query()->where('status', 'active');
+        if (CurrentStore::id() !== null) {
+            $query->whereKey(CurrentStore::id());
+        }
+
+        return response()->json(['data' => $query->orderBy('name')->get(['id', 'name'])]);
     }
 
     public function store(CampaignRequest $request)

@@ -17,6 +17,7 @@ Route::middleware(['auth', 'verified', 'admin'])->group(function () {
 
     Route::get('/campaigns', [CampaignController::class, 'index'])->name('campaigns.index')->middleware('permission:campaigns.view');
     Route::get('/campaigns/list', [CampaignController::class, 'list'])->name('campaigns.list')->middleware('permission:campaigns.view');
+    Route::get('/campaigns/stores', [CampaignController::class, 'stores'])->name('campaigns.stores')->middleware('permission:campaigns.view');
     Route::post('/campaigns', [CampaignController::class, 'store'])->name('campaigns.store')->middleware('permission:campaigns.create');
     Route::get('/campaigns/{campaign}', [CampaignController::class, 'show'])->name('campaigns.show')->middleware('permission:campaigns.view');
     Route::put('/campaigns/{campaign}', [CampaignController::class, 'update'])->name('campaigns.update')->middleware('permission:campaigns.edit');

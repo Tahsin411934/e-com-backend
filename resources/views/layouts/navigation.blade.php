@@ -1,4 +1,8 @@
 <header class="h-[60px] theme-navbar border-b border-primary flex items-center justify-between px-6 flex-shrink-0 z-20">
+    <button id="mobileMenuBtn" type="button" aria-controls="sidebar" aria-expanded="false" aria-label="Open navigation menu"
+        class="mobile-menu-btn w-9 h-9 rounded-lg theme-navbar-btn text-white items-center justify-center shadow-sm">
+        <i class="fas fa-bars text-[16px]"></i>
+    </button>
     <button id="collapseBtn"
         class="w-8 h-8 rounded-full border  theme-navbar-btn flex items-center justify-center text-gray-100 flex-shrink-0 shadow-sm">
         <i class="fas fa-chevron-left text-[15px]" id="collapseIcon"></i>

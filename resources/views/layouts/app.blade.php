@@ -75,6 +75,7 @@
 
     <!-- Sidebar -->
     @include('layouts.sidebar')
+    <div id="sidebarOverlay" class="sidebar-overlay" aria-hidden="true"></div>
 
     <!-- Theme Customizer: Floating color picker + dark/light mode -->
     <x-theme-customizer />

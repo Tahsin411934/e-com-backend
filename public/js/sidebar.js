@@ -4,6 +4,33 @@
     const collapseBtn = document.getElementById('collapseBtn');
     const collapseIcon = document.getElementById('collapseIcon');
     const navTooltip = document.getElementById('navTooltip');
+    const mobileMenuBtn = document.getElementById('mobileMenuBtn');
+    const sidebarOverlay = document.getElementById('sidebarOverlay');
+
+    function closeMobileSidebar() {
+        sidebar.classList.remove('mobile-open');
+        sidebarOverlay?.classList.remove('visible');
+        mobileMenuBtn?.setAttribute('aria-expanded', 'false');
+        document.body.classList.remove('sidebar-open');
+    }
+
+    function openMobileSidebar() {
+        sidebar.classList.add('mobile-open');
+        sidebarOverlay?.classList.add('visible');
+        mobileMenuBtn?.setAttribute('aria-expanded', 'true');
+        document.body.classList.add('sidebar-open');
+    }
+
+    mobileMenuBtn?.addEventListener('click', () => {
+        sidebar.classList.contains('mobile-open') ? closeMobileSidebar() : openMobileSidebar();
+    });
+    sidebarOverlay?.addEventListener('click', closeMobileSidebar);
+    sidebar.addEventListener('click', (event) => {
+        if (event.target.closest('a')) closeMobileSidebar();
+    });
+    window.addEventListener('resize', () => {
+        if (window.innerWidth >= 640) closeMobileSidebar();
+    });
     
     // Restore collapsed state from localStorage
     let collapsed = localStorage.getItem('sidebarCollapsed') === 'true';

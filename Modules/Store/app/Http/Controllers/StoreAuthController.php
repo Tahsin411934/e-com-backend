@@ -25,9 +25,16 @@ class StoreAuthController extends Controller
     public function slugAvailability(Request $request)
     {
         $slug = Str::slug((string) $request->query('slug'));
+        $reserved = collect(config('storefront.reserved_subdomains', []))
+            ->map(fn (string $value) => Str::slug($value))
+            ->contains($slug);
 
         if ($slug === '') {
             return ApiResponse::success(['available' => false, 'slug' => $slug, 'reason' => 'invalid']);
+        }
+
+        if ($reserved) {
+            return ApiResponse::success(['available' => false, 'slug' => $slug, 'reason' => 'reserved']);
         }
 
         $available = ! Store::withTrashed()->where('slug', $slug)->exists();

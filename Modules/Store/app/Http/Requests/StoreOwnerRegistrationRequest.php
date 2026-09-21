@@ -49,7 +49,7 @@ class StoreOwnerRegistrationRequest extends FormRequest
             ],
             'store_slug' => [
                 'nullable', 'string', 'max:180', 'alpha_dash',
-                'not_in:admin,api,www,mail,support,login,register,dashboard,app,central,store',
+                Rule::notIn(config('storefront.reserved_subdomains', [])),
                 'unique:stores,slug',
             ],
             'currency_code' => ['nullable', 'string', 'size:3', 'alpha'],
@@ -66,7 +66,7 @@ class StoreOwnerRegistrationRequest extends FormRequest
             'store_name.regex' => 'Store name must look professional: letters, numbers, spaces and characters like & . , ( ) \' - / + only.',
             'store_name.unique' => 'This store name is already registered. Please choose another name.',
             'store_slug.unique' => 'This store URL slug is already taken.',
-            'store_slug.not_in' => 'This store URL is reserved. Please choose another name.',
+            'store_slug.not_in' => 'This store URL is reserved for the platform. Please choose another name.',
             'currency_code.size' => 'Currency code must be exactly 3 characters (e.g. USD, BDT).',
             'timezone.timezone' => 'Please provide a valid timezone (e.g. Asia/Dhaka).',
         ];

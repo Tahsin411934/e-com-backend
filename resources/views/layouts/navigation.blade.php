@@ -43,10 +43,10 @@
         </div>
 
         <!-- Settings gear -->
-        <button
+        <a href="{{ route('profile.edit') }}" aria-label="Open profile settings" title="Profile settings"
             class="w-9 h-9 border border-gray-200 dark:border-gray-600 rounded-lg flex items-center justify-center text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
             <i class="fas fa-cog text-[15px]"></i>
-        </button>
+        </a>
 
         <!-- Divider -->
         <div class="w-px h-6 bg-gray-200 dark:bg-gray-600"></div>
@@ -84,8 +84,16 @@
             <div
                 class="absolute right-0 top-12 w-48 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
 
-                <a href="{{ route('profile.edit') }}" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700">
-                    Profile
+                <div class="px-4 py-3 border-b border-gray-100 dark:border-gray-700">
+                    <p class="text-sm font-semibold text-gray-800 dark:text-gray-200 truncate">{{ Auth::user()->name }}</p>
+                    <p class="text-[11px] text-gray-400 truncate">{{ Auth::user()->email }}</p>
+                    @if(Auth::user()->roles->isNotEmpty())
+                        <p class="text-[11px] text-primary mt-1">{{ Auth::user()->roles->pluck('name')->implode(', ') }}</p>
+                    @endif
+                </div>
+
+                <a href="{{ route('profile.edit') }}" class="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700">
+                    <i class="fas fa-user-gear w-4 text-gray-400"></i> Profile settings
                 </a>
 
                 <form method="POST" action="{{ route('logout') }}">

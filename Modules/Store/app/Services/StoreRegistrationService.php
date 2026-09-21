@@ -2,10 +2,12 @@
 
 namespace Modules\Store\Services;
 
+use App\Mail\StoreRegisteredMail;
 use App\Helpers\ApiResponse;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
 use Modules\Identity\Models\Role;
 use Modules\Identity\Models\User;
@@ -78,6 +80,10 @@ class StoreRegistrationService
             // away — it is always trusted and needs no DNS verification.
             $storeDomain = $this->createSubdomain($store);
 
+            // Keep this synchronous and inside the transaction. If SMTP fails,
+            // the exception rolls back the user, store, seed data and domain.
+            Mail::to($user->email)->send(new StoreRegisteredMail($user, $store, $storeDomain));
+
             return ['user' => $user, 'store' => $store, 'store_domain' => $storeDomain];
         });
     }
@@ -96,7 +102,7 @@ class StoreRegistrationService
                 'store' => $store->fresh(),
                 'store_url' => StoreDomainResolver::urlForDomain($storeDomain->domain),
                 'token' => $token,
-            ], 'Store owner registration successful. Please login with your credentials.');
+            ], 'Store created successfully. Store details have been sent to your email.');
         } catch (\Throwable $e) {
             report($e);
 

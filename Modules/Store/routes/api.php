@@ -23,9 +23,9 @@ Route::middleware(['convert.auth.cookie', 'auth:sanctum', 'role:Super Admin,Admi
 Route::middleware(['convert.auth.cookie', 'auth:sanctum'])
     ->prefix('v1')
     ->group(function () {
-        Route::get('/store/domains', [StoreDomainController::class, 'index'])->name('api.store.domains.index');
-        Route::post('/store/domains', [StoreDomainController::class, 'store'])->name('api.store.domains.store');
-        Route::post('/store/domains/{storeDomain}/verify', [StoreDomainController::class, 'verify'])->name('api.store.domains.verify');
+    Route::get('/store/domains', [StoreDomainController::class, 'index'])->name('api.store.domains.index');
+        Route::post('/store/domains', [StoreDomainController::class, 'store'])->middleware('throttle:10,1')->name('api.store.domains.store');
+        Route::post('/store/domains/{storeDomain}/verify', [StoreDomainController::class, 'verify'])->middleware('throttle:10,1')->name('api.store.domains.verify');
         Route::post('/store/domains/{storeDomain}/primary', [StoreDomainController::class, 'primary'])->name('api.store.domains.primary');
         Route::delete('/store/domains/{storeDomain}', [StoreDomainController::class, 'destroy'])->name('api.store.domains.destroy');
     });

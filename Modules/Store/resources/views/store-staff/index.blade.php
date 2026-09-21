@@ -29,7 +29,10 @@
         dataKey="data"
         idField="staff_id"
         :filters="[
-            'Store' => $storeFilterOptions
+            'store_id' => [
+                'label' => 'Store',
+                'options' => $storeFilterOptions,
+            ],
         ]"
         :order="[[5, 'desc']]"
     >

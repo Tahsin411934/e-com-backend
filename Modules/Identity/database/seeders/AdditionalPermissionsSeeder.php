@@ -95,6 +95,15 @@ class AdditionalPermissionsSeeder extends Seeder
         ],
         'plans' => [
             'plans.view' => 'View subscription plans',
+            'plans.create' => 'Create subscription plans',
+            'plans.edit' => 'Edit subscription plans',
+            'plans.delete' => 'Delete subscription plans',
+        ],
+        'features' => [
+            'features.view' => 'View plan features',
+            'features.create' => 'Create plan features',
+            'features.edit' => 'Edit plan features',
+            'features.delete' => 'Delete plan features',
         ],
 
         // ===== Cart & Wishlist =====

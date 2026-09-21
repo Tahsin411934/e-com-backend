@@ -17,4 +17,15 @@ class Plan extends Model
     {
         return $this->hasMany(StoreSubscription::class);
     }
+
+    public function features()
+    {
+        return $this->belongsToMany(Feature::class, 'plan_features')
+            ->withPivot(['enabled', 'limit_value', 'configuration'])->withTimestamps();
+    }
+
+    public function hasFeature(string $slug): bool
+    {
+        return $this->features()->where('features.slug', $slug)->wherePivot('enabled', true)->exists();
+    }
 }

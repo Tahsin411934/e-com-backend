@@ -21,9 +21,13 @@ class StorefrontSettingService
     {
         $storeId = CurrentStore::id();
         $settings = Setting::query()
-            ->where('store_id', $storeId)
+            ->where(function ($query) use ($storeId) {
+                $query->whereNull('store_id')->orWhere('store_id', $storeId);
+            })
             ->orderBy('sort_order')
-            ->get();
+            ->get()
+            ->sortBy(fn (Setting $setting) => $setting->store_id === null ? 0 : 1)
+            ->keyBy('key');
 
         $flat = [];
 

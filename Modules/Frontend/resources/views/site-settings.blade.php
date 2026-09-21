@@ -122,9 +122,9 @@
                                                 <div class="logo-upload-area">
                                                     <div class="shrink-0">
                                                         @if($item['value'])
-                                                            <img src="{{ $item['value'] }}" alt="Logo" class="logo-preview" id="logo_preview">
+                                                            <img src="{{ $item['value'] }}" alt="{{ $item['label'] }}" class="logo-preview" id="preview_{{ $item['key'] }}">
                                                         @else
-                                                            <div class="logo-preview flex items-center justify-center text-gray-300" id="logo_preview">
+                                                            <div class="logo-preview flex items-center justify-center text-gray-300" id="preview_{{ $item['key'] }}">
                                                                 <i class="fas fa-image text-3xl"></i>
                                                             </div>
                                                         @endif
@@ -133,16 +133,16 @@
                                                         <div class="flex flex-wrap items-center gap-3">
                                                             <label class="btn-secondary cursor-pointer">
                                                                 <i class="fas fa-upload"></i> Choose Image
-                                                                <input type="file" name="{{ $item['key'] }}" accept="image/*" class="js-site-settings-logo hidden" data-preview-id="logo_preview">
+                                                                <input type="file" name="{{ $item['key'] }}" accept="image/png,image/jpeg,image/webp,image/x-icon" class="js-site-settings-logo hidden" data-preview-id="preview_{{ $item['key'] }}">
                                                             </label>
                                                             @if($item['value'])
                                                                 <label class="btn-remove cursor-pointer" style="padding: 12px 24px; background: #fee2e2; color: #b91c1c; border: 1px solid #fecaca; border-radius: 12px; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.2s; display: inline-flex; align-items: center; gap: 6px;">
                                                                     <i class="fas fa-trash"></i> Remove
-                                                                    <input type="checkbox" name="remove_{{ $item['key'] }}" value="1" class="js-site-settings-logo-remove hidden" data-preview-id="logo_preview">
+                                                                    <input type="checkbox" name="remove_{{ $item['key'] }}" value="1" class="js-site-settings-logo-remove hidden" data-preview-id="preview_{{ $item['key'] }}">
                                                                 </label>
                                                             @endif
                                                         </div>
-                                                        <p class="hint">Recommended: 200x60px. PNG, JPG, WebP. Max 2MB.</p>
+                                                        <p class="hint">{{ $item['key'] === 'site_favicon' ? 'Recommended: 32x32px or 64x64px. PNG, WebP or ICO. Max 2MB.' : 'Recommended: 200x60px. PNG, JPG or WebP. Max 2MB.' }}</p>
                                                     </div>
                                                 </div>
                                                 @break

@@ -17,7 +17,7 @@ Route::middleware('guest')->group(function () {
 
     Route::post('/', [AuthenticatedSessionController::class, 'store']);
 
-    Route::post('email/verification-notification', [StoreEmailVerificationController::class, 'resendFromLogin'])
+    Route::post('store-owner/email/verification-notification', [StoreEmailVerificationController::class, 'resendFromLogin'])
         ->middleware('throttle:3,10')
         ->name('verification.resend-login');
 

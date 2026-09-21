@@ -49,4 +49,9 @@ class Store extends Model
     {
         return $this->hasMany(Address::class);
     }
+
+    public function subscriptions()
+    {
+        return $this->hasMany(StoreSubscription::class);
+    }
 }

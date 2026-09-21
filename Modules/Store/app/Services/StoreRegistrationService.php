@@ -2,23 +2,25 @@
 
 namespace Modules\Store\Services;
 
-use App\Mail\StoreRegisteredMail;
+use App\Mail\VerifyStoreOwnerMail;
 use App\Helpers\ApiResponse;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Str;
 use Modules\Identity\Models\Role;
 use Modules\Identity\Models\User;
 use Modules\Store\Models\Store;
 use Modules\Store\Models\StoreDomain;
+use Modules\Store\Models\Plan;
 use Modules\Store\Support\StoreDomainResolver;
 use Modules\Store\Services\StoreDemoDataSeeder;
 
 class StoreRegistrationService
 {
-    public function __construct(private StoreDemoDataSeeder $demoDataSeeder) {}
+    public function __construct(private StoreDemoDataSeeder $demoDataSeeder, private StoreSubscriptionService $subscriptionService) {}
 
     /**
      * Create the owner's user account with the default "Store Owner" role.
@@ -73,16 +75,15 @@ class StoreRegistrationService
                 'timezone' => $data['timezone'] ?? 'Asia/Dhaka',
             ]);
 
+            $plan = Plan::where('slug', $data['plan_slug'] ?? 'free-trial')->where('is_active', true)->where('is_public', true)->firstOrFail();
+            $this->subscriptionService->assign($store, $plan);
+
             // Seed demo data for the new store
             $this->demoDataSeeder->seed($store->id);
 
             // Provision the free wildcard subdomain ({slug}.{suffix}) right
             // away — it is always trusted and needs no DNS verification.
             $storeDomain = $this->createSubdomain($store);
-
-            // Keep this synchronous and inside the transaction. If SMTP fails,
-            // the exception rolls back the user, store, seed data and domain.
-            Mail::to($user->email)->send(new StoreRegisteredMail($user, $store, $storeDomain));
 
             return ['user' => $user, 'store' => $store, 'store_domain' => $storeDomain];
         });
@@ -95,14 +96,19 @@ class StoreRegistrationService
     {
         try {
             ['user' => $user, 'store' => $store, 'store_domain' => $storeDomain] = $this->createStoreOwner($data);
-            $token = $user->createToken('auth_token')->plainTextToken;
+            $verificationUrl = URL::temporarySignedRoute(
+                'api.store.email.verify',
+                now()->addHours(24),
+                ['id' => $user->id, 'hash' => sha1($user->email)]
+            );
+            Mail::to($user->email)->queue(new VerifyStoreOwnerMail($user, $verificationUrl));
 
             return ApiResponse::created([
                 'user' => $user->load('roles'),
                 'store' => $store->fresh(),
                 'store_url' => StoreDomainResolver::urlForDomain($storeDomain->domain),
-                'token' => $token,
-            ], 'Store created successfully. Store details have been sent to your email.');
+                'email_verification_required' => true,
+            ], 'Store created successfully. Please check your email to verify your account.');
         } catch (\Throwable $e) {
             report($e);
 
@@ -116,6 +122,17 @@ class StoreRegistrationService
                 'line' => $e->getLine(),
             ] : []);
         }
+    }
+
+    public function sendVerificationEmail(User $user): void
+    {
+        $verificationUrl = URL::temporarySignedRoute(
+            'api.store.email.verify',
+            now()->addHours(24),
+            ['id' => $user->id, 'hash' => sha1($user->email)]
+        );
+
+        Mail::to($user->email)->queue(new VerifyStoreOwnerMail($user, $verificationUrl));
     }
 
     /**

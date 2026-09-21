@@ -7,6 +7,7 @@ use Modules\Store\Http\Controllers\CountryController;
 use Modules\Store\Http\Controllers\StoreController;
 use Modules\Store\Http\Controllers\StoreStaffController;
 use Modules\Store\Http\Controllers\StoreRoleController;
+use Modules\Store\Http\Controllers\PlanController;
 
 Route::middleware(['auth', 'verified', 'admin'])->group(function () {
     // Stores
@@ -31,4 +32,5 @@ Route::middleware(['auth', 'verified', 'admin'])->group(function () {
     // App Settings
     Route::resource('app-settings', AppSettingController::class)->except(['create', 'edit'])->names('app-settings')->middleware('permission:app-settings.*');
     Route::get('/dataTable/app-settings', [AppSettingController::class, 'dataTable'])->name('app-settings.dataTable')->middleware('permission:app-settings.view');
+    Route::get('/plans', [PlanController::class, 'index'])->name('plans.index')->middleware('permission:plans.view');
 });

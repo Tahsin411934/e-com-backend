@@ -70,6 +70,13 @@ class AuthController extends Controller
             return ApiResponse::error('Your account is inactive. Please contact support.', 403, ['email' => ['Your account is inactive. Please contact support.']]);
         }
 
+        if ($user->isStoreOwner() && ! $user->email_verified_at) {
+            return ApiResponse::error('Please verify your email before logging in.', 403, [
+                'email_verification_required' => true,
+                'email' => $user->email,
+            ]);
+        }
+
         $user->tokens()->delete();
 
         $token = $user->createToken('auth_token')->plainTextToken;

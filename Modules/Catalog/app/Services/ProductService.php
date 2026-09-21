@@ -16,6 +16,8 @@ use Modules\Catalog\Models\Product;
 use Modules\Catalog\Models\ProductImage;
 use Modules\Catalog\Models\ProductVariant;
 use Modules\Catalog\Models\VariantOption;
+use Modules\Store\Support\CurrentStore;
+use Modules\Store\Services\StoreSubscriptionService;
 use Yajra\DataTables\DataTables;
 
 class ProductService
@@ -151,6 +153,9 @@ class ProductService
                     $product->update($data);
                     $message = 'Product updated successfully.';
                 } else {
+                    if ($currentStore = CurrentStore::store()) {
+                        app(StoreSubscriptionService::class)->assertCanCreateProduct($currentStore);
+                    }
                     $product = Product::create($data);
                     $message = 'Product created successfully.';
                 }

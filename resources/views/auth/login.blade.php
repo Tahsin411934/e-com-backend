@@ -31,6 +31,22 @@
 
                 <!-- Session Status -->
                 <x-auth-session-status class="mb-6" :status="session('status')" />
+                @if (session('verification-status'))
+                    <div class="mb-6 rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-700">
+                        {{ session('verification-status') }}
+                    </div>
+                @endif
+                @if ($errors->has('email_verification_required'))
+                    <div class="mb-6 rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800">
+                        <p class="font-semibold">Email verification required</p>
+                        <p class="mt-1">{{ $errors->first('email_verification_required') }}</p>
+                        <form method="POST" action="{{ route('verification.resend-login') }}" class="mt-3">
+                            @csrf
+                            <input type="hidden" name="email" value="{{ old('email') }}">
+                            <button type="submit" class="font-semibold text-amber-900 underline hover:no-underline">Resend verification email</button>
+                        </form>
+                    </div>
+                @endif
 
                 <form method="POST" action="{{ route('login') }}">
                     @csrf

@@ -56,6 +56,7 @@ return [
 
     // Common admin dashboard URL used in customer-facing emails.
     'admin_url' => env('ADMIN_URL', 'http://localhost:3000'),
+    'public_site_url' => env('PUBLIC_SITE_URL', 'http://localhost:3000'),
 
     /*
     |--------------------------------------------------------------------------

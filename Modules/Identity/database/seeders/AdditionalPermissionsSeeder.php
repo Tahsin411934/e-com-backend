@@ -93,6 +93,9 @@ class AdditionalPermissionsSeeder extends Seeder
             'app-settings.edit' => 'Edit app settings',
             'app-settings.delete' => 'Delete app settings',
         ],
+        'plans' => [
+            'plans.view' => 'View subscription plans',
+        ],
 
         // ===== Cart & Wishlist =====
         'carts' => [

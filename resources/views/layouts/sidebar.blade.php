@@ -149,7 +149,7 @@
 
         @endif
 
-        @if(auth()->user()->hasAnyPermission(['stores.view','store-staff.view','store-roles.view','countries.view','addresses.view','app-settings.view']))
+        @if(auth()->user()->hasAnyPermission(['stores.view','store-staff.view','store-roles.view','countries.view','addresses.view','app-settings.view','plans.view']))
         <!-- Store & Location -->
         <div class="mb-0.5">
             <button
@@ -194,6 +194,11 @@
                 <a href="{{ route('app-settings.index') }}"
                     class="flex items-center gap-2.5 pl-9 pr-3 py-1.5 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-50 text-[13px] transition-colors {{ request()->routeIs('app-settings.*') ? 'text-primary bg-primary-light font-medium' : '' }}">
                     <i class="fas fa-cogs w-3.5 text-center"></i><span>App Settings</span>
+                </a>
+                @endif
+                @if(auth()->user()->hasPermission('plans.view'))
+                <a href="{{ route('plans.index') }}" class="flex items-center gap-2.5 pl-9 pr-3 py-1.5 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-50 text-[13px] transition-colors {{ request()->routeIs('plans.*') ? 'text-primary bg-primary-light font-medium' : '' }}">
+                    <i class="fas fa-tags w-3.5 text-center"></i><span>Plans & Billing</span>
                 </a>
                 @endif
             </div>

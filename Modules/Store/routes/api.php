@@ -3,6 +3,8 @@
 use Illuminate\Support\Facades\Route;
 use Modules\Store\Http\Controllers\StoreAuthController;
 use Modules\Store\Http\Controllers\StoreDomainController;
+use Modules\Store\Http\Controllers\StoreEmailVerificationController;
+use Modules\Store\Http\Controllers\PlanController;
 
 // Public SaaS registration for store owners (tenants)
 Route::get('/v1/register/store-slug-availability', [StoreAuthController::class, 'slugAvailability'])
@@ -10,6 +12,13 @@ Route::get('/v1/register/store-slug-availability', [StoreAuthController::class, 
 Route::post('/v1/register/store-owner', [StoreAuthController::class, 'register'])
     ->middleware('throttle:5,1')
     ->name('api.store.register-owner');
+Route::get('/v1/plans', [PlanController::class, 'publicIndex'])->name('store.plans');
+Route::get('/v1/email/verify/{id}/{hash}', [StoreEmailVerificationController::class, 'verify'])
+    ->middleware(['signed', 'throttle:10,1'])
+    ->name('store.email.verify');
+Route::post('/v1/email/verification-notification', [StoreEmailVerificationController::class, 'resend'])
+    ->middleware('throttle:3,10')
+    ->name('store.email.resend');
 
 // Authenticated store context (platform staff may inspect, owners read their own store)
 Route::middleware(['convert.auth.cookie', 'auth:sanctum', 'role:Super Admin,Admin,Store Owner'])

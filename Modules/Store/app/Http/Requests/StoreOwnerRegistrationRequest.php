@@ -8,9 +8,16 @@ use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\Exceptions\HttpResponseException;
 use Illuminate\Validation\Rule;
 use Modules\Identity\Models\User;
+use Modules\Store\Models\Plan;
 
 class StoreOwnerRegistrationRequest extends FormRequest
 {
+    protected function prepareForValidation(): void
+    {
+        // Keep older clients compatible while the plan selector is rolled out.
+        $this->merge(['plan_slug' => $this->input('plan_slug', 'free-trial')]);
+    }
+
     protected function failedValidation(Validator $validator): void
     {
         throw new HttpResponseException(ApiResponse::validationError($validator->errors()));
@@ -54,6 +61,7 @@ class StoreOwnerRegistrationRequest extends FormRequest
             ],
             'currency_code' => ['nullable', 'string', 'size:3', 'alpha'],
             'timezone' => ['nullable', 'timezone'],
+            'plan_slug' => ['required', Rule::exists('plans', 'slug')->where(fn ($query) => $query->where('is_active', true)->where('is_public', true))],
         ];
     }
 
@@ -73,6 +81,8 @@ class StoreOwnerRegistrationRequest extends FormRequest
             'store_slug.not_in' => 'This store URL is reserved for the platform. Please choose another name.',
             'currency_code.size' => 'Currency code must be exactly 3 characters (e.g. USD, BDT).',
             'timezone.timezone' => 'Please provide a valid timezone (e.g. Asia/Dhaka).',
+            'plan_slug.required' => 'Please select a subscription plan.',
+            'plan_slug.exists' => 'The selected subscription plan is unavailable.',
         ];
     }
 }

@@ -133,6 +133,7 @@ class StoreDemoDataSeeder
                 'brand_id' => $brandIds['techbrand'] ?? null,
                 'name' => 'Wireless Headphones Pro',
                 'slug' => 'wireless-headphones-pro',
+                'image' => 'demo/products/wireless-headphones-pro.webp',
                 'short_description' => 'Premium noise-cancelling headphones',
                 'description' => 'High-quality wireless headphones with active noise cancellation and 30-hour battery life.',
                 'product_type' => 'physical',
@@ -149,6 +150,7 @@ class StoreDemoDataSeeder
                 'brand_id' => $brandIds['techbrand'] ?? null,
                 'name' => 'Smartphone X Pro Max',
                 'slug' => 'smartphone-x-pro-max',
+                'image' => 'demo/products/smartphone-x-pro-max.webp',
                 'short_description' => 'Latest flagship smartphone',
                 'description' => 'Cutting-edge smartphone with 200MP camera, 120Hz display, and 5G connectivity.',
                 'product_type' => 'physical',
@@ -200,6 +202,7 @@ class StoreDemoDataSeeder
                 'brand_id' => $brandIds['fashionco'] ?? null,
                 'name' => 'Classic Cotton T-Shirt',
                 'slug' => 'classic-cotton-tshirt',
+                'image' => 'demo/products/classic-cotton-tshirt.webp',
                 'short_description' => 'Comfortable everyday t-shirt',
                 'description' => '100% organic cotton t-shirt available in multiple colors and sizes.',
                 'product_type' => 'physical',
@@ -292,6 +295,7 @@ class StoreDemoDataSeeder
                 'brand_id' => $brandIds['homestyle'] ?? null,
                 'name' => 'Smart LED Desk Lamp',
                 'slug' => 'smart-led-desk-lamp',
+                'image' => 'demo/products/smart-led-desk-lamp.webp',
                 'short_description' => 'Adjustable smart desk lamp',
                 'description' => 'Touch-controlled LED desk lamp with adjustable brightness and color temperature.',
                 'product_type' => 'physical',
@@ -356,6 +360,7 @@ class StoreDemoDataSeeder
                 'brand_id' => $brandIds['techbrand'] ?? null,
                 'name' => 'Yoga Mat Premium',
                 'slug' => 'yoga-mat-premium',
+                'image' => 'demo/products/yoga-mat-premium.webp',
                 'short_description' => 'Non-slip exercise yoga mat',
                 'description' => 'Extra thick 6mm eco-friendly TPE yoga mat with alignment lines and carrying strap.',
                 'product_type' => 'physical',
@@ -583,10 +588,11 @@ class StoreDemoDataSeeder
                 $product->categories()->syncWithoutDetaching($catIds);
             }
 
+            $productImageExists = $productImage
+                && is_file(storage_path('app/public/'.$productImage));
+
             $product->images()->create([
-                'image_url' => $productImage
-                    ?? $imageByCategory[$categorySlugs[0] ?? '']
-                    ?? 'demo/products/default.svg',
+                'image_url' => $productImageExists ? $productImage : 'demo/products/default.svg',
                 'alt_text' => $product->name,
                 'sort_order' => 0,
             ]);

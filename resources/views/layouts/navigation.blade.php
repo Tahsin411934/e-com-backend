@@ -3,6 +3,7 @@
         class="mobile-menu-btn w-9 h-9 rounded-lg theme-navbar-btn text-white items-center justify-center shadow-sm">
         <i class="fas fa-bars text-[16px]"></i>
     </button>
+    <span class="mobile-header-title text-white font-semibold text-sm">Admin</span>
     <button id="collapseBtn"
         class="w-8 h-8 rounded-full border  theme-navbar-btn flex items-center justify-center text-gray-100 flex-shrink-0 shadow-sm">
         <i class="fas fa-chevron-left text-[15px]" id="collapseIcon"></i>

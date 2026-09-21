@@ -5,6 +5,7 @@
     const collapseIcon = document.getElementById('collapseIcon');
     const navTooltip = document.getElementById('navTooltip');
     const mobileMenuBtn = document.getElementById('mobileMenuBtn');
+    const mobileSidebarClose = document.getElementById('mobileSidebarClose');
     const sidebarOverlay = document.getElementById('sidebarOverlay');
     let lastFocusedElement = null;
 
@@ -38,6 +39,7 @@
         sidebar.classList.contains('mobile-open') ? closeMobileSidebar() : openMobileSidebar();
     });
     sidebarOverlay?.addEventListener('click', closeMobileSidebar);
+    mobileSidebarClose?.addEventListener('click', closeMobileSidebar);
     sidebar.addEventListener('click', (event) => {
         if (event.target.closest('a')) closeMobileSidebar();
     });

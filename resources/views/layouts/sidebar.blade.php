@@ -13,7 +13,10 @@
             </div>
             <span class="logo-text font-semibold text-white text-[20px] whitespace-nowrap">Ecommerce</span>
         </div>
-
+        <button id="mobileSidebarClose" type="button" aria-label="Close navigation menu"
+            class="mobile-sidebar-close w-8 h-8 rounded-lg items-center justify-center text-white/80 hover:text-white hover:bg-white/10 transition-colors">
+            <i class="fas fa-xmark text-lg"></i>
+        </button>
 
     </div>
 
@@ -48,7 +51,7 @@
         <div class="mb-0.5">
             <button
                 class="nav-item has-sub w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-gray-500 hover:bg-gray-50 hover:text-gray-800 text-sm font-medium transition-colors duration-150"
-                data-label="Identity" data-sub="sub-identity">
+                data-label="Users & Permissions" data-sub="sub-identity">
                 <i class="fas fa-id-card w-4 text-center flex-shrink-0 text-base"></i>
                 <span class="nav-label flex-1 text-left">Identity & Access</span>
                 <i class="nav-chevron fas fa-chevron-down text-[10px] flex-shrink-0"></i>
@@ -81,7 +84,7 @@
         <div class="mb-0.5">
             <button
                 class="nav-item has-sub w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-gray-500 hover:bg-gray-50 hover:text-gray-800 text-sm font-medium transition-colors duration-150"
-                data-label="Catalog" data-sub="sub-cat">
+                data-label="Products" data-sub="sub-cat">
                 <i class="fas fa-boxes w-4 text-center flex-shrink-0 text-base"></i>
                 <span class="nav-label flex-1 text-left">Catalog</span>
                 <i class="nav-chevron fas fa-chevron-down text-[10px] flex-shrink-0"></i>
@@ -126,7 +129,7 @@
                     @if(auth()->user()->hasPermission('barcode-print.view'))
                     <a href="{{ route('barcode-print.index') }}"
                         class="flex items-center gap-2.5 pl-9 pr-3 py-1.5 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-50 text-[13px] transition-colors {{ request()->routeIs('barcode-print.*') ? 'text-primary bg-primary-light font-medium' : '' }}">
-                        <i class="fas fa-qrcode w-3.5 text-center"></i><span>Barcode Print</span>
+                        <i class="fas fa-qrcode w-3.5 text-center"></i><span>Barcode Printing</span>
                     </a>
                     @endif
                     @if(auth()->user()->hasPermission('tax-rates.view'))
@@ -151,7 +154,7 @@
         <div class="mb-0.5">
             <button
                 class="nav-item has-sub w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-gray-500 hover:bg-gray-50 hover:text-gray-800 text-sm font-medium transition-colors duration-150"
-                data-label="Store" data-sub="sub-store">
+                data-label="Store Management" data-sub="sub-store">
                 <i class="fas fa-store w-4 text-center flex-shrink-0 text-base"></i>
                 <span class="nav-label flex-1 text-left">Store & Location</span>
                 <i class="nav-chevron fas fa-chevron-down text-[10px] flex-shrink-0"></i>
@@ -237,7 +240,7 @@
         <div class="mb-0.5">
             <button
                 class="nav-item has-sub w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-gray-500 hover:bg-gray-50 hover:text-gray-800 text-sm font-medium transition-colors duration-150"
-                data-label="Cart" data-sub="sub-cart">
+                data-label="Marketing & Promotions" data-sub="sub-cart">
                 <i class="fas fa-shopping-cart w-4 text-center flex-shrink-0 text-base"></i>
                 <span class="nav-label flex-1 text-left">Cart & Wishlist</span>
                 <i class="nav-chevron fas fa-chevron-down text-[10px] flex-shrink-0"></i>
@@ -252,13 +255,13 @@
                 @if(auth()->user()->hasPermission('coupons.view'))
                 <a href="{{ route('coupons.index') }}"
                     class="flex items-center gap-2.5 pl-9 pr-3 py-1.5 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-50 text-[13px] transition-colors {{ request()->routeIs('coupons.*') ? 'text-primary bg-primary-light font-medium' : '' }}">
-                    <i class="fas fa-ticket-alt w-3.5 text-center"></i><span>Coupons</span>
+                    <i class="fas fa-ticket-alt w-3.5 text-center"></i><span>Discount Coupons</span>
                 </a>
                 @endif
                 @if(auth()->user()->hasPermission('campaigns.view'))
                 <a href="{{ route('campaigns.index') }}"
                     class="flex items-center gap-2.5 pl-9 pr-3 py-1.5 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-50 text-[13px] transition-colors {{ request()->routeIs('campaigns.*') ? 'text-primary bg-primary-light font-medium' : '' }}">
-                    <i class="fas fa-bullhorn w-3.5 text-center"></i><span>Campaigns</span>
+                    <i class="fas fa-bullhorn w-3.5 text-center"></i><span>Marketing Campaigns</span>
                 </a>
                 @endif
                 @if(auth()->user()->hasPermission('wishlists.view'))
@@ -277,7 +280,7 @@
         <div class="mb-0.5">
             <button
                 class="nav-item has-sub w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-gray-500 hover:bg-gray-50 hover:text-gray-800 text-sm font-medium transition-colors duration-150"
-                data-label="Purchases" data-sub="sub-purchases">
+                data-label="Purchasing" data-sub="sub-purchases">
                 <i class="fas fa-file-invoice w-4 text-center flex-shrink-0 text-base"></i>
                 <span class="nav-label flex-1 text-left">Purchases</span>
                 <i class="nav-chevron fas fa-chevron-down text-[10px] flex-shrink-0"></i>
@@ -317,7 +320,7 @@
         <div class="mb-0.5">
             <button
                 class="nav-item has-sub w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-gray-500 hover:bg-gray-50 hover:text-gray-800 text-sm font-medium transition-colors duration-150"
-                data-label="Orders" data-sub="sub-orders">
+                data-label="Orders & Payments" data-sub="sub-orders">
                 <i class="fas fa-shopping-cart w-4 text-center flex-shrink-0 text-base"></i>
                 <span class="nav-label flex-1 text-left">Orders</span>
                 <i class="nav-chevron fas fa-chevron-down text-[10px] flex-shrink-0"></i>
@@ -351,7 +354,7 @@
         <div class="mb-0.5">
             <button
                 class="nav-item has-sub w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-gray-500 hover:bg-gray-50 hover:text-gray-800 text-sm font-medium transition-colors duration-150"
-                data-label="Account" data-sub="sub-account">
+                data-label="Finance" data-sub="sub-account">
                 <i class="fas fa-wallet w-4 text-center flex-shrink-0 text-base"></i>
                 <span class="nav-label flex-1 text-left">Account</span>
                 <i class="nav-chevron fas fa-chevron-down text-[10px] flex-shrink-0"></i>
@@ -407,7 +410,7 @@
          <div class="mb-0.5">
             <button
                 class="nav-item has-sub w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-gray-500 hover:bg-gray-50 hover:text-gray-800 text-sm font-medium transition-colors duration-150"
-                data-label="Investments" data-sub="sub-investments">
+                data-label="Investments & Assets" data-sub="sub-investments">
                 <i class="fas fa-chart-line w-4 text-center flex-shrink-0 text-base"></i>
                 <span class="nav-label flex-1 text-left">Investments</span>
                 <i class="nav-chevron fas fa-chevron-down text-[10px] flex-shrink-0"></i>
@@ -440,7 +443,7 @@
         <div class="mb-0.5">
             <button
                 class="nav-item has-sub w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-gray-500 hover:bg-gray-50 hover:text-gray-800 text-sm font-medium transition-colors duration-150"
-                data-label="Delivery" data-sub="sub-delivery">
+                data-label="Shipping & Delivery" data-sub="sub-delivery">
                 <i class="fas fa-shipping-fast w-4 text-center flex-shrink-0 text-base"></i>
                 <span class="nav-label flex-1 text-left">Delivery</span>
                 <i class="nav-chevron fas fa-chevron-down text-[10px] flex-shrink-0"></i>
@@ -480,7 +483,7 @@
         <div class="mb-0.5">
             <button
                 class="nav-item has-sub w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-gray-500 hover:bg-gray-50 hover:text-gray-800 text-sm font-medium transition-colors duration-150"
-                data-label="POS" data-sub="sub-pos">
+                data-label="Point of Sale" data-sub="sub-pos">
                 <i class="fas fa-cash-register w-4 text-center flex-shrink-0 text-base"></i>
                 <span class="nav-label flex-1 text-left">POS</span>
                 <i class="nav-chevron fas fa-chevron-down text-[10px] flex-shrink-0"></i>
@@ -520,7 +523,7 @@
         <div class="mb-0.5">
             <button
                 class="nav-item has-sub w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-gray-500 hover:bg-gray-50 hover:text-gray-800 text-sm font-medium transition-colors duration-150"
-                data-label="Reviews" data-sub="sub-reviews">
+                data-label="Customer Engagement" data-sub="sub-reviews">
                 <i class="fas fa-star w-4 text-center flex-shrink-0 text-base"></i>
                 <span class="nav-label flex-1 text-left">Reviews & Notif.</span>
                 <i class="nav-chevron fas fa-chevron-down text-[10px] flex-shrink-0"></i>
@@ -553,7 +556,7 @@
                 @if(auth()->user()->hasPermission('webhook-deliveries.view'))
                 <a href="{{ route('webhook-deliveries.index') }}"
                     class="flex items-center gap-2.5 pl-9 pr-3 py-1.5 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-50 text-[13px] transition-colors {{ request()->routeIs('webhook-deliveries.*') ? 'text-primary bg-primary-light font-medium' : '' }}">
-                    <i class="fas fa-paper-plane w-3.5 text-center"></i><span>Webhook Deliv.</span>
+                    <i class="fas fa-paper-plane w-3.5 text-center"></i><span>Webhook Deliveries</span>
                 </a>
                 @endif
             </div>
@@ -565,7 +568,7 @@
         <div class="mb-0.5">
             <a href="{{ route('history.page') }}"
                 class="nav-item flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-medium transition-colors duration-150 mb-0.5 {{ request()->routeIs('history.*') ? 'text-white active' : 'text-gray-500 hover:bg-gray-50 hover:text-gray-800' }}"
-                data-label="History">
+                data-label="Activity Log">
                 <i class="fas fa-clock-rotate-left w-4 text-center flex-shrink-0 text-base"></i>
                 <span class="nav-label">History</span>
             </a>
@@ -577,7 +580,7 @@
         <div class="mb-0.5">
             <button
                 class="nav-item has-sub w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-gray-500 hover:bg-gray-50 hover:text-gray-800 text-sm font-medium transition-colors duration-150"
-                data-label="Frontend" data-sub="sub-frontend">
+                data-label="Online Store" data-sub="sub-frontend">
                 <i class="fas fa-paint-brush w-4 text-center flex-shrink-0 text-base"></i>
                 <span class="nav-label flex-1 text-left">Frontend</span>
                 <i class="nav-chevron fas fa-chevron-down text-[10px] flex-shrink-0"></i>
@@ -598,7 +601,7 @@
                 @if(auth()->user()->hasPermission('frontend.navbar.view'))
                 <a href="{{ route('frontend.nav-items.index') }}"
                     class="flex items-center gap-2.5 pl-9 pr-3 py-1.5 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-50 text-[13px] transition-colors {{ request()->routeIs('frontend.nav-items.index') ? 'text-primary bg-primary-light font-medium' : '' }}">
-                    <i class="fas fa-bars w-3.5 text-center"></i><span>Navbar Items</span>
+                    <i class="fas fa-bars w-3.5 text-center"></i><span>Primary Navigation</span>
                 </a>
                 @endif
                 @if(auth()->user()->hasPermission('frontend.announcements.view'))
@@ -616,13 +619,13 @@
                 @if(auth()->user()->hasPermission('frontend.ctas.view'))
                 <a href="{{ route('frontend.ctas.index') }}"
                     class="flex items-center gap-2.5 pl-9 pr-3 py-1.5 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-50 text-[13px] transition-colors {{ request()->routeIs('frontend.ctas.*') ? 'text-primary bg-primary-light font-medium' : '' }}">
-                    <i class="fas fa-bullhorn w-3.5 text-center"></i><span>Homepage CTAs</span>
+                    <i class="fas fa-bullhorn w-3.5 text-center"></i><span>Homepage Actions</span>
                 </a>
                 @endif
                 @if(auth()->user()->hasPermission('frontend.navbar.view'))
                 <a href="{{ route('frontend.nav-items.subnavbar.index') }}"
                     class="flex items-center gap-2.5 pl-9 pr-3 py-1.5 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-50 text-[13px] transition-colors {{ request()->routeIs('frontend.nav-items.subnavbar.*') ? 'text-primary bg-primary-light font-medium' : '' }}">
-                    <i class="fas fa-list w-3.5 text-center"></i><span>Subnavbar Items</span>
+                    <i class="fas fa-list w-3.5 text-center"></i><span>Secondary Navigation</span>
                 </a>
                 @endif
                 @if(auth()->user()->hasPermission('frontend.pages.view'))
@@ -659,7 +662,7 @@
         <div class="mb-0.5">
             <button
                 class="nav-item has-sub w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-gray-500 hover:bg-gray-50 hover:text-gray-800 text-sm font-medium transition-colors duration-150"
-                data-label="Marketing" data-sub="sub-marketing">
+                data-label="Integrations" data-sub="sub-marketing">
                 <i class="fas fa-bullhorn w-4 text-center flex-shrink-0 text-base"></i>
                 <span class="nav-label flex-1 text-left">Marketing</span>
                 <i class="nav-chevron fas fa-chevron-down text-[10px] flex-shrink-0"></i>

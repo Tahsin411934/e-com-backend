@@ -33,6 +33,7 @@ class StoreRegisteredMail extends Mailable
             with: [
                 'storeUrl' => StoreDomainResolver::urlForDomain($this->storeDomain->domain),
                 'loginUrl' => rtrim((string) config('app.frontend_url', config('app.url')), '/').'/login',
+                'logoUrl' => (string) env('MAIL_LOGO_URL', 'https://aftsoftandlimited.com/aft-navbar-logo-clean.png'),
             ],
         );
     }

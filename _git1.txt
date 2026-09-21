@@ -1,5 +1,0 @@
-﻿afc33f3 added
-7257a08 first commit
-* main
-  remotes/origin/HEAD -> origin/main
-  remotes/origin/main

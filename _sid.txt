@@ -1,9 +1,0 @@
-D:\e-com-backend\Modules\Cart\database\migrations\2026_09_18_000004_add_store_id_to_campaigns_table.php
-D:\e-com-backend\Modules\Catalog\database\migrations\2026_09_04_000002_add_store_id_to_products_table.php
-D:\e-com-backend\Modules\Catalog\database\migrations\2026_09_10_000001_add_store_id_to_brands_and_categories_table.php
-D:\e-com-backend\Modules\Catalog\database\migrations\2026_09_18_000003_add_store_id_to_product_requests_table.php
-D:\e-com-backend\Modules\Frontend\database\migrations\2026_09_17_000001_add_store_id_to_banners_table.php
-D:\e-com-backend\Modules\Frontend\database\migrations\2026_09_17_000002_add_store_id_to_navbar_items_table.php
-D:\e-com-backend\Modules\Frontend\database\migrations\2026_09_17_000003_add_store_id_to_announcement_bars_homepage_ctas_settings.php
-D:\e-com-backend\Modules\Frontend\database\migrations\2026_09_18_000002_add_store_id_to_subnavbar_items_table.php
-D:\e-com-backend\Modules\Inventory\database\migrations\2026_09_10_000002_add_store_id_to_suppliers_table.php

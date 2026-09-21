@@ -1,6 +1,0 @@
-d:\e-com-backend\database\migrations\0001_01_01_000000_create_users_table.php
-d:\e-com-backend\database\migrations\0001_01_01_000001_create_cache_table.php
-d:\e-com-backend\database\migrations\0001_01_01_000002_create_jobs_table.php
-d:\e-com-backend\database\migrations\2026_06_20_200601_create_personal_access_tokens_table.php
-d:\e-com-backend\database\migrations\2026_08_27_000001_add_deleted_at_to_business_tables.php
-d:\e-com-backend\database\migrations\2026_09_09_000001_add_dropdown_search_indexes_to_tables.php

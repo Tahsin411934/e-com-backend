@@ -3,7 +3,7 @@
 <head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Your store is ready</title></head>
 <body style="margin:0;background:#f4f7fb;font-family:Arial,sans-serif;color:#1f2937;">
     <div style="max-width:620px;margin:32px auto;padding:0 16px;">
-        <div style="background:#1e3a8a;padding:28px 32px;border-radius:14px 14px 0 0;color:#fff;"><div style="font-size:22px;font-weight:700;">AFT SOFT</div><div style="margin-top:8px;font-size:14px;opacity:.85;">Your free commerce store is ready</div></div>
+        <div style="background:#1e3a8a;padding:28px 32px;border-radius:14px 14px 0 0;color:#fff;"><div style="display:inline-block;padding:7px 10px;border-radius:7px;background:#fff;"><img src="{{ $logoUrl }}" alt="AFT SOFT" style="display:block;max-width:180px;max-height:42px;width:auto;height:auto;object-fit:contain;"></div><div style="margin-top:12px;font-size:14px;opacity:.85;">Your free commerce store is ready</div></div>
         <div style="background:#fff;padding:32px;border-radius:0 0 14px 14px;box-shadow:0 8px 24px rgba(15,23,42,.06);">
             <h1 style="margin:0 0 12px;font-size:24px;color:#10245a;">Welcome, {{ $user->name }}!</h1>
             <p style="font-size:15px;line-height:1.7;color:#64748b;">Your store <strong>{{ $store->name }}</strong> has been created successfully.</p>

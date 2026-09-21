@@ -77,10 +77,10 @@ class StoreOwnerRegistrationTest extends TestCase
         $this->assertDatabaseCount('stores', 0);
     }
 
-    public function test_registration_works_without_seeded_roles_or_optional_fields(): void
+    public function test_registration_works_without_seeded_roles_or_optional_store_settings(): void
     {
         Role::where('name', User::STORE_OWNER_ROLE)->forceDelete();
-        unset($this->payload['phone'], $this->payload['currency_code'], $this->payload['timezone']);
+        unset($this->payload['currency_code'], $this->payload['timezone']);
 
         $this->postJson('/api/v1/register/store-owner', $this->payload)
             ->assertCreated()

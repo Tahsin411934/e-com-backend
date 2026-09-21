@@ -33,7 +33,7 @@ class StoreOwnerRegistrationRequest extends FormRequest
             'first_name' => ['required', 'string', 'max:255'],
             'last_name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'email', 'max:255', Rule::unique(User::class, 'email')],
-            'phone' => ['nullable', 'string', 'max:20', Rule::unique(User::class, 'phone')],
+            'phone' => ['required', 'string', 'max:20', 'regex:/^\+?[0-9\s()\-]{7,20}$/', Rule::unique(User::class, 'phone')],
             'password' => ['required', 'string', 'min:8', 'confirmed'],
 
             // Professional store name: must start and end with a letter or number
@@ -48,7 +48,7 @@ class StoreOwnerRegistrationRequest extends FormRequest
                 Rule::unique('stores', 'name'),
             ],
             'store_slug' => [
-                'nullable', 'string', 'max:180', 'alpha_dash',
+                'required', 'string', 'min:2', 'max:180', 'alpha_dash',
                 Rule::notIn(config('storefront.reserved_subdomains', [])),
                 'unique:stores,slug',
             ],
@@ -61,6 +61,10 @@ class StoreOwnerRegistrationRequest extends FormRequest
     {
         return [
             'store_name.required' => 'Store / company name is required.',
+            'phone.required' => 'A phone number is required for your store account.',
+            'phone.regex' => 'Enter a valid phone number using digits, spaces, +, hyphens or parentheses.',
+            'store_slug.required' => 'Choose a free store URL for your storefront.',
+            'store_slug.min' => 'Your store URL must be at least 2 characters.',
             'store_name.min' => 'Store name must be at least 2 characters.',
             'store_name.max' => 'Store name may not be longer than 160 characters.',
             'store_name.regex' => 'Store name must look professional: letters, numbers, spaces and characters like & . , ( ) \' - / + only.',

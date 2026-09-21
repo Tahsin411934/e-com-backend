@@ -21,9 +21,9 @@
     <div class="shrink-0 px-4 py-4 sm:px-6 sm:py-5 border-b dark:border-gray-700 bg-gradient-to-r from-primary-light to-primary-light dark:from-gray-700 dark:to-gray-800 flex justify-between items-center gap-3">
         <h2 class="min-w-0 break-words text-xl sm:text-2xl font-bold text-gray-800 dark:text-gray-100" id="drawerTitle">{{ e($title) }}</h2>
 
-        <button type="button" class="js-global-drawer-close"
+        <button type="button"
             data-drawer-id="{{ e($id) }}" data-overlay-id="{{ e($overlayId) }}"
-            class="shrink-0 text-gray-500 dark:text-gray-400 hover:text-red-600 p-1 hover:bg-red-50 dark:hover:bg-gray-700 rounded-lg transition-colors duration-200">
+            class="js-global-drawer-close shrink-0 text-gray-500 dark:text-gray-400 hover:text-red-600 p-1 hover:bg-red-50 dark:hover:bg-gray-700 rounded-lg transition-colors duration-200">
             <i class="fa-solid fa-times text-2xl"></i>
         </button>
     </div>
@@ -33,9 +33,9 @@
     </div>
 
     <div class="shrink-0 border-t dark:border-gray-700 bg-gray-50 dark:bg-gray-900 px-4 py-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] sm:px-6 sm:py-4 flex flex-col-reverse sm:flex-row gap-2 sm:gap-3">
-        <button type="button" class="js-global-drawer-close"
+        <button type="button"
             data-drawer-id="{{ e($id) }}" data-overlay-id="{{ e($overlayId) }}"
-            class="min-h-10 w-full min-w-0 flex-1 border border-gray-300 dark:border-gray-600 rounded p-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 font-medium transition-colors duration-200">
+            class="js-global-drawer-close min-h-10 w-full min-w-0 flex-1 border border-gray-300 dark:border-gray-600 rounded p-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 font-medium transition-colors duration-200">
             Cancel
         </button>
 

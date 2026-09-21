@@ -20,6 +20,12 @@ class StorefrontSettingService
     public function flat(): array
     {
         $storeId = CurrentStore::id();
+        $storeSettings = Setting::query()
+            ->where('store_id', $storeId)
+            ->orderBy('sort_order')
+            ->get()
+            ->keyBy('key');
+
         $settings = Setting::query()
             ->where(function ($query) use ($storeId) {
                 $query->whereNull('store_id')->orWhere('store_id', $storeId);
@@ -39,6 +45,16 @@ class StorefrontSettingService
             }
 
             $flat[$setting->key] = $value;
+        }
+
+        // A platform logo must never appear as a tenant's storefront logo.
+        // Store owners either see their own uploaded asset or their store name.
+        if ($storeId !== null) {
+            if (! $storeSettings->has('site_logo')) {
+                unset($flat['site_logo']);
+                $flat['site_name'] = Store::find($storeId)?->name;
+            }
+            if (! $storeSettings->has('site_favicon')) unset($flat['site_favicon']);
         }
 
         // A store always has a name fallback, but never inherit global

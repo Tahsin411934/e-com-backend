@@ -39,9 +39,9 @@ return [
 
         'smtp' => [
             'transport' => 'smtp',
-            // MAIL_SCHEME is used by newer Laravel versions; keep the
-            // conventional MAIL_ENCRYPTION fallback for existing .env files.
-            'scheme' => env('MAIL_SCHEME', env('MAIL_ENCRYPTION')),
+            // Symfony Mailer schemes are smtp/smtps. STARTTLS on port 587
+            // is negotiated automatically by the smtp transport.
+            'scheme' => env('MAIL_SCHEME', 'smtp'),
             'url' => env('MAIL_URL'),
             'host' => env('MAIL_HOST', '127.0.0.1'),
             'port' => env('MAIL_PORT', 2525),

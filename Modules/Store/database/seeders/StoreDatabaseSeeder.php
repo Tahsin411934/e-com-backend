@@ -55,10 +55,11 @@ class StoreDatabaseSeeder extends Seeder
         $mainStore = Store::where('slug', 'main-store-dhaka')->first();
 
         if ($mainStore && $adminUser) {
-            StoreStaff::firstOrCreate([
+            StoreStaff::updateOrCreate([
                 'store_id' => $mainStore->id,
-                'user_id' => $adminUser->id,
+                'staff_code' => 'ADMIN-001',
             ], [
+                'user_id' => $adminUser->id,
                 'staff_code' => 'ADMIN-001',
                 'status' => 'active',
                 'hired_at' => now()->subMonths(6),
@@ -66,10 +67,11 @@ class StoreDatabaseSeeder extends Seeder
         }
 
         if ($mainStore && $managerUser) {
-            StoreStaff::firstOrCreate([
+            StoreStaff::updateOrCreate([
                 'store_id' => $mainStore->id,
-                'user_id' => $managerUser->id,
+                'staff_code' => 'MGR-001',
             ], [
+                'user_id' => $managerUser->id,
                 'staff_code' => 'MGR-001',
                 'status' => 'active',
                 'hired_at' => now()->subMonths(3),
@@ -77,10 +79,11 @@ class StoreDatabaseSeeder extends Seeder
         }
 
         if ($mainStore && $staffUser) {
-            StoreStaff::firstOrCreate([
+            StoreStaff::updateOrCreate([
                 'store_id' => $mainStore->id,
-                'user_id' => $staffUser->id,
+                'staff_code' => 'STF-001',
             ], [
+                'user_id' => $staffUser->id,
                 'staff_code' => 'STF-001',
                 'status' => 'active',
                 'hired_at' => now()->subMonths(1),

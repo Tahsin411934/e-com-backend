@@ -82,6 +82,10 @@
     header > .flex.items-center.gap-2 { display: none; }
   }
 
+  @media (prefers-reduced-motion: reduce) {
+    #sidebar, .sidebar-overlay, .submenu { transition: none !important; }
+  }
+
   /* Chevron rotate */
   .has-sub.open > .nav-chevron { transform: rotate(180deg); }
   .nav-chevron { transition: transform 0.2s; }

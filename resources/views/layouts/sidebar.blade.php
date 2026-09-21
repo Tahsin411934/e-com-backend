@@ -1,7 +1,7 @@
 <div class="nav-tooltip" id="navTooltip"></div>
 
 <!-- ========== SIDEBAR ========== -->
-<aside id="sidebar" class="w-52 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 flex flex-col flex-shrink-0 z-30 overflow-hidden">
+<aside id="sidebar" aria-label="Main navigation" aria-hidden="false" class="w-52 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 flex flex-col flex-shrink-0 z-30 overflow-hidden">
 
     <!-- Logo -->
     <div class="h-[60px] theme-navbar text-white flex items-center justify-between px-3.5 border-b border-primary flex-shrink-0">

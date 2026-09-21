@@ -6,19 +6,32 @@
     const navTooltip = document.getElementById('navTooltip');
     const mobileMenuBtn = document.getElementById('mobileMenuBtn');
     const sidebarOverlay = document.getElementById('sidebarOverlay');
+    let lastFocusedElement = null;
+
+    if (sidebar && window.innerWidth < 640) sidebar.setAttribute('aria-hidden', 'true');
 
     function closeMobileSidebar() {
+        if (!sidebar) return;
         sidebar.classList.remove('mobile-open');
         sidebarOverlay?.classList.remove('visible');
         mobileMenuBtn?.setAttribute('aria-expanded', 'false');
         document.body.classList.remove('sidebar-open');
+        sidebar.setAttribute('aria-hidden', 'true');
+        if (lastFocusedElement && typeof lastFocusedElement.focus === 'function') {
+            lastFocusedElement.focus({ preventScroll: true });
+            lastFocusedElement = null;
+        }
     }
 
     function openMobileSidebar() {
+        if (!sidebar) return;
+        lastFocusedElement = document.activeElement;
         sidebar.classList.add('mobile-open');
         sidebarOverlay?.classList.add('visible');
         mobileMenuBtn?.setAttribute('aria-expanded', 'true');
         document.body.classList.add('sidebar-open');
+        sidebar.setAttribute('aria-hidden', 'false');
+        sidebar.querySelector('input, a, button')?.focus({ preventScroll: true });
     }
 
     mobileMenuBtn?.addEventListener('click', () => {
@@ -31,6 +44,11 @@
     window.addEventListener('resize', () => {
         if (window.innerWidth >= 640) closeMobileSidebar();
     });
+    document.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape' && sidebar?.classList.contains('mobile-open')) {
+            closeMobileSidebar();
+        }
+    });
     
     // Restore collapsed state from localStorage
     let collapsed = localStorage.getItem('sidebarCollapsed') === 'true';
@@ -42,7 +60,7 @@
     }
 
     /* ---- Collapse toggle ---- */
-    collapseBtn.addEventListener('click', () => {
+    collapseBtn?.addEventListener('click', () => {
         collapsed = !collapsed;
         localStorage.setItem('sidebarCollapsed', collapsed);
         if (collapsed) {

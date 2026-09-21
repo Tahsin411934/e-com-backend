@@ -1343,8 +1343,9 @@ class GarmentsProductSeeder extends Seeder
                 }
 
                 ProductVariant::firstOrCreate(
-                    ['product_id' => $product->id, 'sku' => $sku],
+                    ['sku' => $sku],
                     [
+                        'product_id' => $product->id,
                         'name' => $variantName,
                         'barcode' => (string) Str::uuid(),
                         'sale_price' => (int) round($price * $sizeMultiplier),

@@ -114,6 +114,10 @@ class StoreDemoDataSeeder
 
     private function seedProducts(int $storeId, array $brandIds, array $categoryIds): void
     {
+        // Keep the storefront homepage focused: only these categories get
+        // products in the homepage product sections.
+        $homepageCategories = ['electronics', 'clothing', 'home-kitchen'];
+
         $imageByCategory = [
             'electronics' => 'demo/products/electronics.png',
             'clothing' => 'demo/products/clothing.png',
@@ -548,12 +552,14 @@ class StoreDemoDataSeeder
         foreach ($products as $productData) {
             $categorySlugs = $productData['categories'] ?? [];
             $variants = $productData['variants'] ?? [];
+            $productImage = $productData['image'] ?? null;
             unset($productData['categories'], $productData['variants']);
+            unset($productData['image']);
 
             $product = Product::create(array_merge($productData, [
                 'store_id' => $storeId,
                 'published_at' => now(),
-                'is_homepage' => true,
+                'is_homepage' => (bool) array_intersect($categorySlugs, $homepageCategories),
             ]));
 
             if (!empty($categorySlugs)) {
@@ -562,7 +568,8 @@ class StoreDemoDataSeeder
             }
 
             $product->images()->create([
-                'image_url' => $imageByCategory[$categorySlugs[0] ?? '']
+                'image_url' => $productImage
+                    ?? $imageByCategory[$categorySlugs[0] ?? '']
                     ?? 'demo/products/default.svg',
                 'alt_text' => $product->name,
                 'sort_order' => 0,
@@ -587,23 +594,7 @@ class StoreDemoDataSeeder
     private function seedBanners(int $storeId): void
     {
         $banners = [
-            [
-                'store_id' => $storeId,
-                'banner_image' => 'banners/7CVCKbhuLnKEN6LGJ62ZDQSqIJcCZntYvoCpdYIi.png',
-                'title' => 'Discover your next favourite',
-                'subtitle' => 'Explore our latest products, selected for everyday living.',
-                'smtag' => 'Featured collection',
-                'primary_btn' => 'Shop now',
-                'primary_btn_url' => '/products',
-                'primary_btn_color' => '#1a462f',
-                'primary_btn_text_color' => '#ffffff',
-                'secondary_btn' => 'Browse categories',
-                'secondary_btn_url' => '/categories',
-                'secondary_btn_color' => '#ffffff',
-                'secondary_btn_text_color' => '#1f2937',
-                'sort_order' => 0,
-                'status' => 'active',
-            ],
+           
             [
                 'store_id' => $storeId,
                 'banner_image' => 'banners/cUgMETtch0m9yYFiWJgiEne1ZljIgkyUKJAcINdt.jpg',

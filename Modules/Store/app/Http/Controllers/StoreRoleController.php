@@ -15,6 +15,7 @@ class StoreRoleController extends Controller
     public function index()
     {
         $permissions = $this->permissionService->getAllPermissions();
+        $user = auth()->user();
         $permissions = $permissions->reject(function ($permission) {
             foreach (['users.', 'roles.', 'permissions.', 'store-roles.'] as $prefix) {
                 if (str_starts_with($permission->name, $prefix)) {
@@ -23,6 +24,10 @@ class StoreRoleController extends Controller
             }
 
             return false;
+        })->filter(function ($permission) use ($user) {
+            // Store roles may only receive permissions already granted to
+            // the current platform/store administrator.
+            return $user && $user->hasPermission($permission->name);
         });
         $groupedPermissions = $permissions->groupBy(fn ($permission) => ucfirst(explode('.', $permission->name)[0]));
 

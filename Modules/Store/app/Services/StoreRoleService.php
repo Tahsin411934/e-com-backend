@@ -27,8 +27,8 @@ class StoreRoleService
                 'permission' => 'store-roles',
                 'entityLabel' => 'Store Role',
                 'id' => $role->id,
-                'edit' => 'storeRoleEdit',
-                'delete' => 'storeRoleDelete',
+                'edit' => 'storerolesEdit',
+                'delete' => 'storerolesDelete',
             ])->render())
             ->rawColumns(['action'])
             ->make(true);

@@ -53,7 +53,7 @@
                 class="nav-item has-sub w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-gray-500 hover:bg-gray-50 hover:text-gray-800 text-sm font-medium transition-colors duration-150"
                 data-label="Users & Permissions" data-sub="sub-identity">
                 <i class="fas fa-id-card w-4 text-center flex-shrink-0 text-base"></i>
-                <span class="nav-label flex-1 text-left">Identity & Access</span>
+                <span class="nav-label flex-1 text-left">Users & Access</span>
                 <i class="nav-chevron fas fa-chevron-down text-[10px] flex-shrink-0"></i>
             </button>
             <div class="submenu sub-indent" id="sub-identity">
@@ -66,13 +66,13 @@
                 @if(auth()->user()->hasPermission('roles.view'))
                 <a href="{{ route('roles.index') }}"
                     class="flex items-center gap-2.5 pl-9 pr-3 py-1.5 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-50 text-[13px] transition-colors {{ request()->routeIs('roles.*') ? 'text-primary bg-primary-light font-medium' : '' }}">
-                    <i class="fas fa-shield-halved w-3.5 text-center"></i><span>Roles</span>
+                    <i class="fas fa-shield-halved w-3.5 text-center"></i><span>User Roles</span>
                 </a>
                 @endif
                 @if(auth()->user()->hasPermission('permissions.view'))
                 <a href="{{ route('permissions.index') }}"
                     class="flex items-center gap-2.5 pl-9 pr-3 py-1.5 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-50 text-[13px] transition-colors {{ request()->routeIs('permissions.*') ? 'text-primary bg-primary-light font-medium' : '' }}">
-                    <i class="fas fa-key w-3.5 text-center"></i><span>Permissions</span>
+                    <i class="fas fa-key w-3.5 text-center"></i><span>Access Permissions</span>
                 </a>
                 @endif
             </div>
@@ -86,7 +86,7 @@
                 class="nav-item has-sub w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-gray-500 hover:bg-gray-50 hover:text-gray-800 text-sm font-medium transition-colors duration-150"
                 data-label="Products" data-sub="sub-cat">
                 <i class="fas fa-boxes w-4 text-center flex-shrink-0 text-base"></i>
-                <span class="nav-label flex-1 text-left">Catalog</span>
+                <span class="nav-label flex-1 text-left">Products</span>
                 <i class="nav-chevron fas fa-chevron-down text-[10px] flex-shrink-0"></i>
             </button>
                 <div class="submenu sub-indent" id="sub-cat">
@@ -111,7 +111,7 @@
                     @if(auth()->user()->hasPermission('units.view'))
                     <a href="{{ route('units.index') }}"
                         class="flex items-center gap-2.5 pl-9 pr-3 py-1.5 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-50 text-[13px] transition-colors {{ request()->routeIs('units.*') ? 'text-primary bg-primary-light font-medium' : '' }}">
-                        <i class="fas fa-ruler-combined w-3.5 text-center"></i><span>Units</span>
+                    <i class="fas fa-ruler-combined w-3.5 text-center"></i><span>Measurement Units</span>
                     </a>
                     @endif
                     @if(auth()->user()->hasPermission('sizes.view'))
@@ -123,7 +123,7 @@
                     @if(auth()->user()->hasPermission('size-groups.view'))
                     <a href="{{ route('size-groups.index') }}"
                         class="flex items-center gap-2.5 pl-9 pr-3 py-1.5 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-50 text-[13px] transition-colors {{ request()->routeIs('size-groups.*') ? 'text-primary bg-primary-light font-medium' : '' }}">
-                        <i class="fas fa-layer-group w-3.5 text-center"></i><span>Size Groups</span>
+                    <i class="fas fa-layer-group w-3.5 text-center"></i><span>Size Groups</span>
                     </a>
                     @endif
                     @if(auth()->user()->hasPermission('barcode-print.view'))
@@ -156,7 +156,7 @@
                 class="nav-item has-sub w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-gray-500 hover:bg-gray-50 hover:text-gray-800 text-sm font-medium transition-colors duration-150"
                 data-label="Store Management" data-sub="sub-store">
                 <i class="fas fa-store w-4 text-center flex-shrink-0 text-base"></i>
-                <span class="nav-label flex-1 text-left">Store & Location</span>
+                <span class="nav-label flex-1 text-left">Store Management</span>
                 <i class="nav-chevron fas fa-chevron-down text-[10px] flex-shrink-0"></i>
             </button>
             <div class="submenu sub-indent" id="sub-store">
@@ -193,7 +193,7 @@
                 @if(auth()->user()->hasPermission('app-settings.view'))
                 <a href="{{ route('app-settings.index') }}"
                     class="flex items-center gap-2.5 pl-9 pr-3 py-1.5 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-50 text-[13px] transition-colors {{ request()->routeIs('app-settings.*') ? 'text-primary bg-primary-light font-medium' : '' }}">
-                    <i class="fas fa-cogs w-3.5 text-center"></i><span>App Settings</span>
+                    <i class="fas fa-cogs w-3.5 text-center"></i><span>Store Settings</span>
                 </a>
                 @endif
                 @if(auth()->user()->hasPermission('plans.view'))
@@ -225,7 +225,7 @@
                 @if(auth()->user()->hasPermission('inventory-stock.view'))
                 <a href="{{ route('inventory-stock.index') }}"
                     class="flex items-center gap-2.5 pl-9 pr-3 py-1.5 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-50 text-[13px] transition-colors {{ request()->routeIs('inventory-stock.*') ? 'text-primary bg-primary-light font-medium' : '' }}">
-                    <i class="fas fa-boxes w-3.5 text-center"></i><span>Stock</span>
+                    <i class="fas fa-boxes w-3.5 text-center"></i><span>Stock Overview</span>
                 </a>
                 @endif
                 @if(auth()->user()->hasPermission('inventory-locations.view'))
@@ -237,7 +237,7 @@
                 @if(auth()->user()->hasPermission('inventory-movements.view'))
                 <a href="{{ route('inventory-movements.index') }}"
                     class="flex items-center gap-2.5 pl-9 pr-3 py-1.5 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-50 text-[13px] transition-colors {{ request()->routeIs('inventory-movements.*') ? 'text-primary bg-primary-light font-medium' : '' }}">
-                    <i class="fas fa-exchange-alt w-3.5 text-center"></i><span>Movements</span>
+                    <i class="fas fa-exchange-alt w-3.5 text-center"></i><span>Stock Movements</span>
                 </a>
                 @endif
             </div>
@@ -252,14 +252,14 @@
                 class="nav-item has-sub w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-gray-500 hover:bg-gray-50 hover:text-gray-800 text-sm font-medium transition-colors duration-150"
                 data-label="Marketing & Promotions" data-sub="sub-cart">
                 <i class="fas fa-shopping-cart w-4 text-center flex-shrink-0 text-base"></i>
-                <span class="nav-label flex-1 text-left">Cart & Wishlist</span>
+                <span class="nav-label flex-1 text-left">Marketing</span>
                 <i class="nav-chevron fas fa-chevron-down text-[10px] flex-shrink-0"></i>
             </button>
             <div class="submenu sub-indent" id="sub-cart">
                 @if(auth()->user()->hasPermission('carts.view'))
                 <a href="{{ route('cart.index') }}"
                     class="flex items-center gap-2.5 pl-9 pr-3 py-1.5 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-50 text-[13px] transition-colors {{ request()->routeIs('cart.*') ? 'text-primary bg-primary-light font-medium' : '' }}">
-                    <i class="fas fa-shopping-cart w-3.5 text-center"></i><span>Carts</span>
+                    <i class="fas fa-shopping-cart w-3.5 text-center"></i><span>Abandoned Carts</span>
                 </a>
                 @endif
                 @if(auth()->user()->hasPermission('coupons.view'))
@@ -366,7 +366,7 @@
                 class="nav-item has-sub w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-gray-500 hover:bg-gray-50 hover:text-gray-800 text-sm font-medium transition-colors duration-150"
                 data-label="Finance" data-sub="sub-account">
                 <i class="fas fa-wallet w-4 text-center flex-shrink-0 text-base"></i>
-                <span class="nav-label flex-1 text-left">Account</span>
+                <span class="nav-label flex-1 text-left">Finance</span>
                 <i class="nav-chevron fas fa-chevron-down text-[10px] flex-shrink-0"></i>
             </button>
             <div class="submenu sub-indent" id="sub-account">
@@ -403,7 +403,7 @@
                 @if(auth()->user()->hasPermission('account-reports.view'))
                 <a href="{{ route('account-transactions.index') }}"
                     class="flex items-center gap-2.5 pl-9 pr-3 py-1.5 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-50 text-[13px] transition-colors {{ request()->routeIs('account-transactions.*') ? 'text-primary bg-primary-light font-medium' : '' }}">
-                    <i class="fas fa-book w-3.5 text-center"></i><span>Ledger</span>
+                    <i class="fas fa-book w-3.5 text-center"></i><span>Transaction Ledger</span>
                 </a>
                 @endif
                 @if(auth()->user()->hasPermission('account-reports.view'))
@@ -422,7 +422,7 @@
                 class="nav-item has-sub w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-gray-500 hover:bg-gray-50 hover:text-gray-800 text-sm font-medium transition-colors duration-150"
                 data-label="Investments & Assets" data-sub="sub-investments">
                 <i class="fas fa-chart-line w-4 text-center flex-shrink-0 text-base"></i>
-                <span class="nav-label flex-1 text-left">Investments</span>
+                <span class="nav-label flex-1 text-left">Assets & Investments</span>
                 <i class="nav-chevron fas fa-chevron-down text-[10px] flex-shrink-0"></i>
             </button>
             <div class="submenu sub-indent" id="sub-investments">
@@ -455,7 +455,7 @@
                 class="nav-item has-sub w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-gray-500 hover:bg-gray-50 hover:text-gray-800 text-sm font-medium transition-colors duration-150"
                 data-label="Shipping & Delivery" data-sub="sub-delivery">
                 <i class="fas fa-shipping-fast w-4 text-center flex-shrink-0 text-base"></i>
-                <span class="nav-label flex-1 text-left">Delivery</span>
+                <span class="nav-label flex-1 text-left">Shipping & Delivery</span>
                 <i class="nav-chevron fas fa-chevron-down text-[10px] flex-shrink-0"></i>
             </button>
             <div class="submenu sub-indent" id="sub-delivery">
@@ -468,7 +468,7 @@
                 @if(auth()->user()->hasPermission('shipment-events.view'))
                 <a href="{{ route('shipment-events.index') }}"
                     class="flex items-center gap-2.5 pl-9 pr-3 py-1.5 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-50 text-[13px] transition-colors {{ request()->routeIs('shipment-events.*') ? 'text-primary bg-primary-light font-medium' : '' }}">
-                    <i class="fas fa-timeline w-3.5 text-center"></i><span>Events</span>
+                    <i class="fas fa-timeline w-3.5 text-center"></i><span>Delivery Tracking</span>
                 </a>
                 @endif
                 @if(auth()->user()->hasPermission('delivery-drivers.view'))
@@ -480,7 +480,7 @@
                 @if(auth()->user()->hasPermission('delivery-zones.view'))
                 <a href="{{ route('delivery-zones.index') }}"
                     class="flex items-center gap-2.5 pl-9 pr-3 py-1.5 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-50 text-[13px] transition-colors {{ request()->routeIs('delivery-zones.*') ? 'text-primary bg-primary-light font-medium' : '' }}">
-                    <i class="fas fa-map-location-dot w-3.5 text-center"></i><span>Zones</span>
+                    <i class="fas fa-map-location-dot w-3.5 text-center"></i><span>Delivery Zones</span>
                 </a>
                 @endif
             </div>
@@ -495,14 +495,14 @@
                 class="nav-item has-sub w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-gray-500 hover:bg-gray-50 hover:text-gray-800 text-sm font-medium transition-colors duration-150"
                 data-label="Point of Sale" data-sub="sub-pos">
                 <i class="fas fa-cash-register w-4 text-center flex-shrink-0 text-base"></i>
-                <span class="nav-label flex-1 text-left">POS</span>
+                <span class="nav-label flex-1 text-left">Point of Sale</span>
                 <i class="nav-chevron fas fa-chevron-down text-[10px] flex-shrink-0"></i>
             </button>
             <div class="submenu sub-indent" id="sub-pos">
                 @if(auth()->user()->hasPermission('pos-registers.view'))
                 <a href="{{ route('pos-registers.index') }}"
                     class="flex items-center gap-2.5 pl-9 pr-3 py-1.5 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-50 text-[13px] transition-colors {{ request()->routeIs('pos-registers.*') ? 'text-primary bg-primary-light font-medium' : '' }}">
-                    <i class="fas fa-desktop w-3.5 text-center"></i><span>Registers</span>
+                    <i class="fas fa-desktop w-3.5 text-center"></i><span>Cash Registers</span>
                 </a>
                 @endif
                 @if(auth()->user()->hasPermission('pos-shifts.view'))
@@ -535,7 +535,7 @@
                 class="nav-item has-sub w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-gray-500 hover:bg-gray-50 hover:text-gray-800 text-sm font-medium transition-colors duration-150"
                 data-label="Customer Engagement" data-sub="sub-reviews">
                 <i class="fas fa-star w-4 text-center flex-shrink-0 text-base"></i>
-                <span class="nav-label flex-1 text-left">Reviews & Notif.</span>
+                <span class="nav-label flex-1 text-left">Customer Engagement</span>
                 <i class="nav-chevron fas fa-chevron-down text-[10px] flex-shrink-0"></i>
             </button>
             <div class="submenu sub-indent" id="sub-reviews">
@@ -554,7 +554,7 @@
                 @if(auth()->user()->hasPermission('histories.view'))
                 <a href="{{ route('history.page') }}"
                     class="flex items-center gap-2.5 pl-9 pr-3 py-1.5 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-50 text-[13px] transition-colors {{ request()->routeIs('history.*') ? 'text-primary bg-primary-light font-medium' : '' }}">
-                    <i class="fas fa-history w-3.5 text-center"></i><span>History</span>
+                    <i class="fas fa-history w-3.5 text-center"></i><span>Activity History</span>
                 </a>
                 @endif
                 @if(auth()->user()->hasPermission('webhooks.view'))
@@ -580,7 +580,7 @@
                 class="nav-item flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-medium transition-colors duration-150 mb-0.5 {{ request()->routeIs('history.*') ? 'text-white active' : 'text-gray-500 hover:bg-gray-50 hover:text-gray-800' }}"
                 data-label="Activity Log">
                 <i class="fas fa-clock-rotate-left w-4 text-center flex-shrink-0 text-base"></i>
-                <span class="nav-label">History</span>
+                <span class="nav-label">Activity Log</span>
             </a>
         </div>
         @endif
@@ -592,7 +592,7 @@
                 class="nav-item has-sub w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-gray-500 hover:bg-gray-50 hover:text-gray-800 text-sm font-medium transition-colors duration-150"
                 data-label="Online Store" data-sub="sub-frontend">
                 <i class="fas fa-paint-brush w-4 text-center flex-shrink-0 text-base"></i>
-                <span class="nav-label flex-1 text-left">Frontend</span>
+                <span class="nav-label flex-1 text-left">Online Store</span>
                 <i class="nav-chevron fas fa-chevron-down text-[10px] flex-shrink-0"></i>
             </button>
             <div class="submenu sub-indent" id="sub-frontend">

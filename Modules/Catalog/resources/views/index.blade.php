@@ -169,9 +169,24 @@
                     tbody.__sortableInstance.destroy();
                 }
 
+                // Only the dedicated handle should start a drag. Keep the rest
+                // of the row available for links, text selection and actions.
+                tbody.querySelectorAll('tr').forEach(function(row) {
+                    let firstCell = row.querySelector('td');
+                    if (!firstCell || firstCell.querySelector('.drag-handle')) return;
+
+                    let handle = document.createElement('button');
+                    handle.type = 'button';
+                    handle.className = 'drag-handle mr-2 inline-flex items-center justify-center text-gray-400 hover:text-primary cursor-grab active:cursor-grabbing';
+                    handle.title = 'Drag to reorder';
+                    handle.setAttribute('aria-label', 'Drag to reorder product');
+                    handle.innerHTML = '<i class="fa-solid fa-grip-vertical" aria-hidden="true"></i>';
+                    firstCell.prepend(handle);
+                });
+
                 // Create new Sortable instance
                 let sortable = Sortable.create(tbody, {
-                    handle: 'tr',
+                    handle: '.drag-handle',
                     animation: 150,
                     ghostClass: 'sortable-ghost',
                     dragClass: 'sortable-drag',
@@ -202,17 +217,6 @@
 
                 // Store the instance for later cleanup
                 tbody.__sortableInstance = sortable;
-
-                // Add visual feedback for draggable rows
-                document.querySelectorAll('#productTable tbody tr').forEach(function(row) {
-                    row.style.cursor = 'grab';
-                    row.addEventListener('dragstart', function() {
-                        row.style.cursor = 'grabbing';
-                    });
-                    row.addEventListener('dragend', function() {
-                        row.style.cursor = 'grab';
-                    });
-                });
             }
 
             function sendProductReorder(productIds) {
@@ -272,7 +276,14 @@
         <style>
             /* Drag-and-drop visual styles */
             #productTable tbody tr {
-                user-select: none;
+                user-select: text;
+            }
+
+            #productTable tbody .drag-handle {
+                border: 0;
+                background: transparent;
+                padding: 0.25rem;
+                line-height: 1;
             }
 
             #productTable tbody tr.sortable-ghost {

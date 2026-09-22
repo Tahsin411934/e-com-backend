@@ -546,45 +546,6 @@
     color: var(--dark-text);
 }
 
-/* DataTable loader for search, sorting and pagination requests. */
-.dataTables_wrapper .dataTables_processing {
-    position: absolute;
-    inset: 48px 0 auto 0;
-    width: 100%;
-    min-height: 120px;
-    display: none !important;
-    align-items: center;
-    justify-content: center;
-    gap: 10px;
-    z-index: 10;
-    border: 0;
-    border-radius: 10px;
-    background: rgba(255, 255, 255, .88);
-    color: #334155;
-    font-size: 13px;
-    font-weight: 600;
-}
-.dataTables_wrapper.dt-is-loading .dataTables_processing { display: flex !important; }
-.dataTables_wrapper .dataTables_processing::before {
-    content: '';
-    width: 18px;
-    height: 18px;
-    border: 3px solid var(--primary-light);
-    border-top-color: var(--primary-color);
-    border-radius: 9999px;
-    animation: dt-spin .7s linear infinite;
-}
-.dt-loading-spinner {
-    width: 18px;
-    height: 18px;
-    border: 3px solid var(--primary-light);
-    border-top-color: var(--primary-color);
-    border-radius: 9999px;
-    animation: dt-spin .7s linear infinite;
-}
-@keyframes dt-spin { to { transform: rotate(360deg); } }
-.dark .dataTables_wrapper .dataTables_processing { background: rgba(31, 41, 55, .9); }
-
 .dark .bg-white.shadow-md.rounded-xl {
     background: var(--dark-surface);
     border-color: var(--dark-border);

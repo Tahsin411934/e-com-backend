@@ -546,6 +546,14 @@
     color: var(--dark-text);
 }
 
+/* Keep the native DataTables processing indicator, without a white panel. */
+.dataTables_wrapper .dataTables_processing {
+    background: transparent !important;
+    border: 0 !important;
+    box-shadow: none !important;
+    color: inherit;
+}
+
 .dark .bg-white.shadow-md.rounded-xl {
     background: var(--dark-surface);
     border-color: var(--dark-border);

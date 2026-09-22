@@ -120,8 +120,15 @@
             // event is not missed on the initial request or later reloads.
             $('#{{ $id }}').on('processing.dt', function(e, settings, processing) {
                 $(this).closest('.dataTables_wrapper')
+                    .toggleClass('dt-is-loading', processing)
                     .find('.dataTables_processing')
                     .css('display', processing ? 'block' : 'none');
+            });
+
+            $('#{{ $id }}').on('preXhr.dt', function() {
+                $(this).closest('.dataTables_wrapper').addClass('dt-is-loading');
+            }).on('xhr.dt error.dt', function() {
+                $(this).closest('.dataTables_wrapper').removeClass('dt-is-loading');
             });
 
             const table = $('#{{ $id }}').DataTable({

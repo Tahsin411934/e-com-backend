@@ -9,11 +9,16 @@ use Modules\Store\Http\Controllers\StoreStaffController;
 use Modules\Store\Http\Controllers\StoreRoleController;
 use Modules\Store\Http\Controllers\PlanController;
 use Modules\Store\Http\Controllers\FeatureController;
+use Modules\Store\Http\Controllers\StoreDomainAdminController;
 
 Route::middleware(['auth', 'verified', 'admin'])->group(function () {
     // Stores
     Route::resource('stores', StoreController::class)->except(['create', 'edit'])->names('stores')->middleware('permission:stores.*');
     Route::get('/dataTable/stores', [StoreController::class, 'dataTable'])->name('stores.dataTable')->middleware('permission:stores.view');
+
+    // Connected storefront domains (reuses the store-view permission).
+    Route::get('/store-domains', [StoreDomainAdminController::class, 'index'])->name('store-domains.index')->middleware('permission:stores.view');
+    Route::get('/dataTable/store-domains', [StoreDomainAdminController::class, 'dataTable'])->name('store-domains.dataTable')->middleware('permission:stores.view');
 
     // Store Staff
     Route::resource('store-staff', StoreStaffController::class)->except(['create', 'edit'])->names('store-staff')->middleware('permission:store-staff.*');

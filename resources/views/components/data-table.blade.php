@@ -137,6 +137,19 @@
                 }
             });
 
+            // Keep the loader visible during search, sorting and pagination.
+            $('#{{ $id }}').on('preXhr.dt', function() {
+                $(this).closest('.dataTables_wrapper').addClass('dt-is-loading');
+            }).on('xhr.dt error.dt', function() {
+                $(this).closest('.dataTables_wrapper').removeClass('dt-is-loading');
+            });
+
+            // DataTables' native processing event is the authoritative state
+            // for search, ordering and pagination requests.
+            $('#{{ $id }}').on('processing.dt', function(e, settings, processing) {
+                $(this).closest('.dataTables_wrapper').toggleClass('dt-is-loading', processing);
+            });
+
             $(document).on('change', '.dt-filter-' + tableId, function() {
                 table.ajax.reload();
             });

@@ -596,6 +596,12 @@
                 <i class="nav-chevron fas fa-chevron-down text-[10px] flex-shrink-0"></i>
             </button>
             <div class="submenu sub-indent" id="sub-frontend">
+                @if(auth()->user()->hasPermission('stores.view'))
+                <a href="{{ route('store-domains.index') }}"
+                    class="flex items-center gap-2.5 pl-9 pr-3 py-1.5 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-50 text-[13px] transition-colors {{ request()->routeIs('store-domains.*') ? 'text-primary bg-primary-light font-medium' : '' }}">
+                    <i class="fas fa-globe w-3.5 text-center"></i><span>Custom Domains</span>
+                </a>
+                @endif
                 @if(auth()->user()->hasPermission('frontend.banners.view'))
                 <a href="{{ route('frontend.banners.index') }}"
                     class="flex items-center gap-2.5 pl-9 pr-3 py-1.5 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-50 text-[13px] transition-colors {{ request()->routeIs('frontend.banners.*') ? 'text-primary bg-primary-light font-medium' : '' }}">

@@ -124,12 +124,22 @@
                     .css('display', processing ? 'block' : 'none');
             });
 
+            // Track every server-side request, including the initial load.
+            $('#{{ $id }}').on('preXhr.dt', function() {
+                $(this).closest('.dataTables_wrapper').addClass('dt-is-loading');
+            }).on('xhr.dt error.dt', function(e) {
+                $(this).closest('.dataTables_wrapper').removeClass('dt-is-loading');
+                if (e.type === 'error') {
+                    Toastify({ text: 'Unable to load table data. Please try again.', duration: 4000, gravity: 'bottom', position: 'right', style: { background: '#dc2626' } }).showToast();
+                }
+            });
+
             const table = $('#{{ $id }}').DataTable({
                 processing: true,
                 serverSide: true,
                 autoWidth: false,
                 ajax: {
-                    url: "{!! $ajaxUrl !!}",
+                    url: @json($ajaxUrl),
                     data: buildAjaxData(@json($filters ?? []))
                 },
                 columns: {!! json_encode($dtColumns) !!},
@@ -145,26 +155,9 @@
                 }
             });
 
-            // Keep the native DataTables loader visible during search,
-            // sorting and pagination requests.
-            $('#{{ $id }}').on('preXhr.dt', function() {
-                $(this).closest('.dataTables_wrapper').addClass('dt-is-loading');
-            }).on('xhr.dt error.dt', function() {
-                $(this).closest('.dataTables_wrapper').removeClass('dt-is-loading');
-            });
-
             $(document).on('change', '.dt-filter-' + tableId, function() {
                 table.ajax.reload();
             });
-
-            @if ($exportButtons)
-                setTimeout(function() {
-                    if (table.buttons().container().length) {
-                        table.buttons().container().appendTo('#{{ $id }}_buttons_container');
-                        $('.dt-button').removeClass('dt-button');
-                    }
-                }, 50);
-            @endif
 
             // Global delete function for URL-based action buttons.
             // Defined here so any page using x-data-table can delete rows

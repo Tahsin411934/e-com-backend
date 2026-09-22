@@ -542,7 +542,7 @@
     background-color: var(--dark-hover);
 }
 .dark .dataTables_processing {
-    background-color: var(--dark-surface);
+    background-color: transparent;
     color: var(--dark-text);
 }
 

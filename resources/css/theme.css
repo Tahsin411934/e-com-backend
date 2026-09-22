@@ -542,40 +542,9 @@
     background-color: var(--dark-hover);
 }
 .dark .dataTables_processing {
-    background-color: transparent;
+    background-color: var(--dark-surface);
     color: var(--dark-text);
 }
-
-/* Keep the native DataTables processing indicator, without a white panel. */
-.dataTables_wrapper .dataTables_processing {
-    position: absolute;
-    inset: 120px 0 auto 0;
-    width: 100%;
-    min-height: 120px;
-    display: none;
-    align-items: center;
-    justify-content: center;
-    gap: 10px;
-    z-index: 10;
-    border: 0 !important;
-    border-radius: 10px;
-    background: transparent !important;
-    box-shadow: none !important;
-    color: inherit;
-    font-size: 13px;
-    font-weight: 600;
-}
-.dataTables_wrapper.dt-is-loading .dataTables_processing { display: flex !important; }
-.dataTables_wrapper .dataTables_processing::before {
-    content: '';
-    width: 18px;
-    height: 18px;
-    border: 3px solid var(--primary-light);
-    border-top-color: var(--primary-color);
-    border-radius: 9999px;
-    animation: dt-spin .7s linear infinite;
-}
-@keyframes dt-spin { to { transform: rotate(360deg); } }
 
 .dark .bg-white.shadow-md.rounded-xl {
     background: var(--dark-surface);

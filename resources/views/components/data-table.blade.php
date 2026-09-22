@@ -124,16 +124,6 @@
                     .css('display', processing ? 'block' : 'none');
             });
 
-            // Track every server-side request, including the initial load.
-            $('#{{ $id }}').on('preXhr.dt', function() {
-                $(this).closest('.dataTables_wrapper').addClass('dt-is-loading');
-            }).on('xhr.dt error.dt', function(e) {
-                $(this).closest('.dataTables_wrapper').removeClass('dt-is-loading');
-                if (e.type === 'error') {
-                    Toastify({ text: 'Unable to load table data. Please try again.', duration: 4000, gravity: 'bottom', position: 'right', style: { background: '#dc2626' } }).showToast();
-                }
-            });
-
             const table = $('#{{ $id }}').DataTable({
                 processing: true,
                 serverSide: true,
@@ -147,8 +137,6 @@
                 buttons: tableButtons,
                 scrollX: true,
                 responsive: true,
-                deferRender: true,
-                searchDelay: 350,
                 order: @json($order),
                 language: {
                     search: "",

@@ -549,7 +549,7 @@
 /* Keep the native DataTables processing indicator, without a white panel. */
 .dataTables_wrapper .dataTables_processing {
     position: absolute;
-    inset: 48px 0 auto 0;
+    inset: 120px 0 auto 0;
     width: 100%;
     min-height: 120px;
     display: none;

@@ -142,11 +142,13 @@
                     url: @json($ajaxUrl),
                     data: buildAjaxData(@json($filters ?? []))
                 },
-                columns: {!! json_encode($dtColumns) !!},
+                columns: @json($dtColumns),
                 dom: '<"flex flex-col md:flex-row items-center justify-between gap-4 mb-4"lBf>rt<"flex flex-col md:flex-row items-center justify-between gap-4 mt-4"ip>',
                 buttons: tableButtons,
                 scrollX: true,
                 responsive: true,
+                deferRender: true,
+                searchDelay: 350,
                 order: @json($order),
                 language: {
                     search: "",

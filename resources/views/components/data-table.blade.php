@@ -149,6 +149,13 @@
                 table.ajax.reload();
             });
 
+            // Keep the component's button styling and remove only the
+            // DataTables default button class. Do not depend on an optional
+            // external buttons container.
+            @if ($exportButtons)
+                table.buttons().container().find('.dt-button').removeClass('dt-button');
+            @endif
+
             // Global delete function for URL-based action buttons.
             // Defined here so any page using x-data-table can delete rows
             // (e.g. Purchase Orders, Suppliers, Inventory Locations, etc.).

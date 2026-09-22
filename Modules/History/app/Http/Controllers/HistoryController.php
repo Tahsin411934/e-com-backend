@@ -84,13 +84,11 @@ class HistoryController extends Controller
             ->editColumn('created_at', fn (History $history) => $history->created_at?->format('d M Y, h:i A'))
             ->addColumn('row_actions', function (History $history) {
                 $html = '<div class="flex items-center justify-center gap-2">';
-                $html .= '<button type="button" class="js-history-action inline-flex items-center px-3 py-1.5 bg-white border border-gray-200 text-gray-700 text-xs font-semibold" data-history-action="details" data-history-id="'.$history->id.'" title="View details" '
-                    .'rounded-lg hover:bg-gray-50 hover:border-gray-300 transition duration-150">'
+                $html .= '<button type="button" class="js-history-action inline-flex items-center px-3 py-1.5 rounded-lg bg-white border border-gray-200 text-gray-700 text-xs font-semibold hover:bg-gray-50 hover:border-gray-300 transition duration-150" data-history-action="details" data-history-id="'.$history->id.'" title="View details">'
                     .'<i class="fa fa-eye mr-1 text-primary"></i> Details</button>';
 
                 if ($history->action === 'deleted') {
-                    $html .= '<button type="button" class="js-history-action inline-flex items-center px-3 py-1.5 bg-primary text-white text-xs font-semibold rounded-lg" data-history-action="restore" data-history-id="'.$history->id.'" title="Restore record" '
-                        .'hover:opacity-90 transition duration-150">'
+                    $html .= '<button type="button" class="js-history-action inline-flex items-center px-3 py-1.5 rounded-lg bg-primary text-white text-xs font-semibold hover:opacity-90 transition duration-150" data-history-action="restore" data-history-id="'.$history->id.'" title="Restore record">'
                         .'<i class="fa fa-rotate-left mr-1"></i> Restore</button>';
                 }
 

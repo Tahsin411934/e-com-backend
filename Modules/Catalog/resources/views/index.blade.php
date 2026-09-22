@@ -32,7 +32,8 @@
             </div>
         </div>
 
-        <x-data-table id="productTable" title="Product Catalog" icon="fa-solid fa-boxes" createPermission="products" buttonLink="{{ route('products.create') }}" buttonText="Add New Product" :columns="['Store','Brand','SKU','Name','Type','Status','Visibility','Created At','Action']" :ajaxUrl="route('products.dataTable')" :dtColumns="[
+        <x-data-table id="productTable" title="Product Catalog" icon="fa-solid fa-boxes" createPermission="products" buttonLink="{{ route('products.create') }}" buttonText="Add New Product" :columns="['Sort','Store','Brand','SKU','Name','Type','Status','Visibility','Created At','Action']" :ajaxUrl="route('products.dataTable')" :dtColumns="[
+            ['data' => null, 'orderable' => false, 'searchable' => false, 'defaultContent' => ''],
             ['data' => 'store_name', 'name' => 'store_name'],
             ['data' => 'brand.name'],
             ['data' => 'slug'],
@@ -169,11 +170,11 @@
                     tbody.__sortableInstance.destroy();
                 }
 
-                // Only the dedicated handle should start a drag. Keep the rest
-                // of the row available for links, text selection and actions.
+                // Add a dedicated handle cell so the rest of the row remains
+                // available for links, text selection and actions.
                 tbody.querySelectorAll('tr').forEach(function(row) {
-                    let firstCell = row.querySelector('td');
-                    if (!firstCell || firstCell.querySelector('.drag-handle')) return;
+                    let handleCell = row.querySelector('td');
+                    if (!handleCell || handleCell.querySelector('.drag-handle')) return;
 
                     let handle = document.createElement('button');
                     handle.type = 'button';
@@ -181,7 +182,7 @@
                     handle.title = 'Drag to reorder';
                     handle.setAttribute('aria-label', 'Drag to reorder product');
                     handle.innerHTML = '<i class="fa-solid fa-grip-vertical" aria-hidden="true"></i>';
-                    firstCell.prepend(handle);
+                    handleCell.appendChild(handle);
                 });
 
                 // Create new Sortable instance

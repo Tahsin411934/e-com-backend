@@ -127,7 +127,7 @@
                 columns: {!! json_encode($dtColumns) !!},
                 dom: '<"flex flex-col md:flex-row items-center justify-between gap-4 mb-4"lBf>rt<"flex flex-col md:flex-row items-center justify-between gap-4 mt-4"ip>',
                 buttons: tableButtons,
-                ScrollX: true,
+                scrollX: true,
                 responsive: true,
                 order: @json($order),
                 language: {

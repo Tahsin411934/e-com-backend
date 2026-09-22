@@ -116,6 +116,14 @@
                 ];
             @endif
 
+            // Bind before initialization so the native DataTables processing
+            // event is not missed on the initial request or later reloads.
+            $('#{{ $id }}').on('processing.dt', function(e, settings, processing) {
+                $(this).closest('.dataTables_wrapper')
+                    .find('.dataTables_processing')
+                    .css('display', processing ? 'block' : 'none');
+            });
+
             const table = $('#{{ $id }}').DataTable({
                 processing: true,
                 serverSide: true,

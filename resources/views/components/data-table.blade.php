@@ -145,6 +145,14 @@
                 }
             });
 
+            // Keep the native DataTables loader visible during search,
+            // sorting and pagination requests.
+            $('#{{ $id }}').on('preXhr.dt', function() {
+                $(this).closest('.dataTables_wrapper').addClass('dt-is-loading');
+            }).on('xhr.dt error.dt', function() {
+                $(this).closest('.dataTables_wrapper').removeClass('dt-is-loading');
+            });
+
             $(document).on('change', '.dt-filter-' + tableId, function() {
                 table.ajax.reload();
             });

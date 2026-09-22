@@ -38,9 +38,9 @@
             :columns="['Type','Entity','User','Description','Date','Action']"
             :ajaxUrl="route('history.dataTable')"
             :dtColumns="[
-                ['data' => 'action_badge', 'orderable' => false, 'searchable' => false],
-                ['data' => 'entity_label', 'orderable' => false, 'searchable' => false],
-                ['data' => 'user_name', 'orderable' => false, 'searchable' => false],
+                ['data' => 'action_badge', 'name' => 'action', 'orderable' => false, 'searchable' => true],
+                ['data' => 'entity_label', 'name' => 'entity_type', 'orderable' => false, 'searchable' => true],
+                ['data' => 'user_name', 'name' => 'user.name', 'orderable' => false, 'searchable' => true],
                 ['data' => 'description', 'name' => 'description'],
                 ['data' => 'created_at', 'name' => 'created_at'],
                 ['data' => 'row_actions', 'orderable' => false, 'searchable' => false],

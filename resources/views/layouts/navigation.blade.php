@@ -90,7 +90,7 @@
 
             <!-- Dropdown -->
             <div
-                class="absolute right-0 top-12 w-48 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
+                class="absolute right-0 top-8 w-48 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
 
                 <div class="px-4 py-3 border-b border-gray-100 dark:border-gray-700">
                     <p class="text-sm font-semibold text-gray-800 dark:text-gray-200 truncate">{{ Auth::user()->name }}</p>

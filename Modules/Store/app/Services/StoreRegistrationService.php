@@ -16,11 +16,10 @@ use Modules\Store\Models\Store;
 use Modules\Store\Models\StoreDomain;
 use Modules\Store\Models\Plan;
 use Modules\Store\Support\StoreDomainResolver;
-use Modules\Store\Services\StoreDemoDataSeeder;
 
 class StoreRegistrationService
 {
-    public function __construct(private StoreDemoDataSeeder $demoDataSeeder, private StoreSubscriptionService $subscriptionService) {}
+    public function __construct(private StoreSubscriptionService $subscriptionService) {}
 
     /**
      * Create the owner's user account with the default "Store Owner" role.
@@ -77,9 +76,6 @@ class StoreRegistrationService
 
             $plan = Plan::where('slug', $data['plan_slug'] ?? 'free-trial')->where('is_active', true)->where('is_public', true)->firstOrFail();
             $this->subscriptionService->assign($store, $plan);
-
-            // Seed demo data for the new store
-            $this->demoDataSeeder->seed($store->id);
 
             // Provision the free wildcard subdomain ({slug}.{suffix}) right
             // away — it is always trusted and needs no DNS verification.

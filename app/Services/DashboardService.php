@@ -13,6 +13,8 @@ use Modules\Order\Models\Delivery;
 use Modules\Order\Models\Order;
 use Modules\Order\Models\OrderItem;
 use Modules\Store\Support\CurrentStore;
+use Modules\Frontend\Models\Setting;
+use Modules\Frontend\Models\NavbarItem;
 
 class DashboardService
 {
@@ -91,6 +93,32 @@ class DashboardService
             'lastMonthCustomers' => $lastMonthCustomers,
             'thisMonthCustomers' => $thisMonthCustomers,
         ];
+    }
+
+    /**
+     * Completion score for the current store's setup and storefront profile.
+     */
+    public function getStoreProfileProgress(): array
+    {
+        $store = CurrentStore::store();
+        if (! $store) {
+            return ['percent' => 0, 'completed' => 0, 'total' => 0, 'items' => []];
+        }
+
+        $settings = Setting::forStore($store->id)->pluck('value', 'key');
+        $items = [
+            ['label' => 'Store name', 'done' => filled($store->name), 'url' => route('profile.edit')],
+            ['label' => 'Email and phone', 'done' => filled($store->email) && filled($store->phone), 'url' => route('profile.edit')],
+            ['label' => 'Store logo', 'done' => filled($settings->get('site_logo')), 'url' => route('frontend.site-settings.edit')],
+            ['label' => 'Favicon', 'done' => filled($settings->get('site_favicon')), 'url' => route('frontend.site-settings.edit')],
+            ['label' => 'Site name and description', 'done' => filled($settings->get('site_name')) && filled($settings->get('site_description')), 'url' => route('frontend.site-settings.edit')],
+            ['label' => 'Contact address', 'done' => filled($settings->get('contact_address')) || filled($settings->get('address')), 'url' => route('frontend.site-settings.edit')],
+            ['label' => 'Product catalog', 'done' => Product::forCurrentStore()->exists(), 'url' => route('products.create')],
+            ['label' => 'Navigation and homepage', 'done' => NavbarItem::forStore($store->id)->exists(), 'url' => route('frontend.nav-items.index')],
+        ];
+
+        $completed = collect($items)->where('done', true)->count();
+        return ['percent' => (int) round(($completed / count($items)) * 100), 'completed' => $completed, 'total' => count($items), 'items' => $items];
     }
 
     /**

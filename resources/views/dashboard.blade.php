@@ -36,6 +36,29 @@
             </div>
         </div>
 
+        @if(($storeProfileProgress['total'] ?? 0) > 0 && ($storeProfileProgress['percent'] ?? 100) < 100)
+            <div class="dashboard-card mb-8 p-5 sm:p-6">
+                <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-3">
+                    <div>
+                        <h2 class="text-lg font-bold text-gray-900">Complete your store profile</h2>
+                        <p class="text-sm text-gray-500 mt-1">Add your branding and storefront details before launch.</p>
+                    </div>
+                    <span class="text-2xl font-bold text-primary">{{ $storeProfileProgress['percent'] }}%</span>
+                </div>
+                <div class="h-2.5 bg-gray-100 rounded-full overflow-hidden">
+                    <div class="h-full bg-primary rounded-full transition-all" style="width: {{ $storeProfileProgress['percent'] }}%"></div>
+                </div>
+                <div class="mt-4 flex flex-wrap gap-2">
+                    @foreach($storeProfileProgress['items'] as $item)
+                        <a href="{{ $item['url'] }}" class="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium {{ $item['done'] ? 'bg-emerald-50 text-emerald-700' : 'bg-gray-100 text-gray-600 hover:bg-primary-soft hover:text-primary' }}">
+                            <i class="fas {{ $item['done'] ? 'fa-check' : 'fa-arrow-up-right-from-square' }} text-[10px]"></i>
+                            {{ $item['label'] }}
+                        </a>
+                    @endforeach
+                </div>
+            </div>
+        @endif
+
         {{-- First-time store onboarding --}}
         @if(($kpi['totalProducts'] ?? 0) == 0 && ($kpi['totalOrders'] ?? 0) == 0)
             <div class="dashboard-card mb-8 overflow-hidden border-primary/20 bg-gradient-to-br from-primary-soft to-white">

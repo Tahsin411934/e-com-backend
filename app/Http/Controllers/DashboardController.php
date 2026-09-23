@@ -26,6 +26,7 @@ class DashboardController extends Controller
             'lowStockProducts' => $data['lowStockProducts'],
             'recentActivities' => $data['recentActivities'],
             'inventorySummary' => $data['inventorySummary'],
+            'storeProfileProgress' => $this->dashboardService->getStoreProfileProgress(),
         ]);
     }
 

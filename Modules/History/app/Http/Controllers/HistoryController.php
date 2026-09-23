@@ -58,7 +58,7 @@ class HistoryController extends Controller
                 if ($request->filled('date_to')) {
                     $query->whereDate('created_at', '<=', $request->date('date_to'));
                 }
-            })
+            }, true)
             ->addColumn('user_name', fn (History $history) => $history->user?->name ?? $history->user?->email ?? 'System')
             ->filterColumn('action_badge', function ($query, $keyword) {
                 $query->where('action', 'like', '%'.$keyword.'%');
@@ -68,7 +68,8 @@ class HistoryController extends Controller
             })
             ->filterColumn('user_name', function ($query, $keyword) {
                 $query->whereHas('user', function ($userQuery) use ($keyword) {
-                    $userQuery->where('name', 'like', '%'.$keyword.'%')
+                    $userQuery->where('first_name', 'like', '%'.$keyword.'%')
+                        ->orWhere('last_name', 'like', '%'.$keyword.'%')
                         ->orWhere('email', 'like', '%'.$keyword.'%');
                 });
             })
@@ -87,7 +88,7 @@ class HistoryController extends Controller
                 $html .= '<button type="button" class="js-history-action inline-flex items-center px-3 py-1.5 rounded-lg bg-white border border-gray-200 text-gray-700 text-xs font-semibold hover:bg-gray-50 hover:border-gray-300 transition duration-150" data-history-action="details" data-history-id="'.$history->id.'" title="View details">'
                     .'<i class="fa fa-eye mr-1 text-primary"></i> Details</button>';
 
-                if ($history->action === 'deleted') {
+                if ($history->action === 'deleted' && auth()->user()?->hasPermission('histories.restore')) {
                     $html .= '<button type="button" class="js-history-action inline-flex items-center px-3 py-1.5 rounded-lg bg-primary text-white text-xs font-semibold hover:opacity-90 transition duration-150" data-history-action="restore" data-history-id="'.$history->id.'" title="Restore record">'
                         .'<i class="fa fa-rotate-left mr-1"></i> Restore</button>';
                 }

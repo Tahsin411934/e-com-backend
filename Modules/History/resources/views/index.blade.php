@@ -38,9 +38,9 @@
             :columns="['Type','Entity','User','Description','Date','Action']"
             :ajaxUrl="route('history.dataTable')"
             :dtColumns="[
-                ['data' => 'action_badge', 'name' => 'action', 'orderable' => false, 'searchable' => true],
-                ['data' => 'entity_label', 'name' => 'entity_type', 'orderable' => false, 'searchable' => true],
-                ['data' => 'user_name', 'name' => 'user.name', 'orderable' => false, 'searchable' => true],
+                ['data' => 'action_badge', 'name' => 'action_badge', 'orderable' => false, 'searchable' => true],
+                ['data' => 'entity_label', 'name' => 'entity_label', 'orderable' => false, 'searchable' => true],
+                ['data' => 'user_name', 'name' => 'user_name', 'orderable' => false, 'searchable' => true],
                 ['data' => 'description', 'name' => 'description'],
                 ['data' => 'created_at', 'name' => 'created_at'],
                 ['data' => 'row_actions', 'orderable' => false, 'searchable' => false],
@@ -144,7 +144,7 @@
             // for deleted records (details-only otherwise).
             const entityName = (row.entity_type || '').split('\\').pop();
             $('#drawerTitle').text('History Details — ' + entityName + ' #' + (row.entity_id ?? '-'));
-            $('#restoreHistoryBtn').toggleClass('hidden', row.action !== 'deleted');
+            $('#restoreHistoryBtn').toggleClass('hidden', row.action !== 'deleted' || !@json(auth()->user()->hasPermission('histories.restore')));
 
             openGlobalDrawer('historyDrawer', 'historyOverlay');
         };

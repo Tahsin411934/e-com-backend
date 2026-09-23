@@ -19,7 +19,7 @@
     $canCreate = ! $createPermission || auth()->user()->hasPermission($createPermission.'.create');
 @endphp
 
-<div class="bg-white dark:bg-gray-800 shadow-md rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
+<div class="reusable-data-table bg-white dark:bg-gray-800 shadow-md rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
     {{-- TABLE HEADER --}}
     <div
         class="flex flex-col sm:flex-row sm:items-center justify-between px-6 py-4 border-b border-gray-200 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-800 gap-4">
@@ -49,6 +49,7 @@
     {{-- TABLE BODY --}}
     <div class="p-6">
         <div class="overflow-x-auto">
+            <div class="table-load-error hidden mb-3 text-sm text-red-600" role="alert">Unable to load records. <button type="button" class="table-retry underline">Retry</button></div>
             <table id="{{ $id }}" class="w-full border-collapse rounded-lg text-sm text-gray-700">
                 <thead>
                     <tr>
@@ -70,7 +71,13 @@
 @push('scripts')
     <script>
         $(document).ready(function() {
-            const tableId = "{{ $id }}";
+            const tableId = @json($id);
+            const tableElement = $(document.getElementById(tableId));
+            const panel = tableElement.closest(".reusable-data-table");
+            const columnConfig = @json($dtColumns);
+            const exportColumns = columnConfig.map((column, index) =>
+                column.exportable === false || ["action", "actions", "row_actions"].includes(column.data) ? null : index
+            ).filter(index => index !== null);
 
             function buildAjaxData(filters) {
                 return function(d) {
@@ -89,7 +96,7 @@
                         text: '<i class="fa-solid fa-file-excel mr-1.5 text-green-500"></i> Excel',
                         className: 'inline-flex items-center px-3 py-1.5 bg-white border border-gray-200 text-gray-700 text-xs font-semibold rounded-lg hover:bg-gray-50 hover:border-gray-300 transition duration-150 shadow-sm',
                         exportOptions: {
-                            columns: ':not(:last-child)'
+                            columns: exportColumns
                         }
                     },
                     {
@@ -97,7 +104,7 @@
                         text: '<i class="fa-solid fa-file-pdf mr-1.5 text-red-500"></i> PDF',
                         className: 'inline-flex items-center px-3 py-1.5 bg-white border border-gray-200 text-gray-700 text-xs font-semibold rounded-lg hover:bg-gray-50 hover:border-gray-300 transition duration-150 shadow-sm',
                         exportOptions: {
-                            columns: ':not(:last-child)'
+                            columns: exportColumns
                         }
                     },
                     {
@@ -105,7 +112,7 @@
                         text: '<i class="fa-solid fa-print mr-1.5 text-gray-500"></i> Print',
                         className: 'inline-flex items-center px-3 py-1.5 bg-white border border-gray-200 text-gray-700 text-xs font-semibold rounded-lg hover:bg-gray-50 hover:border-gray-300 transition duration-150 shadow-sm',
                         exportOptions: {
-                            columns: ':not(:last-child)'
+                            columns: exportColumns
                         }
                     },
                     {
@@ -118,20 +125,26 @@
 
             // Bind before initialization so the native DataTables processing
             // event is not missed on the initial request or later reloads.
-            $('#{{ $id }}').on('processing.dt', function(e, settings, processing) {
+            tableElement.on('processing.dt', function(e, settings, processing) {
                 $(this).closest('.dataTables_wrapper')
                     .toggleClass('dt-is-loading', processing)
                     .find('.dataTables_processing')
                     .css('display', processing ? 'block' : 'none');
             });
 
-            $('#{{ $id }}').on('preXhr.dt', function() {
+            tableElement.on('preXhr.dt', function() {
+                panel.find('.table-load-error').addClass('hidden');
                 $(this).closest('.dataTables_wrapper').addClass('dt-is-loading');
-            }).on('xhr.dt error.dt', function() {
+            }).on('xhr.dt error.dt', function(e, settings, json) {
+                if (e.type === 'error' || json === null || (json && json.error)) {
+                    panel.find('.table-load-error').removeClass('hidden');
+                    $(this).closest('.dataTables_wrapper').find('.dataTables_processing').hide();
+                }
                 $(this).closest('.dataTables_wrapper').removeClass('dt-is-loading');
+                if (e.type === 'xhr' && json === null) return true;
             });
 
-            const table = $('#{{ $id }}').DataTable({
+            const table = tableElement.DataTable({
                 processing: true,
                 serverSide: true,
                 autoWidth: false,
@@ -147,10 +160,12 @@
                 order: @json($order),
                 language: {
                     search: "",
-                    searchPlaceholder: "🔎︎ Search records...",
+                    searchPlaceholder: "Search records...",
                     lengthMenu: "Show _MENU_ entries"
                 }
             });
+
+            panel.find('.table-retry').on('click', function() { table.ajax.reload(null, false); });
 
             $(document).on('change', '.dt-filter-' + tableId, function() {
                 table.ajax.reload();
@@ -166,7 +181,7 @@
             // Global delete function for URL-based action buttons.
             // Defined here so any page using x-data-table can delete rows
             // (e.g. Purchase Orders, Suppliers, Inventory Locations, etc.).
-            var deleteEntity = function(url) {
+            var deleteEntity = function(url, sourceTable) {
                 Swal.fire({
                     title: 'Are you sure?',
                     text: 'This action cannot be undone!',
@@ -190,8 +205,8 @@
                                         position: 'right',
                                         style: { background: 'linear-gradient(135deg, #dc2626, #f87171)' }
                                     }).showToast();
-                                    if (table) {
-                                        table.ajax.reload(null, false);
+                                    if (sourceTable) {
+                                        sourceTable.ajax.reload(null, false);
                                     } else {
                                         location.reload();
                                     }
@@ -222,7 +237,10 @@
                     if (action === 'delete-url') {
                         var deleteUrl = window.Crud.get('shared', 'delete-url');
                         if (typeof deleteUrl === 'function') {
-                            deleteUrl(button.data('crud-url'), button.data('crud-label') || 'delete');
+                            var sourceNode = button.closest('.dataTables_wrapper').find('table.dataTable').filter(function () {
+                                return $.fn.dataTable.isDataTable(this);
+                            }).first();
+                            deleteUrl(button.data('crud-url'), sourceNode.length ? sourceNode.DataTable() : null);
                         }
                         return;
                     }
@@ -243,25 +261,26 @@
     </script>
 @endpush
 
+@once
 <style>
-    #{{ $id }} tbody tr:nth-child(even) {
+    .reusable-data-table table tbody tr:nth-child(even) {
         background-color: #f8fafc !important;
     }
 
-    #{{ $id }} tbody tr:nth-child(odd) {
+    .reusable-data-table table tbody tr:nth-child(odd) {
         background-color: #ffffff !important;
     }
 
-    #{{ $id }} tbody tr {
+    .reusable-data-table table tbody tr {
         transition: all 0.15s ease-in-out;
         border-bottom: 1px solid #13293f;
     }
 
-    #{{ $id }} tbody tr:hover {
+    .reusable-data-table table tbody tr:hover {
         background-color: #f1f5f9 !important;
     }
 
-    #{{ $id }} thead th {
+    .reusable-data-table table thead th {
         background-color: #f1f5f9 !important;
         color: #475569 !important;
         border-bottom: 2px solid #cbd5e1 !important;
@@ -269,7 +288,7 @@
 
     }
 
-    #{{ $id }} tbody td {
+    .reusable-data-table table tbody td {
         padding: 12px 16px !important;
         color: #334155;
         vertical-align: middle;
@@ -277,50 +296,52 @@
     }
 
     /* Dark mode overrides - same specificity as light mode */
-    .dark #{{ $id }} tbody tr:nth-child(even) {
+    .dark .reusable-data-table table tbody tr:nth-child(even) {
         background-color: #1f2937 !important;
     }
 
-    .dark #{{ $id }} tbody tr:nth-child(odd) {
+    .dark .reusable-data-table table tbody tr:nth-child(odd) {
         background-color: #111827 !important;
     }
 
-    .dark #{{ $id }} tbody tr {
+    .dark .reusable-data-table table tbody tr {
         border-bottom: 1px solid #374151 !important;
     }
 
-    .dark #{{ $id }} tbody tr:hover {
+    .dark .reusable-data-table table tbody tr:hover {
         background-color: #4b5563 !important;
     }
 
-    .dark #{{ $id }} thead th {
+    .dark .reusable-data-table table thead th {
         background-color: #1f2937 !important;
         color: #9ca3af !important;
         border-bottom: 2px solid #4b5563 !important;
     }
 
-    .dark #{{ $id }} tbody td {
+    .dark .reusable-data-table table tbody td {
         color: #e5e7eb !important;
         border: 1px solid #374151 !important;
     }
 
-    .dataTables_filter input {
+    .reusable-data-table .dataTables_filter input {
         border: 1px solid #e2e8f0;
         padding: 0.45rem 0.85rem;
         border-radius: 0.5rem;
         outline: none;
         font-size: 0.875rem;
         transition: all 0.2s;
-        width: 320px;
+        width: min(320px, 100%);
+        max-width: 100%;
+        box-sizing: border-box;
     }
 
-    .dataTables_filter input:focus {
+    .reusable-data-table .dataTables_filter input:focus {
         border-color: #3b82f6;
         box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
     }
 
     /* dropdown tyle */
-    .dataTables_length select {
+    .reusable-data-table .dataTables_length select {
         border: 1px solid #e2e8f0;
         padding: 0.4rem 0.9rem !important;
         border-radius: 0.5rem;
@@ -334,7 +355,7 @@
         /* Modern Browsers */
     }
 
-    .dataTables_length select::-ms-expand {
+    .reusable-data-table .dataTables_length select::-ms-expand {
         display: none;
     }
 
@@ -342,3 +363,4 @@
         display: none !important;
     }
 </style>
+@endonce

@@ -28,6 +28,7 @@ class User extends Authenticatable
         'email_verified_at',
         'phone_verified_at',
         'last_login_at',
+        'first_login_at',
     ];
 
     protected $hidden = [
@@ -156,6 +157,12 @@ class User extends Authenticatable
     {
         // Super Admin has all permissions
         if ($this->hasRole('Super Admin')) {
+            return true;
+        }
+
+        // Store owners may view their own store's customers. The customer
+        // controller applies the current-store scope before querying.
+        if ($permissionName === 'customers.view' && $this->isStoreOwner()) {
             return true;
         }
 

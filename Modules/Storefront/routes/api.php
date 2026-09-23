@@ -16,6 +16,7 @@ use Modules\Storefront\Http\Controllers\SettingsController;
 use Modules\Storefront\Http\Controllers\SitemapController;
 use Modules\Storefront\Http\Controllers\StoreResolveController;
 use Modules\Storefront\Http\Controllers\SubnavbarController;
+use Modules\Identity\Http\Controllers\CustomerAuthController;
 
 /*
 |--------------------------------------------------------------------------
@@ -33,6 +34,8 @@ use Modules\Storefront\Http\Controllers\SubnavbarController;
 */
 
 Route::middleware('storefront.tenant')->prefix('v1/storefront')->group(function () {
+    Route::post('/auth/register', [CustomerAuthController::class, 'register'])->middleware('throttle:5,1');
+    Route::post('/auth/login', [CustomerAuthController::class, 'login'])->middleware('throttle:10,1');
     // Navbar API - resolved per storefront
     Route::get('/navbar-items', [NavbarController::class, 'index'])->name('navbar-items.index');
     Route::get('/navbar-items/{id}', [NavbarController::class, 'show'])->name('navbar-items.show');
@@ -75,6 +78,8 @@ Route::middleware('storefront.tenant')->prefix('v1/storefront')->group(function 
 
 // Customer endpoints - authentication required, tenant still resolved first
 Route::middleware(['storefront.tenant', 'auth:sanctum'])->prefix('v1/storefront')->group(function () {
+    Route::get('/auth/me', [CustomerAuthController::class, 'me']);
+    Route::post('/auth/logout', [CustomerAuthController::class, 'logout']);
     Route::get('/orders', [OrderController::class, 'index'])->name('orders.index');
     Route::get('/orders/{order}', [OrderController::class, 'show'])->name('orders.show');
 });

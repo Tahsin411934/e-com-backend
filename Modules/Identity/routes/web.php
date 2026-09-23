@@ -4,8 +4,14 @@ use Illuminate\Support\Facades\Route;
 use Modules\Identity\Http\Controllers\PermissionController;
 use Modules\Identity\Http\Controllers\RoleController;
 use Modules\Identity\Http\Controllers\UserController;
+use Modules\Identity\Http\Controllers\CustomerController;
 
 Route::middleware(['auth', 'verified', 'admin'])->group(function () {
+    // Customers are visible to platform admins and store owners; the
+    // controller scopes store owners to their current store.
+    Route::get('/customers', [CustomerController::class, 'index'])->name('customers.index')->middleware('permission:customers.view');
+    Route::get('/dataTable/customers', [CustomerController::class, 'dataTable'])->name('customers.dataTable')->middleware('permission:customers.view');
+
     // Users - platform staff only (Super Admin/Admin); permission-gated
     Route::middleware(['role:Super Admin,Admin'])->group(function () {
         Route::resource('users', UserController::class)->except(['create', 'edit'])->names('users')->middleware('permission:users.*');

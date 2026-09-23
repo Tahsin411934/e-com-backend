@@ -80,9 +80,17 @@ class AuthController extends Controller
         $user->tokens()->delete();
 
         $token = $user->createToken('auth_token')->plainTextToken;
-        $user->update(['last_login_at' => now()]);
+        $isFirstLogin = is_null($user->first_login_at);
+        $now = now();
+        $user->update([
+            'first_login_at' => $user->first_login_at ?: $now,
+            'last_login_at' => $now,
+        ]);
 
-        return ApiResponse::success($this->userPayload($user) + ['token' => $token], 'Login successful.');
+        return ApiResponse::success($this->userPayload($user) + [
+            'token' => $token,
+            'is_first_login' => $isFirstLogin,
+        ], 'Login successful.');
     }
 
     /**

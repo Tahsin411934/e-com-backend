@@ -42,7 +42,15 @@ class AuthenticatedSessionController extends Controller
 
         $request->session()->regenerate();
 
-        return redirect()->intended(route('dashboard', absolute: false));
+        $isFirstLogin = is_null($user->first_login_at);
+        $now = now();
+        $user->update([
+            'first_login_at' => $user->first_login_at ?: $now,
+            'last_login_at' => $now,
+        ]);
+
+        return redirect()->intended(route('dashboard', absolute: false))
+            ->with('first_login', $isFirstLogin);
     }
 
     /**

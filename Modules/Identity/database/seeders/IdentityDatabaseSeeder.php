@@ -15,6 +15,7 @@ class IdentityDatabaseSeeder extends Seeder
     {
         // ===== Permissions =====
         $permissions = [
+            ['name' => 'customers.view', 'description' => 'View customers'],
             ['name' => 'users.view', 'description' => 'View users'],
             ['name' => 'users.create', 'description' => 'Create users'],
             ['name' => 'users.edit', 'description' => 'Edit users'],

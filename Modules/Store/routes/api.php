@@ -29,7 +29,7 @@ Route::middleware(['convert.auth.cookie', 'auth:sanctum', 'role:Super Admin,Admi
 
 // Storefront domain management — the authenticated owner manages the
 // hostnames of their own store (free subdomain + custom domains).
-Route::middleware(['auth', 'convert.auth.cookie', 'auth:sanctum'])
+Route::middleware(['web', 'auth'])
     ->prefix('v1')
     ->group(function () {
     Route::get('/store/domains', [StoreDomainController::class, 'index'])->name('api.store.domains.index');

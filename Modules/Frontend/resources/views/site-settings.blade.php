@@ -223,13 +223,27 @@
             window.location.href = url.toString();
         });
         function previewLogo(input, previewId) {
-            const preview = document.getElementById(previewId);
             const file = input.files[0];
-            if (file) {
-                const reader = new FileReader();
-                reader.onload = function(e) { preview.src = e.target.result; preview.classList.remove('flex', 'items-center', 'justify-center'); }
-                reader.readAsDataURL(file);
+            if (!file) return;
+
+            let preview = document.getElementById(previewId);
+            // Empty settings render a div placeholder. Replace it with an img
+            // so a newly selected logo/favicon can be previewed immediately.
+            if (preview && preview.tagName !== 'IMG') {
+                const image = document.createElement('img');
+                image.id = previewId;
+                image.alt = 'Selected image preview';
+                image.className = preview.className;
+                preview.replaceWith(image);
+                preview = image;
             }
+
+            const reader = new FileReader();
+            reader.onload = function (event) {
+                preview.src = event.target.result;
+                preview.classList.remove('flex', 'items-center', 'justify-center');
+            };
+            reader.readAsDataURL(file);
         }
         function removeLogo(checkbox, previewId) {
             const preview = document.getElementById(previewId);

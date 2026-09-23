@@ -8,12 +8,12 @@
    1. CSS Variables
    -------------------------------------------------------------------------- */
 :root {
-    --primary-color: #1e3a8a;
-    --primary-hover: #1e40af;
-    --primary-light: #dbeafe;
-    --primary-soft: #eff6ff;
+    --primary-color: #0d9488;
+    --primary-hover: #0f766e;
+    --primary-light: #ccfbf1;
+    --primary-soft: #f0fdfa;
     --primary-text: #ffffff;
-    --primary-rgb: 30, 58, 138;
+    --primary-rgb: 13, 148, 136;
 
     /* Dark mode surface colors */
     --dark-surface: #1f2937;

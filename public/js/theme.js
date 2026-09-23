@@ -6,7 +6,7 @@
 window.ThemeManager = (function() {
     'use strict';
 
-    const DEFAULT_PRIMARY = '#1e3a8a';
+    const DEFAULT_PRIMARY = '#0d9488';
     const STORAGE_COLOR_KEY = 'theme-primary';
     const STORAGE_DARK_KEY = 'theme-dark';
 
@@ -53,7 +53,7 @@ window.ThemeManager = (function() {
      */
     function hexToRgb(hex) {
         const num = parseInt(hex.replace('#', ''), 16);
-        if (isNaN(num)) return '30, 58, 138';
+        if (isNaN(num)) return '13, 148, 136';
         const r = (num >> 16) & 255;
         const g = (num >> 8) & 255;
         const b = num & 255;

@@ -51,6 +51,14 @@
         <!-- Divider -->
         <div class="w-px h-6 bg-gray-200 dark:bg-gray-600"></div>
 
+        <!-- Mobile logout (the user dropdown is hidden below sm) -->
+        <form method="POST" action="{{ route('logout') }}" class="sm:hidden">
+            @csrf
+            <button type="submit" aria-label="Log out" title="Log out"
+                class="w-9 h-9 border border-red-200 dark:border-red-900/50 rounded-lg flex items-center justify-center text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors">
+                <i class="fas fa-right-from-bracket text-[14px]"></i>
+            </button>
+        </form>
 
 
         <!-- User chip -->

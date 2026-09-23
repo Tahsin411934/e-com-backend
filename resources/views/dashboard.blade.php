@@ -36,6 +36,47 @@
             </div>
         </div>
 
+        {{-- First-time store onboarding --}}
+        @if(($kpi['totalProducts'] ?? 0) == 0 && ($kpi['totalOrders'] ?? 0) == 0)
+            <div class="dashboard-card mb-8 overflow-hidden border-primary/20 bg-gradient-to-br from-primary-soft to-white">
+                <div class="p-5 sm:p-6 lg:p-7">
+                    <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
+                        <div class="flex items-start gap-4">
+                            <div class="w-12 h-12 rounded-2xl bg-primary text-white flex items-center justify-center shrink-0 shadow-sm">
+                                <i class="fas fa-store text-lg"></i>
+                            </div>
+                            <div>
+                                <h2 class="text-xl font-bold text-gray-900">Welcome, {{ Auth::user()->name }}! 👋</h2>
+                                <p class="text-sm text-gray-500 mt-1">Complete these quick steps to start selling from your store.</p>
+                            </div>
+                        </div>
+                        <a href="{{ route('products.create') }}"
+                            class="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-primary text-white text-sm font-semibold hover:bg-primary-hover transition-colors shadow-sm">
+                            <i class="fas fa-plus text-xs"></i>
+                            Add Your First Product
+                        </a>
+                    </div>
+
+                    <div class="mt-6 grid grid-cols-1 md:grid-cols-3 gap-3">
+                        <a href="{{ route('products.create') }}" class="flex items-center gap-3 rounded-xl bg-white border border-gray-200 p-4 hover:border-primary hover:shadow-sm transition-all">
+                            <span class="w-8 h-8 rounded-full bg-primary-light text-primary flex items-center justify-center"><i class="fas fa-box text-xs"></i></span>
+                            <span class="min-w-0"><span class="block text-sm font-semibold text-gray-800">Add a product</span><span class="block text-xs text-gray-500 mt-0.5">Build your catalog</span></span>
+                            <i class="fas fa-arrow-right ml-auto text-xs text-gray-400"></i>
+                        </a>
+                        <a href="{{ route('categories.index') }}" class="flex items-center gap-3 rounded-xl bg-white border border-gray-200 p-4 hover:border-primary hover:shadow-sm transition-all">
+                            <span class="w-8 h-8 rounded-full bg-primary-light text-primary flex items-center justify-center"><i class="fas fa-tags text-xs"></i></span>
+                            <span class="min-w-0"><span class="block text-sm font-semibold text-gray-800">Create a category</span><span class="block text-xs text-gray-500 mt-0.5">Organize products</span></span>
+                            <i class="fas fa-arrow-right ml-auto text-xs text-gray-400"></i>
+                        </a>
+                        <div class="flex items-center gap-3 rounded-xl bg-white/70 border border-dashed border-gray-300 p-4">
+                            <span class="w-8 h-8 rounded-full bg-gray-100 text-gray-400 flex items-center justify-center"><i class="fas fa-chart-line text-xs"></i></span>
+                            <span class="min-w-0"><span class="block text-sm font-semibold text-gray-700">Track your sales</span><span class="block text-xs text-gray-500 mt-0.5">Analytics appear after your first order</span></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        @endif
+
         <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-6 gap-4 mb-8">
             <div class="dashboard-card kpi-card p-5">
                 <div class="flex items-center justify-between mb-4">

@@ -13,7 +13,7 @@
     <script>
         (function() {
             try {
-                var DEFAULT_PRIMARY = '#1e3a8a';
+                var DEFAULT_PRIMARY = '#0d9488';
                 var color = localStorage.getItem('theme-primary') || DEFAULT_PRIMARY;
                 var savedDark = localStorage.getItem('theme-dark');
                 var dark = savedDark === null
@@ -32,7 +32,7 @@
                 }
                 function hexToRgb(hex) {
                     var num = parseInt(hex.replace('#', ''), 16);
-                    if (isNaN(num)) return '30, 58, 138';
+                    if (isNaN(num)) return '13, 148, 136';
                     return ((num >> 16) & 255) + ', ' + ((num >> 8) & 255) + ', ' + (num & 255);
                 }
                 root.style.setProperty('--primary-color', color);

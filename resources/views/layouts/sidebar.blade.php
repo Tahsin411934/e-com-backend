@@ -54,7 +54,7 @@
         @endif
 
         <!-- Identity & Access (permission-driven) -->
-        @if(auth()->user()->hasAnyPermission(['users.view','roles.view','permissions.view']))
+        @if(auth()->user()->hasAnyPermission(['users.view','customers.view','roles.view','permissions.view']))
         <div class="mb-0.5">
             <button
                 class="nav-item has-sub w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-gray-500 hover:bg-gray-50 hover:text-gray-800 text-sm font-medium transition-colors duration-150"
@@ -63,7 +63,13 @@
                 <span class="nav-label flex-1 text-left">Users & Access</span>
                 <i class="nav-chevron fas fa-chevron-down text-[10px] flex-shrink-0"></i>
             </button>
-            <div class="submenu sub-indent" id="sub-identity">
+        <div class="submenu sub-indent" id="sub-identity">
+                @if(auth()->user()->hasPermission('customers.view'))
+                <a href="{{ route('customers.index') }}"
+                    class="flex items-center gap-2.5 pl-9 pr-3 py-1.5 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-50 text-[13px] transition-colors {{ request()->routeIs('customers.*') ? 'text-primary bg-primary-light font-medium' : '' }}">
+                    <i class="fas fa-user-group w-3.5 text-center"></i><span>Customers</span>
+                </a>
+                @endif
                 @if(auth()->user()->hasPermission('users.view'))
                 <a href="{{ route('users.index') }}"
                     class="flex items-center gap-2.5 pl-9 pr-3 py-1.5 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-50 text-[13px] transition-colors {{ request()->routeIs('users.*') ? 'text-primary bg-primary-light font-medium' : '' }}">

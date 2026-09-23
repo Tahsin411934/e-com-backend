@@ -81,14 +81,14 @@
     <!-- Theme Customizer: Floating color picker + dark/light mode -->
     <x-theme-customizer />
 
-    <div class="flex-1 flex flex-col overflow-hidden">
+    <div class="flex-1 min-w-0 flex flex-col overflow-hidden">
 
         <!-- Navigation -->
         @include('layouts.navigation')
 
         <main class="flex-1 overflow-x-hidden overflow-y-auto bg-gray-50 dark:bg-gray-900 relative flex flex-col">
             @include('components.global-loader')
-            <div class="flex-1 w-full">
+            <div class="flex-1 min-w-0 w-full">
                 {{ $slot }}
             </div>
 

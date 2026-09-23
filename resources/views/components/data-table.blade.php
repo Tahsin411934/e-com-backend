@@ -12,6 +12,7 @@
     'exportButtons' => true,
     'filters' => [],
     'order' => [[0, 'desc']],
+    'scrollHeight' => '60vh',
 ])
 
 @php
@@ -47,8 +48,8 @@
     </div>
 
     {{-- TABLE BODY --}}
-    <div class="p-6">
-        <div class="overflow-x-auto">
+    <div class="p-3 sm:p-6">
+        <div class="min-w-0">
             <div class="table-load-error hidden mb-3 text-sm text-red-600" role="alert">Unable to load records. <button type="button" class="table-retry underline">Retry</button></div>
             <table id="{{ $id }}" class="w-full border-collapse rounded-lg text-sm text-gray-700">
                 <thead>
@@ -156,7 +157,10 @@
                 dom: '<"flex flex-col md:flex-row items-center justify-between gap-4 mb-4"lBf>rt<"flex flex-col md:flex-row items-center justify-between gap-4 mt-4"ip>',
                 buttons: tableButtons,
                 scrollX: true,
-                responsive: true,
+                scrollY: @json($scrollHeight),
+                scrollCollapse: true,
+                // Keep every column reachable through horizontal scrolling.
+                responsive: false,
                 order: @json($order),
                 language: {
                     search: "",
@@ -166,6 +170,26 @@
             });
 
             panel.find('.table-retry').on('click', function() { table.ajax.reload(null, false); });
+
+            const scrollBody = panel.find('.dataTables_scrollBody');
+            scrollBody.attr({ tabindex: 0, role: 'region', 'aria-label': @json($title.' — scrollable table') });
+            if (window.ResizeObserver) {
+                let previousWidth = 0;
+                let resizeFrame;
+                const observer = new ResizeObserver(function(entries) {
+                    const width = entries[0].contentRect.width;
+                    if (width > 0 && width !== previousWidth) {
+                        previousWidth = width;
+                        cancelAnimationFrame(resizeFrame);
+                        resizeFrame = requestAnimationFrame(function() { table.columns.adjust(); });
+                    }
+                });
+                observer.observe(panel[0]);
+                tableElement.on('destroy.dt', function() {
+                    observer.disconnect();
+                    cancelAnimationFrame(resizeFrame);
+                });
+            }
 
             $(document).on('change', '.dt-filter-' + tableId, function() {
                 table.ajax.reload();
@@ -263,6 +287,31 @@
 
 @once
 <style>
+    .reusable-data-table { min-width: 0; width: 100%; max-width: 100%; }
+    .reusable-data-table .dataTables_wrapper,
+    .reusable-data-table .dataTables_scroll { min-width: 0; max-width: 100%; }
+    .reusable-data-table .dataTables_scrollBody {
+        overflow: auto !important;
+        -webkit-overflow-scrolling: touch;
+    }
+    .reusable-data-table .dataTables_scrollBody:focus-visible {
+        outline: 2px solid var(--primary-color);
+        outline-offset: -2px;
+    }
+    .reusable-data-table table th,
+    .reusable-data-table table td { white-space: nowrap; }
+    .reusable-data-table .dt-buttons {
+        display: flex; flex-wrap: wrap; gap: .5rem; max-width: 100%;
+    }
+    .reusable-data-table .dataTables_paginate { white-space: normal; }
+    @media (max-width: 639px) {
+        .reusable-data-table .dataTables_filter,
+        .reusable-data-table .dataTables_filter label { display: block; width: 100%; }
+        .reusable-data-table .dataTables_filter input { width: 100%; margin-left: 0; }
+        .reusable-data-table .dataTables_info,
+        .reusable-data-table .dataTables_paginate { width: 100%; text-align: center; }
+        .reusable-data-table .dataTables_paginate .paginate_button { padding: .4em .6em; }
+    }
     .reusable-data-table table tbody tr:nth-child(even) {
         background-color: #f8fafc !important;
     }
@@ -357,6 +406,14 @@
 
     .reusable-data-table .dataTables_length select::-ms-expand {
         display: none;
+    }
+
+    /* DataTables keeps a hidden sizing header inside the scrolling body. */
+    .reusable-data-table .dataTables_scrollBody table thead th {
+        padding-top: 0 !important;
+        padding-bottom: 0 !important;
+        border-top: 0 !important;
+        border-bottom: 0 !important;
     }
 
     .dataTables_wrapper .dataTables_buttons {

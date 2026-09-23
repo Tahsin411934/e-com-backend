@@ -11,6 +11,10 @@ use Modules\Store\Http\Controllers\PlanController;
 use Modules\Store\Http\Controllers\FeatureController;
 use Modules\Store\Http\Controllers\StoreDomainAdminController;
 
+Route::middleware(['auth', 'verified', 'role:Store Owner,Store Staff'])->group(function () {
+    Route::get('/custom-domain', [StoreDomainAdminController::class, 'connect'])->name('custom-domain.index');
+});
+
 Route::middleware(['auth', 'verified', 'admin'])->group(function () {
     // Stores
     Route::resource('stores', StoreController::class)->except(['create', 'edit'])->names('stores')->middleware('permission:stores.*');

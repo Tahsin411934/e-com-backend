@@ -9,6 +9,11 @@ use Yajra\DataTables\DataTables;
 
 class StoreDomainAdminController extends Controller
 {
+    public function connect()
+    {
+        return view('store::domains.connect');
+    }
+
     public function index()
     {
         return view('store::domains.index');

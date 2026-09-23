@@ -46,6 +46,13 @@
             <span class="nav-label font-bold">Dashboard</span>
         </a>
 
+        @if(auth()->user()->hasAnyRole(['Store Owner', 'Store Staff']))
+        <!-- Custom Domain -->
+        <a href="{{ route('custom-domain.index') }}" class="nav-item flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-medium transition-colors duration-150 mb-0.5 {{ request()->routeIs('custom-domain.*') ? 'text-white active' : 'text-gray-500 hover:bg-gray-50 hover:text-gray-800' }}" data-label="Custom Domain">
+            <i class="fas fa-globe w-4 text-center flex-shrink-0 text-base"></i><span class="nav-label">Custom Domain</span>
+        </a>
+        @endif
+
         <!-- Identity & Access (permission-driven) -->
         @if(auth()->user()->hasAnyPermission(['users.view','roles.view','permissions.view']))
         <div class="mb-0.5">
@@ -599,7 +606,7 @@
                 @if(auth()->user()->hasPermission('stores.view'))
                 <a href="{{ route('store-domains.index') }}"
                     class="flex items-center gap-2.5 pl-9 pr-3 py-1.5 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-50 text-[13px] transition-colors {{ request()->routeIs('store-domains.*') ? 'text-primary bg-primary-light font-medium' : '' }}">
-                    <i class="fas fa-globe w-3.5 text-center"></i><span>Custom Domains</span>
+                    <i class="fas fa-globe w-3.5 text-center"></i><span>Domain Registry</span>
                 </a>
                 @endif
                 @if(auth()->user()->hasPermission('frontend.banners.view'))

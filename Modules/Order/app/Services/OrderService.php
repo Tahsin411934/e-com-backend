@@ -23,6 +23,12 @@ class OrderService
             ->addColumn('user_email', function (Order $order) {
                 return $order->user?->email ?? ($order->customer_name ?: 'Guest');
             })
+            ->addColumn('customer_name', function (Order $order) {
+                return $order->user?->name ?: ($order->customer_name ?: 'Guest');
+            })
+            ->addColumn('customer_phone', function (Order $order) {
+                return $order->user?->phone ?: ($order->deliveries->first()?->delivery_phone ?: '-');
+            })
             ->addColumn('store_name', function (Order $order) {
                 return $order->store?->name ?? '-';
             })

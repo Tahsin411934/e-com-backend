@@ -7,10 +7,11 @@
                     . collect($stores)->map(fn ($s) => '<option value="'.$s->id.'">'.e($s->name).'</option>')->implode(''),
             ],
         ] : [];
-        $orderColumns = ['Order #', 'Customer'];
+        $orderColumns = ['Order #', 'Customer', 'Phone'];
         $orderDtColumns = [
             ['data' => 'order_number'],
-            ['data' => 'user_email'],
+            ['data' => 'customer_name'],
+            ['data' => 'customer_phone'],
         ];
 
         if ($canAssignStore) {
@@ -129,8 +130,9 @@ Crud.register('order', 'fill', function (data) {
 
                 var order = res.data;
                 var delivery = order.deliveries && order.deliveries[0];
-                var customerName = order.user ? order.user.name : (order.customer_name || 'Guest');
-                var customerEmail = order.user ? order.user.email : 'Guest checkout';
+                var customerName = order.user && order.user.name ? order.user.name : (order.customer_name || 'Guest');
+                var customerEmail = order.user && order.user.email ? order.user.email : 'Guest checkout';
+                var customerPhone = order.user && order.user.phone ? order.user.phone : (delivery ? delivery.delivery_phone : '-');
                 var deliveryBoy = delivery && delivery.delivery_boy ? delivery.delivery_boy.name : 'Not assigned';
                 var deliveryBoyPhone = delivery && delivery.delivery_boy ? (delivery.delivery_boy.phone || '-') : '-';
                 var items = (order.items || []).map(function (item) {
@@ -156,7 +158,7 @@ Crud.register('order', 'fill', function (data) {
                     + '<section><h3 class="font-semibold text-gray-800 mb-2">Customer</h3>'
                     + detailRow('Name', escapeHtml(customerName))
                     + detailRow('Email', escapeHtml(customerEmail))
-                    + detailRow('Phone', escapeHtml(delivery ? delivery.delivery_phone : '-'))
+                    + detailRow('Phone', escapeHtml(customerPhone))
                     + '</section>'
                     + '<section><h3 class="font-semibold text-gray-800 mb-2">Delivery</h3>'
                     + detailRow('Address', escapeHtml(delivery ? delivery.delivery_address : '-'))

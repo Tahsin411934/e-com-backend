@@ -103,7 +103,9 @@
 /* ---- Submenu toggles ---- */
 document.querySelectorAll('.has-sub').forEach(btn => {
     btn.addEventListener('click', function () {
-        if (collapsed) return;
+        // The desktop collapse preference must not disable submenu toggles on
+        // small screens, where the sidebar is expanded for touch navigation.
+        if (collapsed && window.innerWidth >= 640) return;
 
         const subId = this.dataset.sub;
         const sub = document.getElementById(subId);

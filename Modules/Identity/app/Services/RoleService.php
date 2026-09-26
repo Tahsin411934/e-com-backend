@@ -18,14 +18,14 @@ class RoleService
             ->withCount(['permissions' => fn ($permissions) => $permissions->whereNull('permissions.deleted_at')])
             ->orderByDesc('roles.created_at');
 
-        return DataTables::eloquent($query)
+        return DataTables::of($query)
             ->filter(function ($query) use ($request) {
                 $search = trim((string) data_get($request->all(), 'search.value', ''));
                 if ($search === '') {
                     return;
                 }
 
-                $like = '%'.addcslashes(mb_strtolower($search), '%_\\').'%';
+                $like = '%'.mb_strtolower($search).'%';
                 $query->where(function ($filter) use ($like) {
                     $filter->whereRaw('LOWER(roles.name) LIKE ?', [$like])
                         ->orWhereRaw('LOWER(COALESCE(roles.description, \'\')) LIKE ?', [$like])

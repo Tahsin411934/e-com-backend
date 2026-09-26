@@ -4,6 +4,7 @@ namespace Modules\Store\Http\Requests;
 
 use Closure;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 use Modules\Store\Models\StoreDomain;
 use Modules\Store\Support\StoreDomainResolver;
 
@@ -24,6 +25,8 @@ class StoreDomainRequest extends FormRequest
     public function rules(): array
     {
         $suffix = strtolower(StoreDomainResolver::primarySuffix());
+        $storeId = \Modules\Store\Support\CurrentStore::id();
+        $domainId = $this->route('storeDomain')?->id;
 
         return [
             'domain' => [
@@ -31,6 +34,7 @@ class StoreDomainRequest extends FormRequest
                 'string',
                 'max:253',
                 'regex:/^(?!-)[a-z0-9-]{1,63}(\.[a-z0-9-]{1,63})+$/',
+                Rule::unique('store_domains', 'domain')->ignore($domainId),
                 function (string $attribute, mixed $value, Closure $fail) use ($suffix) {
                     $domain = strtolower(trim((string) $value));
 
@@ -40,8 +44,14 @@ class StoreDomainRequest extends FormRequest
                         $fail("Use your free {$suffix} subdomain instead of adding it as a custom domain.");
                     }
 
-                    if (StoreDomain::query()->where('domain', $domain)->exists()) {
+                    $domainId = $this->route('storeDomain')?->id;
+                    if (StoreDomain::query()->where('domain', $domain)->when($domainId, fn ($query) => $query->whereKeyNot($domainId))->exists()) {
                         $fail('This domain is already connected to a store.');
+                    }
+                },
+                function (string $attribute, mixed $value, Closure $fail) use ($storeId, $domainId) {
+                    if (! $domainId && $storeId && StoreDomain::query()->where('store_id', $storeId)->where('type', 'custom')->exists()) {
+                        $fail('Your store can connect one custom domain. Edit or remove the connected custom domain first.');
                     }
                 },
             ],

@@ -64,6 +64,32 @@ class StoreDomainController extends Controller
         ], 'Domain added. Point it at the platform, then call the verify endpoint.');
     }
 
+    /** Update the hostname of the store's single custom domain. */
+    public function update(StoreDomainRequest $request, StoreDomain $storeDomain): JsonResponse
+    {
+        if ($response = $this->ensureOwnership($storeDomain)) {
+            return $response;
+        }
+
+        if (! $storeDomain->isCustom()) {
+            return ApiResponse::error('The free subdomain cannot be edited here.', 403);
+        }
+
+        $newDomain = $request->validated('domain');
+        if ($newDomain !== $storeDomain->domain) {
+            $storeDomain->update([
+                'domain' => $newDomain,
+                'verified_at' => null,
+                'ssl_status' => 'pending',
+            ]);
+        }
+
+        return ApiResponse::success([
+            'domain' => $this->present($storeDomain->fresh()),
+            'dns_instructions' => $this->dnsInstructions(),
+        ], 'Custom domain updated. Update its DNS record, then verify it.');
+    }
+
     /**
      * Verify DNS ownership. POST /api/v1/store/domains/{id}/verify
      */

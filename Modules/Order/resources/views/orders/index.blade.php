@@ -189,6 +189,39 @@ Crud.register('order', 'fill', function (data) {
         $(document).on('click', '.js-order-details', function () {
             showOrderDetails($(this).data('order-id'));
         });
+
+        $(document).on('click', '.js-order-steadfast:not(:disabled)', function () {
+            var button = $(this);
+            var orderId = button.data('order-id');
+            Swal.fire({
+                title: 'Create Steadfast parcel?',
+                text: 'This will send this order to Steadfast for delivery.',
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonText: 'Create parcel',
+            }).then(function (result) {
+                if (!result.isConfirmed) return;
+                button.prop('disabled', true);
+                $.ajax({
+                    url: "{{ route('orders.steadfast', ':id') }}".replace(':id', orderId),
+                    method: 'POST',
+                    data: { _token: '{{ csrf_token() }}' },
+                    success: function (res) {
+                        if (res.status === 'success') {
+                            Swal.fire('Created', res.message, 'success');
+                            button.html('<i class="fa fa-truck"></i><span>Steadfast Created</span>');
+                        } else {
+                            button.prop('disabled', false);
+                            Swal.fire('Error', res.message || 'Could not create parcel.', 'error');
+                        }
+                    },
+                    error: function (xhr) {
+                        button.prop('disabled', false);
+                        Swal.fire('Error', xhr.responseJSON?.message || 'Could not create parcel.', 'error');
+                    }
+                });
+            });
+        });
         @endif
     </script>
     @endpush

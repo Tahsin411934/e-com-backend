@@ -13,7 +13,7 @@ class OrderService
 {
     public function getOrderDataTable(Request $request)
     {
-        $query = Order::forCurrentStore()->with(['user', 'store'])->orderByDesc('created_at');
+        $query = Order::forCurrentStore()->with(['user', 'store', 'shipments'])->orderByDesc('created_at');
 
         if ($request->store_id) {
             $query->where('store_id', $request->store_id);
@@ -42,8 +42,12 @@ class OrderService
                 $detailsButton = auth()->user()?->hasPermission('orders.details')
                     ? '<button type="button" class="js-order-details btn-action-details" data-order-id="'.$order->id.'" title="View order details"><i class="fa fa-eye"></i><span>Details</span></button>'
                     : '';
+                $hasSteadfast = $order->shipments->contains(fn ($shipment) => $shipment->carrier_name === 'Steadfast');
+                $steadfastButton = auth()->user()?->hasPermission('orders.details')
+                    ? '<button type="button" class="js-order-steadfast btn-action-details" data-order-id="'.$order->id.'" title="Create Steadfast parcel" '.($hasSteadfast ? 'disabled' : '').'><i class="fa fa-truck"></i><span>'.($hasSteadfast ? 'Steadfast Created' : 'Steadfast').'</span></button>'
+                    : '';
 
-                return $detailsButton.view('components.action-buttons', [
+                return $detailsButton.$steadfastButton.view('components.action-buttons', [
                     'permission' => 'orders',
                     'entityLabel' => 'Order',
                     'id' => $order->id,

@@ -15,15 +15,12 @@ use Modules\Catalog\Models\VariantOption;
 use Modules\Order\Models\Delivery;
 use Modules\Order\Models\Order;
 use Modules\Order\Models\OrderItem;
-use Modules\Shipping\Models\Shipment;
-use Modules\Shipping\Services\PackzyService;
 
 class CheckoutController extends Controller
 {
     public function __construct(
         private CampaignPricingService $campaignPricing,
         private DeliveryChargeService $deliveryCharges,
-        private PackzyService $packzy,
     ) {}
 
     /**
@@ -184,7 +181,6 @@ class CheckoutController extends Controller
                     }
 
                     $orders[] = $order->fresh()->load('items');
-                    $this->bookPackzyShipment($order);
                     $totalSpend += $group['grand_total'];
                 }
 
@@ -354,7 +350,6 @@ class CheckoutController extends Controller
                     }
 
                     $orders[] = $order->fresh()->load('items');
-                    $this->bookPackzyShipment($order);
                     $totalSpend += $groupSubtotal + $groupShipping;
                 }
 
@@ -377,30 +372,4 @@ class CheckoutController extends Controller
         }
     }
 
-    private function bookPackzyShipment(Order $order): void
-    {
-        $shipment = Shipment::create([
-            'order_id' => $order->id,
-            'store_id' => $order->store_id,
-            'shipping_address_id' => $order->shipping_address_id,
-            'tracking_number' => 'SHP-'.now()->format('ymd').'-'.strtoupper(substr(uniqid(), -6)),
-            'carrier_name' => 'Packzy',
-            'service_level' => 'standard',
-            'delivery_type' => 'home_delivery',
-            'status' => 'pending',
-            'shipping_cost' => $order->shipping_total,
-            'package_count' => 1,
-            'recipient_name' => $order->customer_name ?: ($order->user?->name ?? 'Customer'),
-            'recipient_phone' => $order->deliveries()->latest()->value('delivery_phone'),
-            'delivery_instructions' => $order->customer_note,
-        ]);
-
-        $result = $this->packzy->book($order->fresh(['deliveries', 'user']));
-        $consignment = data_get($result, 'consignment');
-        $tracking = data_get($consignment, 'tracking_code') ?: data_get($consignment, 'consignment_id');
-
-        if ($tracking) {
-            $shipment->update(['tracking_number' => $tracking]);
-        }
-    }
 }

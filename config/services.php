@@ -35,4 +35,11 @@ return [
         ],
     ],
 
+    'packzy' => [
+        'url' => env('PACKZY_API_URL', 'https://portal.packzy.com/api/v1'),
+        'api_key' => env('PACKZY_API_KEY'),
+        'secret_key' => env('PACKZY_SECRET_KEY'),
+        'enabled' => (bool) env('PACKZY_ENABLED', true),
+    ],
+
 ];

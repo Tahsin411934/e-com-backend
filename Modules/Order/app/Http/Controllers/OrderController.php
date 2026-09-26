@@ -75,6 +75,11 @@ class OrderController extends Controller
             return \App\Helpers\ApiResponse::error('Steadfast booking failed. Check the API response/logs and order details.', 502);
         }
 
+        $existingTracking = Shipment::where('tracking_number', (string) $tracking)->exists();
+        if ($existingTracking) {
+            return \App\Helpers\ApiResponse::error('Steadfast returned a tracking code that is already linked to a shipment.', 409);
+        }
+
         $shipment = Shipment::create([
             'order_id' => $order->id,
             'store_id' => $order->store_id,

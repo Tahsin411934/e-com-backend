@@ -13,9 +13,36 @@ class RoleService
 {
     public function getRoleDataTable(Request $request)
     {
-        $query = Role::withCount('permissions')->orderByDesc('created_at');
+        $query = Role::query()
+            ->select('roles.*')
+            ->withCount(['permissions' => fn ($permissions) => $permissions->whereNull('permissions.deleted_at')])
+            ->orderByDesc('roles.created_at');
 
-        return DataTables::of($query)
+        return DataTables::eloquent($query)
+            ->filter(function ($query) use ($request) {
+                $search = trim((string) data_get($request->all(), 'search.value', ''));
+                if ($search === '') {
+                    return;
+                }
+
+                $like = '%'.addcslashes(mb_strtolower($search), '%_\\').'%';
+                $query->where(function ($filter) use ($like) {
+                    $filter->whereRaw('LOWER(roles.name) LIKE ?', [$like])
+                        ->orWhereRaw('LOWER(COALESCE(roles.description, \'\')) LIKE ?', [$like])
+                        ->orWhereHas('permissions', function ($permissions) use ($like) {
+                            $permissions->whereNull('permissions.deleted_at')
+                                ->whereRaw('LOWER(permissions.name) LIKE ?', [$like]);
+                        })
+                        ->orWhereHas('permissions', function ($permissions) use ($like) {
+                            $permissions->whereNull('permissions.deleted_at')
+                                ->whereRaw('LOWER(permissions.description) LIKE ?', [$like]);
+                        });
+                });
+            }, false)
+            ->orderColumn('name', 'roles.name $1')
+            ->orderColumn('description', 'roles.description $1')
+            ->orderColumn('created_at', 'roles.created_at $1')
+            ->orderColumn('permissions_count', 'permissions_count $1')
             ->editColumn('created_at', function (Role $role) {
                 return $role->created_at->format('d M Y H:i');
             })

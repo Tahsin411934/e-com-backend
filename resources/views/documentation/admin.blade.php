@@ -1,7 +1,8 @@
-<p>প্রজেক্টের dashboard-এর menu অনুযায়ী কাজের নির্দেশনা। কোন option কী কাজে লাগে, আগে কী প্রস্তুত করতে হবে এবং কোথা থেকে কাজ করবেন তা নিচে দেওয়া আছে। Button শুধু আপনার role ও view permission মিললে দেখানো হয়; পরিবর্তনের জন্য আলাদা create/edit permission লাগতে পারে।</p>
+<div class="guide-context"><strong>আপনার কাজ অনুযায়ী শুরু করুন</strong><p>প্রতিটি topic-এ কাজের ক্রম, সংশ্লিষ্ট menu-এর ব্যবহার এবং management shortcut পাবেন। নিজের ব্যবসার তথ্য ব্যবহার করুন। Page দেখার permission ও create/edit permission আলাদা; আপনার account অনুযায়ী shortcut দেখানো হয়।</p></div>
 <div class="guide-layout">
     <nav class="guide-nav" aria-label="Admin guide sections">
         <strong>এই গাইডে যা আছে</strong>
+        @include('documentation.search')
         <a href="#admin-start">শুরু করার ক্রম</a>
         @foreach($adminSections as $section)
             <a href="#{{ $section['id'] }}">{{ $loop->iteration }}. {{ $section['title'] }}</a>
@@ -18,18 +19,21 @@
                 <li>Frontend Guide ধরে storefront content সাজিয়ে order ও checkout পরীক্ষা করুন।</li>
                 <li>প্রতিদিন Orders, Payments, Shipments এবং Reports মিলিয়ে অসম্পূর্ণ কাজ শেষ করুন।</li>
             </ol>
-            <p class="guide-note">Admin screenshot দেওয়া হয়নি, তাই এখানে বাস্তব menu ও route অনুসারে text guide আছে। Frontend Guide-এ আপনার দেওয়া screenshot ও marked shortcuts আছে। সব module-এর data isolation একইভাবে implemented ধরে নেবেন না; অন্য store-এর record নিয়ে কাজের আগে context যাচাই করুন।</p>
+            <p class="guide-note"><strong>কাজ শুরুর আগে</strong>সঠিক store ও account নির্বাচন করুন। Admin Guide-এ dashboard-এর কাজ এবং Frontend Guide-এ storefront-এর ছবিসহ নির্দেশনা পাবেন। কোনো menu না দেখলে আপনার account-এর access যাচাই করতে platform admin-এর সঙ্গে যোগাযোগ করুন।</p>
             <a class="guide-edit" href="{{ route('documentation.index') }}">Frontend Guide ও screenshot দেখুন &rarr;</a>
         </section>
         @foreach($adminSections as $section)
             <section class="guide-card" id="{{ $section['id'] }}">
+                <span class="guide-eyebrow">TOPIC {{ str_pad((string) $loop->iteration, 2, '0', STR_PAD_LEFT) }}</span>
                 <h2>{{ $loop->iteration }}. {{ $section['title'] }}</h2>
                 <p>{{ $section['intro'] }}</p>
+                <h3 class="guide-subheading">কাজের ক্রম</h3>
                 <ol>
                     @foreach($section['steps'] as $step)
                         <li>{{ $step }}</li>
                     @endforeach
                 </ol>
+                @if(count($section['items']))<h3 class="guide-subheading">Menu ও ব্যবহার</h3>@endif
                 @foreach($section['items'] as $item)
                     @php
                         [$label, $routeName, $permission, $instructions] = $item;
@@ -52,7 +56,9 @@
                         <p>{{ $instructions }}</p>
                     </article>
                 @endforeach
-                <a class="guide-action" href="#admin-start">↑ Admin setup-এর শুরুতে</a>
+                <div class="guide-article-footer"><a href="#admin-start">↑ শুরুর নির্দেশনা</a>
+                    @if(!$loop->last)<a href="#{{ $adminSections[$loop->index + 1]['id'] }}">পরবর্তী topic →</a>@else<a href="{{ route('documentation.index') }}">Frontend Guide →</a>@endif
+                </div>
             </section>
         @endforeach
     </div>

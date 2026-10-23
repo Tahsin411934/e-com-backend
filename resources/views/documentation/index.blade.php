@@ -1,6 +1,6 @@
 <x-app-layout>
-    @php($sections = require resource_path('views/documentation/sections.php'))
     @php
+        $sections = require resource_path('views/documentation/sections.php');
         $sectionActions = [
             'announcement' => ['frontend.announcement-bars.index', 'frontend.announcements.view', 'Add or Update Announcement Bar'],
             'header' => ['frontend.site-settings.index', 'frontend.settings.view', 'Update Logo & Site Settings'],
@@ -95,7 +95,9 @@
             </div>
             <div class="guide-shortcuts" aria-label="Homepage management shortcuts">
                 @foreach($sections as $section)
-                    @php($action = $sectionActions[$section['id']] ?? null)
+                    @php
+                        $action = $sectionActions[$section['id']] ?? null;
+                    @endphp
                     <div class="guide-shortcut">
                         <strong>{{ $loop->iteration }}. {{ $section['title'] }}</strong>
                         @if($action && auth()->user()->hasPermission($action[1]))
@@ -131,11 +133,15 @@
                     </ol>
                 </section>
                 @foreach($sections as $section)
-                    @php([$start, $end] = $section['area'])
+                    @php
+                        [$start, $end] = $section['area'];
+                    @endphp
                     <section class="guide-card" id="{{ $section['id'] }}">
                         <div class="guide-section-heading">
                             <h2>{{ $loop->iteration }}. {{ $section['title'] }}</h2>
-                            @php($action = $sectionActions[$section['id']] ?? null)
+                            @php
+                                $action = $sectionActions[$section['id']] ?? null;
+                            @endphp
                             @if($action && auth()->user()->hasPermission($action[1]))
                                 <a class="guide-edit" href="{{ route($action[0]) }}">
                                     {{ $action[2] }} <span aria-hidden="true">&rarr;</span>

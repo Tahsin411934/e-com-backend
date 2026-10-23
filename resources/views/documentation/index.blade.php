@@ -41,6 +41,25 @@
             .guide ol, .guide ul { padding-left:24px; line-height:1.9; }
             .guide ol { list-style:decimal; } .guide ul { list-style:disc; }
             .guide li { padding:5px 0; }
+            .guide-step { display:flex; align-items:flex-start; justify-content:space-between; gap:14px; }
+            .guide-step-text { flex:1; min-width:0; }
+            .guide-preview-button { flex-shrink:0; border:1px solid #0f766e; color:#0f766e; background:#f0fdfa; border-radius:7px; padding:5px 12px; font:inherit; font-size:12px; cursor:pointer; }
+            .guide-preview-button:focus-visible { outline:3px solid #14b8a6; outline-offset:2px; }
+            .guide-dialog { width:min(1100px,calc(100vw - 32px)); max-height:85vh; overflow:auto; margin:auto; border:1px solid #cbd5e1; border-radius:16px; padding:24px; background:#fff; color:#1e293b; }
+            .guide-dialog::backdrop { background:rgba(15,23,42,.65); }
+            .guide-dialog-heading { display:flex; align-items:center; justify-content:space-between; gap:16px; margin-bottom:14px; }
+            .guide-dialog-heading h3 { font-size:20px; font-weight:700; }
+            .guide-dialog-step { padding:12px 16px; background:#f1f5f9; border-radius:8px; }
+            .guide-announcement-scroll { overflow-x:auto; margin:18px 0; }
+            .guide-announcement-labels,.guide-announcement-example { display:grid; grid-template-columns:1fr 1fr 1fr; min-width:900px; gap:16px; padding:10px 16px; font-size:12px; }
+            .guide-announcement-labels { color:#64748b; background:#f8fafc; }
+            .guide-announcement-example { background:#004d40; color:#fff; }
+            .guide-announcement-labels span:nth-child(2),.guide-announcement-example span:nth-child(2) { text-align:center; }
+            .guide-announcement-labels span:last-child,.guide-announcement-example span:last-child { text-align:right; }
+            .dark .guide-dialog { background:#1f2937; color:#e2e8f0; border-color:#475569; }
+            .dark .guide-dialog-step { background:#334155; }
+            @media(max-width:600px) { .guide-step { flex-direction:column; gap:6px; } .guide-dialog { padding:16px; } }
+            @media print { .guide-preview-button,.guide-dialog { display:none!important; } }
             .guide-note { border-left:3px solid #eab308; background:#fffbeb; padding:12px 16px; border-radius:6px; font-size:14px; }
             .guide-action { display:inline-block; padding:9px 16px; border:1px solid #cbd5e1; border-radius:8px; margin-right:8px; color:#0f766e; }
             .guide-map-scroll { overflow-x:auto; border:1px solid #cbd5e1; border-radius:12px; margin:18px 0; }
@@ -82,7 +101,7 @@
             @include('documentation.admin')
         @else
         <p>OneHaat.bd-এর দেওয়া homepage screenshot অনুসারে কোন অংশ কোথা থেকে সাজাবেন—ছবিসহ ধাপে ধাপে নির্দেশনা।</p>
-        <p>ছবিটি design reference। নিজের store-এর logo, product, দাম ও policy ব্যবহার করুন। Menu দেখার ও পরিবর্তনের permission আলাদা; কোনো menu না পেলে platform admin-এর সঙ্গে যোগাযোগ করুন। Store Owner নিজের store-এর content পরিচালনা করবেন; platform admin হলে সঠিক store নির্বাচন করুন।</p>
+        <p>ছবিটি design reference। নিচের নাম, message, রং, category, offer ও button text-গুলো শুধু উদাহরণ—নিজের store-এর জন্য নিজের পছন্দমতো content দিন। ছবি বা উদাহরণের লেখা হুবহু ব্যবহার করা বাধ্যতামূলক নয়। Upload limit, প্রয়োজনীয় field ও প্রকাশের status-এর নিয়মগুলো প্রযোজ্য থাকবে। Menu দেখার ও পরিবর্তনের permission আলাদা; কোনো menu না পেলে platform admin-এর সঙ্গে যোগাযোগ করুন। Store Owner নিজের store-এর content পরিচালনা করবেন; platform admin হলে সঠিক store নির্বাচন করুন।</p>
         <div class="guide-actions">
             <a class="guide-action" href="{{ asset('images/documentation/homepage.png') }}" target="_blank" rel="noopener">সম্পূর্ণ screenshot দেখুন</a>
             <button type="button" class="guide-action" onclick="window.print()">Print / Save as PDF</button>
@@ -186,9 +205,40 @@
                         <div class="guide-menu"><strong>কোথায় যাবেন:</strong> {{ $section['menu'] }}</div>
                         <ol>
                             @foreach($section['steps'] as $step)
-                                <li>{{ $step }}</li>
+                                <li>
+                                    <div class="guide-step">
+                                        <span class="guide-step-text">{{ $step }}</span>
+                                        <button type="button" class="guide-preview-button"
+                                            data-guide-preview="preview-{{ $section['id'] }}" data-preview-step="{{ $step }}"
+                                            aria-label="Preview {{ $section['title'] }}, step {{ $loop->iteration }}"
+                                            aria-haspopup="dialog" aria-controls="preview-{{ $section['id'] }}">Preview</button>
+                                    </div>
+                                </li>
                             @endforeach
                         </ol>
+                        <dialog class="guide-dialog" id="preview-{{ $section['id'] }}" aria-labelledby="preview-title-{{ $section['id'] }}">
+                            <div class="guide-dialog-heading">
+                                <h3 id="preview-title-{{ $section['id'] }}">Frontend Preview · {{ $section['title'] }}</h3>
+                                <form method="dialog"><button class="guide-preview-button" type="submit" autofocus>Close ×</button></form>
+                            </div>
+                            <p class="guide-dialog-step" data-preview-instruction></p>
+                            @if($section['id'] === 'announcement')
+                                <p>এই উদাহরণে desktop-এর বাম, মাঝ ও ডান অংশে লেখার অবস্থান দেখানো হয়েছে। নিজের store-এর message ব্যবহার করুন।</p>
+                                <div class="guide-announcement-scroll" tabindex="0" role="region" aria-label="Announcement text placement preview">
+                                    <div class="guide-announcement-labels"><span>Left Text · ৬–৮ শব্দ</span><span>Center Text · ৬–৮ শব্দ</span><span>Right Text · ৫–৭ শব্দ</span></div>
+                                    <div class="guide-announcement-example"><span>Free Shipping on Orders Over ৳500</span><span>Cash on Delivery Available Across Bangladesh</span><span>Need Help Call Our Support Team</span></div>
+                                </div>
+                                <p class="text-sm text-gray-500">ছোট mobile screen-এ শুধু মাঝের message দেখাবে। Preview-টি sample; এটি আপনার saved announcement নয়।</p>
+                            @endif
+                            <figure>
+                                <div class="guide-preview" style="aspect-ratio:896 / {{ $end - $start }}">
+                                    <img src="{{ asset('images/documentation/homepage.png') }}" width="896" height="1754"
+                                        alt="Frontend section preview: {{ $section['title'] }}"
+                                        style="transform:translateY(-{{ $start / 1754 * 100 }}%)">
+                                </div>
+                                <figcaption class="text-xs mt-2 text-gray-500">Reference homepage-এর এই অংশে আপনার content দেখাবে। এটি screenshot preview; পরিবর্তন save বা publish করে না।</figcaption>
+                            </figure>
+                        </dialog>
                         <p class="guide-note"><strong>মনে রাখুন:</strong> {{ $section['note'] }}</p>
                         <a class="guide-action" href="#homepage-map">↑ পুরো ছবির shortcuts</a>
                         <a class="text-sm text-teal-700" href="#before-start">↑ শুরুতে যান</a>
@@ -210,4 +260,17 @@
         </div>
         @endif
     </main>
+    @push('scripts')
+        <script>
+            document.addEventListener('click', function (event) {
+                if (!(event.target instanceof Element)) return;
+                const button = event.target.closest('[data-guide-preview]');
+                if (!button) return;
+                const dialog = document.getElementById(button.dataset.guidePreview);
+                if (!(dialog instanceof HTMLDialogElement)) return;
+                dialog.querySelector('[data-preview-instruction]').textContent = button.dataset.previewStep;
+                dialog.showModal();
+            });
+        </script>
+    @endpush
 </x-dynamic-component>

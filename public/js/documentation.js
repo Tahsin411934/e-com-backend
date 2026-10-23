@@ -2,6 +2,25 @@
     const guide = document.querySelector('.guide');
     if (!guide) return;
 
+    guide.querySelectorAll('dialog.guide-dialog').forEach(function (dialog) {
+        let startedOutside = false;
+        function isOutside(event) {
+            const bounds = dialog.getBoundingClientRect();
+            return event.target === dialog && (event.clientX < bounds.left || event.clientX > bounds.right
+                || event.clientY < bounds.top || event.clientY > bounds.bottom);
+        }
+        dialog.addEventListener('pointerdown', function (event) {
+            startedOutside = isOutside(event);
+        });
+        dialog.addEventListener('pointercancel', function () {
+            startedOutside = false;
+        });
+        dialog.addEventListener('click', function (event) {
+            if (startedOutside && isOutside(event)) dialog.close();
+            startedOutside = false;
+        });
+    });
+
     guide.addEventListener('click', function (event) {
         if (!(event.target instanceof Element)) return;
         const button = event.target.closest('[data-guide-preview]');

@@ -81,6 +81,32 @@ Wildcard DNS à¦›à¦¾à¦¡à¦¼à¦¾ à¦Ÿà§‡à¦¸à§à¦Ÿ à�
 
 ## Tests
 
+### Service benefits
+
+`GET /api/v1/storefront/service-benefits` uses the same tenant-host resolution.
+It returns `{ status: "success", data: { items: [...] } }`; each item includes
+`id`, `title`, `description`, `icon`, and `sort_order`. Only active rows belonging
+to the resolved store are returned, ordered by `sort_order` then `id`.
+An empty store returns `items: []`, and the frontend hides the entire section.
+No global defaults or placeholder benefits are created.
+
+Dashboard management: **Online Store → Service Benefits**, `/service-benefits`.
+Owners are assigned their store on the server; platform admins must select a store.
+Icons use stable allowlisted keys shared by backend and frontend.
+Deploy the backend migration before deploying the frontend:
+
+```sh
+php artisan migrate --force
+```
+
+The migration also installs the four `frontend.service-benefits.*` permissions
+for existing Super Admin, Admin, and Store Owner roles. No sample benefits are seeded.
+Fresh database seeding includes the same idempotent permission seeder.
+
+```sh
+php artisan test tests/Feature/Saas/ServiceBenefitTest.php
+```
+
 ```
 php artisan test tests/Feature/Saas/StorefrontTenantApiTest.php
 ```

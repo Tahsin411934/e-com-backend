@@ -32,6 +32,7 @@ class DatabaseSeeder extends Seeder
         $this->call(\Modules\Order\Database\Seeders\OrderDatabaseSeeder::class);
         $this->call(\Modules\Pos\Database\Seeders\PosDatabaseSeeder::class);
         $this->call(\Modules\Reviews\Database\Seeders\ReviewsDatabaseSeeder::class);
+        $this->call(\Modules\Frontend\Database\Seeders\ServiceBenefitPermissionsSeeder::class);
 
         $this->command->info('====================================');
         $this->command->info('   ALL DATABASE SEEDING COMPLETED');

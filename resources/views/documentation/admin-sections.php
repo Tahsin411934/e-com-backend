@@ -138,6 +138,7 @@ return [
             ['Announcement Bars', 'frontend.announcement-bars.index', 'frontend.announcements.view', 'Left/Center/Right Text, colours, status ও sort order দিন। Promotional লেখা checkout rule পরিবর্তন করে না।'],
             ['Site Settings', 'frontend.site-settings.index', 'frontend.settings.view', 'General, Contact, Social ও SEO group-এর মান দিন। Store Owner নিজের store-এর settings পরিচালনা করবেন।'],
             ['Homepage Actions', 'frontend.ctas.index', 'frontend.ctas.view', 'CTA style, image, title, button, colour ও placement-related fields পরিচালনা করুন। Actual section position frontend/home API-এর rendering-এর ওপর নির্ভর করে।'],
+            ['Service Benefits', 'frontend.service-benefits.index', 'frontend.service-benefits.view', 'নিজের Title, Description, Icon, Sort Order ও Active/Inactive status দিন। Active benefit থাকলেই storefront footer-এর উপরে section দেখাবে; না থাকলে পুরো section লুকাবে।'],
             ['Google Tag Manager', 'frontend.marketing.gtm.index', 'marketing.gtm.view', 'GTM Enabled ও Container ID-সহ প্রযোজ্য configuration দিন। Save করার পরে frontend integration দিয়ে tag load হচ্ছে কি না পরীক্ষা করুন।'],
         ]],
     ['id' => 'admin-reports', 'title' => 'Reports — বিশ্লেষণ ও Export',

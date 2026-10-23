@@ -34,6 +34,7 @@ use Modules\Identity\Http\Controllers\CustomerAuthController;
 */
 
 Route::middleware('storefront.tenant')->prefix('v1/storefront')->group(function () {
+    Route::get('/service-benefits', [\Modules\Storefront\Http\Controllers\ServiceBenefitController::class, 'index']);
     Route::post('/auth/register', [CustomerAuthController::class, 'register'])->middleware('throttle:5,1');
     Route::post('/auth/login', [CustomerAuthController::class, 'login'])->middleware('throttle:10,1');
     // Navbar API - resolved per storefront

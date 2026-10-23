@@ -3,7 +3,8 @@
         $sections = require resource_path('views/documentation/sections.php');
         $isAdminGuide = request()->routeIs('documentation.admin');
         $adminSections = require resource_path('views/documentation/admin-sections.php');
-        $topicCount = $isAdminGuide ? count($adminSections) : count($sections);
+        $frontendTopics = require resource_path('views/documentation/frontend-topics.php');
+        $topicCount = $isAdminGuide ? count($adminSections) : count($sections) + count($frontendTopics);
         $optionCount = array_sum(array_map(fn ($section) => count($section['items']), $adminSections));
         $sectionActions = [
             'announcement' => ['frontend.announcement-bars.index', 'frontend.announcements.view', 'Add or Update Announcement Bar'],
@@ -17,6 +18,7 @@
             'fashion' => ['products.index', 'products.view', 'Add or Update Products'],
             'home-living' => ['products.index', 'products.view', 'Add or Update Products'],
             'footer' => ['frontend.site-settings.index', 'frontend.settings.view', 'Update Contact & Social Links'],
+            'benefits' => ['frontend.service-benefits.index', 'frontend.service-benefits.view', 'Manage Service Benefits'],
         ];
     @endphp
     @push('head')
@@ -52,13 +54,17 @@
                 @foreach($sections as $section)
                     <a href="#{{ $section['id'] }}">{{ $loop->iteration }}. {{ $section['title'] }}</a>
                 @endforeach
+                <strong class="guide-nav-group">Pages ও Customer Features</strong>
+                @foreach($frontendTopics as $topic)
+                    <a href="#{{ $topic['id'] }}">{{ count($sections) + $loop->iteration }}. {{ $topic['title'] }}</a>
+                @endforeach
                 <a href="#verification">শেষে যা পরীক্ষা করবেন</a>
             </nav>
             <div class="guide-content">
         <section class="guide-card" id="homepage-map">
             <div class="guide-section-heading"><div><span class="guide-eyebrow">VISUAL OVERVIEW</span><h2>আপনার homepage এক নজরে</h2></div><a class="guide-action" href="{{ asset('images/documentation/homepage.png') }}" target="_blank" rel="noopener">পূর্ণ ছবি ↗</a></div>
-            <p>চিহ্নিত অংশ থেকে <strong>Add / Update</strong> দিয়ে management page খুলুন অথবা <strong>Details</strong> থেকে নির্দেশনা পড়ুন। প্রতিটি section-এর শিরোনামের পাশে একটি <strong>Preview</strong> button আছে। ছোট screen-এ ছবিটি পাশে scroll করা যাবে।</p>
-            <div class="guide-map-scroll" tabindex="0" role="region" aria-label="Marked homepage screenshot; scroll horizontally on small screens">
+            <p>বড় screen-এ চিহ্নিত অংশ থেকে <strong>Add / Update</strong> বা <strong>Details</strong> খুলুন। ছোট screen-এ ছবির নিচের <strong>section shortcuts</strong> তালিকা ব্যবহার করুন। প্রতিটি section-এর শিরোনামের পাশে একটি <strong>Preview</strong> button আছে। <strong>পূর্ণ ছবি</strong> থেকে বড় করে screenshot দেখা যাবে।</p>
+            <div class="guide-map-scroll" tabindex="0" role="region" aria-label="Marked homepage screenshot">
                 <div class="guide-map">
                     <img src="{{ asset('images/documentation/homepage.png') }}" width="896" height="1754" alt="OneHaat.bd সম্পূর্ণ homepage; প্রতিটি section numbered box দিয়ে চিহ্নিত">
                     @foreach($sections as $section)
@@ -184,11 +190,12 @@
                             @if(!$loop->last)
                                 <a href="#{{ $sections[$loop->index + 1]['id'] }}">পরবর্তী: {{ $sections[$loop->index + 1]['title'] }} →</a>
                             @else
-                                <a href="#verification">প্রকাশের আগে যাচাই করুন →</a>
+                                <a href="#{{ $frontendTopics[0]['id'] }}">Pages ও customer features →</a>
                             @endif
                         </div>
                     </section>
                 @endforeach
+                @include('documentation.frontend-features')
                 <section class="guide-card" id="verification">
                     <h2>শেষে যা পরীক্ষা করবেন</h2>
                     <ul>

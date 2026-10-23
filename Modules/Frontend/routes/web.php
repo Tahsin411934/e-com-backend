@@ -8,6 +8,10 @@ use Modules\Frontend\Http\Controllers\NavbarController;
 use Modules\Frontend\Http\Controllers\SiteSettingController;
 
 Route::middleware(['auth', 'verified', 'admin'])->group(function () {
+    Route::get('/service-benefits', [\Modules\Frontend\Http\Controllers\ServiceBenefitController::class, 'index'])->name('frontend.service-benefits.index')->middleware('permission:frontend.service-benefits.view');
+    Route::post('/service-benefits', [\Modules\Frontend\Http\Controllers\ServiceBenefitController::class, 'store'])->name('frontend.service-benefits.store')->middleware('permission:frontend.service-benefits.create');
+    Route::put('/service-benefits/{id}', [\Modules\Frontend\Http\Controllers\ServiceBenefitController::class, 'update'])->name('frontend.service-benefits.update')->middleware('permission:frontend.service-benefits.edit');
+    Route::delete('/service-benefits/{id}', [\Modules\Frontend\Http\Controllers\ServiceBenefitController::class, 'destroy'])->name('frontend.service-benefits.destroy')->middleware('permission:frontend.service-benefits.delete');
     // Navbar Items page
     Route::get('/nav-items', [NavbarController::class, 'index'])->name('frontend.nav-items.index')->middleware('permission:frontend.navbar.view');
 

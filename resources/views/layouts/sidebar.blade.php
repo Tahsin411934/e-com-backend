@@ -605,7 +605,7 @@
         </div>
         @endif
 
-        @if(auth()->user()->hasAnyPermission(['frontend.view','frontend.banners.view','frontend.sliders.view','frontend.navbar.view','frontend.announcements.view','frontend.ctas.view','frontend.pages.view','frontend.testimonials.view','frontend.faqs.view','frontend.footers.view','frontend.settings.view']))
+        @if(auth()->user()->hasAnyPermission(['frontend.view','frontend.banners.view','frontend.sliders.view','frontend.navbar.view','frontend.announcements.view','frontend.ctas.view','frontend.service-benefits.view','frontend.pages.view','frontend.testimonials.view','frontend.faqs.view','frontend.footers.view','frontend.settings.view']))
         <!-- Frontend -->
         <div class="mb-0.5">
             <button
@@ -616,6 +616,9 @@
                 <i class="nav-chevron fas fa-chevron-down text-[10px] flex-shrink-0"></i>
             </button>
             <div class="submenu sub-indent" id="sub-frontend">
+                @if(auth()->user()->hasPermission('frontend.service-benefits.view'))
+                <a href="{{ route('frontend.service-benefits.index') }}" class="flex items-center gap-2.5 pl-9 pr-3 py-1.5 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-50 text-[13px] transition-colors {{ request()->routeIs('frontend.service-benefits.*') ? 'text-primary bg-primary-light font-medium' : '' }}"><i class="fas fa-shield-halved w-3.5 text-center"></i><span>Service Benefits</span></a>
+                @endif
                 @if(auth()->user()->hasPermission('stores.view'))
                 <a href="{{ route('store-domains.index') }}"
                     class="flex items-center gap-2.5 pl-9 pr-3 py-1.5 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-50 text-[13px] transition-colors {{ request()->routeIs('store-domains.*') ? 'text-primary bg-primary-light font-medium' : '' }}">

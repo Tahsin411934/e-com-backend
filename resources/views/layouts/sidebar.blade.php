@@ -37,6 +37,13 @@
     <!-- Navigation -->
     <nav id="sideNav" class="flex-1 overflow-y-auto overflow-x-hidden py-2.5 px-2">
 
+        <a href="{{ route('documentation.index') }}"
+            class="nav-item flex items-center gap-2.5 px-3 py-2 rounded-lg text-gray-500 hover:bg-gray-50 hover:text-gray-800 text-sm font-medium transition-colors mb-0.5 {{ request()->routeIs('documentation.*') ? 'text-primary bg-primary-light' : '' }}"
+            data-label="Documentation">
+            <i class="fas fa-book-open w-4 text-center flex-shrink-0 text-base"></i>
+            <span class="nav-label">Documentation</span>
+        </a>
+
     <!-- Dashboard -->
     <a href="{{ route('dashboard') }}"
             class="nav-item flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-medium transition-colors duration-150 mb-0.5 
@@ -806,11 +813,5 @@
         </a>
         @endif
 
-        <a href="{{ route('documentation.index') }}"
-            class="nav-item flex items-center gap-2.5 px-3 py-2 rounded-lg text-gray-500 hover:bg-gray-50 hover:text-gray-800 text-sm font-medium transition-colors mb-0.5 {{ request()->routeIs('documentation.*') ? 'text-primary bg-primary-light' : '' }}"
-            data-label="Documentation">
-            <i class="fas fa-book-open w-4 text-center flex-shrink-0 text-base"></i>
-            <span class="nav-label">Documentation</span>
-        </a>
     </nav>
 </aside>

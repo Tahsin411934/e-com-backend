@@ -1,6 +1,8 @@
 <x-app-layout>
     @php
         $sections = require resource_path('views/documentation/sections.php');
+        $isAdminGuide = request()->routeIs('documentation.admin');
+        $adminSections = require resource_path('views/documentation/admin-sections.php');
         $sectionActions = [
             'announcement' => ['frontend.announcement-bars.index', 'frontend.announcements.view', 'Add or Update Announcement Bar'],
             'header' => ['frontend.site-settings.index', 'frontend.settings.view', 'Update Logo & Site Settings'],
@@ -21,7 +23,7 @@
             .guide h1 { font-size:30px; font-weight:800; margin-bottom:10px; }
             .guide p { line-height:1.9; margin:10px 0; }
             .guide-layout { display:grid; grid-template-columns:230px minmax(0,1fr); gap:28px; margin-top:26px; align-items:start; }
-            .guide-nav { position:sticky; top:20px; padding:18px; border:1px solid #e2e8f0; border-radius:14px; background:#fff; }
+            .guide-nav { position:sticky; top:20px; max-height:calc(100vh - 100px); overflow-y:auto; padding:18px; border:1px solid #e2e8f0; border-radius:14px; background:#fff; }
             .guide-nav a { display:block; padding:8px 0; color:#0f766e; font-size:14px; }
             .guide-card { background:#fff; border:1px solid #e2e8f0; border-radius:16px; padding:24px; margin-bottom:24px; scroll-margin-top:24px; }
             .guide-card h2 { font-size:22px; font-weight:700; margin-bottom:16px; }
@@ -42,7 +44,7 @@
             .guide-note { border-left:3px solid #eab308; background:#fffbeb; padding:12px 16px; border-radius:6px; font-size:14px; }
             .guide-action { display:inline-block; padding:9px 16px; border:1px solid #cbd5e1; border-radius:8px; margin-right:8px; color:#0f766e; }
             .guide-map-scroll { overflow-x:auto; border:1px solid #cbd5e1; border-radius:12px; margin:18px 0; }
-            .guide-map { position:relative; min-width:896px; background:#fff; }
+            .guide-map { position:relative; min-width:680px; background:#fff; }
             .guide-map > img { display:block; width:100%; height:auto; }
             .guide-hotspot { position:absolute; left:0; right:0; border:2px solid #0f766e; pointer-events:none; }
             .guide-hotspot:focus-within,.guide-hotspot:hover { border-color:#f97316; background:rgba(20,184,166,.08); }
@@ -55,22 +57,48 @@
             .guide-shortcut strong { display:block; margin-bottom:10px; }
             .guide-shortcut a { margin-top:6px; }
             .dark .guide-shortcut { border-color:#475569; }
+            .guide-tabs { display:flex; gap:10px; flex-wrap:wrap; margin:20px 0; }
+            .guide-tabs a { padding:12px 20px; border:1px solid #cbd5e1; border-radius:10px; font-weight:700; }
+            .guide-tabs a[aria-current="page"] { background:#0f766e; border-color:#0f766e; color:#fff; }
+            .guide-content { min-width:0; }
+            .guide-option { padding:18px 0; border-top:1px solid #e2e8f0; }
+            .guide-option h3 { font-size:17px; font-weight:700; }
+            .guide-option p { font-size:14px; }
+            .guide-option .guide-section-heading { margin-bottom:6px; }
             @media print { .guide-map-scroll { overflow:visible; } .guide-map { min-width:0; } .guide-hotspot-tools { display:none; } .guide-shortcuts { display:none; } }
             .dark .guide { color:#e2e8f0; } .dark .guide-card,.dark .guide-nav { background:#1f2937; border-color:#475569; }
             .dark .guide-nav a { color:#5eead4; } .dark .guide-note { background:#422006; color:#fef3c7; }
-            @media(max-width:900px) { .guide-layout { grid-template-columns:1fr; } .guide-nav { position:static; } .guide { padding:16px; } .guide-card { padding:16px; } }
+            @media(max-width:900px) { .guide-layout { grid-template-columns:1fr; } .guide-nav { position:static; max-height:300px; } .guide { padding:16px; } .guide-card { padding:16px; } }
             @media print { #sidebar,header,.guide-nav,.guide-actions { display:none!important; } .guide-layout { display:block; } .guide { padding:0; color:#000; } .guide-card { break-inside:avoid; box-shadow:none; } }
         </style>
     @endpush
     <main class="guide" lang="bn">
-        <h1>Documentation · Homepage Setup</h1>
+        <h1>Documentation · {{ $isAdminGuide ? 'Admin Guide' : 'Frontend Guide' }}</h1>
+        <nav class="guide-tabs" aria-label="Documentation parts">
+            <a href="{{ route('documentation.admin') }}" @if($isAdminGuide) aria-current="page" @endif>01 · Admin Guide</a>
+            <a href="{{ route('documentation.index') }}" @if(!$isAdminGuide) aria-current="page" @endif>02 · Frontend Guide</a>
+        </nav>
+        @if($isAdminGuide)
+            @include('documentation.admin')
+        @else
         <p>OneHaat.bd-এর দেওয়া homepage screenshot অনুসারে কোন অংশ কোথা থেকে সাজাবেন—ছবিসহ ধাপে ধাপে নির্দেশনা।</p>
         <p>ছবিটি design reference। নিজের store-এর logo, product, দাম ও policy ব্যবহার করুন। Menu দেখার ও পরিবর্তনের permission আলাদা; কোনো menu না পেলে platform admin-এর সঙ্গে যোগাযোগ করুন। Store Owner নিজের store-এর content পরিচালনা করবেন; platform admin হলে সঠিক store নির্বাচন করুন।</p>
         <div class="guide-actions">
             <a class="guide-action" href="{{ asset('images/documentation/homepage.png') }}" target="_blank" rel="noopener">সম্পূর্ণ screenshot দেখুন</a>
             <button type="button" class="guide-action" onclick="window.print()">Print / Save as PDF</button>
         </div>
-        <section class="guide-card" id="homepage-map" style="margin-top:24px">
+        <div class="guide-layout">
+            <nav class="guide-nav" aria-label="Documentation sections">
+                <strong>এই গাইডে যা আছে</strong>
+                <a href="#homepage-map">পুরো ছবিতে shortcuts</a>
+                <a href="#before-start">শুরু করার আগে</a>
+                @foreach($sections as $section)
+                    <a href="#{{ $section['id'] }}">{{ $loop->iteration }}. {{ $section['title'] }}</a>
+                @endforeach
+                <a href="#verification">শেষে যা পরীক্ষা করবেন</a>
+            </nav>
+            <div class="guide-content">
+        <section class="guide-card" id="homepage-map">
             <h2>পুরো Homepage — চিহ্নিত অংশ থেকে সরাসরি কাজ করুন</h2>
             <p>প্রতিটি সবুজ বক্স একটি section। <strong>Add / Update</strong> দিয়ে management page খুলুন, সেখান থেকে নতুন content যোগ বা পুরোনোটি edit করুন। <strong>Details</strong> দিয়ে নিচের ছবিসহ সম্পূর্ণ নির্দেশনা পড়ুন। ছোট screen-এ ছবিটি ডানে-বামে scroll করুন; নিচের shortcut list-ও ব্যবহার করতে পারবেন।</p>
             <div class="guide-map-scroll" tabindex="0" role="region" aria-label="Marked homepage screenshot; scroll horizontally on small screens">
@@ -112,17 +140,6 @@
                 @endforeach
             </div>
         </section>
-        <div class="guide-layout">
-            <nav class="guide-nav" aria-label="Documentation sections">
-                <strong>এই গাইডে যা আছে</strong>
-                <a href="#homepage-map">পুরো ছবিতে shortcuts</a>
-                <a href="#before-start">শুরু করার আগে</a>
-                @foreach($sections as $section)
-                    <a href="#{{ $section['id'] }}">{{ $loop->iteration }}. {{ $section['title'] }}</a>
-                @endforeach
-                <a href="#verification">শেষে যা পরীক্ষা করবেন</a>
-            </nav>
-            <div>
                 <section class="guide-card" id="before-start">
                     <h2>শুরু করার আগে</h2>
                     <ol>
@@ -185,5 +202,6 @@
                 </section>
             </div>
         </div>
+        @endif
     </main>
 </x-app-layout>

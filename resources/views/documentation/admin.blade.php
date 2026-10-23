@@ -34,14 +34,17 @@
                     @php
                         [$label, $routeName, $permission, $instructions] = $item;
                         $allowedRoles = $item[4] ?? null;
-                        $canOpen = (!$permission || auth()->user()->hasPermission($permission))
-                            && (!$allowedRoles || auth()->user()->hasAnyRole($allowedRoles));
+                        $user = auth()->user();
+                        $canOpen = $user && (!$permission || $user->hasPermission($permission))
+                            && (!$allowedRoles || $user->hasAnyRole($allowedRoles));
                     @endphp
                     <article class="guide-option">
                         <div class="guide-section-heading">
                             <h3>{{ $label }}</h3>
                             @if($canOpen)
                                 <a class="guide-edit" href="{{ route($routeName) }}">Open {{ $label }} &rarr;</a>
+                            @elseif(auth()->guest())
+                                <a class="guide-edit" href="{{ route('login') }}">Login to manage &rarr;</a>
                             @else
                                 <span class="guide-edit-note">আপনার role/permission-এ এই page খোলা নেই।</span>
                             @endif

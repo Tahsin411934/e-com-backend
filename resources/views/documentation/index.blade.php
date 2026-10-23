@@ -1,4 +1,4 @@
-<x-app-layout>
+<x-dynamic-component :component="auth()->user()?->hasAdminAccess() ? 'app-layout' : 'documentation-layout'">
     @php
         $sections = require resource_path('views/documentation/sections.php');
         $isAdminGuide = request()->routeIs('documentation.admin');
@@ -112,8 +112,10 @@
                         <div class="guide-hotspot" style="top:{{ $start / 1754 * 100 }}%;height:{{ ($end - $start) / 1754 * 100 }}%">
                             <div class="guide-hotspot-tools">
                                 <a href="#{{ $section['id'] }}" aria-label="{{ $loop->iteration }}. {{ $section['title'] }}">{{ $loop->iteration }}. {{ explode(' — ', $section['title'])[0] }}</a>
-                                @if($action && auth()->user()->hasPermission($action[1]))
+                                @if($action && auth()->user()?->hasPermission($action[1]))
                                     <a href="{{ route($action[0]) }}" aria-label="{{ $action[2] }}">Add / Update &rarr;</a>
+                                @elseif($action && auth()->guest())
+                                    <a href="{{ route('login') }}">Login to manage &rarr;</a>
                                 @endif
                                 <a href="#{{ $section['id'] }}" aria-label="Details: {{ $section['title'] }}">Details &darr;</a>
                             </div>
@@ -128,8 +130,10 @@
                     @endphp
                     <div class="guide-shortcut">
                         <strong>{{ $loop->iteration }}. {{ $section['title'] }}</strong>
-                        @if($action && auth()->user()->hasPermission($action[1]))
+                        @if($action && auth()->user()?->hasPermission($action[1]))
                             <a class="guide-edit" href="{{ route($action[0]) }}">{{ $action[2] }} &rarr;</a>
+                        @elseif($action && auth()->guest())
+                            <a class="guide-edit" href="{{ route('login') }}">Login to manage &rarr;</a>
                         @elseif($action)
                             <p class="guide-edit-note">Management access পেতে admin-এর সঙ্গে যোগাযোগ করুন।</p>
                         @else
@@ -159,10 +163,12 @@
                             @php
                                 $action = $sectionActions[$section['id']] ?? null;
                             @endphp
-                            @if($action && auth()->user()->hasPermission($action[1]))
+                            @if($action && auth()->user()?->hasPermission($action[1]))
                                 <a class="guide-edit" href="{{ route($action[0]) }}">
                                     {{ $action[2] }} <span aria-hidden="true">&rarr;</span>
                                 </a>
+                            @elseif($action && auth()->guest())
+                                <a class="guide-edit" href="{{ route('login') }}">Login to manage &rarr;</a>
                             @elseif($action)
                                 <span class="guide-edit-note">এই settings খুলতে admin-এর কাছে access চাইতে হবে।</span>
                             @else
@@ -204,4 +210,4 @@
         </div>
         @endif
     </main>
-</x-app-layout>
+</x-dynamic-component>

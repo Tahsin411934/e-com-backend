@@ -33,9 +33,7 @@ Route::middleware(['auth', 'verified', 'admin', 'role:Super Admin,Admin,Manager,
 require __DIR__.'/auth.php';
 
 Route::view('/documentation', 'documentation.index')
-    ->middleware(['auth', 'verified', 'admin'])
     ->name('documentation.index');
 
 Route::view('/documentation/admin', 'documentation.index')
-    ->middleware(['auth', 'verified', 'admin'])
     ->name('documentation.admin');

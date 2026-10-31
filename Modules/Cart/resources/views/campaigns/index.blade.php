@@ -19,7 +19,7 @@
                     <input x-model="form.starts_at" type="datetime-local" class="rounded border-gray-300">
                     <input x-model="form.ends_at" type="datetime-local" class="rounded border-gray-300">
                 </div>
-                <select x-model="form.status" data-local-select2 class="w-full rounded border-gray-300">
+                <select x-model="form.status" class="w-full rounded border-gray-300">
                     <option value="draft">Draft</option>
                     <option value="active">Active</option>
                     <option value="paused">Paused</option>
@@ -135,7 +135,7 @@
                 </div>
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1">Status</label>
-                    <select x-model="editForm.status" data-local-select2 class="w-full rounded border-gray-300"><option value="draft">Draft</option><option value="active">Active</option><option value="paused">Paused</option></select>
+                    <select x-model="editForm.status" class="w-full rounded border-gray-300"><option value="draft">Draft</option><option value="active">Active</option><option value="paused">Paused</option></select>
                 </div>
                 <div class="grid grid-cols-2 gap-2">
                     <div><label class="block text-sm font-medium text-gray-700 mb-1">Starts at</label><input x-model="editForm.starts_at" type="datetime-local" class="w-full rounded border-gray-300"></div>

@@ -6,6 +6,7 @@ use App\Helpers\ApiResponse;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use Illuminate\Validation\ValidationException;
 use Modules\Cart\Models\Campaign;
 use Modules\Catalog\Models\Product;
 use Modules\Store\Support\CurrentStore;
@@ -100,6 +101,14 @@ class CampaignService
     public function addProduct(Campaign $campaign, array $data): JsonResponse
     {
         $this->ensureCampaignAccess($campaign);
+        $product = Product::findOrFail($data['product_id']);
+        if ($product->store_id !== $campaign->store_id) {
+            throw ValidationException::withMessages(['product_id' => 'The product must belong to the campaign store.']);
+        }
+        if (! empty($data['variant_id']) && ! $product->variants()->whereKey($data['variant_id'])->exists()) {
+            throw ValidationException::withMessages(['variant_id' => 'The variant must belong to the selected product.']);
+        }
+        $this->validateDiscount($data);
         $entry = $campaign->products()->firstOrNew(['product_id' => $data['product_id'], 'variant_id' => $data['variant_id'] ?? null]);
         if (! $entry->exists) {
             $entry->sort_order = ((int) $campaign->products()->max('sort_order')) + 1;
@@ -114,6 +123,7 @@ class CampaignService
     {
         $this->ensureCampaignAccess($campaign);
         $entry = $campaign->products()->whereKey($campaignProduct)->firstOrFail();
+        $this->validateDiscount(array_merge($entry->only(['discount_type', 'discount_value']), $data));
         $entry->update($data);
 
         return ApiResponse::success($entry->load('product', 'variant'), 'Campaign product updated.');
@@ -144,10 +154,11 @@ class CampaignService
     public function liveCampaigns(): JsonResponse
     {
         $campaigns = Campaign::live()->where('is_central_campaign', true)
-            ->with(['products.product.images', 'products.product.variants'])
+            ->with(['products.product.images', 'products.product.variants', 'products.variant'])
             ->orderByDesc('is_featured')
             ->orderByDesc('priority')
             ->get();
+
 
         return ApiResponse::success(
             $campaigns->map(fn (Campaign $campaign) => $this->serialize($campaign))->values(),
@@ -159,7 +170,7 @@ class CampaignService
     {
         $campaign = Campaign::live()->where('is_central_campaign', true)
             ->where('slug', $slug)
-            ->with(['products.product.images', 'products.product.variants'])
+            ->with(['products.product.images', 'products.product.variants', 'products.variant'])
             ->firstOrFail();
 
         return ApiResponse::success($this->serialize($campaign), 'Campaign retrieved successfully.');
@@ -173,7 +184,7 @@ class CampaignService
     public function liveCampaignsForStorefront(): JsonResponse
     {
         $query = Campaign::live()
-            ->with(['products.product.images', 'products.product.variants'])
+            ->with(['products.product.images', 'products.product.variants', 'products.variant'])
             ->orderByDesc('is_featured')
             ->orderByDesc('priority');
 
@@ -191,7 +202,7 @@ class CampaignService
     {
         $query = Campaign::live()
             ->where('slug', $slug)
-            ->with(['products.product.images', 'products.product.variants']);
+            ->with(['products.product.images', 'products.product.variants', 'products.variant']);
 
         StorefrontScope::apply($query);
 
@@ -222,6 +233,13 @@ class CampaignService
     }
 
     // ===== Helpers =====
+
+    private function validateDiscount(array $data): void
+    {
+        if ($data['discount_type'] === 'percentage' && (float) $data['discount_value'] > 100) {
+            throw ValidationException::withMessages(['discount_value' => 'Percentage discount cannot exceed 100.']);
+        }
+    }
 
     private function storeBanner(array $data): array
     {
@@ -272,8 +290,11 @@ class CampaignService
             'products' => $campaign->products
                 ->map(function ($entry) {
                     $product = $entry->product;
-                    $variant = $entry->variant ?? $product?->variants->firstWhere('status', 'active');
-                    if (! $product || ! $variant) {
+                    $variant = $entry->variant_id !== null
+                        ? $entry->variant
+                        : $product?->variants->firstWhere('status', 'active');
+                    if (! $product || $product->status !== 'active' || $product->visibility !== 'public'
+                        || ! $variant || $variant->status !== 'active' || $variant->product_id !== $product->id) {
                         return null;
                     }
 

@@ -7,6 +7,11 @@ use Modules\Catalog\Models\Product;
 
 class ProductSearchService
 {
+    protected function productQuery(): \Illuminate\Database\Eloquent\Builder
+    {
+        return Product::query();
+    }
+
     /**
      * Max candidates to pass to Levenshtein scoring.
      */
@@ -81,7 +86,7 @@ class ProductSearchService
             if (! empty($topIds)) {
                 // Preserve the scored order
                 $idOrder = array_flip($topIds);
-                $results = Product::with(['images', 'variants' => function ($q) {
+                $results = $this->productQuery()->with(['images', 'variants' => function ($q) {
                     $q->where('status', 'active');
                 }])
                     ->whereIn('id', $topIds)
@@ -126,7 +131,7 @@ class ProductSearchService
         // Build BOOLEAN MODE query: "+word* +word2*"
         $booleanQuery = '+'.implode('* +', $words).'*';
 
-        $queryBuilder = Product::where('status', 'active')
+        $queryBuilder = $this->productQuery()->where('status', 'active')
             ->where('visibility', 'public')
             ->whereRaw(
                 'MATCH(name, short_description, description) AGAINST(? IN BOOLEAN MODE)',

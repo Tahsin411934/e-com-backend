@@ -23,6 +23,7 @@ class ResolveStorefrontTenant
         // Always resolve fresh for this request — the memoized value would
         // otherwise survive across requests inside a long-running worker.
         StoreDomainResolver::reset();
+        CurrentStore::reset();
 
         $store = StoreDomainResolver::store();
 

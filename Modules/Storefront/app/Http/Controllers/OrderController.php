@@ -15,7 +15,7 @@ use Modules\Store\Support\CurrentStore;
  *
  * Identical payload to the legacy /v1/orders endpoints, but a customer can
  * only ever see orders placed on the storefront they are browsing
- * (user + resolved tenant store), never other stores' orders.
+ * (customer_id + resolved tenant store), never legacy users' orders.
  */
 class OrderController extends Controller
 {
@@ -34,8 +34,8 @@ class OrderController extends Controller
 
     public function show(Request $request, Order $order): JsonResponse
     {
-        abort_unless($order->user_id === $request->user()->id, 404);
-        abort_unless($order->store_id === CurrentStore::id(), 404);
+        abort_unless((int) $order->customer_id === (int) $request->user()->id, 404);
+        abort_unless((int) $order->store_id === (int) CurrentStore::id(), 404);
 
         $order->load([
             'items',
@@ -67,7 +67,7 @@ class OrderController extends Controller
     private function baseQuery(Request $request)
     {
         return Order::query()
-            ->where('user_id', $request->user()->id)
+            ->where('customer_id', $request->user()->id)
             ->where('store_id', CurrentStore::id());
     }
 

@@ -15,6 +15,9 @@ class StorefrontScope
     public static function apply(Builder|Relation $query, ?int $storeId = null): Builder|Relation
     {
         $storeId ??= CurrentStore::id();
+        if ($storeId === null) {
+            return $query->whereRaw('1 = 0');
+        }
         $model = $query instanceof Builder ? $query->getModel() : $query->getRelated();
         $column = $model->qualifyColumn('store_id');
 

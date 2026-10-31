@@ -16,7 +16,7 @@ class Cart extends Model
     protected $table = 'carts';
 
     protected $fillable = [
-        'user_id',
+        'user_id', 'customer_id',
         'session_id',
         'store_id',
         'status',
@@ -26,6 +26,11 @@ class Cart extends Model
     protected $casts = [
         'expires_at' => 'datetime',
     ];
+
+    public function customer()
+    {
+        return $this->belongsTo(\Modules\Identity\Models\Customer::class);
+    }
 
     public function user()
     {

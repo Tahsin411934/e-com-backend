@@ -6,6 +6,7 @@ use App\Traits\CustomSoftDeletes;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Modules\Catalog\Models\Product;
+use Modules\Identity\Models\User;
 
 class Store extends Model
 {

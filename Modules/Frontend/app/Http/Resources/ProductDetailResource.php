@@ -162,10 +162,10 @@ class ProductDetailResource extends JsonResource
             'title' => $r->title,
             'body' => $r->body,
             'is_verified_purchase' => (bool) $r->is_verified_purchase,
-            'user' => $r->user ? [
-                'id' => $r->user->id,
-                'name' => $r->user->name,
-                'avatar' => $r->user->avatar ?? null,
+            'user' => ($r->customer ?? $r->user) ? [
+                'id' => ($r->customer ?? $r->user)->id,
+                'name' => ($r->customer ?? $r->user)->name,
+                'avatar' => ($r->customer ?? $r->user)->avatar ?? null,
             ] : null,
             'created_at' => $r->created_at?->diffForHumans(),
         ]);

@@ -17,12 +17,14 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
+        $middleware->api(append: [\App\Http\Middleware\RejectLegacyCustomerToken::class]);
         $middleware->alias([
             'admin' => EnsureAdminUser::class,
             'role' => CheckRole::class,
             'permission' => CheckPermission::class,
             'convert.auth.cookie' => ConvertAuthTokenCookieToBearerHeader::class,
             'storefront.tenant' => ResolveStorefrontTenant::class,
+            'storefront.customer' => \Modules\Storefront\Http\Middleware\EnsureStorefrontCustomer::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

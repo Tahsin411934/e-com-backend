@@ -34,6 +34,10 @@ use Modules\Identity\Http\Controllers\CustomerAuthController;
 */
 
 Route::middleware('storefront.tenant')->prefix('v1/storefront')->group(function () {
+    Route::post('/guest-checkout', [\Modules\Storefront\Http\Controllers\CustomerCommerceController::class, 'guestCheckout'])->middleware('throttle:10,1');
+    Route::get('/products/{productId}/reviews', [\Modules\Storefront\Http\Controllers\CustomerCommerceController::class, 'reviews']);
+    Route::post('/auth/forgot-password', [CustomerAuthController::class, 'forgotPassword'])->middleware('throttle:5,1');
+    Route::post('/auth/reset-password', [CustomerAuthController::class, 'resetPassword'])->middleware('throttle:5,1');
     Route::get('/service-benefits', [\Modules\Storefront\Http\Controllers\ServiceBenefitController::class, 'index']);
     Route::post('/auth/register', [CustomerAuthController::class, 'register'])->middleware('throttle:5,1');
     Route::post('/auth/login', [CustomerAuthController::class, 'login'])->middleware('throttle:10,1');
@@ -50,7 +54,7 @@ Route::middleware('storefront.tenant')->prefix('v1/storefront')->group(function 
     Route::get('/announcement-bars', [AnnouncementBarController::class, 'index'])->name('announcement-bars.index');
     Route::get('/announcement-bars/{id}', [AnnouncementBarController::class, 'show'])->name('announcement-bars.show');
 
-    // Settings API - store overrides win over global platform values
+    // Settings API - resolved store only
     Route::get('/settings', [SettingsController::class, 'index'])->name('settings.index');
 
     // Brands / Categories / Products
@@ -78,7 +82,16 @@ Route::middleware('storefront.tenant')->prefix('v1/storefront')->group(function 
 });
 
 // Customer endpoints - authentication required, tenant still resolved first
-Route::middleware(['storefront.tenant', 'auth:sanctum'])->prefix('v1/storefront')->group(function () {
+Route::middleware(['storefront.tenant', 'auth:sanctum', 'storefront.customer'])->prefix('v1/storefront')->group(function () {
+    Route::post('/carts/sync', [\Modules\Storefront\Http\Controllers\CustomerCommerceController::class, 'syncCart']);
+    Route::post('/checkout', [\Modules\Storefront\Http\Controllers\CustomerCommerceController::class, 'checkout']);
+    Route::get('/wishlists', [\Modules\Storefront\Http\Controllers\CustomerCommerceController::class, 'wishlist']);
+    Route::post('/wishlists/toggle', [\Modules\Storefront\Http\Controllers\CustomerCommerceController::class, 'toggleWishlist']);
+    Route::delete('/wishlists/{productId}', [\Modules\Storefront\Http\Controllers\CustomerCommerceController::class, 'removeWishlist']);
+    Route::post('/products/{productId}/reviews', [\Modules\Storefront\Http\Controllers\CustomerCommerceController::class, 'submitReview']);
+    Route::post('/auth/logout-all', [CustomerAuthController::class, 'logoutAll']);
+    Route::post('/auth/change-password', [CustomerAuthController::class, 'changePassword']);
+    Route::post('/auth/refresh', [CustomerAuthController::class, 'refresh']);
     Route::get('/auth/me', [CustomerAuthController::class, 'me']);
     Route::post('/auth/logout', [CustomerAuthController::class, 'logout']);
     Route::get('/orders', [OrderController::class, 'index'])->name('orders.index');

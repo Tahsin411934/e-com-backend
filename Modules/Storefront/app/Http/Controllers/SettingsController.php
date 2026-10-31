@@ -11,7 +11,7 @@ use Modules\Storefront\Services\StorefrontSettingService;
  * Storefront settings API.
  *
  * Identical response shape to the legacy /api/v1/settings endpoint, but the
- * store's own setting rows win over the global platform values per key.
+ * only the resolved store's own setting rows are exposed.
  */
 class SettingsController extends Controller
 {

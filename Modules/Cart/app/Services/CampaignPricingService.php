@@ -15,7 +15,7 @@ class CampaignPricingService
     protected function offerFor(ProductVariant $variant): ?CampaignProduct
     {
         return CampaignProduct::query()->with('campaign')->where('product_id', $variant->product_id)
-            ->whereHas('campaign', fn ($query) => $query->live())
+            ->whereHas('campaign', fn ($query) => $query->live()->where('store_id', $variant->product?->store_id))
             ->where(fn ($query) => $query->whereNull('variant_id')->orWhere('variant_id', $variant->id))
             ->get()->sortByDesc(fn (CampaignProduct $item) => [
                 $item->variant_id === $variant->id ? 1 : 0,

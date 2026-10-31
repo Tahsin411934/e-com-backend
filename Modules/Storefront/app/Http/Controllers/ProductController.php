@@ -31,17 +31,23 @@ class ProductController extends Controller
             ->where('status', 'active')
             ->where('visibility', 'public')
             ->with([
-                'brand',
-                'categories',
+                'brand' => fn ($q) => StorefrontScope::apply($q),
+                'categories' => fn ($q) => StorefrontScope::apply($q),
                 'images' => function ($q) {
                     $q->orderBy('sort_order');
                 },
                 'variants' => function ($q) {
-                    $q->whereNull('deleted_at')->where('status', 'active')->with(['inventoryStocks', 'options.inventoryStocks']);
+                    $stockScope = fn ($stock) => $stock->whereHas('location', fn ($location) => StorefrontScope::apply($location));
+                    $q->whereNull('deleted_at')->where('status', 'active')->with([
+                        'inventoryStocks' => $stockScope,
+                        'options.inventoryStocks' => $stockScope,
+                    ]);
                 },
                 'variants.images',
                 'reviews' => function ($q) {
-                    $q->where('status', 'approved')->with('user');
+                    $q->where('status', 'approved')
+                        ->where(fn ($review) => $review->whereNull('customer_id')->orWhereHas('customer', fn ($customer) => $customer->where('store_id', \Modules\Store\Support\CurrentStore::id())))
+                        ->with(['customer', 'user']);
                 },
             ]);
 

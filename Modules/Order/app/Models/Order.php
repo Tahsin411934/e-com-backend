@@ -19,7 +19,7 @@ class Order extends Model
     protected $table = 'orders';
 
     protected $fillable = [
-        'order_number', 'user_id', 'store_id', 'source', 'status',
+        'order_number', 'user_id', 'customer_id', 'store_id', 'source', 'status',
         'payment_status', 'fulfillment_status', 'currency_code',
         'subtotal', 'discount_total', 'tax_total', 'shipping_total', 'grand_total',
         'coupon_id', 'billing_address_id', 'shipping_address_id',
@@ -35,6 +35,11 @@ class Order extends Model
         'shipping_total' => 'decimal:4',
         'grand_total' => 'decimal:4',
     ];
+
+    public function customer()
+    {
+        return $this->belongsTo(\Modules\Identity\Models\Customer::class);
+    }
 
     public function user()
     {

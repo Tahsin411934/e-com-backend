@@ -15,7 +15,7 @@ class ProductReview extends Model
     protected $table = 'product_reviews';
 
     protected $fillable = [
-        'product_id', 'user_id', 'order_id', 'rating', 'title', 'body', 'status', 'is_verified_purchase',
+        'product_id', 'user_id', 'customer_id', 'order_id', 'rating', 'title', 'body', 'status', 'is_verified_purchase',
     ];
 
     protected $casts = [
@@ -26,6 +26,11 @@ class ProductReview extends Model
     public function product()
     {
         return $this->belongsTo(Product::class);
+    }
+
+    public function customer()
+    {
+        return $this->belongsTo(\Modules\Identity\Models\Customer::class);
     }
 
     public function user()

@@ -95,6 +95,9 @@ class StoreDomainResolver
             }
 
             $label = substr($host, 0, -\strlen($suffix) - 1);
+            if ($label === '' || str_contains($label, '.')) {
+                return null;
+            }
             $slug = explode('.', $label)[0];
 
             if (in_array($slug, self::reservedSubdomains(), true)) {
@@ -134,6 +137,9 @@ class StoreDomainResolver
      */
     private static function fallbackStore(): ?Store
     {
+        if (! app()->environment(['local', 'testing'])) {
+            return null;
+        }
         $slug = trim((string) config('storefront.fallback_store'));
 
         if ($slug === '') {

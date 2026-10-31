@@ -16,7 +16,7 @@ class ProductReviewService
 
     public function getReviewDataTable(Request $request)
     {
-        $query = ProductReview::query()->with(['product', 'user'])->orderByDesc('created_at');
+        $query = ProductReview::query()->with(['product', 'user', 'customer'])->orderByDesc('created_at');
         if (($storeId = CurrentStore::id()) !== null) {
             $query->whereHas('product', fn ($q) => $q->where('store_id', $storeId));
         }
@@ -43,7 +43,7 @@ class ProductReviewService
                 return '<span class="px-2 py-0.5 rounded-full text-xs font-semibold '.$color.'">'.e(ucfirst($r->status)).'</span>';
             })
             ->addColumn('product_name', fn ($r) => $r->product ? $r->product->name : '-')
-            ->addColumn('user_name', fn ($r) => $r->user ? $r->user->name : '-')
+            ->addColumn('user_name', fn ($r) => $r->customer?->name ?? $r->user?->name ?? '-')
             ->editColumn('is_verified_purchase', fn ($r) => $r->is_verified_purchase
                 ? '<span class="text-green-600 text-xs font-semibold"><i class="fa fa-circle-check mr-1"></i>Verified</span>'
                 : '<span class="text-gray-400 text-xs">—</span>')

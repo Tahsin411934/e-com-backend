@@ -12,8 +12,8 @@ class RejectLegacyCustomerToken
 {
     public function handle(Request $request, Closure $next)
     {
-        if (! $request->is('api/v1/storefront', 'api/v1/storefront/*')) {
-            abort_if(Auth::guard('sanctum')->user() instanceof Customer, 403, 'Use the storefront customer API.');
+        if (! $request->is('api/v1/storefront', 'api/v1/storefront/*', 'api/v1/central', 'api/v1/central/*')) {
+            abort_if(Auth::guard('sanctum')->user() instanceof Customer, 403, 'Use the matching customer API.');
         }
 
         return $next($request);

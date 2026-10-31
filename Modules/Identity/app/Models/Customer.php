@@ -19,7 +19,7 @@ class Customer extends Authenticatable
         'status', 'email_verified_at', 'first_login_at', 'last_login_at',
     ];
 
-    protected $hidden = ['password_hash', 'remember_token'];
+    protected $hidden = ['password_hash', 'remember_token', 'central_email'];
 
     protected $casts = [
         'email_verified_at' => 'datetime',

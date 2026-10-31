@@ -45,7 +45,9 @@ return [
 
         'sanctum' => [
             'driver' => 'sanctum',
-            'provider' => 'users',
+            // Tokens belong to either User or Customer. Route middleware enforces
+            // central/store ownership; a users-only provider rejects customer /me.
+            'provider' => null,
         ],
     ],
 

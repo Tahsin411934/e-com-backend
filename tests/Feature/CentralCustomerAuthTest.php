@@ -64,6 +64,27 @@ class CentralCustomerAuthTest extends TestCase
         $this->postJson('/api/v1/central/auth/register', $this->registration(['email' => 'CUSTOMER@example.test']))->assertUnprocessable()->assertJsonValidationErrors('email');
     }
 
+    public function test_login_token_restores_session_across_fresh_authenticated_requests(): void
+    {
+        $customer = $this->customer();
+        $login = $this->postJson('/api/v1/central/auth/login', [
+            'email' => $customer->email, 'password' => 'password123',
+        ])->assertOk();
+        $token = $login->json('data.token');
+
+        // A refresh cannot rely on the User/Customer object used during login.
+        foreach (range(1, 3) as $request) {
+            auth()->forgetGuards();
+            $this->withToken($token)->getJson('/api/v1/central/auth/me')
+                ->assertOk()->assertJsonPath('data.customer.id', $customer->id);
+        }
+
+        auth()->forgetGuards();
+        $this->postJson('/api/v1/central/auth/logout')->assertOk();
+        auth()->forgetGuards();
+        $this->getJson('/api/v1/central/auth/me')->assertUnauthorized();
+    }
+
     public function test_central_login_does_not_authenticate_a_store_customer(): void
     {
         $this->customer($this->store()->id);

@@ -68,8 +68,8 @@
 
             function productDelete(id) {
                 let deleteUrl = "{{ route('products.destroy', ':id') }}".replace(':id', id);
-                let tableId = '#productTable';
-                Crud.get('shared', 'delete-url')(deleteUrl, tableId);
+                let table = $('#productTable').DataTable();
+                Crud.get('shared', 'delete-url')(deleteUrl, table);
             }
 
             function productDuplicate(id) {

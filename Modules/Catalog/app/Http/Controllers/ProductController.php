@@ -154,6 +154,16 @@ class ProductController extends Controller
         return $this->productService->deleteProduct((int) $id);
     }
 
+    public function bulkDestroy(Request $request)
+    {
+        $validated = $request->validate([
+            'product_ids' => 'required|array|min:1|max:500',
+            'product_ids.*' => 'required|integer|distinct',
+        ]);
+
+        return $this->productService->deleteProducts($validated['product_ids']);
+    }
+
     /**
      * Duplicate a product with an optional new name and price.
      */

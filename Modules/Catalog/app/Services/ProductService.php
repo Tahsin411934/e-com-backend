@@ -66,6 +66,13 @@ class ProductService
             ->editColumn('created_at', function (Product $product) {
                 return $product->created_at->format('d M Y H:i');
             })
+            ->addColumn('selection', function (Product $product) {
+                if (! auth()->user()->hasPermission('products.delete')) {
+                    return '';
+                }
+
+                return '<input type="checkbox" class="product-select" value="'.(int) $product->id.'" aria-label="Select product '.(int) $product->id.'">';
+            })
             ->addColumn('action', function (Product $product) {
                 return view('components.action-buttons', [
                 'permission' => 'products',
@@ -76,7 +83,7 @@ class ProductService
                     'duplicate' => 'productDuplicate',
                 ])->render();
             })
-            ->rawColumns(['status', 'action'])
+            ->rawColumns(['status', 'selection', 'action'])
             ->make(true);
     }
 
@@ -310,18 +317,28 @@ class ProductService
 
     public function deleteProduct(int $id): JsonResponse
     {
+        return $this->deleteProducts([$id]);
+    }
+
+    public function deleteProducts(array $ids): JsonResponse
+    {
         try {
-            return DB::transaction(function () use ($id) {
-                $product = Product::forCurrentStore()->findOrFail($id);
+            return DB::transaction(function () use ($ids) {
+                $products = Product::forCurrentStore()->whereIn('id', $ids)->lockForUpdate()->get();
+                if ($products->count() !== count(array_unique($ids))) {
+                    return ApiResponse::notFound('One or more products were not found in your store.');
+                }
 
-                $product->variants()->get()->each(function (ProductVariant $variant) {
-                    $variant->options()->get()->each->delete();
-                    $variant->delete();
-                });
-                $product->images()->get()->each->delete();
-                $product->delete();
+                foreach ($products as $product) {
+                    $product->variants()->get()->each(function (ProductVariant $variant) {
+                        $variant->options()->get()->each->delete();
+                        $variant->delete();
+                    });
+                    $product->images()->get()->each->delete();
+                    $product->delete();
+                }
 
-                return ApiResponse::success(null, 'Product deleted successfully.');
+                return ApiResponse::success(null, count($ids) === 1 ? 'Product deleted successfully.' : $products->count().' products deleted successfully.');
             });
         } catch (\Exception $e) {
             return ApiResponse::error('Error deleting product: '.$e->getMessage(), 500);

@@ -25,6 +25,7 @@ Route::middleware(['auth', 'verified', 'admin'])->group(function () {
     Route::get('/barcode-print/variants/{product}', [BarcodePrintController::class, 'variants'])->name('barcode-print.variants')->middleware('permission:barcode-print.view');
     Route::post('/barcode-print/print', [BarcodePrintController::class, 'print'])->name('barcode-print.print')->middleware('permission:barcode-print.view');
 
+    Route::post('/products/bulk-delete', [ProductController::class, 'bulkDestroy'])->name('products.bulk-destroy')->middleware('permission:products.delete');
     Route::post('/products/reorder', [ProductController::class, 'reorder'])->name('products.reorder')->middleware('permission:products.edit');
     Route::post('/products/{id}/duplicate', [ProductController::class, 'duplicate'])->name('products.duplicate')->middleware('permission:products.create');
     Route::get('products', [ProductController::class, 'index'])->name('products.index')->middleware('permission:products.view');

@@ -32,8 +32,16 @@
             </div>
         </div>
 
-        <x-data-table id="productTable" title="Product Catalog" icon="fa-solid fa-boxes" createPermission="products" buttonLink="{{ route('products.create') }}" buttonText="Add New Product" :columns="['Sort','Store','Brand','SKU','Name','Type','Status','Visibility','Created At','Action']" :ajaxUrl="route('products.dataTable')" :dtColumns="[
+        @if(auth()->user()->hasPermission('products.delete'))
+            <div id="productBulkActions" class="flex items-center gap-3 mb-3">
+                <label class="flex items-center gap-2 text-sm"><input type="checkbox" id="selectPageProducts"> Select all on this page</label>
+                <button type="button" id="deleteSelectedProducts" disabled class="bg-red-600 text-white px-4 py-2 rounded-lg disabled:opacity-40">Delete All Selected (<span id="selectedProductCount">0</span>)</button>
+            </div>
+        @endif
+
+        <x-data-table id="productTable" title="Product Catalog" icon="fa-solid fa-boxes" createPermission="products" buttonLink="{{ route('products.create') }}" buttonText="Add New Product" :columns="['Sort','Select','Store','Brand','SKU','Name','Type','Status','Visibility','Created At','Action']" :ajaxUrl="route('products.dataTable')" :dtColumns="[
             ['data' => null, 'orderable' => false, 'searchable' => false, 'defaultContent' => ''],
+            ['data' => 'selection', 'orderable' => false, 'searchable' => false],
             ['data' => 'store_name', 'name' => 'store_name'],
             ['data' => 'brand.name'],
             ['data' => 'slug'],
@@ -154,12 +162,78 @@
                 // Initialize DataTable and set up drag-and-drop
                 let table = $('#productTable').DataTable();
                 initProductDragDrop(table);
+                initProductBulkDelete(table);
 
                 // Reinitialize drag-and-drop after each table reload
                 $('#productTable').on('draw.dt', function() {
                     initProductDragDrop(table);
                 });
             });
+
+            function initProductBulkDelete(table) {
+                const selected = new Set();
+                let deleting = false;
+                const button = $('#deleteSelectedProducts');
+                const pageCheckbox = $('#selectPageProducts');
+
+                function syncSelection() {
+                    const boxes = $('#productTable tbody .product-select');
+                    boxes.each(function() {
+                        this.checked = selected.has(String(this.value));
+                        this.disabled = deleting;
+                    });
+                    const checked = boxes.filter(':checked').length;
+                    pageCheckbox.prop('checked', boxes.length > 0 && checked === boxes.length)
+                        .prop('indeterminate', checked > 0 && checked < boxes.length).prop('disabled', deleting);
+                    $('#selectedProductCount').text(selected.size);
+                    button.prop('disabled', deleting || selected.size === 0);
+                }
+
+                $('#productTable').on('draw.dt', syncSelection);
+                $('#productTable').on('change', '.product-select', function() {
+                    if (this.checked) selected.add(String(this.value));
+                    else selected.delete(String(this.value));
+                    syncSelection();
+                });
+                pageCheckbox.on('change', function() {
+                    const checked = this.checked;
+                    $('#productTable tbody .product-select').each(function() {
+                        if (checked) selected.add(String(this.value));
+                        else selected.delete(String(this.value));
+                    });
+                    syncSelection();
+                });
+                button.on('click', async function() {
+                    if (deleting || !selected.size) return;
+                    const result = await Swal.fire({
+                        title: 'Delete selected products?',
+                        text: selected.size + ' selected products will be deleted. Selections across pages are included.',
+                        icon: 'warning', showCancelButton: true,
+                        confirmButtonText: 'Yes, delete all selected', confirmButtonColor: '#dc2626'
+                    });
+                    if (!result.isConfirmed || deleting) return;
+                    deleting = true;
+                    syncSelection();
+                    $.ajax({
+                        url: "{{ route('products.bulk-destroy') }}", type: 'POST', dataType: 'json',
+                        data: { product_ids: Array.from(selected), _token: $('meta[name="csrf-token"]').attr('content') },
+                        success: function(res) {
+                            if (res.status !== 'success') {
+                                Swal.fire('Error', res.message || 'Failed to delete products.', 'error');
+                                return;
+                            }
+                            selected.clear();
+                            table.ajax.reload(null, true);
+                            Swal.fire('Deleted', res.message, 'success');
+                        },
+                        error: function(xhr) {
+                            Swal.fire('Error', xhr.responseJSON?.message || 'Failed to delete products.', 'error');
+                        },
+                        complete: function() { deleting = false; syncSelection(); }
+                    });
+                });
+                syncSelection();
+            }
 
             function initProductDragDrop(table) {
                 let tbody = document.querySelector('#productTable tbody');

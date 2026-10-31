@@ -32,15 +32,6 @@
             </div>
         </div>
 
-        @if(auth()->user()->hasPermission('products.delete'))
-            <div id="productBulkActions" class="flex flex-wrap items-center gap-3 mb-3 p-4 bg-white border border-gray-200 rounded-xl shadow-sm" aria-busy="false">
-                <label class="flex items-center gap-2 text-sm"><input type="checkbox" id="selectPageProducts" class="rounded border-gray-300 text-red-600 focus:ring-red-500"> Select all on this page</label>
-                <button type="button" id="deleteSelectedProducts" disabled class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition disabled:opacity-40 disabled:cursor-not-allowed"><i class="fa fa-trash mr-1" aria-hidden="true"></i> <span id="bulkDeleteLabel">Delete Selected</span> (<span id="selectedProductCount" aria-live="polite">0</span>)</button>
-                <button type="button" id="clearProductSelection" disabled class="text-sm text-gray-600 hover:text-gray-900 underline disabled:opacity-40 disabled:cursor-not-allowed">Clear selection</button>
-                <span class="text-xs text-gray-500">Selections stay across pages. Up to 500 products per batch.</span>
-            </div>
-        @endif
-
         <x-data-table id="productTable" title="Product Catalog" icon="fa-solid fa-boxes" createPermission="products" buttonLink="{{ route('products.create') }}" buttonText="Add New Product" :columns="['Sort','Select','Store','Brand','SKU','Name','Type','Status','Visibility','Created At','Action']" :ajaxUrl="route('products.dataTable')" :dtColumns="[
             ['data' => null, 'orderable' => false, 'searchable' => false, 'defaultContent' => '', 'exportable' => false],
             ['data' => 'selection', 'orderable' => false, 'searchable' => false, 'exportable' => false],
@@ -58,6 +49,15 @@
             'brand_id' => '#filter_brand',
             'category_id' => '#filter_category',
         ]" :exportButtons="true" />
+
+        @if(auth()->user()->hasPermission('products.delete'))
+            <div id="productBulkActions" class="flex flex-wrap items-center gap-3 mt-3 p-4 bg-white border border-gray-200 rounded-xl shadow-sm" aria-busy="false">
+                <label class="flex items-center gap-2 text-sm"><input type="checkbox" id="selectPageProducts" class="rounded border-gray-300 text-red-600 focus:ring-red-500"> Select all on this page</label>
+                <button type="button" id="deleteSelectedProducts" disabled class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition disabled:opacity-40 disabled:cursor-not-allowed"><i class="fa fa-trash mr-1" aria-hidden="true"></i> <span id="bulkDeleteLabel">Delete Selected</span> (<span id="selectedProductCount" aria-live="polite">0</span>)</button>
+                <button type="button" id="clearProductSelection" disabled class="text-sm text-gray-600 hover:text-gray-900 underline disabled:opacity-40 disabled:cursor-not-allowed">Clear selection</button>
+                <span class="text-xs text-gray-500">Selections stay across pages. Up to 500 products per batch.</span>
+            </div>
+        @endif
     </div>
 
     <x-confirm-delete />

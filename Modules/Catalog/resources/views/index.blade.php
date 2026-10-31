@@ -33,15 +33,17 @@
         </div>
 
         @if(auth()->user()->hasPermission('products.delete'))
-            <div id="productBulkActions" class="flex items-center gap-3 mb-3">
-                <label class="flex items-center gap-2 text-sm"><input type="checkbox" id="selectPageProducts"> Select all on this page</label>
-                <button type="button" id="deleteSelectedProducts" disabled class="bg-red-600 text-white px-4 py-2 rounded-lg disabled:opacity-40">Delete All Selected (<span id="selectedProductCount">0</span>)</button>
+            <div id="productBulkActions" class="flex flex-wrap items-center gap-3 mb-3 p-4 bg-white border border-gray-200 rounded-xl shadow-sm" aria-busy="false">
+                <label class="flex items-center gap-2 text-sm"><input type="checkbox" id="selectPageProducts" class="rounded border-gray-300 text-red-600 focus:ring-red-500"> Select all on this page</label>
+                <button type="button" id="deleteSelectedProducts" disabled class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition disabled:opacity-40 disabled:cursor-not-allowed"><i class="fa fa-trash mr-1" aria-hidden="true"></i> <span id="bulkDeleteLabel">Delete Selected</span> (<span id="selectedProductCount" aria-live="polite">0</span>)</button>
+                <button type="button" id="clearProductSelection" disabled class="text-sm text-gray-600 hover:text-gray-900 underline disabled:opacity-40 disabled:cursor-not-allowed">Clear selection</button>
+                <span class="text-xs text-gray-500">Selections stay across pages. Up to 500 products per batch.</span>
             </div>
         @endif
 
         <x-data-table id="productTable" title="Product Catalog" icon="fa-solid fa-boxes" createPermission="products" buttonLink="{{ route('products.create') }}" buttonText="Add New Product" :columns="['Sort','Select','Store','Brand','SKU','Name','Type','Status','Visibility','Created At','Action']" :ajaxUrl="route('products.dataTable')" :dtColumns="[
-            ['data' => null, 'orderable' => false, 'searchable' => false, 'defaultContent' => ''],
-            ['data' => 'selection', 'orderable' => false, 'searchable' => false],
+            ['data' => null, 'orderable' => false, 'searchable' => false, 'defaultContent' => '', 'exportable' => false],
+            ['data' => 'selection', 'orderable' => false, 'searchable' => false, 'exportable' => false],
             ['data' => 'store_name', 'name' => 'store_name'],
             ['data' => 'brand.name'],
             ['data' => 'slug'],
@@ -154,6 +156,7 @@
                 $('#resetFilters').on('click', function() {
                     // change.select2 repaints the Select2 UI without firing
                     // the DataTable's own change→reload handler (single reload below)
+                    $('#filter_store').val('').trigger('change.select2');
                     $('#filter_brand').val('').trigger('change.select2');
                     $('#filter_category').val('').trigger('change.select2');
                     $('#productTable').DataTable().ajax.reload();
@@ -175,6 +178,7 @@
                 let deleting = false;
                 const button = $('#deleteSelectedProducts');
                 const pageCheckbox = $('#selectPageProducts');
+                const clearButton = $('#clearProductSelection');
 
                 function syncSelection() {
                     const boxes = $('#productTable tbody .product-select');
@@ -187,36 +191,53 @@
                         .prop('indeterminate', checked > 0 && checked < boxes.length).prop('disabled', deleting);
                     $('#selectedProductCount').text(selected.size);
                     button.prop('disabled', deleting || selected.size === 0);
+                    clearButton.prop('disabled', deleting || selected.size === 0);
+                    $('#productBulkActions').attr('aria-busy', String(deleting));
+                    $('#bulkDeleteLabel').text(deleting ? 'Deleting...' : 'Delete Selected');
                 }
 
                 $('#productTable').on('draw.dt', syncSelection);
+                clearButton.on('click', function() {
+                    if (deleting) return;
+                    selected.clear();
+                    syncSelection();
+                });
                 $('#productTable').on('change', '.product-select', function() {
-                    if (this.checked) selected.add(String(this.value));
-                    else selected.delete(String(this.value));
+                    if (this.checked) {
+                        if (selected.size < 500) selected.add(String(this.value));
+                    } else selected.delete(String(this.value));
                     syncSelection();
                 });
                 pageCheckbox.on('change', function() {
                     const checked = this.checked;
                     $('#productTable tbody .product-select').each(function() {
-                        if (checked) selected.add(String(this.value));
-                        else selected.delete(String(this.value));
+                        if (checked) {
+                            if (selected.size < 500) selected.add(String(this.value));
+                        } else selected.delete(String(this.value));
                     });
                     syncSelection();
                 });
                 button.on('click', async function() {
                     if (deleting || !selected.size) return;
+                    const productIds = Array.from(selected);
+                    deleting = true;
+                    syncSelection();
+                    $('#bulkDeleteLabel').text('Confirm deletion');
                     const result = await Swal.fire({
                         title: 'Delete selected products?',
-                        text: selected.size + ' selected products will be deleted. Selections across pages are included.',
+                        text: productIds.length + ' selected products will be deleted. Selections across pages are included.',
                         icon: 'warning', showCancelButton: true,
                         confirmButtonText: 'Yes, delete all selected', confirmButtonColor: '#dc2626'
                     });
-                    if (!result.isConfirmed || deleting) return;
-                    deleting = true;
+                    if (!result.isConfirmed) {
+                        deleting = false;
+                        syncSelection();
+                        return;
+                    }
                     syncSelection();
                     $.ajax({
                         url: "{{ route('products.bulk-destroy') }}", type: 'POST', dataType: 'json',
-                        data: { product_ids: Array.from(selected), _token: $('meta[name="csrf-token"]').attr('content') },
+                        data: { product_ids: productIds, _token: $('meta[name="csrf-token"]').attr('content') },
                         success: function(res) {
                             if (res.status !== 'success') {
                                 Swal.fire('Error', res.message || 'Failed to delete products.', 'error');

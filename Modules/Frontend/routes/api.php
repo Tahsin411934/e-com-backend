@@ -5,6 +5,7 @@ use Modules\Frontend\Http\Controllers\AnnouncementBarApiController;
 use Modules\Frontend\Http\Controllers\BannerApiController;
 use Modules\Frontend\Http\Controllers\BrandApiController;
 use Modules\Frontend\Http\Controllers\CategoryApiController;
+use Modules\Frontend\Http\Controllers\CentralSettingsApiController;
 use Modules\Frontend\Http\Controllers\CustomerOrderApiController;
 use Modules\Frontend\Http\Controllers\FrontendController;
 use Modules\Frontend\Http\Controllers\HomeApiController;
@@ -26,6 +27,9 @@ use Modules\Frontend\Http\Controllers\SubnavbarApiController;
 */
 
 Route::prefix('v1')->group(function () {
+    // Public marketplace settings; no tenant resolution or authentication required.
+    Route::get('/central/settings', [CentralSettingsApiController::class, 'index'])->name('central.settings.index');
+
     // Navbar API - publicly accessible (for store frontend)
     Route::get('/navbar-items', [NavbarApiController::class, 'index'])->name('api.navbar-items.index');
     Route::get('/navbar-items/{id}', [NavbarApiController::class, 'show'])->name('api.navbar-items.show');

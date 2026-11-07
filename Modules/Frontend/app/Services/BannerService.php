@@ -8,6 +8,7 @@ use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 use Modules\Frontend\Models\Banner;
 use Modules\Identity\Models\User;
 use Yajra\DataTables\DataTables;
@@ -133,11 +134,24 @@ class BannerService
 
                 // Handle image upload
                 if (isset($data['banner_image']) && $data['banner_image'] instanceof UploadedFile) {
+                    $upload = $data['banner_image'];
+                    $optimized = (new BannerImageOptimizer)->optimize($upload->getRealPath());
+                    if ($optimized !== null) {
+                        $path = 'banners/'.Str::uuid().'.webp';
+                        if (! Storage::disk('public')->put($path, $optimized, 'public')) {
+                            throw new \RuntimeException('Unable to save the optimized banner.');
+                        }
+                    } else {
+                        $path = $upload->storePublicly('banners', 'public');
+                        if (! $path) {
+                            throw new \RuntimeException('Unable to save the banner.');
+                        }
+                    }
                     // Delete old image if updating
                     if ($banner && $banner->banner_image) {
                         Storage::disk('public')->delete($banner->banner_image);
                     }
-                    $data['banner_image'] = $data['banner_image']->store('banners', 'public');
+                    $data['banner_image'] = $path;
                 } else {
                     // Keep existing image if no new file uploaded
                     unset($data['banner_image']);

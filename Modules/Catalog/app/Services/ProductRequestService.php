@@ -3,6 +3,7 @@
 namespace Modules\Catalog\Services;
 
 use App\Helpers\ApiResponse;
+use App\Services\ImageUploadService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
@@ -95,8 +96,7 @@ class ProductRequestService
         try {
             return DB::transaction(function () use ($data) {
                 if (isset($data['product_image']) && $data['product_image'] instanceof UploadedFile) {
-                    $fileName = 'product-request-'.time().'.'.$data['product_image']->getClientOriginalExtension();
-                    $path = $data['product_image']->storeAs('product-requests', $fileName, 'public');
+                    $path = (new ImageUploadService)->store($data['product_image'], 'product-requests', 'product');
                     $data['product_image'] = $path;
                 }
 
@@ -126,8 +126,7 @@ class ProductRequestService
                     if ($productRequest->product_image) {
                         Storage::disk('public')->delete($productRequest->product_image);
                     }
-                    $fileName = 'product-request-'.time().'.'.$data['product_image']->getClientOriginalExtension();
-                    $path = $data['product_image']->storeAs('product-requests', $fileName, 'public');
+                    $path = (new ImageUploadService)->store($data['product_image'], 'product-requests', 'product');
                     $data['product_image'] = $path;
                 } else {
                     unset($data['product_image']);
@@ -165,8 +164,7 @@ class ProductRequestService
             return DB::transaction(function () use ($data) {
                 // Handle image upload
                 if (isset($data['product_image']) && $data['product_image'] instanceof UploadedFile) {
-                    $fileName = 'product-request-'.time().'.'.$data['product_image']->getClientOriginalExtension();
-                    $path = $data['product_image']->storeAs('product-requests', $fileName, 'public');
+                    $path = (new ImageUploadService)->store($data['product_image'], 'product-requests', 'product');
                     $data['product_image'] = $path;
                 }
 

@@ -1,6 +1,7 @@
 <?php
 
 // Standalone image regression checks: no Laravel/vendor bootstrap required.
+require dirname(__DIR__).'/app/Services/ImageOptimizer.php';
 require dirname(__DIR__).'/Modules/Frontend/app/Services/BannerImageOptimizer.php';
 
 use Modules\Frontend\Services\BannerImageOptimizer;

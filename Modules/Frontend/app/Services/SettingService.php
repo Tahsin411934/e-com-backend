@@ -3,6 +3,7 @@
 namespace Modules\Frontend\Services;
 
 use App\Helpers\ApiResponse;
+use App\Services\ImageUploadService;
 use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
@@ -241,7 +242,7 @@ class SettingService
 
     public function uploadImage(UploadedFile $file): string
     {
-        $path = $file->store('settings', 'public');
+        $path = (new ImageUploadService)->store($file, 'settings', 'settings');
 
         return Storage::url($path);
     }

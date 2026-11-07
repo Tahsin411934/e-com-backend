@@ -3,6 +3,7 @@
 namespace Modules\Cart\Services;
 
 use App\Helpers\ApiResponse;
+use App\Services\ImageUploadService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
@@ -244,7 +245,7 @@ class CampaignService
     private function storeBanner(array $data): array
     {
         if (! empty($data['banner_image_file'])) {
-            $data['banner_image'] = $data['banner_image_file']->store('campaigns/banners', 'public');
+            $data['banner_image'] = (new ImageUploadService)->store($data['banner_image_file'], 'campaigns/banners', 'banner');
         }
         unset($data['banner_image_file']);
 
@@ -262,7 +263,7 @@ class CampaignService
             if ($campaign->banner_image) {
                 Storage::disk('public')->delete($campaign->banner_image);
             }
-            $data['banner_image'] = $data['banner_image_file']->store('campaigns/banners', 'public');
+            $data['banner_image'] = (new ImageUploadService)->store($data['banner_image_file'], 'campaigns/banners', 'banner');
         }
         unset($data['banner_image_file'], $data['remove_banner']);
 

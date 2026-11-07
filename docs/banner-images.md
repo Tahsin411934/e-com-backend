@@ -1,5 +1,8 @@
 # Banner image optimization
 
+Banner uploads now use the shared `App\Services\ImageUploadService` banner
+profile. See [shared image uploads](image-uploads.md) for all image types.
+
 New JPEG/PNG banner uploads are resized proportionally to fit within 1920x1080
 (no upscaling), encoded as WebP at quality 80, and saved only if smaller than the
 original. PNG transparency is retained. Upload paths are unique and public.

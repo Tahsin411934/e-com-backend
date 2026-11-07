@@ -3,12 +3,12 @@
 namespace Modules\Catalog\Services;
 
 use App\Helpers\ApiResponse;
+use App\Services\ImageUploadService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Str;
 use Modules\Catalog\Models\Brand;
 use Modules\Store\Support\CurrentStore;
 use Yajra\DataTables\DataTables;
@@ -155,10 +155,7 @@ class BrandService
 
     private function storeLogo(UploadedFile $logo, string $name): string
     {
-        $name = Str::slug($name) ?: 'brand';
-        $extension = $logo->getClientOriginalExtension();
-        $fileName = $name.'-logo-'.now()->format('YmdHis').'.'.$extension;
-        $path = $logo->storeAs('brands', $fileName, 'public');
+        $path = (new ImageUploadService)->store($logo, 'brands', 'logo', $name);
 
         return '/storage/'.$path;
     }

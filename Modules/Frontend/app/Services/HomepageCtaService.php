@@ -3,6 +3,7 @@
 namespace Modules\Frontend\Services;
 
 use App\Helpers\ApiResponse;
+use App\Services\ImageUploadService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
@@ -135,7 +136,7 @@ class HomepageCtaService
                     if ($cta && $cta->image) {
                         Storage::disk('public')->delete($cta->image);
                     }
-                    $data['image'] = $data['image']->store('homepage-ctas', 'public');
+                    $data['image'] = (new ImageUploadService)->store($data['image'], 'homepage-ctas', 'cta');
                 } else {
                     unset($data['image']);
                 }
@@ -145,7 +146,7 @@ class HomepageCtaService
                     if ($cta && $cta->banner_image) {
                         Storage::disk('public')->delete($cta->banner_image);
                     }
-                    $data['banner_image'] = $data['banner_image']->store('homepage-ctas/banners', 'public');
+                    $data['banner_image'] = (new ImageUploadService)->store($data['banner_image'], 'homepage-ctas/banners', 'banner');
                 } else {
                     unset($data['banner_image']);
                 }

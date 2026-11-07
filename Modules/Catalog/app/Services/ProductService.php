@@ -3,6 +3,7 @@
 namespace Modules\Catalog\Services;
 
 use App\Helpers\ApiResponse;
+use App\Services\ImageUploadService;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -645,8 +646,7 @@ class ProductService
     {
         foreach ($images as $index => $image) {
             if ($image instanceof UploadedFile) {
-                $fileName = Str::slug($product->name).'-'.now()->format('YmdHis').'-'.$index.'.'.$image->getClientOriginalExtension();
-                $path = $image->storeAs('products', $fileName, 'public');
+                $path = (new ImageUploadService)->store($image, 'products', 'product', $product->name);
 
                 // First image is automatically set as main
                 $isMain = ! ProductImage::where('product_id', $product->id)->where('is_main', true)->exists() && $index === 0;

@@ -3,6 +3,7 @@
 namespace Modules\Catalog\Services;
 
 use App\Helpers\ApiResponse;
+use App\Services\ImageUploadService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
@@ -113,7 +114,7 @@ class CategoryService
                             Storage::disk('public')->delete($oldCategory->image);
                         }
                     }
-                    $data['image'] = $data['image']->store('categories', 'public');
+                    $data['image'] = (new ImageUploadService)->store($data['image'], 'categories', 'category');
                     // Clear legacy image_url when new image uploaded
                     $data['image_url'] = null;
                 } else {

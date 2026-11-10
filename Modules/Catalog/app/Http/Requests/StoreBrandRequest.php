@@ -21,6 +21,9 @@ class StoreBrandRequest extends FormRequest
             'slug' => ['required', 'string', 'max:180', Rule::unique('brands', 'slug')->where('store_id', $this->input('store_id') ?: CurrentStore::id())],
             'logo' => 'nullable|image|max:2048',
             'status' => 'required|in:active,inactive',
+            'category_ids_present' => 'sometimes|in:1',
+            'category_ids' => 'sometimes|array',
+            'category_ids.*' => 'integer|distinct|exists:categories,id',
         ];
     }
 

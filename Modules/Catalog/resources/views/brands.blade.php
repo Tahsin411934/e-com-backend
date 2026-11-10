@@ -13,12 +13,13 @@
         createPermission="brands"
         title="Brand Catalog"
         icon="fa-solid fa-star"
-        :columns="['Store','Logo','Name','Slug','Status','Created At','Action']"
+        :columns="['Store','Logo','Name','Slug','Categories','Status','Created At','Action']"
         :dtColumns="[
             ['data' => 'store_name', 'name' => 'store_name'],
             ['data' => 'logo', 'orderable' => false, 'searchable' => false],
             ['data' => 'name'],
             ['data' => 'slug'],
+            ['data' => 'categories', 'orderable' => false, 'searchable' => false],
             ['data' => 'status'],
             ['data' => 'created_at'],
             ['data' => 'action', 'orderable' => false, 'searchable' => false],
@@ -32,7 +33,7 @@
         drawerTitle="Brand"
         dataKey="data"
         idField="brand_id"
-        :order="[[4, 'desc']]"
+        :order="[[5, 'desc']]"
     >
         <div class="mb-4">
             @if($canAssignStore ?? false)
@@ -54,6 +55,20 @@
         <div class="mb-4">
             <x-form-input label="Slug" name="slug" id="brand_slug" placeholder="Brand Slug" required />
         </div>
+        @if($canAssignStore ?? false)
+            <div class="mb-4">
+                <x-select2-dropdown
+                    label="Categories"
+                    name="category_ids[]"
+                    id="brand_category_ids"
+                    :route="route('ajax.dropdown-search', 'categories')"
+                    placeholder="Search categories..."
+                    multiple
+                />
+                <input type="hidden" name="category_ids_present" value="1">
+                <p class="text-xs text-gray-400 mt-1">A brand can belong to multiple categories.</p>
+            </div>
+        @endif
         <div class="mb-4">
             <label for="brand_logo" class="block text-sm font-medium text-gray-700 mb-2">Logo</label>
             <input type="file" name="logo" id="brand_logo" accept="image/*" class="block w-full text-sm text-gray-900 bg-white border border-gray-300 rounded-lg cursor-pointer focus:outline-none focus:ring-2 focus:ring-indigo-500" />
@@ -76,6 +91,14 @@
             $('#brand_name').val(data.name);
             $('#brand_slug').val(data.slug);
             $('#brand_status').val(data.status);
+            const $categorySelect = $('#brand_category_ids');
+            if ($categorySelect.length) {
+                $categorySelect.empty();
+                (data.categories || []).forEach(function(category) {
+                    $categorySelect.append(new Option(category.name, category.id, true, true));
+                });
+                $categorySelect.trigger('change.select2');
+            }
             if (data.logo_url) {
                 $('#brandLogoPreview').removeClass('hidden').find('img').attr('src', data.logo_url);
             }

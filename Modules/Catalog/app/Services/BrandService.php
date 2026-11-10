@@ -20,7 +20,7 @@ class BrandService
         // Categories & brands are global reference data: everyone
         // (platform staff + SaaS store owners) sees the full list.
         // Only administrators may edit or delete them.
-        $query = Brand::query()->with('store')->orderByDesc('created_at');
+        $query = Brand::query()->with(['store', 'categories:id,name'])->orderByDesc('created_at');
 
         if ($request->store_id) {
             $query->where('store_id', $request->store_id);
@@ -39,6 +39,9 @@ class BrandService
             })
             ->addColumn('store_name', function (Brand $brand) {
                 return $brand->store?->name ?? 'Platform';
+            })
+            ->addColumn('categories', function (Brand $brand) {
+                return $brand->categories->pluck('name')->implode(', ') ?: '-';
             })
             ->editColumn('created_at', function (Brand $brand) {
                 return $brand->created_at->format('d M Y H:i');
@@ -65,6 +68,8 @@ class BrandService
             return DB::transaction(function () use ($data, &$newLogoUrl) {
                 $brandId = $data['brand_id'] ?? null;
                 $logo = $data['logo'] ?? null;
+                $categoryIds = $data['category_ids'] ?? [];
+                $hasCategorySelection = array_key_exists('category_ids_present', $data) || array_key_exists('category_ids', $data);
                 $oldLogoUrl = null;
 
                 // Only administrators may edit or delete brands;
@@ -74,7 +79,7 @@ class BrandService
                 }
 
                 $data['status'] = $data['status'] ?? 'active';
-                unset($data['brand_id'], $data['logo']);
+                unset($data['brand_id'], $data['logo'], $data['category_ids'], $data['category_ids_present']);
 
                 // Store owners/staff are locked to their own store;
                 // platform admins may pick any store (or Platform/null).
@@ -103,6 +108,10 @@ class BrandService
                     $message = 'Brand created successfully.';
                 }
 
+                if ($this->isPlatformAdmin() && ($hasCategorySelection || ! $brandId)) {
+                    $brand->categories()->sync($categoryIds);
+                }
+
                 if ($newLogoUrl && $oldLogoUrl) {
                     $this->deleteLogo($oldLogoUrl);
                 }
@@ -125,7 +134,7 @@ class BrandService
     public function getBrandById(int $id): JsonResponse
     {
         try {
-            $brand = Brand::findOrFail($id);
+            $brand = Brand::with('categories:id,name')->findOrFail($id);
             $brand->logo_url = $brand->logo_url ? $this->logoUrl($brand->logo_url) : null;
 
             return ApiResponse::success($brand);

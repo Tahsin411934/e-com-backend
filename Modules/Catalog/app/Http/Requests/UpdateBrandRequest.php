@@ -29,6 +29,9 @@ class UpdateBrandRequest extends FormRequest
             ],
             'logo' => 'nullable|image|max:2048',
             'status' => 'required|in:active,inactive',
+            'category_ids_present' => 'sometimes|in:1',
+            'category_ids' => 'sometimes|array',
+            'category_ids.*' => 'integer|distinct|exists:categories,id',
         ];
     }
 

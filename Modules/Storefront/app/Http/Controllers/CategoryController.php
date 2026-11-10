@@ -8,7 +8,7 @@ use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
+use Modules\Frontend\Services\CategoryProductSorting;
 use Modules\Catalog\Models\Category;
 use Modules\Frontend\Http\Resources\CategoryResource;
 use Modules\Frontend\Http\Resources\HomeProductResource;
@@ -87,9 +87,10 @@ class CategoryController extends Controller
     {
         $validated = $request->validate([
             'brand_id' => 'nullable|integer|min:1|exists:brands,id',
+            'sort' => 'nullable|string|in:latest,price_asc,price_desc,name',
         ]);
-        $perPage = min((int) $request->query('per_page', 20), 40);
-        $sort = $request->query('sort', 'latest');
+        $perPage = max(1, min((int) $request->query('per_page', 20), 40));
+        $sort = $validated['sort'] ?? 'latest';
         $brandId = $validated['brand_id'] ?? null;
 
         $categoryQuery = Category::where('slug', $slug)
@@ -121,27 +122,7 @@ class CategoryController extends Controller
             $query->where('products.brand_id', (int) $brandId);
         }
 
-        // Apply sorting (order_column first, then secondary sort).
-        // Price sorts use the discounted price so the order matches the UI.
-        switch ($sort) {
-            case 'price_asc':
-                $query->orderBy('products.order_column')->orderBy(
-                    DB::raw('(SELECT MIN(sale_price * (1 - COALESCE(discount_percent, 0) / 100)) FROM product_variants WHERE product_variants.product_id = products.id AND product_variants.status = "active")'),
-                    'asc'
-                );
-                break;
-            case 'price_desc':
-                $query->orderBy('products.order_column')->orderBy(
-                    DB::raw('(SELECT MIN(sale_price * (1 - COALESCE(discount_percent, 0) / 100)) FROM product_variants WHERE product_variants.product_id = products.id AND product_variants.status = "active")'),
-                    'desc'
-                );
-                break;
-            case 'name':
-                $query->orderBy('products.order_column')->orderBy('products.name');
-                break;
-            default: // latest
-                $query->orderBy('products.order_column')->orderBy('products.published_at', 'desc');
-        }
+        app(CategoryProductSorting::class)->apply($query->getQuery(), $sort);
 
         $products = $query->paginate($perPage);
 

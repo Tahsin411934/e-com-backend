@@ -10,6 +10,7 @@
     'showUrl' => '',
     'destroyUrl' => '',
     'createPermission' => null, // Permission group (e.g., 'units') â€” hides the Add New button unless granted
+    'deletePermission' => null,
     'filters' => [],
     'order' => [[0, 'desc']],
     'exportButtons' => true,
@@ -57,7 +58,7 @@
             $filterMap[$param] = '#filter_' . $safeId . '_' . $param;
         }
     @endphp
-    <x-data-table :id="$safeTableId" :title="$title" :icon="$icon" :buttonId="$safeButtonId" :buttonText="'Add New ' . $title" :createPermission="$createPermission" :columns="$columns" :ajaxUrl="$ajaxUrl" :dtColumns="$dtColumns" :exportButtons="$exportButtons" :order="$order" :filters="$filterMap" />
+    <x-data-table :id="$safeTableId" :title="$title" :icon="$icon" :buttonId="$safeButtonId" :buttonText="'Add New ' . $title" :createPermission="$createPermission" :deletePermission="($deletePermission ?: ($createPermission ? $createPermission.'.delete' : null))" :destroyUrl="$destroyUrl" :columns="$columns" :ajaxUrl="$ajaxUrl" :dtColumns="$dtColumns" :exportButtons="$exportButtons" :order="$order" :filters="$filterMap" />
 </div>
 
 <x-drawer :id="$safeDrawerId" :overlayId="$safeOverlayId" :title="$drawerTitle" :submitEntity="$safeId" submitAction="save">

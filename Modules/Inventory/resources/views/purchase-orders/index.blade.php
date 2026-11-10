@@ -8,6 +8,7 @@
             :buttonId="'btnAddPurchaseOrder'"
             buttonText="Add New Purchase Order"
             :columns="['PO Number','Supplier','Store','Status','Payment','Paid','Due','Total','Created At','Action']"
+            :destroyUrl="route('purchase-orders.destroy', ':id')" deletePermission="purchase-orders.delete"
             :dtColumns="[
                 ['data' => 'po_number'],
                 ['data' => 'supplier_name'],

@@ -20,7 +20,7 @@
         <x-data-table id="productRequestTable" title="Product Requests" icon="fa-solid fa-clipboard-list" createPermission="product-requests"
             :buttonId="'btnAddProductRequest'" :buttonText="'Add New Request'"
             :columns="['Image','Customer','Email','Phone','Product','Status','Date','Action']" 
-            :ajaxUrl="route('product-requests.dataTable')" :dtColumns="[
+            :ajaxUrl="route('product-requests.dataTable')" :destroyUrl="route('product-requests.destroy', ':id')" deletePermission="product-requests.delete" :dtColumns="[
             ['data' => 'product_image_preview', 'orderable' => false, 'searchable' => false],
             ['data' => 'customer_name'],
             ['data' => 'customer_email'],

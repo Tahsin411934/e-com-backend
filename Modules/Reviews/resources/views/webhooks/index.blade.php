@@ -21,6 +21,7 @@
             :buttonId="'btnAddWebhook'" :buttonText="'Add New Webhook'"
             :columns="['Name','Endpoint URL','Events','Status','Retries','Timeout','Date','Action']"
             :ajaxUrl="route('webhooks.dataTable')"
+            :destroyUrl="route('webhooks.destroy', ':id')" deletePermission="webhooks.delete"
             :dtColumns="[
                 ['data' => 'name', 'name' => 'name'],
                 ['data' => 'url', 'name' => 'url', 'orderable' => false],

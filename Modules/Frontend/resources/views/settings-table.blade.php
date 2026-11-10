@@ -32,6 +32,7 @@
     <x-entity-crud
         id="site_setting"
         createPermission="frontend.settings"
+        deletePermission="frontend.settings.edit"
         title="Site Settings"
         icon="fa-solid fa-gear"
         :columns="$settingColumns"

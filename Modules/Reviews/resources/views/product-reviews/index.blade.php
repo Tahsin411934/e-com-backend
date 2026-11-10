@@ -28,6 +28,7 @@
             :buttonId="null"
             :columns="['Product','Customer','Rating','Status','Verified','Date','Action']"
             :ajaxUrl="route('product-reviews.dataTable')"
+            :destroyUrl="route('product-reviews.destroy', ':id')" deletePermission="reviews.delete"
             :dtColumns="[
                 ['data' => 'product_name', 'orderable' => false, 'searchable' => false],
                 ['data' => 'user_name', 'orderable' => false, 'searchable' => false],

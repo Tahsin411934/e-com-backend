@@ -13,11 +13,19 @@
     'filters' => [],
     'order' => [[0, 'desc']],
     'scrollHeight' => '60vh',
+    'destroyUrl' => null,
+    'deletePermission' => null,
+    'bulkIdField' => 'id',
 ])
 
 @php
     // Show the "Add New" / create button only when the role has the create permission.
     $canCreate = ! $createPermission || auth()->user()->hasPermission($createPermission.'.create');
+    $isMainAdmin = auth()->user()->hasRole('Super Admin') || auth()->user()->hasRole('Admin');
+    $canBulkDelete = $isMainAdmin
+        && $destroyUrl
+        && $destroyUrl !== '#'
+        && (! $deletePermission || auth()->user()->hasPermission($deletePermission));
 @endphp
 
 <div class="reusable-data-table bg-white dark:bg-gray-800 shadow-md rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
@@ -54,6 +62,11 @@
             <table id="{{ $id }}" class="w-full border-collapse rounded-lg text-sm text-gray-700">
                 <thead>
                     <tr>
+                        @if ($canBulkDelete)
+                            <th class="px-5 py-3.5 text-left text-xs font-semibold uppercase tracking-wider">
+                                <input type="checkbox" class="bulk-select-page rounded border-gray-300 text-red-600 focus:ring-red-500" aria-label="Select all rows on this page">
+                            </th>
+                        @endif
                         @foreach ($columns as $column)
                             <th 
                                 class="px-5 py-3.5 text-left text-xs font-semibold uppercase tracking-wider
@@ -65,6 +78,16 @@
                 </thead>
                 <tbody></tbody>
             </table>
+            @if ($canBulkDelete)
+                <div class="flex flex-wrap items-center gap-3 mt-3 p-4 bg-white border border-gray-200 rounded-xl shadow-sm bulk-delete-actions" aria-busy="false">
+                    <span class="text-sm text-gray-700">Select rows on this page or across pages.</span>
+                    <button type="button" disabled class="bulk-delete-button bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition disabled:opacity-40 disabled:cursor-not-allowed">
+                        <i class="fa fa-trash mr-1" aria-hidden="true"></i> <span class="bulk-delete-label">Delete Selected</span> (<span class="bulk-delete-count" aria-live="polite">0</span>)
+                    </button>
+                    <button type="button" disabled class="bulk-clear-button text-sm text-gray-600 hover:text-gray-900 underline disabled:opacity-40 disabled:cursor-not-allowed">Clear selection</button>
+                    <span class="text-xs text-gray-500">Up to 500 records per batch.</span>
+                </div>
+            @endif
         </div>
     </div>
 </div>
@@ -76,8 +99,28 @@
             const tableElement = $(document.getElementById(tableId));
             const panel = tableElement.closest(".reusable-data-table");
             const columnConfig = @json($dtColumns);
+            const bulkDeleteEnabled = @json($canBulkDelete);
+            const bulkIdField = @json($bulkIdField);
+            const destroyUrlTemplate = @json($destroyUrl);
+            const csrfToken = @json(csrf_token());
+            const tableColumns = bulkDeleteEnabled ? [{
+                data: null,
+                orderable: false,
+                searchable: false,
+                exportable: false,
+                render: function(data, type, row) {
+                    if (type !== 'display' || row[bulkIdField] === undefined || row[bulkIdField] === null) return '';
+                    const value = String(row[bulkIdField]).replace(/[&<>"']/g, function(char) {
+                        return {'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'}[char];
+                    });
+                    return '<input type="checkbox" class="bulk-row-select rounded border-gray-300 text-red-600 focus:ring-red-500" value="' + value + '" aria-label="Select row">';
+                }
+            }].concat(columnConfig) : columnConfig;
+            const tableOrder = @json($order).map(function(ordering) {
+                return [ordering[0] + (bulkDeleteEnabled ? 1 : 0), ordering[1]];
+            });
             const exportColumns = columnConfig.map((column, index) =>
-                column.exportable === false || ["action", "actions", "row_actions"].includes(column.data) ? null : index
+                column.exportable === false || ["action", "actions", "row_actions"].includes(column.data) ? null : index + (bulkDeleteEnabled ? 1 : 0)
             ).filter(index => index !== null);
 
             function buildAjaxData(filters) {
@@ -153,7 +196,7 @@
                     url: @json($ajaxUrl),
                     data: buildAjaxData(@json($filters ?? []))
                 },
-                columns: @json($dtColumns),
+                columns: tableColumns,
                 dom: '<"flex flex-col md:flex-row items-center justify-between gap-4 mb-4"lBf>rt<"flex flex-col md:flex-row items-center justify-between gap-4 mt-4"ip>',
                 buttons: tableButtons,
                 scrollX: true,
@@ -161,7 +204,7 @@
                 scrollCollapse: true,
                 // Keep every column reachable through horizontal scrolling.
                 responsive: false,
-                order: @json($order),
+                order: tableOrder,
                 language: {
                     search: "",
                     searchPlaceholder: "Search records...",
@@ -170,6 +213,96 @@
             });
 
             panel.find('.table-retry').on('click', function() { table.ajax.reload(null, false); });
+
+            if (bulkDeleteEnabled) {
+                const selectedIds = new Set();
+                let bulkDeleting = false;
+                const actionPanel = panel.find('.bulk-delete-actions');
+                const deleteButton = actionPanel.find('.bulk-delete-button');
+                const clearButton = actionPanel.find('.bulk-clear-button');
+
+                function syncBulkSelection() {
+                    const rowCheckboxes = tableElement.find('tbody .bulk-row-select');
+                    rowCheckboxes.each(function() {
+                        this.checked = selectedIds.has(String(this.value));
+                        this.disabled = bulkDeleting;
+                    });
+                    const checkedOnPage = rowCheckboxes.filter(':checked').length;
+                    panel.find('.bulk-select-page').prop('checked', rowCheckboxes.length > 0 && checkedOnPage === rowCheckboxes.length)
+                        .prop('indeterminate', checkedOnPage > 0 && checkedOnPage < rowCheckboxes.length)
+                        .prop('disabled', bulkDeleting);
+                    actionPanel.find('.bulk-delete-count').text(selectedIds.size);
+                    deleteButton.prop('disabled', bulkDeleting || selectedIds.size === 0);
+                    clearButton.prop('disabled', bulkDeleting || selectedIds.size === 0);
+                    actionPanel.attr('aria-busy', String(bulkDeleting));
+                    actionPanel.find('.bulk-delete-label').text(bulkDeleting ? 'Deleting...' : 'Delete Selected');
+                }
+
+                tableElement.on('draw.dt', syncBulkSelection);
+                tableElement.on('change', 'tbody .bulk-row-select', function() {
+                    if (this.checked) {
+                        if (selectedIds.size < 500) selectedIds.add(String(this.value));
+                        else this.checked = false;
+                    } else selectedIds.delete(String(this.value));
+                    syncBulkSelection();
+                });
+                panel.on('change', 'thead .bulk-select-page', function() {
+                    const shouldSelect = this.checked;
+                    tableElement.find('tbody .bulk-row-select').each(function() {
+                        if (shouldSelect) {
+                            if (selectedIds.size < 500) selectedIds.add(String(this.value));
+                        } else selectedIds.delete(String(this.value));
+                    });
+                    syncBulkSelection();
+                });
+                clearButton.on('click', function() {
+                    if (bulkDeleting) return;
+                    selectedIds.clear();
+                    syncBulkSelection();
+                });
+                deleteButton.on('click', async function() {
+                    if (bulkDeleting || selectedIds.size === 0) return;
+                    const ids = Array.from(selectedIds);
+                    const confirmation = await Swal.fire({
+                        title: 'Delete selected records?',
+                        text: ids.length + ' records will be deleted. This cannot be undone.',
+                        icon: 'warning',
+                        showCancelButton: true,
+                        confirmButtonColor: '#dc2626',
+                        confirmButtonText: 'Yes, delete selected'
+                    });
+                    if (!confirmation.isConfirmed) return;
+
+                    bulkDeleting = true;
+                    syncBulkSelection();
+                    const failedIds = [];
+                    for (let offset = 0; offset < ids.length; offset += 10) {
+                        await Promise.all(ids.slice(offset, offset + 10).map(async function(id) {
+                            try {
+                                const response = await $.ajax({
+                                    url: destroyUrlTemplate.replace(':id', encodeURIComponent(id)),
+                                    type: 'POST',
+                                    dataType: 'json',
+                                    data: { _method: 'DELETE', _token: csrfToken }
+                                });
+                                if (response && response.status && response.status !== 'success') failedIds.push(id);
+                                else selectedIds.delete(id);
+                            } catch (error) {
+                                failedIds.push(id);
+                            }
+                        }));
+                    }
+                    table.ajax.reload(null, false);
+                    bulkDeleting = false;
+                    syncBulkSelection();
+                    if (failedIds.length) {
+                        Swal.fire('Some records were not deleted', (ids.length - failedIds.length) + ' deleted; ' + failedIds.length + ' could not be deleted.', 'warning');
+                    } else {
+                        Swal.fire('Deleted', ids.length + ' records deleted successfully.', 'success');
+                    }
+                });
+                syncBulkSelection();
+            }
 
             const scrollBody = panel.find('.dataTables_scrollBody');
             scrollBody.attr({ tabindex: 0, role: 'region', 'aria-label': @json($title.' — scrollable table') });

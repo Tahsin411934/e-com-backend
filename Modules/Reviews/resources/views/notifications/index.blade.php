@@ -33,6 +33,7 @@
             :buttonId="null"
             :columns="['Type','User','Subject','Details','Channel','Read','Date','Action']"
             :ajaxUrl="route('notifications.dataTable')"
+            :destroyUrl="route('notifications.destroy', ':id')" deletePermission="notifications.delete"
             :dtColumns="[
                 ['data' => 'type', 'orderable' => false, 'searchable' => false],
                 ['data' => 'user_name', 'orderable' => false, 'searchable' => false],

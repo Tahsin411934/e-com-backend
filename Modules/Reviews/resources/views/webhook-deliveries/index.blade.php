@@ -27,6 +27,7 @@
             :buttonId="null"
             :columns="['Webhook','Event','Response','Attempt','Result','Delivered At','Date','Action']"
             :ajaxUrl="route('webhook-deliveries.dataTable')"
+            :destroyUrl="route('webhook-deliveries.destroy', ':id')" deletePermission="webhook-deliveries.delete"
             :dtColumns="[
                 ['data' => 'webhook_name', 'orderable' => false, 'searchable' => false],
                 ['data' => 'event', 'orderable' => false, 'searchable' => false],

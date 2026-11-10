@@ -4,6 +4,7 @@ namespace Modules\Catalog\Http\Controllers;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
+use Modules\Catalog\Models\Category;
 use Modules\Catalog\Http\Requests\StoreBrandRequest;
 use Modules\Catalog\Http\Requests\UpdateBrandRequest;
 use Modules\Catalog\Services\BrandService;
@@ -22,9 +23,12 @@ class BrandController extends Controller
         $stores = $canAssignStore
             ? Store::where('status', 'active')->orderBy('name')->get()
             : collect();
+        $categories = $canAssignStore
+            ? Category::orderBy('name')->get(['id', 'name'])
+            : collect();
         $currentStore = CurrentStore::store();
 
-        return view('catalog::brands', compact('stores', 'canAssignStore', 'currentStore'));
+        return view('catalog::brands', compact('stores', 'categories', 'canAssignStore', 'currentStore'));
     }
 
     public function dataTable(Request $request)

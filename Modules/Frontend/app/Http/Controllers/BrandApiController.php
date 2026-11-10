@@ -20,12 +20,23 @@ class BrandApiController extends Controller
      */
     public function index(Request $request): JsonResponse
     {
+        $validated = $request->validate([
+            'category_id' => 'nullable|integer|min:1',
+        ]);
         $search = $request->query('q');
         $limit = min((int) $request->query('limit', 20), 100);
         $page = max((int) $request->query('page', 1), 1);
 
         $query = Brand::where('status', 'active')
             ->orderBy('name');
+
+        if (! empty($validated['category_id'])) {
+            $categoryId = (int) $validated['category_id'];
+            $query->whereHas('categories', function ($categoryQuery) use ($categoryId) {
+                $categoryQuery->where('categories.id', $categoryId)
+                    ->where('categories.status', 'active');
+            });
+        }
 
         if ($search) {
             $query->where('name', 'like', "%{$search}%");

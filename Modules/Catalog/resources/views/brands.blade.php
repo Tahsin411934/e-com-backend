@@ -57,16 +57,20 @@
         </div>
         @if($canAssignStore ?? false)
             <div class="mb-4">
-                <x-select2-dropdown
+                <x-form-select
                     label="Categories"
                     name="category_ids[]"
                     id="brand_category_ids"
-                    :route="route('ajax.dropdown-search', 'categories')"
-                    placeholder="Search categories..."
+                    placeholder=""
+                    data-dropdown-search="1"
                     multiple
-                />
+                >
+                    @foreach($categories as $category)
+                        <option value="{{ $category->id }}">{{ $category->name }}</option>
+                    @endforeach
+                </x-form-select>
                 <input type="hidden" name="category_ids_present" value="1">
-                <p class="text-xs text-gray-400 mt-1">A brand can belong to multiple categories.</p>
+                <p class="text-xs text-gray-400 mt-1">A brand can belong to multiple categories. Search in the opened dropdown.</p>
             </div>
         @endif
         <div class="mb-4">
@@ -93,10 +97,10 @@
             $('#brand_status').val(data.status);
             const $categorySelect = $('#brand_category_ids');
             if ($categorySelect.length) {
-                $categorySelect.empty();
-                (data.categories || []).forEach(function(category) {
-                    $categorySelect.append(new Option(category.name, category.id, true, true));
+                const categoryIds = (data.categories || []).map(function(category) {
+                    return String(category.id);
                 });
+                $categorySelect.val(categoryIds);
                 $categorySelect.trigger('change.select2');
             }
             if (data.logo_url) {

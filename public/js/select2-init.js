@@ -62,6 +62,23 @@
             dropdownParent: resolveDropdownParent($el),
         };
 
+        // Select2 puts the search input inside the selection for multi-selects
+        // by default. Some large AJAX multi-selects are easier to use with a
+        // dedicated search field at the top of the dropdown instead.
+        if (String($el.data('dropdown-search')) === '1' && $el.prop('multiple')) {
+            var amdRequire = $.fn.select2.amd.require;
+            var Utils = amdRequire('select2/utils');
+            var Dropdown = amdRequire('select2/dropdown');
+            var DropdownSearch = amdRequire('select2/dropdown/search');
+            var AttachBody = amdRequire('select2/dropdown/attachBody');
+
+            options.closeOnSelect = false;
+            options.dropdownAdapter = Utils.Decorate(
+                Utils.Decorate(Dropdown, DropdownSearch),
+                AttachBody
+            );
+        }
+
         if ($el.is('[data-ajax-select2]')) {
             options.ajax = {
                 url: $el.data('route'),

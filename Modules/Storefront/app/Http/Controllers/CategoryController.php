@@ -85,9 +85,12 @@ class CategoryController extends Controller
      */
     public function products(string $slug, Request $request): JsonResponse
     {
+        $validated = $request->validate([
+            'brand_id' => 'nullable|integer|min:1|exists:brands,id',
+        ]);
         $perPage = min((int) $request->query('per_page', 20), 40);
         $sort = $request->query('sort', 'latest');
-        $brandId = $request->query('brand_id');
+        $brandId = $validated['brand_id'] ?? null;
 
         $categoryQuery = Category::where('slug', $slug)
             ->where('status', 'active')

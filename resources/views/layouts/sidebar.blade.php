@@ -37,783 +37,693 @@
     <!-- Navigation -->
     <nav id="sideNav" class="flex-1 overflow-y-auto overflow-x-hidden py-2.5 px-2">
 
-        <a href="{{ route('documentation.index') }}"
+        <x-sidebar-link href="{{ route('documentation.index') }}"
             class="nav-item flex items-center gap-2.5 px-3 py-2 rounded-lg text-gray-500 hover:bg-gray-50 hover:text-gray-800 text-sm font-medium transition-colors mb-0.5 {{ request()->routeIs('documentation.*') ? 'text-primary bg-primary-light' : '' }}"
             data-label="Documentation">
             <i class="fas fa-book-open w-4 text-center flex-shrink-0 text-base"></i>
             <span class="nav-label">Documentation</span>
-        </a>
+        </x-sidebar-link>
 
     <!-- Dashboard -->
-    <a href="{{ route('dashboard') }}"
-            class="nav-item flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-medium transition-colors duration-150 mb-0.5 
+    <x-sidebar-link href="{{ route('dashboard') }}"
+            class="nav-item flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-medium transition-colors duration-150 mb-0.5
     {{ request()->routeIs('dashboard') ? 'text-white active' : 'text-gray-500 hover:bg-gray-50 hover:text-gray-800' }}"
             data-label="Dashboard">
             <i class="fas fa-th-large w-4 text-center flex-shrink-0 text-base"></i>
             <span class="nav-label font-bold">Dashboard</span>
-        </a>
+        </x-sidebar-link>
 
         @if(auth()->user()->hasAnyRole(['Store Owner', 'Store Staff']))
         <!-- Custom Domain -->
-        <a href="{{ route('custom-domain.index') }}" class="nav-item flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-medium transition-colors duration-150 mb-0.5 {{ request()->routeIs('custom-domain.*') ? 'text-white active' : 'text-gray-500 hover:bg-gray-50 hover:text-gray-800' }}" data-label="Custom Domain">
+        <x-sidebar-link href="{{ route('custom-domain.index') }}" class="nav-item flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-medium transition-colors duration-150 mb-0.5 {{ request()->routeIs('custom-domain.*') ? 'text-white active' : 'text-gray-500 hover:bg-gray-50 hover:text-gray-800' }}" data-label="Custom Domain">
             <i class="fas fa-globe w-4 text-center flex-shrink-0 text-base"></i><span class="nav-label">Custom Domain</span>
-        </a>
+        </x-sidebar-link>
         @endif
 
         <!-- Identity & Access (permission-driven) -->
         @if(auth()->user()->hasAnyPermission(['users.view','customers.view','roles.view','permissions.view']))
-        <div class="mb-0.5">
-            <button
-                class="nav-item has-sub w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-gray-500 hover:bg-gray-50 hover:text-gray-800 text-sm font-medium transition-colors duration-150"
-                data-label="Users & Permissions" data-sub="sub-identity">
-                <i class="fas fa-id-card w-4 text-center flex-shrink-0 text-base"></i>
-                <span class="nav-label flex-1 text-left">Users & Access</span>
-                <i class="nav-chevron fas fa-chevron-down text-[10px] flex-shrink-0"></i>
-            </button>
-        <div class="submenu sub-indent" id="sub-identity">
+        <x-sidebar-group id="sub-identity" title="Users & Access" :active="request()->routeIs('customers.*', 'users.*', 'roles.*', 'permissions.*')">
+            <x-slot name="icon"><i class="fas fa-id-card w-4 text-center flex-shrink-0 text-base"></i></x-slot>
+
                 @if(auth()->user()->hasPermission('customers.view'))
-                <a href="{{ route('customers.index') }}"
+                <x-sidebar-link href="{{ route('customers.index') }}"
                     class="flex items-center gap-2.5 pl-9 pr-3 py-1.5 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-50 text-[13px] transition-colors {{ request()->routeIs('customers.*') ? 'text-primary bg-primary-light font-medium' : '' }}">
                     <i class="fas fa-user-group w-3.5 text-center"></i><span>Customers</span>
-                </a>
+                </x-sidebar-link>
                 @endif
                 @if(auth()->user()->hasPermission('users.view'))
-                <a href="{{ route('users.index') }}"
+                <x-sidebar-link href="{{ route('users.index') }}"
                     class="flex items-center gap-2.5 pl-9 pr-3 py-1.5 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-50 text-[13px] transition-colors {{ request()->routeIs('users.*') ? 'text-primary bg-primary-light font-medium' : '' }}">
                     <i class="fas fa-users w-3.5 text-center"></i><span>Users</span>
-                </a>
+                </x-sidebar-link>
                 @endif
                 @if(auth()->user()->hasPermission('roles.view'))
-                <a href="{{ route('roles.index') }}"
+                <x-sidebar-link href="{{ route('roles.index') }}"
                     class="flex items-center gap-2.5 pl-9 pr-3 py-1.5 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-50 text-[13px] transition-colors {{ request()->routeIs('roles.*') ? 'text-primary bg-primary-light font-medium' : '' }}">
                     <i class="fas fa-shield-halved w-3.5 text-center"></i><span>User Roles</span>
-                </a>
+                </x-sidebar-link>
                 @endif
                 @if(auth()->user()->hasPermission('permissions.view'))
-                <a href="{{ route('permissions.index') }}"
+                <x-sidebar-link href="{{ route('permissions.index') }}"
                     class="flex items-center gap-2.5 pl-9 pr-3 py-1.5 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-50 text-[13px] transition-colors {{ request()->routeIs('permissions.*') ? 'text-primary bg-primary-light font-medium' : '' }}">
                     <i class="fas fa-key w-3.5 text-center"></i><span>Access Permissions</span>
-                </a>
+                </x-sidebar-link>
                 @endif
-            </div>
-        </div>
+
+        </x-sidebar-group>
         @endif
 
         @if(auth()->user()->hasAnyPermission(['products.view','categories.view','brands.view','units.view','sizes.view','size-groups.view','tax-rates.view','barcode-print.view','product-requests.view']))
         <!-- Catalog -->
-        <div class="mb-0.5">
-            <button
-                class="nav-item has-sub w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-gray-500 hover:bg-gray-50 hover:text-gray-800 text-sm font-medium transition-colors duration-150"
-                data-label="Products" data-sub="sub-cat">
-                <i class="fas fa-boxes w-4 text-center flex-shrink-0 text-base"></i>
-                <span class="nav-label flex-1 text-left">Products</span>
-                <i class="nav-chevron fas fa-chevron-down text-[10px] flex-shrink-0"></i>
-            </button>
-                <div class="submenu sub-indent" id="sub-cat">
+        <x-sidebar-group id="sub-cat" title="Products" :active="request()->routeIs('products.*', 'categories.*', 'brands.*', 'units.*', 'sizes.*', 'size-groups.*', 'barcode-print.*', 'tax-rates.*', 'product-requests.*')">
+            <x-slot name="icon"><i class="fas fa-boxes w-4 text-center flex-shrink-0 text-base"></i></x-slot>
+
                     @if(auth()->user()->hasPermission('products.view'))
-                    <a href="{{ route('products.index') }}"
+                    <x-sidebar-link href="{{ route('products.index') }}"
                         class="flex items-center gap-2.5 pl-9 pr-3 py-1.5 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-50 text-[13px] transition-colors {{ request()->routeIs('products.*') ? 'text-primary bg-primary-light font-medium' : '' }}">
                         <i class="fas fa-box w-3.5 text-center"></i><span>Products</span>
-                    </a>
+                    </x-sidebar-link>
                     @endif
                     @if(auth()->user()->hasPermission('categories.view'))
-                    <a href="{{ route('categories.index') }}"
+                    <x-sidebar-link href="{{ route('categories.index') }}"
                         class="flex items-center gap-2.5 pl-9 pr-3 py-1.5 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-50 text-[13px] transition-colors {{ request()->routeIs('categories.*') ? 'text-primary bg-primary-light font-medium' : '' }}">
                         <i class="fas fa-tags w-3.5 text-center"></i><span>Categories</span>
-                    </a>
+                    </x-sidebar-link>
                     @endif
                     @if(auth()->user()->hasPermission('brands.view'))
-                    <a href="{{ route('brands.index') }}"
+                    <x-sidebar-link href="{{ route('brands.index') }}"
                         class="flex items-center gap-2.5 pl-9 pr-3 py-1.5 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-50 text-[13px] transition-colors {{ request()->routeIs('brands.*') ? 'text-primary bg-primary-light font-medium' : '' }}">
                         <i class="fas fa-star w-3.5 text-center"></i><span>Brands</span>
-                    </a>
+                    </x-sidebar-link>
                     @endif
                     @if(auth()->user()->hasPermission('units.view'))
-                    <a href="{{ route('units.index') }}"
+                    <x-sidebar-link href="{{ route('units.index') }}"
                         class="flex items-center gap-2.5 pl-9 pr-3 py-1.5 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-50 text-[13px] transition-colors {{ request()->routeIs('units.*') ? 'text-primary bg-primary-light font-medium' : '' }}">
                     <i class="fas fa-ruler-combined w-3.5 text-center"></i><span>Measurement Units</span>
-                    </a>
+                    </x-sidebar-link>
                     @endif
                     @if(auth()->user()->hasPermission('sizes.view'))
-                    <a href="{{ route('sizes.index') }}"
+                    <x-sidebar-link href="{{ route('sizes.index') }}"
                         class="flex items-center gap-2.5 pl-9 pr-3 py-1.5 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-50 text-[13px] transition-colors {{ request()->routeIs('sizes.*') ? 'text-primary bg-primary-light font-medium' : '' }}">
                         <i class="fas fa-ruler w-3.5 text-center"></i><span>Sizes</span>
-                    </a>
+                    </x-sidebar-link>
                     @endif
                     @if(auth()->user()->hasPermission('size-groups.view'))
-                    <a href="{{ route('size-groups.index') }}"
+                    <x-sidebar-link href="{{ route('size-groups.index') }}"
                         class="flex items-center gap-2.5 pl-9 pr-3 py-1.5 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-50 text-[13px] transition-colors {{ request()->routeIs('size-groups.*') ? 'text-primary bg-primary-light font-medium' : '' }}">
                     <i class="fas fa-layer-group w-3.5 text-center"></i><span>Size Groups</span>
-                    </a>
+                    </x-sidebar-link>
                     @endif
                     @if(auth()->user()->hasPermission('barcode-print.view'))
-                    <a href="{{ route('barcode-print.index') }}"
+                    <x-sidebar-link href="{{ route('barcode-print.index') }}"
                         class="flex items-center gap-2.5 pl-9 pr-3 py-1.5 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-50 text-[13px] transition-colors {{ request()->routeIs('barcode-print.*') ? 'text-primary bg-primary-light font-medium' : '' }}">
                         <i class="fas fa-qrcode w-3.5 text-center"></i><span>Barcode Printing</span>
-                    </a>
+                    </x-sidebar-link>
                     @endif
                     @if(auth()->user()->hasPermission('tax-rates.view'))
-                    <a href="{{ route('tax-rates.index') }}"
+                    <x-sidebar-link href="{{ route('tax-rates.index') }}"
                         class="flex items-center gap-2.5 pl-9 pr-3 py-1.5 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-50 text-[13px] transition-colors {{ request()->routeIs('tax-rates.*') ? 'text-primary bg-primary-light font-medium' : '' }}">
                         <i class="fas fa-percent w-3.5 text-center"></i><span>Tax Rates</span>
-                    </a>
+                    </x-sidebar-link>
                     @endif
                     @if(auth()->user()->hasPermission('product-requests.view'))
-                    <a href="{{ route('product-requests.index') }}"
+                    <x-sidebar-link href="{{ route('product-requests.index') }}"
                         class="flex items-center gap-2.5 pl-9 pr-3 py-1.5 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-50 text-[13px] transition-colors {{ request()->routeIs('product-requests.*') ? 'text-primary bg-primary-light font-medium' : '' }}">
                         <i class="fas fa-clipboard-list w-3.5 text-center"></i><span>Product Requests</span>
-                    </a>
+                    </x-sidebar-link>
                     @endif
-                </div>
-        </div>
+
+        </x-sidebar-group>
 
         @endif
 
         @if(auth()->user()->hasAnyPermission(['stores.view','store-staff.view','store-roles.view','countries.view','addresses.view','app-settings.view','plans.view','features.view']))
         <!-- Store & Location -->
-        <div class="mb-0.5">
-            <button
-                class="nav-item has-sub w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-gray-500 hover:bg-gray-50 hover:text-gray-800 text-sm font-medium transition-colors duration-150"
-                data-label="Store Management" data-sub="sub-store">
-                <i class="fas fa-store w-4 text-center flex-shrink-0 text-base"></i>
-                <span class="nav-label flex-1 text-left">Store Management</span>
-                <i class="nav-chevron fas fa-chevron-down text-[10px] flex-shrink-0"></i>
-            </button>
-            <div class="submenu sub-indent" id="sub-store">
+        <x-sidebar-group id="sub-store" title="Store Management" :active="request()->routeIs('stores.*', 'store-staff.*', 'store-roles.*', 'countries.*', 'addresses.*', 'app-settings.*', 'plans.*', 'features.*')">
+            <x-slot name="icon"><i class="fas fa-store w-4 text-center flex-shrink-0 text-base"></i></x-slot>
+
                 @if(auth()->user()->hasPermission('stores.view'))
-                <a href="{{ route('stores.index') }}"
+                <x-sidebar-link href="{{ route('stores.index') }}"
                     class="flex items-center gap-2.5 pl-9 pr-3 py-1.5 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-50 text-[13px] transition-colors {{ request()->routeIs('stores.*') ? 'text-primary bg-primary-light font-medium' : '' }}">
                     <i class="fas fa-store-alt w-3.5 text-center"></i><span>Stores</span>
-                </a>
+                </x-sidebar-link>
                 @endif
                 @if(auth()->user()->hasPermission('store-staff.view'))
-                <a href="{{ route('store-staff.index') }}"
+                <x-sidebar-link href="{{ route('store-staff.index') }}"
                     class="flex items-center gap-2.5 pl-9 pr-3 py-1.5 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-50 text-[13px] transition-colors {{ request()->routeIs('store-staff.*') ? 'text-primary bg-primary-light font-medium' : '' }}">
                     <i class="fas fa-users w-3.5 text-center"></i><span>Staff</span>
-                </a>
+                </x-sidebar-link>
                 @endif
                 @if(auth()->user()->hasPermission('store-roles.view'))
-                <a href="{{ route('store-roles.index') }}"
+                <x-sidebar-link href="{{ route('store-roles.index') }}"
                     class="flex items-center gap-2.5 pl-9 pr-3 py-1.5 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-50 text-[13px] transition-colors {{ request()->routeIs('store-roles.*') ? 'text-primary bg-primary-light font-medium' : '' }}">
                     <i class="fas fa-user-shield w-3.5 text-center"></i><span>Store Roles</span>
-                </a>
+                </x-sidebar-link>
                 @endif
                 @if(auth()->user()->hasPermission('countries.view'))
-                <a href="{{ route('countries.index') }}"
+                <x-sidebar-link href="{{ route('countries.index') }}"
                     class="flex items-center gap-2.5 pl-9 pr-3 py-1.5 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-50 text-[13px] transition-colors {{ request()->routeIs('countries.*') ? 'text-primary bg-primary-light font-medium' : '' }}">
                     <i class="fas fa-globe w-3.5 text-center"></i><span>Countries</span>
-                </a>
+                </x-sidebar-link>
                 @endif
                 @if(auth()->user()->hasPermission('addresses.view'))
-                <a href="{{ route('addresses.index') }}"
+                <x-sidebar-link href="{{ route('addresses.index') }}"
                     class="flex items-center gap-2.5 pl-9 pr-3 py-1.5 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-50 text-[13px] transition-colors {{ request()->routeIs('addresses.*') ? 'text-primary bg-primary-light font-medium' : '' }}">
                     <i class="fas fa-address-book w-3.5 text-center"></i><span>Addresses</span>
-                </a>
+                </x-sidebar-link>
                 @endif
                 @if(auth()->user()->hasPermission('app-settings.view'))
-                <a href="{{ route('app-settings.index') }}"
+                <x-sidebar-link href="{{ route('app-settings.index') }}"
                     class="flex items-center gap-2.5 pl-9 pr-3 py-1.5 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-50 text-[13px] transition-colors {{ request()->routeIs('app-settings.*') ? 'text-primary bg-primary-light font-medium' : '' }}">
                     <i class="fas fa-cogs w-3.5 text-center"></i><span>Store Settings</span>
-                </a>
+                </x-sidebar-link>
                 @endif
                 @if(auth()->user()->hasPermission('plans.view'))
-                <a href="{{ route('plans.index') }}" class="flex items-center gap-2.5 pl-9 pr-3 py-1.5 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-50 text-[13px] transition-colors {{ request()->routeIs('plans.*') ? 'text-primary bg-primary-light font-medium' : '' }}">
+                <x-sidebar-link href="{{ route('plans.index') }}" class="flex items-center gap-2.5 pl-9 pr-3 py-1.5 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-50 text-[13px] transition-colors {{ request()->routeIs('plans.*') ? 'text-primary bg-primary-light font-medium' : '' }}">
                     <i class="fas fa-tags w-3.5 text-center"></i><span>Plans & Billing</span>
-                </a>
+                </x-sidebar-link>
                 @endif
                 @if(auth()->user()->hasPermission('features.view'))
-                <a href="{{ route('features.index') }}" class="flex items-center gap-2.5 pl-9 pr-3 py-1.5 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-50 text-[13px] transition-colors {{ request()->routeIs('features.*') ? 'text-primary bg-primary-light font-medium' : '' }}">
+                <x-sidebar-link href="{{ route('features.index') }}" class="flex items-center gap-2.5 pl-9 pr-3 py-1.5 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-50 text-[13px] transition-colors {{ request()->routeIs('features.*') ? 'text-primary bg-primary-light font-medium' : '' }}">
                     <i class="fas fa-puzzle-piece w-3.5 text-center"></i><span>Plan Features</span>
-                </a>
+                </x-sidebar-link>
                 @endif
-            </div>
-        </div>
+
+        </x-sidebar-group>
 
         @endif
 
         @if(auth()->user()->hasAnyPermission(['inventory.view','inventory-stock.view','inventory-locations.view','inventory-movements.view']))
         <!-- Inventory -->
-        <div class="mb-0.5">
-            <button
-                class="nav-item has-sub w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-gray-500 hover:bg-gray-50 hover:text-gray-800 text-sm font-medium transition-colors duration-150"
-                data-label="Inventory" data-sub="sub-inv">
-                <i class="fas fa-warehouse w-4 text-center flex-shrink-0 text-base"></i>
-                <span class="nav-label flex-1 text-left">Inventory</span>
-                <i class="nav-chevron fas fa-chevron-down text-[10px] flex-shrink-0"></i>
-            </button>
-            <div class="submenu sub-indent" id="sub-inv">
+        <x-sidebar-group id="sub-inv" title="Inventory" :active="request()->routeIs('inventory-stock.*', 'inventory-locations.*', 'inventory-movements.*')">
+            <x-slot name="icon"><i class="fas fa-warehouse w-4 text-center flex-shrink-0 text-base"></i></x-slot>
+
                 @if(auth()->user()->hasPermission('inventory-stock.view'))
-                <a href="{{ route('inventory-stock.index') }}"
+                <x-sidebar-link href="{{ route('inventory-stock.index') }}"
                     class="flex items-center gap-2.5 pl-9 pr-3 py-1.5 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-50 text-[13px] transition-colors {{ request()->routeIs('inventory-stock.*') ? 'text-primary bg-primary-light font-medium' : '' }}">
                     <i class="fas fa-boxes w-3.5 text-center"></i><span>Stock Overview</span>
-                </a>
+                </x-sidebar-link>
                 @endif
                 @if(auth()->user()->hasPermission('inventory-locations.view'))
-                <a href="{{ route('inventory-locations.index') }}"
+                <x-sidebar-link href="{{ route('inventory-locations.index') }}"
                     class="flex items-center gap-2.5 pl-9 pr-3 py-1.5 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-50 text-[13px] transition-colors {{ request()->routeIs('inventory-locations.*') ? 'text-primary bg-primary-light font-medium' : '' }}">
                     <i class="fas fa-map-marker-alt w-3.5 text-center"></i><span>Locations</span>
-                </a>
+                </x-sidebar-link>
                 @endif
                 @if(auth()->user()->hasPermission('inventory-movements.view'))
-                <a href="{{ route('inventory-movements.index') }}"
+                <x-sidebar-link href="{{ route('inventory-movements.index') }}"
                     class="flex items-center gap-2.5 pl-9 pr-3 py-1.5 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-50 text-[13px] transition-colors {{ request()->routeIs('inventory-movements.*') ? 'text-primary bg-primary-light font-medium' : '' }}">
                     <i class="fas fa-exchange-alt w-3.5 text-center"></i><span>Stock Movements</span>
-                </a>
+                </x-sidebar-link>
                 @endif
-            </div>
-        </div>
+
+        </x-sidebar-group>
 
         @endif
 
         @if(auth()->user()->hasAnyPermission(['carts.view','coupons.view','campaigns.view','wishlists.view']))
         <!-- Cart & Wishlist -->
-        <div class="mb-0.5">
-            <button
-                class="nav-item has-sub w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-gray-500 hover:bg-gray-50 hover:text-gray-800 text-sm font-medium transition-colors duration-150"
-                data-label="Marketing & Promotions" data-sub="sub-cart">
-                <i class="fas fa-shopping-cart w-4 text-center flex-shrink-0 text-base"></i>
-                <span class="nav-label flex-1 text-left">Marketing</span>
-                <i class="nav-chevron fas fa-chevron-down text-[10px] flex-shrink-0"></i>
-            </button>
-            <div class="submenu sub-indent" id="sub-cart">
+        <x-sidebar-group id="sub-cart" title="Marketing & Promotions" :active="request()->routeIs('cart.*', 'coupons.*', 'campaigns.*', 'wishlists.*')">
+            <x-slot name="icon"><i class="fas fa-shopping-cart w-4 text-center flex-shrink-0 text-base"></i></x-slot>
+
                 @if(auth()->user()->hasPermission('carts.view'))
-                <a href="{{ route('cart.index') }}"
+                <x-sidebar-link href="{{ route('cart.index') }}"
                     class="flex items-center gap-2.5 pl-9 pr-3 py-1.5 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-50 text-[13px] transition-colors {{ request()->routeIs('cart.*') ? 'text-primary bg-primary-light font-medium' : '' }}">
                     <i class="fas fa-shopping-cart w-3.5 text-center"></i><span>Abandoned Carts</span>
-                </a>
+                </x-sidebar-link>
                 @endif
                 @if(auth()->user()->hasPermission('coupons.view'))
-                <a href="{{ route('coupons.index') }}"
+                <x-sidebar-link href="{{ route('coupons.index') }}"
                     class="flex items-center gap-2.5 pl-9 pr-3 py-1.5 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-50 text-[13px] transition-colors {{ request()->routeIs('coupons.*') ? 'text-primary bg-primary-light font-medium' : '' }}">
                     <i class="fas fa-ticket-alt w-3.5 text-center"></i><span>Discount Coupons</span>
-                </a>
+                </x-sidebar-link>
                 @endif
                 @if(auth()->user()->hasPermission('campaigns.view'))
-                <a href="{{ route('campaigns.index') }}"
+                <x-sidebar-link href="{{ route('campaigns.index') }}"
                     class="flex items-center gap-2.5 pl-9 pr-3 py-1.5 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-50 text-[13px] transition-colors {{ request()->routeIs('campaigns.*') ? 'text-primary bg-primary-light font-medium' : '' }}">
                     <i class="fas fa-bullhorn w-3.5 text-center"></i><span>Marketing Campaigns</span>
-                </a>
+                </x-sidebar-link>
                 @endif
                 @if(auth()->user()->hasPermission('wishlists.view'))
-                <a href="{{ route('wishlists.index') }}"
+                <x-sidebar-link href="{{ route('wishlists.index') }}"
                     class="flex items-center gap-2.5 pl-9 pr-3 py-1.5 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-50 text-[13px] transition-colors {{ request()->routeIs('wishlists.*') ? 'text-primary bg-primary-light font-medium' : '' }}">
                     <i class="fas fa-heart w-3.5 text-center"></i><span>Wishlists</span>
-                </a>
+                </x-sidebar-link>
                 @endif
-            </div>
-        </div>
+
+        </x-sidebar-group>
 
         @endif
 
         @if(auth()->user()->hasAnyPermission(['suppliers.view','purchase-orders.view','purchase-returns.view','supplier-payments.view']))
         <!-- Purchases -->
-        <div class="mb-0.5">
-            <button
-                class="nav-item has-sub w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-gray-500 hover:bg-gray-50 hover:text-gray-800 text-sm font-medium transition-colors duration-150"
-                data-label="Purchasing" data-sub="sub-purchases">
-                <i class="fas fa-file-invoice w-4 text-center flex-shrink-0 text-base"></i>
-                <span class="nav-label flex-1 text-left">Purchases</span>
-                <i class="nav-chevron fas fa-chevron-down text-[10px] flex-shrink-0"></i>
-            </button>
-            <div class="submenu sub-indent" id="sub-purchases">
+        <x-sidebar-group id="sub-purchases" title="Purchasing" :active="request()->routeIs('suppliers.*', 'purchase-orders.*', 'purchase-returns.*', 'supplier-payments.*')">
+            <x-slot name="icon"><i class="fas fa-file-invoice w-4 text-center flex-shrink-0 text-base"></i></x-slot>
+
                 @if(auth()->user()->hasPermission('suppliers.view'))
-                <a href="{{ route('suppliers.index') }}"
+                <x-sidebar-link href="{{ route('suppliers.index') }}"
                     class="flex items-center gap-2.5 pl-9 pr-3 py-1.5 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-50 text-[13px] transition-colors {{ request()->routeIs('suppliers.*') ? 'text-primary bg-primary-light font-medium' : '' }}">
                     <i class="fas fa-truck w-3.5 text-center"></i><span>Suppliers</span>
-                </a>
+                </x-sidebar-link>
                 @endif
                 @if(auth()->user()->hasPermission('purchase-orders.view'))
-                <a href="{{ route('purchase-orders.index') }}"
+                <x-sidebar-link href="{{ route('purchase-orders.index') }}"
                     class="flex items-center gap-2.5 pl-9 pr-3 py-1.5 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-50 text-[13px] transition-colors {{ request()->routeIs('purchase-orders.*') ? 'text-primary bg-primary-light font-medium' : '' }}">
                     <i class="fas fa-file-invoice w-3.5 text-center"></i><span>Purchase Orders</span>
-                </a>
+                </x-sidebar-link>
                 @endif
                 @if(auth()->user()->hasPermission('purchase-returns.view'))
-                <a href="{{ route('purchase-returns.index') }}"
+                <x-sidebar-link href="{{ route('purchase-returns.index') }}"
                     class="flex items-center gap-2.5 pl-9 pr-3 py-1.5 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-50 text-[13px] transition-colors {{ request()->routeIs('purchase-returns.*') ? 'text-primary bg-primary-light font-medium' : '' }}">
                     <i class="fas fa-undo-alt w-3.5 text-center"></i><span>Purchase Returns</span>
-                </a>
+                </x-sidebar-link>
                 @endif
                 @if(auth()->user()->hasPermission('supplier-payments.view'))
-                <a href="{{ route('supplier-payments.index') }}"
+                <x-sidebar-link href="{{ route('supplier-payments.index') }}"
                     class="flex items-center gap-2.5 pl-9 pr-3 py-1.5 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-50 text-[13px] transition-colors {{ request()->routeIs('supplier-payments.*') ? 'text-primary bg-primary-light font-medium' : '' }}">
                     <i class="fas fa-money-bill-transfer w-3.5 text-center"></i><span>Supplier Payments</span>
-                </a>
+                </x-sidebar-link>
                 @endif
-            </div>
-        </div>
+
+        </x-sidebar-group>
 
         @endif
 
         @if(auth()->user()->hasAnyPermission(['orders.view','payments.view','refunds.view']))
         <!-- Orders -->
-        <div class="mb-0.5">
-            <button
-                class="nav-item has-sub w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-gray-500 hover:bg-gray-50 hover:text-gray-800 text-sm font-medium transition-colors duration-150"
-                data-label="Orders & Payments" data-sub="sub-orders">
-                <i class="fas fa-shopping-cart w-4 text-center flex-shrink-0 text-base"></i>
-                <span class="nav-label flex-1 text-left">Orders</span>
-                <i class="nav-chevron fas fa-chevron-down text-[10px] flex-shrink-0"></i>
-            </button>
-            <div class="submenu sub-indent" id="sub-orders">
+        <x-sidebar-group id="sub-orders" title="Orders & Payments" :active="request()->routeIs('orders.*', 'payments.*', 'refunds.*')">
+            <x-slot name="icon"><i class="fas fa-shopping-cart w-4 text-center flex-shrink-0 text-base"></i></x-slot>
+
                 @if(auth()->user()->hasPermission('orders.view'))
-                <a href="{{ route('orders.index') }}"
+                <x-sidebar-link href="{{ route('orders.index') }}"
                     class="flex items-center gap-2.5 pl-9 pr-3 py-1.5 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-50 text-[13px] transition-colors {{ request()->routeIs('orders.*') ? 'text-primary bg-primary-light font-medium' : '' }}">
                     <i class="fas fa-receipt w-3.5 text-center"></i><span>Orders</span>
-                </a>
+                </x-sidebar-link>
                 @endif
                 @if(auth()->user()->hasPermission('payments.view'))
-                <a href="{{ route('payments.index') }}"
+                <x-sidebar-link href="{{ route('payments.index') }}"
                     class="flex items-center gap-2.5 pl-9 pr-3 py-1.5 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-50 text-[13px] transition-colors {{ request()->routeIs('payments.*') ? 'text-primary bg-primary-light font-medium' : '' }}">
                     <i class="fas fa-credit-card w-3.5 text-center"></i><span>Payments</span>
-                </a>
+                </x-sidebar-link>
                 @endif
                 @if(auth()->user()->hasPermission('refunds.view'))
-                <a href="{{ route('refunds.index') }}"
+                <x-sidebar-link href="{{ route('refunds.index') }}"
                     class="flex items-center gap-2.5 pl-9 pr-3 py-1.5 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-50 text-[13px] transition-colors {{ request()->routeIs('refunds.*') ? 'text-primary bg-primary-light font-medium' : '' }}">
                     <i class="fas fa-undo-alt w-3.5 text-center"></i><span>Refunds</span>
-                </a>
+                </x-sidebar-link>
                 @endif
-            </div>
-        </div>
+
+        </x-sidebar-group>
 
         @endif
 
         @if(auth()->user()->hasAnyPermission(['accounts.view','account-categories.view','account-expenses.view','account-transfers.view','account-reports.view']))
         <!-- Account -->
-        <div class="mb-0.5">
-            <button
-                class="nav-item has-sub w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-gray-500 hover:bg-gray-50 hover:text-gray-800 text-sm font-medium transition-colors duration-150"
-                data-label="Finance" data-sub="sub-account">
-                <i class="fas fa-wallet w-4 text-center flex-shrink-0 text-base"></i>
-                <span class="nav-label flex-1 text-left">Finance</span>
-                <i class="nav-chevron fas fa-chevron-down text-[10px] flex-shrink-0"></i>
-            </button>
-            <div class="submenu sub-indent" id="sub-account">
+        <x-sidebar-group id="sub-account" title="Finance" :active="request()->routeIs('account.dashboard', 'account-accounts.*', 'account-expenses.*', 'account-transfers.*', 'account-categories.*', 'account-transactions.*', 'account-product-profits.*')">
+            <x-slot name="icon"><i class="fas fa-wallet w-4 text-center flex-shrink-0 text-base"></i></x-slot>
+
                 @if(auth()->user()->hasPermission('account-reports.view'))
-                <a href="{{ route('account.dashboard') }}"
+                <x-sidebar-link href="{{ route('account.dashboard') }}"
                     class="flex items-center gap-2.5 pl-9 pr-3 py-1.5 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-50 text-[13px] transition-colors {{ request()->routeIs('account.dashboard') ? 'text-primary bg-primary-light font-medium' : '' }}">
                     <i class="fas fa-chart-pie w-3.5 text-center"></i><span>Dashboard</span>
-                </a>
+                </x-sidebar-link>
                 @endif
                 @if(auth()->user()->hasPermission('accounts.view'))
-                <a href="{{ route('account-accounts.index') }}"
+                <x-sidebar-link href="{{ route('account-accounts.index') }}"
                     class="flex items-center gap-2.5 pl-9 pr-3 py-1.5 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-50 text-[13px] transition-colors {{ request()->routeIs('account-accounts.*') ? 'text-primary bg-primary-light font-medium' : '' }}">
                     <i class="fas fa-building-columns w-3.5 text-center"></i><span>Cash & Bank</span>
-                </a>
+                </x-sidebar-link>
                 @endif
                 @if(auth()->user()->hasPermission('account-expenses.view'))
-                <a href="{{ route('account-expenses.index') }}"
+                <x-sidebar-link href="{{ route('account-expenses.index') }}"
                     class="flex items-center gap-2.5 pl-9 pr-3 py-1.5 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-50 text-[13px] transition-colors {{ request()->routeIs('account-expenses.*') ? 'text-primary bg-primary-light font-medium' : '' }}">
                     <i class="fas fa-money-bill-wave w-3.5 text-center"></i><span>Expenses</span>
-                </a>
+                </x-sidebar-link>
                 @endif
                 @if(auth()->user()->hasPermission('account-transfers.view'))
-                <a href="{{ route('account-transfers.index') }}"
+                <x-sidebar-link href="{{ route('account-transfers.index') }}"
                     class="flex items-center gap-2.5 pl-9 pr-3 py-1.5 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-50 text-[13px] transition-colors {{ request()->routeIs('account-transfers.*') ? 'text-primary bg-primary-light font-medium' : '' }}">
                     <i class="fas fa-right-left w-3.5 text-center"></i><span>Transfers</span>
-                </a>
+                </x-sidebar-link>
                 @endif
                 @if(auth()->user()->hasPermission('account-categories.view'))
-                <a href="{{ route('account-categories.index') }}"
+                <x-sidebar-link href="{{ route('account-categories.index') }}"
                     class="flex items-center gap-2.5 pl-9 pr-3 py-1.5 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-50 text-[13px] transition-colors {{ request()->routeIs('account-categories.*') ? 'text-primary bg-primary-light font-medium' : '' }}">
                     <i class="fas fa-tags w-3.5 text-center"></i><span>Categories</span>
-                </a>
+                </x-sidebar-link>
                 @endif
                 @if(auth()->user()->hasPermission('account-reports.view'))
-                <a href="{{ route('account-transactions.index') }}"
+                <x-sidebar-link href="{{ route('account-transactions.index') }}"
                     class="flex items-center gap-2.5 pl-9 pr-3 py-1.5 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-50 text-[13px] transition-colors {{ request()->routeIs('account-transactions.*') ? 'text-primary bg-primary-light font-medium' : '' }}">
                     <i class="fas fa-book w-3.5 text-center"></i><span>Transaction Ledger</span>
-                </a>
+                </x-sidebar-link>
                 @endif
                 @if(auth()->user()->hasPermission('account-reports.view'))
-                <a href="{{ route('account-product-profits.index') }}"
+                <x-sidebar-link href="{{ route('account-product-profits.index') }}"
                     class="flex items-center gap-2.5 pl-9 pr-3 py-1.5 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-50 text-[13px] transition-colors {{ request()->routeIs('account-product-profits.*') ? 'text-primary bg-primary-light font-medium' : '' }}">
                     <i class="fas fa-chart-simple w-3.5 text-center"></i><span>Product Profit</span>
-                </a>
+                </x-sidebar-link>
                 @endif
-            </div>
-        </div>
+
+        </x-sidebar-group>
         @endif
 
         @if(auth()->user()->hasAnyPermission(['account-investments.view','account-categories.view','account-reports.view']))
-         <div class="mb-0.5">
-            <button
-                class="nav-item has-sub w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-gray-500 hover:bg-gray-50 hover:text-gray-800 text-sm font-medium transition-colors duration-150"
-                data-label="Investments & Assets" data-sub="sub-investments">
-                <i class="fas fa-chart-line w-4 text-center flex-shrink-0 text-base"></i>
-                <span class="nav-label flex-1 text-left">Assets & Investments</span>
-                <i class="nav-chevron fas fa-chevron-down text-[10px] flex-shrink-0"></i>
-            </button>
-            <div class="submenu sub-indent" id="sub-investments">
+         <x-sidebar-group id="sub-investments" title="Investments & Assets" :active="request()->routeIs('account-investments.*')">
+            <x-slot name="icon"><i class="fas fa-chart-line w-4 text-center flex-shrink-0 text-base"></i></x-slot>
+
                 @if(auth()->user()->hasPermission('account-investments.view'))
-                <a href="{{ route('account-investments.index') }}"
+                <x-sidebar-link href="{{ route('account-investments.index') }}"
                     class="flex items-center gap-2.5 pl-9 pr-3 py-1.5 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-50 text-[13px] transition-colors {{ request()->routeIs('account-investments.*') ? 'text-primary bg-primary-light font-medium' : '' }}">
                     <i class="fas fa-chart-bar w-3.5 text-center"></i><span>Investments</span>
-                </a>
+                </x-sidebar-link>
                 @endif
                 @if(auth()->user()->hasPermission('account-categories.view'))
-                <a href="{{ route('account-categories.index') }}"
+                <x-sidebar-link href="{{ route('account-categories.index') }}"
                     class="flex items-center gap-2.5 pl-9 pr-3 py-1.5 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-50 text-[13px] transition-colors {{ request()->routeIs('account-categories.*') ? 'text-primary bg-primary-light font-medium' : '' }}">
                     <i class="fas fa-tags w-3.5 text-center"></i><span>Investment Types</span>
-                </a>
+                </x-sidebar-link>
                 @endif
                 @if(auth()->user()->hasPermission('account-reports.view'))
-                <a href="{{ route('account-transactions.index') }}"
+                <x-sidebar-link href="{{ route('account-transactions.index') }}"
                     class="flex items-center gap-2.5 pl-9 pr-3 py-1.5 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-50 text-[13px] transition-colors {{ request()->routeIs('account-transactions.*') ? 'text-primary bg-primary-light font-medium' : '' }}">
                     <i class="fas fa-book w-3.5 text-center"></i><span>Ledger</span>
-                </a>
+                </x-sidebar-link>
                 @endif
-            </div>
-        </div>
+
+        </x-sidebar-group>
         @endif
 
         @if(auth()->user()->hasAnyPermission(['shipments.view','shipment-events.view','delivery-drivers.view','delivery-zones.view','deliveries.view']))
         <!-- Delivery -->
-        <div class="mb-0.5">
-            <button
-                class="nav-item has-sub w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-gray-500 hover:bg-gray-50 hover:text-gray-800 text-sm font-medium transition-colors duration-150"
-                data-label="Shipping & Delivery" data-sub="sub-delivery">
-                <i class="fas fa-shipping-fast w-4 text-center flex-shrink-0 text-base"></i>
-                <span class="nav-label flex-1 text-left">Shipping & Delivery</span>
-                <i class="nav-chevron fas fa-chevron-down text-[10px] flex-shrink-0"></i>
-            </button>
-            <div class="submenu sub-indent" id="sub-delivery">
+        <x-sidebar-group id="sub-delivery" title="Shipping & Delivery" :active="request()->routeIs('shipments.*', 'shipment-events.*', 'delivery-drivers.*', 'delivery-zones.*')">
+            <x-slot name="icon"><i class="fas fa-shipping-fast w-4 text-center flex-shrink-0 text-base"></i></x-slot>
+
                 @if(auth()->user()->hasPermission('shipments.view'))
-                <a href="{{ route('shipments.index') }}"
+                <x-sidebar-link href="{{ route('shipments.index') }}"
                     class="flex items-center gap-2.5 pl-9 pr-3 py-1.5 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-50 text-[13px] transition-colors {{ request()->routeIs('shipments.*') ? 'text-primary bg-primary-light font-medium' : '' }}">
                     <i class="fas fa-truck w-3.5 text-center"></i><span>Shipments</span>
-                </a>
+                </x-sidebar-link>
                 @endif
                 @if(auth()->user()->hasPermission('shipment-events.view'))
-                <a href="{{ route('shipment-events.index') }}"
+                <x-sidebar-link href="{{ route('shipment-events.index') }}"
                     class="flex items-center gap-2.5 pl-9 pr-3 py-1.5 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-50 text-[13px] transition-colors {{ request()->routeIs('shipment-events.*') ? 'text-primary bg-primary-light font-medium' : '' }}">
                     <i class="fas fa-timeline w-3.5 text-center"></i><span>Delivery Tracking</span>
-                </a>
+                </x-sidebar-link>
                 @endif
                 @if(auth()->user()->hasPermission('delivery-drivers.view'))
-                <a href="{{ route('delivery-drivers.index') }}"
+                <x-sidebar-link href="{{ route('delivery-drivers.index') }}"
                     class="flex items-center gap-2.5 pl-9 pr-3 py-1.5 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-50 text-[13px] transition-colors {{ request()->routeIs('delivery-drivers.*') ? 'text-primary bg-primary-light font-medium' : '' }}">
                     <i class="fas fa-user-tie w-3.5 text-center"></i><span>Drivers</span>
-                </a>
+                </x-sidebar-link>
                 @endif
                 @if(auth()->user()->hasPermission('delivery-zones.view'))
-                <a href="{{ route('delivery-zones.index') }}"
+                <x-sidebar-link href="{{ route('delivery-zones.index') }}"
                     class="flex items-center gap-2.5 pl-9 pr-3 py-1.5 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-50 text-[13px] transition-colors {{ request()->routeIs('delivery-zones.*') ? 'text-primary bg-primary-light font-medium' : '' }}">
                     <i class="fas fa-map-location-dot w-3.5 text-center"></i><span>Delivery Zones</span>
-                </a>
+                </x-sidebar-link>
                 @endif
-            </div>
-        </div>
+
+        </x-sidebar-group>
 
         @endif
 
         @if(auth()->user()->hasAnyPermission(['pos.view','pos.sell','pos-registers.view','pos-shifts.view','pos-sales.view']))
         <!-- POS -->
-        <div class="mb-0.5">
-            <button
-                class="nav-item has-sub w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-gray-500 hover:bg-gray-50 hover:text-gray-800 text-sm font-medium transition-colors duration-150"
-                data-label="Point of Sale" data-sub="sub-pos">
-                <i class="fas fa-cash-register w-4 text-center flex-shrink-0 text-base"></i>
-                <span class="nav-label flex-1 text-left">Point of Sale</span>
-                <i class="nav-chevron fas fa-chevron-down text-[10px] flex-shrink-0"></i>
-            </button>
-            <div class="submenu sub-indent" id="sub-pos">
+        <x-sidebar-group id="sub-pos" title="Point of Sale" :active="request()->routeIs('pos-registers.*', 'pos-shifts.*', 'pos.sell.*', 'pos-sales.*')">
+            <x-slot name="icon"><i class="fas fa-cash-register w-4 text-center flex-shrink-0 text-base"></i></x-slot>
+
                 @if(auth()->user()->hasPermission('pos-registers.view'))
-                <a href="{{ route('pos-registers.index') }}"
+                <x-sidebar-link href="{{ route('pos-registers.index') }}"
                     class="flex items-center gap-2.5 pl-9 pr-3 py-1.5 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-50 text-[13px] transition-colors {{ request()->routeIs('pos-registers.*') ? 'text-primary bg-primary-light font-medium' : '' }}">
                     <i class="fas fa-desktop w-3.5 text-center"></i><span>Cash Registers</span>
-                </a>
+                </x-sidebar-link>
                 @endif
                 @if(auth()->user()->hasPermission('pos-shifts.view'))
-                <a href="{{ route('pos-shifts.index') }}"
+                <x-sidebar-link href="{{ route('pos-shifts.index') }}"
                     class="flex items-center gap-2.5 pl-9 pr-3 py-1.5 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-50 text-[13px] transition-colors {{ request()->routeIs('pos-shifts.*') ? 'text-primary bg-primary-light font-medium' : '' }}">
                     <i class="fas fa-clock w-3.5 text-center"></i><span>Shifts</span>
-                </a>
+                </x-sidebar-link>
                 @endif
                 @if(auth()->user()->hasPermission('pos.sell'))
-                <a href="{{ route('pos.sell.index') }}"
+                <x-sidebar-link href="{{ route('pos.sell.index') }}"
                     class="flex items-center gap-2.5 pl-9 pr-3 py-1.5 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-50 text-[13px] transition-colors {{ request()->routeIs('pos.sell.*') ? 'text-primary bg-primary-light font-medium' : '' }}">
                     <i class="fas fa-cash-register w-3.5 text-center"></i><span>New Sale</span>
-                </a>
+                </x-sidebar-link>
                 @endif
                 @if(auth()->user()->hasPermission('pos-sales.view'))
-                <a href="{{ route('pos-sales.index') }}"
+                <x-sidebar-link href="{{ route('pos-sales.index') }}"
                     class="flex items-center gap-2.5 pl-9 pr-3 py-1.5 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-50 text-[13px] transition-colors {{ request()->routeIs('pos-sales.*') ? 'text-primary bg-primary-light font-medium' : '' }}">
                     <i class="fas fa-receipt w-3.5 text-center"></i><span>Sales</span>
-                </a>
+                </x-sidebar-link>
                 @endif
-            </div>
-        </div>
+
+        </x-sidebar-group>
 
         @endif
 
         @if(auth()->user()->hasAnyPermission(['reviews.view','notifications.view','histories.view','webhooks.view','webhook-deliveries.view']))
         <!-- Reviews & Notifications -->
-        <div class="mb-0.5">
-            <button
-                class="nav-item has-sub w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-gray-500 hover:bg-gray-50 hover:text-gray-800 text-sm font-medium transition-colors duration-150"
-                data-label="Customer Engagement" data-sub="sub-reviews">
-                <i class="fas fa-star w-4 text-center flex-shrink-0 text-base"></i>
-                <span class="nav-label flex-1 text-left">Customer Engagement</span>
-                <i class="nav-chevron fas fa-chevron-down text-[10px] flex-shrink-0"></i>
-            </button>
-            <div class="submenu sub-indent" id="sub-reviews">
+        <x-sidebar-group id="sub-reviews" title="Customer Engagement" :active="request()->routeIs('product-reviews.*', 'notifications.*', 'history.*', 'webhooks.*', 'webhook-deliveries.*')">
+            <x-slot name="icon"><i class="fas fa-star w-4 text-center flex-shrink-0 text-base"></i></x-slot>
+
                 @if(auth()->user()->hasPermission('reviews.view'))
-                <a href="{{ route('product-reviews.index') }}"
+                <x-sidebar-link href="{{ route('product-reviews.index') }}"
                     class="flex items-center gap-2.5 pl-9 pr-3 py-1.5 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-50 text-[13px] transition-colors {{ request()->routeIs('product-reviews.*') ? 'text-primary bg-primary-light font-medium' : '' }}">
                     <i class="fas fa-star-half-stroke w-3.5 text-center"></i><span>Product Reviews</span>
-                </a>
+                </x-sidebar-link>
                 @endif
                 @if(auth()->user()->hasPermission('notifications.view'))
-                <a href="{{ route('notifications.index') }}"
+                <x-sidebar-link href="{{ route('notifications.index') }}"
                     class="flex items-center gap-2.5 pl-9 pr-3 py-1.5 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-50 text-[13px] transition-colors {{ request()->routeIs('notifications.*') ? 'text-primary bg-primary-light font-medium' : '' }}">
                     <i class="fas fa-bell w-3.5 text-center"></i><span>Notifications</span>
-                </a>
+                </x-sidebar-link>
                 @endif
                 @if(auth()->user()->hasPermission('histories.view'))
-                <a href="{{ route('history.page') }}"
+                <x-sidebar-link href="{{ route('history.page') }}"
                     class="flex items-center gap-2.5 pl-9 pr-3 py-1.5 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-50 text-[13px] transition-colors {{ request()->routeIs('history.*') ? 'text-primary bg-primary-light font-medium' : '' }}">
                     <i class="fas fa-history w-3.5 text-center"></i><span>Activity History</span>
-                </a>
+                </x-sidebar-link>
                 @endif
                 @if(auth()->user()->hasPermission('webhooks.view'))
-                <a href="{{ route('webhooks.index') }}"
+                <x-sidebar-link href="{{ route('webhooks.index') }}"
                     class="flex items-center gap-2.5 pl-9 pr-3 py-1.5 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-50 text-[13px] transition-colors {{ request()->routeIs('webhooks.*') ? 'text-primary bg-primary-light font-medium' : '' }}">
                     <i class="fas fa-plug w-3.5 text-center"></i><span>Webhooks</span>
-                </a>
+                </x-sidebar-link>
                 @endif
                 @if(auth()->user()->hasPermission('webhook-deliveries.view'))
-                <a href="{{ route('webhook-deliveries.index') }}"
+                <x-sidebar-link href="{{ route('webhook-deliveries.index') }}"
                     class="flex items-center gap-2.5 pl-9 pr-3 py-1.5 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-50 text-[13px] transition-colors {{ request()->routeIs('webhook-deliveries.*') ? 'text-primary bg-primary-light font-medium' : '' }}">
                     <i class="fas fa-paper-plane w-3.5 text-center"></i><span>Webhook Deliveries</span>
-                </a>
+                </x-sidebar-link>
                 @endif
-            </div>
-        </div>
+
+        </x-sidebar-group>
         @endif
 
         <!-- History -->
         @if(auth()->user()->hasPermission('histories.view'))
         <div class="mb-0.5">
-            <a href="{{ route('history.page') }}"
+            <x-sidebar-link href="{{ route('history.page') }}"
                 class="nav-item flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-medium transition-colors duration-150 mb-0.5 {{ request()->routeIs('history.*') ? 'text-white active' : 'text-gray-500 hover:bg-gray-50 hover:text-gray-800' }}"
                 data-label="Activity Log">
                 <i class="fas fa-clock-rotate-left w-4 text-center flex-shrink-0 text-base"></i>
                 <span class="nav-label">Activity Log</span>
-            </a>
+            </x-sidebar-link>
         </div>
         @endif
 
         @if(auth()->user()->hasAnyPermission(['frontend.view','frontend.banners.view','frontend.sliders.view','frontend.navbar.view','frontend.announcements.view','frontend.ctas.view','frontend.service-benefits.view','frontend.pages.view','frontend.testimonials.view','frontend.faqs.view','frontend.footers.view','frontend.settings.view']))
         <!-- Frontend -->
-        <div class="mb-0.5">
-            <button
-                class="nav-item has-sub w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-gray-500 hover:bg-gray-50 hover:text-gray-800 text-sm font-medium transition-colors duration-150"
-                data-label="Online Store" data-sub="sub-frontend">
-                <i class="fas fa-paint-brush w-4 text-center flex-shrink-0 text-base"></i>
-                <span class="nav-label flex-1 text-left">Online Store</span>
-                <i class="nav-chevron fas fa-chevron-down text-[10px] flex-shrink-0"></i>
-            </button>
-            <div class="submenu sub-indent" id="sub-frontend">
+        <x-sidebar-group id="sub-frontend" title="Online Store" :active="request()->routeIs('frontend.service-benefits.*', 'store-domains.*', 'frontend.banners.*', 'frontend.sliders.*', 'frontend.nav-items.index', 'frontend.announcement-bars.*', 'frontend.site-settings.*', 'frontend.ctas.*', 'frontend.nav-items.subnavbar.*', 'frontend.pages.*', 'frontend.testimonials.*', 'frontend.faqs.*', 'frontend.footers.*')">
+            <x-slot name="icon"><i class="fas fa-paint-brush w-4 text-center flex-shrink-0 text-base"></i></x-slot>
+
                 @if(auth()->user()->hasPermission('frontend.service-benefits.view'))
-                <a href="{{ route('frontend.service-benefits.index') }}" class="flex items-center gap-2.5 pl-9 pr-3 py-1.5 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-50 text-[13px] transition-colors {{ request()->routeIs('frontend.service-benefits.*') ? 'text-primary bg-primary-light font-medium' : '' }}"><i class="fas fa-shield-halved w-3.5 text-center"></i><span>Service Benefits</span></a>
+                <x-sidebar-link href="{{ route('frontend.service-benefits.index') }}" class="flex items-center gap-2.5 pl-9 pr-3 py-1.5 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-50 text-[13px] transition-colors {{ request()->routeIs('frontend.service-benefits.*') ? 'text-primary bg-primary-light font-medium' : '' }}"><i class="fas fa-shield-halved w-3.5 text-center"></i><span>Service Benefits</span></x-sidebar-link>
                 @endif
                 @if(auth()->user()->hasPermission('stores.view'))
-                <a href="{{ route('store-domains.index') }}"
+                <x-sidebar-link href="{{ route('store-domains.index') }}"
                     class="flex items-center gap-2.5 pl-9 pr-3 py-1.5 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-50 text-[13px] transition-colors {{ request()->routeIs('store-domains.*') ? 'text-primary bg-primary-light font-medium' : '' }}">
                     <i class="fas fa-globe w-3.5 text-center"></i><span>Domain Registry</span>
-                </a>
+                </x-sidebar-link>
                 @endif
                 @if(auth()->user()->hasPermission('frontend.banners.view'))
-                <a href="{{ route('frontend.banners.index') }}"
+                <x-sidebar-link href="{{ route('frontend.banners.index') }}"
                     class="flex items-center gap-2.5 pl-9 pr-3 py-1.5 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-50 text-[13px] transition-colors {{ request()->routeIs('frontend.banners.*') ? 'text-primary bg-primary-light font-medium' : '' }}">
                     <i class="fas fa-images w-3.5 text-center"></i><span>Banners</span>
-                </a>
+                </x-sidebar-link>
                 @endif
                 @if(auth()->user()->hasPermission('frontend.sliders.view'))
-                <a href="#"
+                <x-sidebar-link href="#"
                     class="flex items-center gap-2.5 pl-9 pr-3 py-1.5 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-50 text-[13px] transition-colors {{ request()->routeIs('frontend.sliders.*') ? 'text-primary bg-primary-light font-medium' : '' }}">
                     <i class="fas fa-sliders-h w-3.5 text-center"></i><span>Sliders</span>
-                </a>
+                </x-sidebar-link>
                 @endif
                 @if(auth()->user()->hasPermission('frontend.navbar.view'))
-                <a href="{{ route('frontend.nav-items.index') }}"
+                <x-sidebar-link href="{{ route('frontend.nav-items.index') }}"
                     class="flex items-center gap-2.5 pl-9 pr-3 py-1.5 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-50 text-[13px] transition-colors {{ request()->routeIs('frontend.nav-items.index') ? 'text-primary bg-primary-light font-medium' : '' }}">
                     <i class="fas fa-bars w-3.5 text-center"></i><span>Primary Navigation</span>
-                </a>
+                </x-sidebar-link>
                 @endif
                 @if(auth()->user()->hasPermission('frontend.announcements.view'))
-                <a href="{{ route('frontend.announcement-bars.index') }}"
+                <x-sidebar-link href="{{ route('frontend.announcement-bars.index') }}"
                     class="flex items-center gap-2.5 pl-9 pr-3 py-1.5 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-50 text-[13px] transition-colors {{ request()->routeIs('frontend.announcement-bars.*') ? 'text-primary bg-primary-light font-medium' : '' }}">
                     <i class="fas fa-rectangle-ad w-3.5 text-center"></i><span>Announcement Bars</span>
-                </a>
+                </x-sidebar-link>
                 @endif
                 @if(auth()->user()->hasPermission('frontend.settings.view'))
-                <a href="{{ route('frontend.site-settings.index') }}"
+                <x-sidebar-link href="{{ route('frontend.site-settings.index') }}"
                     class="flex items-center gap-2.5 pl-9 pr-3 py-1.5 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-50 text-[13px] transition-colors {{ request()->routeIs('frontend.site-settings.*') ? 'text-primary bg-primary-light font-medium' : '' }}">
                     <i class="fas fa-cog w-3.5 text-center"></i><span>Site Settings</span>
-                </a>
+                </x-sidebar-link>
                 @endif
                 @if(auth()->user()->hasPermission('frontend.ctas.view'))
-                <a href="{{ route('frontend.ctas.index') }}"
+                <x-sidebar-link href="{{ route('frontend.ctas.index') }}"
                     class="flex items-center gap-2.5 pl-9 pr-3 py-1.5 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-50 text-[13px] transition-colors {{ request()->routeIs('frontend.ctas.*') ? 'text-primary bg-primary-light font-medium' : '' }}">
                     <i class="fas fa-bullhorn w-3.5 text-center"></i><span>Homepage Actions</span>
-                </a>
+                </x-sidebar-link>
                 @endif
                 @if(auth()->user()->hasPermission('frontend.navbar.view'))
-                <a href="{{ route('frontend.nav-items.subnavbar.index') }}"
+                <x-sidebar-link href="{{ route('frontend.nav-items.subnavbar.index') }}"
                     class="flex items-center gap-2.5 pl-9 pr-3 py-1.5 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-50 text-[13px] transition-colors {{ request()->routeIs('frontend.nav-items.subnavbar.*') ? 'text-primary bg-primary-light font-medium' : '' }}">
                     <i class="fas fa-list w-3.5 text-center"></i><span>Secondary Navigation</span>
-                </a>
+                </x-sidebar-link>
                 @endif
                 @if(auth()->user()->hasPermission('frontend.pages.view'))
-                <a href="#"
+                <x-sidebar-link href="#"
                     class="flex items-center gap-2.5 pl-9 pr-3 py-1.5 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-50 text-[13px] transition-colors {{ request()->routeIs('frontend.pages.*') ? 'text-primary bg-primary-light font-medium' : '' }}">
                     <i class="fas fa-file w-3.5 text-center"></i><span>Pages</span>
-                </a>
+                </x-sidebar-link>
                 @endif
                 @if(auth()->user()->hasPermission('frontend.testimonials.view'))
-                <a href="#"
+                <x-sidebar-link href="#"
                     class="flex items-center gap-2.5 pl-9 pr-3 py-1.5 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-50 text-[13px] transition-colors {{ request()->routeIs('frontend.testimonials.*') ? 'text-primary bg-primary-light font-medium' : '' }}">
                     <i class="fas fa-comment-dots w-3.5 text-center"></i><span>Testimonials</span>
-                </a>
+                </x-sidebar-link>
                 @endif
                 @if(auth()->user()->hasPermission('frontend.faqs.view'))
-                <a href="#"
+                <x-sidebar-link href="#"
                     class="flex items-center gap-2.5 pl-9 pr-3 py-1.5 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-50 text-[13px] transition-colors {{ request()->routeIs('frontend.faqs.*') ? 'text-primary bg-primary-light font-medium' : '' }}">
                     <i class="fas fa-question-circle w-3.5 text-center"></i><span>FAQs</span>
-                </a>
+                </x-sidebar-link>
                 @endif
                 @if(auth()->user()->hasPermission('frontend.footers.view'))
-                <a href="#"
+                <x-sidebar-link href="#"
                     class="flex items-center gap-2.5 pl-9 pr-3 py-1.5 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-50 text-[13px] transition-colors {{ request()->routeIs('frontend.footers.*') ? 'text-primary bg-primary-light font-medium' : '' }}">
                     <i class="fas fa-shoe-prints w-3.5 text-center"></i><span>Footer</span>
-                </a>
+                </x-sidebar-link>
                 @endif
-            </div>
-        </div>
+
+        </x-sidebar-group>
 
         @endif
 
         @if(auth()->user()->hasAnyPermission(['marketing.view','marketing.gtm.view']))
         <!-- Marketing -->
-        <div class="mb-0.5">
-            <button
-                class="nav-item has-sub w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-gray-500 hover:bg-gray-50 hover:text-gray-800 text-sm font-medium transition-colors duration-150"
-                data-label="Integrations" data-sub="sub-marketing">
-                <i class="fas fa-bullhorn w-4 text-center flex-shrink-0 text-base"></i>
-                <span class="nav-label flex-1 text-left">Marketing</span>
-                <i class="nav-chevron fas fa-chevron-down text-[10px] flex-shrink-0"></i>
-            </button>
-            <div class="submenu sub-indent" id="sub-marketing">
+        <x-sidebar-group id="sub-marketing" title="Integrations" :active="request()->routeIs('frontend.marketing.gtm.*')">
+            <x-slot name="icon"><i class="fas fa-bullhorn w-4 text-center flex-shrink-0 text-base"></i></x-slot>
+
                 @if(auth()->user()->hasPermission('marketing.gtm.view'))
-                <a href="{{ route('frontend.marketing.gtm.index') }}"
+                <x-sidebar-link href="{{ route('frontend.marketing.gtm.index') }}"
                     class="flex items-center gap-2.5 pl-9 pr-3 py-1.5 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-50 text-[13px] transition-colors {{ request()->routeIs('frontend.marketing.gtm.*') ? 'text-primary bg-primary-light font-medium' : '' }}">
                     <i class="fas fa-tags w-3.5 text-center"></i><span>Google Tag Manager</span>
-                </a>
+                </x-sidebar-link>
                 @endif
-            </div>
-        </div>
+
+        </x-sidebar-group>
 
         @endif
 
         @if(auth()->user()->hasAnyPermission(['reports.view','reports.dashboard','reports.sales','reports.products','reports.inventory','reports.orders','reports.shipping','reports.customers','reports.campaigns','reports.finance','reports.refunds','reports.purchases','reports.staff']))
         <!-- Reports -->
-        <div class="mb-0.5">
-            <button
-                class="nav-item has-sub w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-gray-500 hover:bg-gray-50 hover:text-gray-800 text-sm font-medium transition-colors duration-150"
-                data-label="Reports" data-sub="sub-reports">
-                <i class="fas fa-chart-line w-4 text-center flex-shrink-0 text-base"></i>
-                <span class="nav-label flex-1 text-left">Reports</span>
-                <i class="nav-chevron fas fa-chevron-down text-[10px] flex-shrink-0"></i>
-            </button>
-            <div class="submenu sub-indent" id="sub-reports">
+        <x-sidebar-group id="sub-reports" title="Reports" :active="request()->routeIs('reports.dashboard', 'reports.sales', 'reports.products', 'reports.inventory', 'reports.orders', 'reports.shipping', 'reports.customers', 'reports.campaigns', 'reports.finance', 'reports.refunds', 'reports.purchases', 'reports.staff')">
+            <x-slot name="icon"><i class="fas fa-chart-line w-4 text-center flex-shrink-0 text-base"></i></x-slot>
+
                 @if(auth()->user()->hasPermission('reports.dashboard'))
-                <a href="{{ route('reports.dashboard') }}"
+                <x-sidebar-link href="{{ route('reports.dashboard') }}"
                     class="flex items-center gap-2.5 pl-9 pr-3 py-1.5 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-50 text-[13px] transition-colors {{ request()->routeIs('reports.dashboard') ? 'text-primary bg-primary-light font-medium' : '' }}">
                     <i class="fas fa-gauge-high w-3.5 text-center"></i><span>Executive Dashboard</span>
-                </a>
+                </x-sidebar-link>
                 @endif
                 @if(auth()->user()->hasPermission('reports.sales'))
-                <a href="{{ route('reports.sales') }}"
+                <x-sidebar-link href="{{ route('reports.sales') }}"
                     class="flex items-center gap-2.5 pl-9 pr-3 py-1.5 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-50 text-[13px] transition-colors {{ request()->routeIs('reports.sales') ? 'text-primary bg-primary-light font-medium' : '' }}">
                     <i class="fas fa-coins w-3.5 text-center"></i><span>Sales Reports</span>
-                </a>
+                </x-sidebar-link>
                 @endif
                 @if(auth()->user()->hasPermission('reports.products'))
-                <a href="{{ route('reports.products') }}"
+                <x-sidebar-link href="{{ route('reports.products') }}"
                     class="flex items-center gap-2.5 pl-9 pr-3 py-1.5 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-50 text-[13px] transition-colors {{ request()->routeIs('reports.products') ? 'text-primary bg-primary-light font-medium' : '' }}">
                     <i class="fas fa-box w-3.5 text-center"></i><span>Product Reports</span>
-                </a>
+                </x-sidebar-link>
                 @endif
                 @if(auth()->user()->hasPermission('reports.inventory'))
-                <a href="{{ route('reports.inventory') }}"
+                <x-sidebar-link href="{{ route('reports.inventory') }}"
                     class="flex items-center gap-2.5 pl-9 pr-3 py-1.5 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-50 text-[13px] transition-colors {{ request()->routeIs('reports.inventory') ? 'text-primary bg-primary-light font-medium' : '' }}">
                     <i class="fas fa-warehouse w-3.5 text-center"></i><span>Inventory Reports</span>
-                </a>
+                </x-sidebar-link>
                 @endif
                 @if(auth()->user()->hasPermission('reports.orders'))
-                <a href="{{ route('reports.orders') }}"
+                <x-sidebar-link href="{{ route('reports.orders') }}"
                     class="flex items-center gap-2.5 pl-9 pr-3 py-1.5 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-50 text-[13px] transition-colors {{ request()->routeIs('reports.orders') ? 'text-primary bg-primary-light font-medium' : '' }}">
                     <i class="fas fa-truck-fast w-3.5 text-center"></i><span>Order & Fulfilment Reports</span>
-                </a>
+                </x-sidebar-link>
                 @endif
                 @if(auth()->user()->hasPermission('reports.shipping'))
-                <a href="{{ route('reports.shipping') }}"
+                <x-sidebar-link href="{{ route('reports.shipping') }}"
                     class="flex items-center gap-2.5 pl-9 pr-3 py-1.5 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-50 text-[13px] transition-colors {{ request()->routeIs('reports.shipping') ? 'text-primary bg-primary-light font-medium' : '' }}">
                     <i class="fas fa-ship w-3.5 text-center"></i><span>Shipping & Delivery Reports</span>
-                </a>
+                </x-sidebar-link>
                 @endif
                 @if(auth()->user()->hasPermission('reports.customers'))
-                <a href="{{ route('reports.customers') }}"
+                <x-sidebar-link href="{{ route('reports.customers') }}"
                     class="flex items-center gap-2.5 pl-9 pr-3 py-1.5 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-50 text-[13px] transition-colors {{ request()->routeIs('reports.customers') ? 'text-primary bg-primary-light font-medium' : '' }}">
                     <i class="fas fa-users w-3.5 text-center"></i><span>Customer Reports</span>
-                </a>
+                </x-sidebar-link>
                 @endif
                 @if(auth()->user()->hasPermission('reports.campaigns'))
-                <a href="{{ route('reports.campaigns') }}"
+                <x-sidebar-link href="{{ route('reports.campaigns') }}"
                     class="flex items-center gap-2.5 pl-9 pr-3 py-1.5 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-50 text-[13px] transition-colors {{ request()->routeIs('reports.campaigns') ? 'text-primary bg-primary-light font-medium' : '' }}">
                     <i class="fas fa-bullhorn w-3.5 text-center"></i><span>Campaign & Coupon Reports</span>
-                </a>
+                </x-sidebar-link>
                 @endif
                 @if(auth()->user()->hasPermission('reports.finance'))
-                <a href="{{ route('reports.finance') }}"
+                <x-sidebar-link href="{{ route('reports.finance') }}"
                     class="flex items-center gap-2.5 pl-9 pr-3 py-1.5 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-50 text-[13px] transition-colors {{ request()->routeIs('reports.finance') ? 'text-primary bg-primary-light font-medium' : '' }}">
                     <i class="fas fa-file-invoice-dollar w-3.5 text-center"></i><span>Finance Reports</span>
-                </a>
+                </x-sidebar-link>
                 @endif
                 @if(auth()->user()->hasPermission('reports.refunds'))
-                <a href="{{ route('reports.refunds') }}"
+                <x-sidebar-link href="{{ route('reports.refunds') }}"
                     class="flex items-center gap-2.5 pl-9 pr-3 py-1.5 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-50 text-[13px] transition-colors {{ request()->routeIs('reports.refunds') ? 'text-primary bg-primary-light font-medium' : '' }}">
                     <i class="fas fa-rotate-left w-3.5 text-center"></i><span>Refund & Return Reports</span>
-                </a>
+                </x-sidebar-link>
                 @endif
                 @if(auth()->user()->hasPermission('reports.purchases'))
-                <a href="{{ route('reports.purchases') }}"
+                <x-sidebar-link href="{{ route('reports.purchases') }}"
                     class="flex items-center gap-2.5 pl-9 pr-3 py-1.5 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-50 text-[13px] transition-colors {{ request()->routeIs('reports.purchases') ? 'text-primary bg-primary-light font-medium' : '' }}">
                     <i class="fas fa-cart-plus w-3.5 text-center"></i><span>Purchase & Supplier Reports</span>
-                </a>
+                </x-sidebar-link>
                 @endif
                 @if(auth()->user()->hasPermission('reports.staff'))
-                <a href="{{ route('reports.staff') }}"
+                <x-sidebar-link href="{{ route('reports.staff') }}"
                     class="flex items-center gap-2.5 pl-9 pr-3 py-1.5 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-50 text-[13px] transition-colors {{ request()->routeIs('reports.staff') ? 'text-primary bg-primary-light font-medium' : '' }}">
                     <i class="fas fa-user-tie w-3.5 text-center"></i><span>Staff & Access Reports</span>
-                </a>
+                </x-sidebar-link>
                 @endif
-            </div>
-        </div>
+
+        </x-sidebar-group>
 
         @endif
 
         @if(auth()->user()->hasPermission('settings.view'))
         <!-- Settings -->
-        <a href="#"
+        <x-sidebar-link href="#"
             class="nav-item flex items-center gap-2.5 px-3 py-2 rounded-lg text-gray-500 hover:bg-gray-50 hover:text-gray-800 text-sm font-medium transition-colors duration-150 mb-0.5"
             data-label="Settings">
             <i class="fas fa-cog w-4 text-center flex-shrink-0 text-base"></i>
             <span class="nav-label">Settings</span>
-        </a>
+        </x-sidebar-link>
         @endif
 
     </nav>

@@ -52,19 +52,13 @@
         }
     });
     
-    // Restore collapsed state from localStorage
-    let collapsed = localStorage.getItem('sidebarCollapsed') === 'true';
-
-    // Apply initial collapsed state on page load
-    if (collapsed) {
-        sidebar.classList.add('collapsed');
-        sidebar.style.width = '60px';
-    }
+    // Keep collapse state in memory only; every page starts in the expanded
+    // layout while route-active groups are rendered open by Blade.
+    let collapsed = false;
 
     /* ---- Collapse toggle ---- */
     collapseBtn?.addEventListener('click', () => {
         collapsed = !collapsed;
-        localStorage.setItem('sidebarCollapsed', collapsed);
         if (collapsed) {
             sidebar.classList.add('collapsed');
             sidebar.style.width = '60px';
@@ -74,80 +68,47 @@
         }
     });
 
-    /* ---- Helper: save which parent submenus are open ---- */
-    function saveOpenParents() {
-        const openIds = [];
-        document.querySelectorAll('.has-sub.open').forEach(btn => {
-            if (btn.dataset.sub) openIds.push(btn.dataset.sub);
+    function setGroupOpen(button, isOpen) {
+        const group = button.closest('[data-sidebar-group]');
+        const submenu = document.getElementById(button.dataset.sub);
+        if (!submenu) return;
+
+        submenu.classList.toggle('open', isOpen);
+        button.classList.toggle('open', isOpen);
+        button.setAttribute('aria-expanded', String(isOpen));
+        group?.setAttribute('data-open', String(isOpen));
+    }
+
+    function openActiveGroups() {
+        document.querySelectorAll('[data-sidebar-group]').forEach(group => {
+            const button = group.querySelector('[data-sidebar-group-toggle]');
+            if (button) setGroupOpen(button, group.dataset.active === 'true');
         });
-        localStorage.setItem('sidebarOpenSubmenus', JSON.stringify(openIds));
     }
 
-    /* ---- Helper: restore open parents from saved state ---- */
-    function restoreOpenParents() {
-        const saved = localStorage.getItem('sidebarOpenSubmenus');
-        if (!saved) return;
-        try {
-            const openIds = JSON.parse(saved);
-            openIds.forEach(subId => {
-                const sub = document.getElementById(subId);
-                const btn = document.querySelector(`[data-sub="${subId}"]`);
-                if (sub && btn) {
-                    sub.classList.add('open');
-                    btn.classList.add('open');
-                }
-            });
-        } catch(e) {}
-    }
+    /* ---- Submenu toggles ---- */
+    document.querySelectorAll('[data-sidebar-group-toggle]').forEach(button => {
+        button.addEventListener('click', function () {
+            // Keep submenu toggles available on mobile even when the desktop
+            // sidebar is saved in its collapsed state.
+            if (collapsed && window.innerWidth >= 640) return;
 
-/* ---- Submenu toggles ---- */
-document.querySelectorAll('.has-sub').forEach(btn => {
-    btn.addEventListener('click', function () {
-        // The desktop collapse preference must not disable submenu toggles on
-        // small screens, where the sidebar is expanded for touch navigation.
-        if (collapsed && window.innerWidth >= 640) return;
+            const submenu = document.getElementById(this.dataset.sub);
+            const isOpen = submenu?.classList.contains('open') ?? false;
 
-        const subId = this.dataset.sub;
-        const sub = document.getElementById(subId);
+            if (!isOpen) {
+                document.querySelectorAll('[data-sidebar-group-toggle]').forEach(otherButton => {
+                    setGroupOpen(otherButton, false);
+                });
+            }
 
-        const isOpen = sub.classList.contains('open');
-
-        if (isOpen) {
-            // Close current submenu
-            sub.classList.remove('open');
-            this.classList.remove('open');
-        } else {
-            // Close all others
-            document.querySelectorAll('.submenu').forEach(s => {
-                s.classList.remove('open');
-            });
-
-            document.querySelectorAll('.has-sub').forEach(b => {
-                b.classList.remove('open');
-            });
-
-            // Open selected submenu
-            sub.classList.add('open');
-            this.classList.add('open');
-        }
-
-        saveOpenParents();
+            setGroupOpen(this, !isOpen);
+        });
     });
-});
 
-    /* ---- On page load, open submenu: first from saved state, then from active item ---- */
-    restoreOpenParents();
-
-    // Also open any parent that contains an active child (ensures active page is always visible)
-    document.querySelectorAll('.submenu').forEach(sub => {
-        const hasActive = sub.querySelector('a[class*="text-blue-600 bg-blue-50"]');
-        if (hasActive) {
-            sub.classList.add('open');
-            const parentBtn = document.querySelector(`[data-sub="${sub.id}"]`);
-            if (parentBtn) parentBtn.classList.add('open');
-            saveOpenParents(); // immediately save
-        }
-    });
+    // The current route determines the open group in the server-rendered
+    // sidebar. Do not restore an unrelated submenu from a previous page.
+    openActiveGroups();
 
     /* ---- Tooltip on collapsed ---- */
     document.querySelectorAll('.nav-item[data-label], .has-sub[data-label]').forEach(el => {
@@ -192,17 +153,7 @@ document.querySelectorAll('.has-sub').forEach(btn => {
 
             if (!term) {
                 resetSearchFilter();
-                // After clearing search, restore the originally active submenus
-                restoreOpenParents();
-                // Also ensure any active child's parent is open
-                document.querySelectorAll('.submenu').forEach(sub => {
-                    const hasActive = sub.querySelector('a[class*="text-blue-600 bg-blue-50"]');
-                    if (hasActive) {
-                        sub.classList.add('open');
-                        const parentBtn = document.querySelector(`[data-sub="${sub.id}"]`);
-                        if (parentBtn) parentBtn.classList.add('open');
-                    }
-                });
+                openActiveGroups();
                 return;
             }
 
@@ -214,6 +165,10 @@ document.querySelectorAll('.has-sub').forEach(btn => {
                 s.classList.remove('open');
                 s.style.display = '';
             });
+            document.querySelectorAll('[data-sidebar-group-toggle]').forEach(button => {
+                button.setAttribute('aria-expanded', 'false');
+                button.closest('[data-sidebar-group]')?.setAttribute('data-open', 'false');
+            });
 
             allItems.forEach(item => {
                 if (item.label.toLowerCase().includes(term)) {
@@ -224,12 +179,15 @@ document.querySelectorAll('.has-sub').forEach(btn => {
                         if (wrapper) wrapper.style.display = '';
                         item.parentBtn.style.display = '';
                         item.group.style.display = '';
-                        item.group.classList.add('open');
+                        setGroupOpen(item.parentBtn, true);
                     } else if (item.subId) {
                         const wrapper = item.el.closest('div');
                         if (wrapper) wrapper.style.display = '';
                         const sub = document.getElementById(item.subId);
-                        if (sub) { sub.style.display = ''; sub.classList.add('open'); }
+                        if (sub) {
+                            sub.style.display = '';
+                            setGroupOpen(item.el, true);
+                        }
                     }
                 }
             });
@@ -242,15 +200,7 @@ document.querySelectorAll('.has-sub').forEach(btn => {
         searchClear.classList.add('hidden');
         searchEmptyMsg.classList.add('hidden');
         resetSearchFilter();
-        restoreOpenParents();
-        document.querySelectorAll('.submenu').forEach(sub => {
-            const hasActive = sub.querySelector('a[class*="text-blue-600 bg-blue-50"]');
-            if (hasActive) {
-                sub.classList.add('open');
-                const parentBtn = document.querySelector(`[data-sub="${sub.id}"]`);
-                if (parentBtn) parentBtn.classList.add('open');
-            }
-        });
+        openActiveGroups();
     });
 
     document.addEventListener('keydown', e => {
@@ -259,7 +209,7 @@ document.querySelectorAll('.has-sub').forEach(btn => {
             searchClear.classList.add('hidden');
             searchEmptyMsg.classList.add('hidden');
             resetSearchFilter();
-            restoreOpenParents();
+            openActiveGroups();
         }
     });
 
@@ -267,10 +217,9 @@ document.querySelectorAll('.has-sub').forEach(btn => {
         document.querySelectorAll('#sideNav > *').forEach(el => el.style.display = '');
         document.querySelectorAll('#sideNav a, #sideNav button').forEach(el => el.style.display = '');
         document.querySelectorAll('.submenu').forEach(s => {
-            s.classList.remove('open');
             s.style.display = '';
         });
-        document.querySelectorAll('.has-sub').forEach(b => b.classList.remove('open'));
+        document.querySelectorAll('[data-sidebar-group-toggle]').forEach(button => setGroupOpen(button, false));
         searchEmptyMsg.classList.add('hidden');
     }
 })();

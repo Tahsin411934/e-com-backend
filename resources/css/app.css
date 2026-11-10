@@ -4,6 +4,21 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Keep the shared admin sidebar visually continuous across same-origin pages. */
+@view-transition {
+  navigation: auto;
+}
+
+#sidebar { view-transition-name: admin-sidebar; }
+
+::view-transition-group(admin-sidebar) { animation-duration: 0s; }
+::view-transition-image-pair(admin-sidebar) { isolation: none; }
+::view-transition-old(admin-sidebar),
+::view-transition-new(admin-sidebar) {
+  animation: none;
+  mix-blend-mode: normal;
+}
+
  * { -webkit-tap-highlight-color: transparent; }
 
   /* Sidebar width transitions */

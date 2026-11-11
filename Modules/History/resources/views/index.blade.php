@@ -198,7 +198,7 @@
         function permanentlyDeleteRecord(id) {
             Swal.fire({
                 title: 'Permanently delete record?',
-                text: 'This record and dependent records covered by cascade rules will be permanently removed. This cannot be undone.',
+                text: 'This record will be permanently removed. Related data may also be deleted. This cannot be undone.',
                 icon: 'warning', showCancelButton: true,
                 confirmButtonText: 'Permanently delete', confirmButtonColor: '#dc2626',
                 showLoaderOnConfirm: true,

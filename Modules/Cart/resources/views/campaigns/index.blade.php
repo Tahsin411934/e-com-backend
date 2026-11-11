@@ -200,15 +200,13 @@
                             this.selectedData = null;
                             this.searchResults = [];
                         }
-                        Swal.fire({
-                            toast: true,
-                            position: 'top-end',
-                            icon: 'success',
-                            title: result.message || 'Campaign deleted successfully.',
-                            showConfirmButton: false,
-                            timer: 3000,
-                            timerProgressBar: true,
-                        });
+                        Toastify({
+                            text: result.message || 'Campaign deleted successfully.',
+                            duration: 3000,
+                            gravity: 'bottom',
+                            position: 'right',
+                            style: { background: 'linear-gradient(135deg, #dc2626, #f87171)' },
+                        }).showToast();
                     } catch {
                         // The shared request handler displays the error.
                     } finally {

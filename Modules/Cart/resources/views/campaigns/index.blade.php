@@ -193,13 +193,22 @@
                     if (!confirmation.isConfirmed) return;
                     this.deletingId = campaign.id;
                     try {
-                        await request('/campaigns/' + campaign.id, {method: 'DELETE'});
+                        const result = await request('/campaigns/' + campaign.id, {method: 'DELETE'});
                         this.campaigns = this.campaigns.filter(item => item.id !== campaign.id);
                         if (this.selected === campaign.id) {
                             this.selected = null;
                             this.selectedData = null;
                             this.searchResults = [];
                         }
+                        Swal.fire({
+                            toast: true,
+                            position: 'top-end',
+                            icon: 'success',
+                            title: result.message || 'Campaign deleted successfully.',
+                            showConfirmButton: false,
+                            timer: 3000,
+                            timerProgressBar: true,
+                        });
                     } catch {
                         // The shared request handler displays the error.
                     } finally {

@@ -57,6 +57,9 @@
                                 <button @click="editCampaign(campaign)" class="px-3 py-1.5 rounded-lg text-sm font-medium border border-gray-200 text-gray-600 hover:text-primary hover:border-primary transition">Edit</button>
                                 <button @click="toggleActive(campaign.id)" class="px-3 py-1.5 rounded-lg text-sm font-medium border transition" :class="campaign.is_active ? 'bg-red-50 border-red-200 text-red-600 hover:bg-red-100' : 'bg-green-50 border-green-200 text-green-700 hover:bg-green-100'"><span x-text="campaign.is_active ? 'Deactivate' : 'Activate'"></span></button>
                                 <button @click="select(campaign.id)" class="text-primary text-sm">Manage products</button>
+                                @if(auth()->user()?->hasPermission('campaigns.delete'))
+                                    <button type="button" @click="deleteCampaign(campaign)" :disabled="deletingId === campaign.id" class="rounded-lg border border-red-200 px-3 py-1.5 text-sm font-medium text-red-600 hover:bg-red-50 disabled:opacity-50">Delete</button>
+                                @endif
                             </div>
                         </div>
                     </div>
@@ -179,6 +182,30 @@
             const request = (url, options={}) => { const isForm = options.body instanceof FormData; return fetch(url,{headers:{'X-CSRF-TOKEN':csrf,'Accept':'application/json',...(isForm ? {} : {'Content-Type':'application/json'})},...options}).then(async response=>{ const result=await response.json(); if(!response.ok || result.status==='error') throw new Error(Object.values(result.errors || {}).flat().join(' ') || result.message || 'Request failed.'); return result; }).catch(error=>{ Swal.fire({title:'Request failed',text:error.message || 'Please try again.',icon:'error'}); throw error; }); };
             const toLocalInput = (iso) => { if(!iso) return ''; const d=new Date(iso); if(isNaN(d.getTime())) return ''; const p=n=>String(n).padStart(2,'0'); return d.getFullYear()+'-'+p(d.getMonth()+1)+'-'+p(d.getDate())+'T'+p(d.getHours())+':'+p(d.getMinutes()); };
             return {
+                deletingId:null,
+                async deleteCampaign(campaign) {
+                    if (this.deletingId !== null) return;
+                    const confirmation = await Swal.fire({
+                        title: 'Delete campaign?',
+                        text: 'This campaign will stop appearing on the website. You can restore it from History.',
+                        icon: 'warning', showCancelButton: true, confirmButtonText: 'Delete',
+                    });
+                    if (!confirmation.isConfirmed) return;
+                    this.deletingId = campaign.id;
+                    try {
+                        await request('/campaigns/' + campaign.id, {method: 'DELETE'});
+                        this.campaigns = this.campaigns.filter(item => item.id !== campaign.id);
+                        if (this.selected === campaign.id) {
+                            this.selected = null;
+                            this.selectedData = null;
+                            this.searchResults = [];
+                        }
+                    } catch {
+                        // The shared request handler displays the error.
+                    } finally {
+                        this.deletingId = null;
+                    }
+                },
                 campaigns:[], stores:[], filters:{search:'',store_id:'',status:''}, selected:null, selectedData:null, searchResults:[], discount_type:'percentage', discount_value:'', editingEntryId:null, editEntry:{discount_type:'percentage',discount_value:''},
                 form:{name:'',description:'',banner_image:null,starts_at:'',ends_at:'',status:'draft',is_central_campaign:'0'},
                 editForm:{id:null,name:'',description:'',button_text:'',priority:0,status:'draft',starts_at:'',ends_at:'',is_featured:false,is_active:true,is_central_campaign:'0',banner_image:null,banner_preview:null},

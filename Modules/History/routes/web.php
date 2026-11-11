@@ -14,4 +14,6 @@ Route::middleware(['auth', 'verified', 'admin'])->group(function () {
     // (the browser has no Bearer token, matching the dataTable convention
     // used by the other admin modules).
     Route::post('histories/{id}/restore', [HistoryController::class, 'restore'])->name('history.restore')->middleware('permission:histories.restore');
+    Route::delete('histories/{id}/permanent', [HistoryController::class, 'permanentlyDelete'])
+        ->name('history.forceDelete')->middleware('permission:histories.restore');
 });

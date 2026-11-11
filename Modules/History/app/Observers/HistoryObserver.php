@@ -62,7 +62,10 @@ class HistoryObserver
             'new_values' => $new,
             'ip_address' => request()->ip(),
             'user_agent' => request()->userAgent(),
-            'description' => sprintf('%s %s #%s', class_basename($model), $action, $model->getKey()),
+            'description' => sprintf('%s %s #%s', class_basename($model),
+                $action === 'deleted' && method_exists($model, 'isForceDeleting') && $model->isForceDeleting()
+                    ? 'permanently deleted' : $action,
+                $model->getKey()),
         ]);
     }
 }

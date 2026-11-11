@@ -62,6 +62,9 @@
         <div id="historyDetailsContent" class="space-y-4">
             <div class="text-sm text-gray-400">No record selected.</div>
         </div>
+        <button type="button" id="permanentDeleteHistoryBtn" class="hidden mt-4 rounded-lg border border-red-200 px-4 py-2 text-sm font-semibold text-red-600 hover:bg-red-50">
+            Permanent Delete
+        </button>
     </x-drawer>
 
     @push('scripts')
@@ -144,7 +147,8 @@
             // for deleted records (details-only otherwise).
             const entityName = (row.entity_type || '').split('\\').pop();
             $('#drawerTitle').text('History Details — ' + entityName + ' #' + (row.entity_id ?? '-'));
-            $('#restoreHistoryBtn').toggleClass('hidden', row.action !== 'deleted' || !@json(auth()->user()->hasPermission('histories.restore')));
+            $('#restoreHistoryBtn').toggleClass('hidden', !row.can_restore);
+            $('#permanentDeleteHistoryBtn').toggleClass('hidden', !row.can_force_delete);
 
             openGlobalDrawer('historyDrawer', 'historyOverlay');
         };
@@ -191,12 +195,44 @@
             if (currentHistoryId) doRestore(currentHistoryId);
         }
 
+        function permanentlyDeleteRecord(id) {
+            Swal.fire({
+                title: 'Permanently delete record?',
+                text: 'This record and dependent records covered by cascade rules will be permanently removed. This cannot be undone.',
+                icon: 'warning', showCancelButton: true,
+                confirmButtonText: 'Permanently delete', confirmButtonColor: '#dc2626',
+                showLoaderOnConfirm: true,
+                allowOutsideClick: () => !Swal.isLoading(),
+                preConfirm: () => $.ajax({
+                    url: "{{ route('history.forceDelete', ':id') }}".replace(':id', id),
+                    method: 'DELETE',
+                    headers: {'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content},
+                }).then(res => {
+                    if (res.status !== 'success') throw new Error(res.message || 'Unable to delete record.');
+                    return res;
+                }).catch(error => {
+                    Swal.showValidationMessage(error.responseJSON?.message || error.message || 'Unable to delete record.');
+                }),
+            }).then(result => {
+                if (result.isConfirmed) {
+                    closeGlobalDrawer('historyDrawer', 'historyOverlay');
+                    getTable().ajax.reload(null, false);
+                    Swal.fire('Deleted', 'Record permanently deleted.', 'success');
+                }
+            });
+        }
+
         Crud.register('history', 'details', openHistoryDetails);
         Crud.register('history', 'restore', restoreFromDrawer);
+        Crud.register('history', 'permanentDelete', permanentlyDeleteRecord);
 
         $(document).on('click', '.js-history-action', function () {
             var button = $(this);
             var action = button.data('history-action');
+            if (action === 'restore') {
+                restoreHistory(button.data('history-id'));
+                return;
+            }
             var callback = Crud.get('history', action);
             if (typeof callback === 'function') {
                 callback(button.data('history-id'), this);
@@ -204,6 +240,9 @@
         });
 
         $(document).ready(function () {
+            $('#permanentDeleteHistoryBtn').on('click', function () {
+                if (currentHistoryId) permanentlyDeleteRecord(currentHistoryId);
+            });
             $('#resetHistoryFilters').on('click', function () {
                 $('#history_filter_action').val('').trigger('change.select2');
                 $('#history_filter_entity_type').val('').trigger('change.select2');

@@ -5,10 +5,55 @@ namespace Modules\History\Services;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use InvalidArgumentException;
+use Illuminate\Support\Facades\DB;
+use Modules\Cart\Models\Campaign;
+use Modules\Store\Support\CurrentStore;
 use Modules\History\Models\History;
 
 class HistoryService
 {
+    public function canPermanentlyDelete(History $history): bool
+    {
+        if (CurrentStore::id() !== null || ! auth()->user()?->hasPermission('histories.restore')) {
+            return false;
+        }
+        return $this->canRestore($history);
+    }
+
+    public function canRestore(History $history): bool
+    {
+        $modelClass = $history->entity_type;
+        return $history->action === 'deleted'
+            && in_array($modelClass, config('history.models', []), true)
+            && in_array(\Illuminate\Database\Eloquent\SoftDeletes::class, class_uses_recursive($modelClass), true)
+            && $modelClass::onlyTrashed()->whereKey($history->entity_id)->exists();
+    }
+
+    public function permanentlyDelete(int $id): void
+    {
+        abort_unless(CurrentStore::id() === null && auth()->user()?->hasPermission('histories.restore'), 403);
+
+        DB::transaction(function () use ($id) {
+            $history = $this->show($id);
+            $modelClass = $history->entity_type;
+            if ($history->action !== 'deleted'
+                || ! in_array($modelClass, config('history.models', []), true)
+                || ! in_array(\Illuminate\Database\Eloquent\SoftDeletes::class, class_uses_recursive($modelClass), true)) {
+                throw new InvalidArgumentException('This record cannot be permanently deleted.');
+            }
+
+            $model = $modelClass::onlyTrashed()->lockForUpdate()->find($history->entity_id);
+            if (! $model) {
+                throw new InvalidArgumentException('This record has already been restored or permanently deleted.');
+            }
+
+            // Honor model events and the database's cascade/restrict rules.
+            if (! $model->forceDelete()) {
+                throw new InvalidArgumentException('This record could not be permanently deleted.');
+            }
+        });
+    }
+
     public function list(Request $request)
     {
         return History::query()
@@ -32,13 +77,19 @@ class HistoryService
         $history = $this->show($id);
         $modelClass = $history->entity_type;
 
-        if (! in_array($modelClass, config('history.models', []), true)) {
+        if ($history->action !== 'deleted'
+            || ! in_array($modelClass, config('history.models', []), true)
+            || ! in_array(\Illuminate\Database\Eloquent\SoftDeletes::class, class_uses_recursive($modelClass), true)) {
             throw new InvalidArgumentException('This history record cannot be restored.');
         }
 
-        $model = $modelClass::withTrashed()->find($history->entity_id);
+        $model = $modelClass::onlyTrashed()->find($history->entity_id);
         if (! $model || ! method_exists($model, 'restore')) {
             throw new InvalidArgumentException('The original record is no longer available.');
+        }
+
+        if ($model instanceof Campaign) {
+            abort_if(CurrentStore::id() !== null && (int) $model->store_id !== CurrentStore::id(), 404);
         }
 
         $model->restore();

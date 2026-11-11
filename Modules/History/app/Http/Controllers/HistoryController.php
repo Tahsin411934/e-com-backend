@@ -83,14 +83,19 @@ class HistoryController extends Controller
                 return '<span class="px-2 py-0.5 rounded-full text-xs font-semibold '.$color.'">'.e(ucfirst($history->action)).'</span>';
             })
             ->editColumn('created_at', fn (History $history) => $history->created_at?->format('d M Y, h:i A'))
+            ->addColumn('can_restore', fn (History $history) => auth()->user()?->hasPermission('histories.restore') && $this->historyService->canRestore($history))
+            ->addColumn('can_force_delete', fn (History $history) => $this->historyService->canPermanentlyDelete($history))
             ->addColumn('row_actions', function (History $history) {
                 $html = '<div class="flex items-center justify-center gap-2">';
                 $html .= '<button type="button" class="js-history-action inline-flex items-center px-3 py-1.5 rounded-lg bg-white border border-gray-200 text-gray-700 text-xs font-semibold hover:bg-gray-50 hover:border-gray-300 transition duration-150" data-history-action="details" data-history-id="'.$history->id.'" title="View details">'
                     .'<i class="fa fa-eye mr-1 text-primary"></i> Details</button>';
 
-                if ($history->action === 'deleted' && auth()->user()?->hasPermission('histories.restore')) {
+                if ($history->action === 'deleted' && auth()->user()?->hasPermission('histories.restore') && $this->historyService->canRestore($history)) {
                     $html .= '<button type="button" class="js-history-action inline-flex items-center px-3 py-1.5 rounded-lg bg-primary text-white text-xs font-semibold hover:opacity-90 transition duration-150" data-history-action="restore" data-history-id="'.$history->id.'" title="Restore record">'
                         .'<i class="fa fa-rotate-left mr-1"></i> Restore</button>';
+                    if ($this->historyService->canPermanentlyDelete($history)) {
+                        $html .= '<button type="button" class="js-history-action rounded-lg border border-red-200 px-3 py-1.5 text-xs font-semibold text-red-600 hover:bg-red-50" data-history-action="permanentDelete" data-history-id="'.$history->id.'">Permanent Delete</button>';
+                    }
                 }
 
                 $html .= '</div>';
@@ -119,6 +124,19 @@ class HistoryController extends Controller
             return ApiResponse::success($this->historyService->restore((int) $id), 'Record restored successfully.');
         } catch (\Throwable $exception) {
             return ApiResponse::error($exception->getMessage(), 422);
+        }
+    }
+
+    public function permanentlyDelete(int $id)
+    {
+        try {
+            $this->historyService->permanentlyDelete($id);
+            return ApiResponse::success(null, 'Record permanently deleted.');
+        } catch (\InvalidArgumentException $exception) {
+            return ApiResponse::error($exception->getMessage(), 422);
+        } catch (\Illuminate\Database\QueryException $exception) {
+            report($exception);
+            return ApiResponse::error('This record could not be permanently deleted. Related records may need to be removed first.', 409);
         }
     }
 }

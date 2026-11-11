@@ -39,7 +39,14 @@ class HistoryObserver
 
     public function deleted(Model $model): void
     {
-        $this->record($model, 'deleted', $model->getAttributes(), null);
+        $oldValues = $model->getAttributes();
+        if ($model instanceof \Modules\Cart\Models\Campaign && ! $model->isForceDeleting()) {
+            $oldValues['campaign_product_ids'] = $oldValues['_campaign_product_ids_for_audit']
+                ?? $model->products()->pluck('id')->all();
+            unset($oldValues['_campaign_product_ids_for_audit']);
+        }
+
+        $this->record($model, 'deleted', $oldValues, null);
     }
 
     public function restored(Model $model): void

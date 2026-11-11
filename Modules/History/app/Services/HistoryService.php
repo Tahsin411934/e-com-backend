@@ -4,11 +4,12 @@ namespace Modules\History\Services;
 
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
-use InvalidArgumentException;
 use Illuminate\Support\Facades\DB;
+use InvalidArgumentException;
 use Modules\Cart\Models\Campaign;
-use Modules\Store\Support\CurrentStore;
+use Modules\Cart\Models\CampaignProduct;
 use Modules\History\Models\History;
+use Modules\Store\Support\CurrentStore;
 
 class HistoryService
 {
@@ -23,6 +24,13 @@ class HistoryService
     public function canRestore(History $history): bool
     {
         $modelClass = $history->entity_type;
+        if ($modelClass === CampaignProduct::class) {
+            $parentId = CampaignProduct::withTrashed()->whereKey($history->entity_id)->value('campaign_id');
+            if ($parentId !== null && Campaign::onlyTrashed()->whereKey($parentId)->exists()) {
+                return false;
+            }
+        }
+
         return $history->action === 'deleted'
             && in_array($modelClass, config('history.models', []), true)
             && in_array(\Illuminate\Database\Eloquent\SoftDeletes::class, class_uses_recursive($modelClass), true)
@@ -48,6 +56,10 @@ class HistoryService
             }
 
             // Honor model events and the database's cascade/restrict rules.
+            if ($model instanceof Campaign) {
+                CampaignProduct::withTrashed()->where('campaign_id', $model->id)->get()->each->forceDelete();
+            }
+
             if (! $model->forceDelete()) {
                 throw new InvalidArgumentException('This record could not be permanently deleted.');
             }
@@ -88,11 +100,28 @@ class HistoryService
             throw new InvalidArgumentException('The original record is no longer available.');
         }
 
+        if ($model instanceof CampaignProduct && $model->campaign()->withTrashed()->whereNotNull('deleted_at')->exists()) {
+            throw new InvalidArgumentException('Restore the campaign before restoring its products.');
+        }
+
         if ($model instanceof Campaign) {
             abort_if(CurrentStore::id() !== null && (int) $model->store_id !== CurrentStore::id(), 404);
         }
 
-        $model->restore();
+        DB::transaction(function () use ($model, $history): void {
+            $model->restore();
+
+            if ($model instanceof Campaign) {
+                $productIds = $history->old_values['campaign_product_ids'] ?? [];
+                if ($productIds !== []) {
+                    CampaignProduct::onlyTrashed()
+                        ->where('campaign_id', $model->id)
+                        ->whereIn('id', $productIds)
+                        ->get()
+                        ->each->restore();
+                }
+            }
+        });
 
         return $history->fresh('user');
     }

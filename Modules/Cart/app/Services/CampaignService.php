@@ -5,6 +5,7 @@ namespace Modules\Cart\Services;
 use App\Helpers\ApiResponse;
 use App\Services\ImageUploadService;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
@@ -68,7 +69,13 @@ class CampaignService
     public function destroy(Campaign $campaign): JsonResponse
     {
         $this->ensureCampaignAccess($campaign);
-        $campaign->delete();
+        DB::transaction(function () use ($campaign): void {
+            $products = $campaign->products()->get();
+            $productIds = $products->modelKeys();
+            $products->each->delete();
+            $campaign->setAttribute('_campaign_product_ids_for_audit', $productIds);
+            $campaign->delete();
+        });
 
         return ApiResponse::success(null, 'Campaign deleted successfully.');
     }

@@ -31,25 +31,35 @@ class HistoryPermanentDeleteTest extends TestCase
     private function deletedCampaign(): array
     {
         $campaign = Campaign::create(['name' => 'Offer', 'slug' => 'offer', 'status' => 'active']);
+        $product = Product::create([
+            'name' => 'Campaign item', 'slug' => 'campaign-item',
+            'status' => 'active', 'visibility' => 'public', 'product_type' => 'physical',
+        ]);
+        $entry = $campaign->products()->create([
+            'product_id' => $product->id, 'discount_type' => 'percentage', 'discount_value' => 10,
+        ]);
         app(CampaignService::class)->destroy($campaign);
         $history = History::where('entity_type', Campaign::class)
             ->where('entity_id', $campaign->id)->where('action', 'deleted')->latest('id')->firstOrFail();
 
-        return [$campaign, $history];
+        return [$campaign, $history, $entry];
     }
 
     public function test_campaign_soft_delete_restore_and_permanent_delete(): void
     {
-        [$campaign, $history] = $this->deletedCampaign();
+        [$campaign, $history, $entry] = $this->deletedCampaign();
         $service = app(HistoryService::class);
         $this->assertSoftDeleted('campaigns', ['id' => $campaign->id]);
+        $this->assertSoftDeleted('campaign_products', ['id' => $entry->id]);
         $this->assertTrue($service->canPermanentlyDelete($history));
         $service->restore($history->id);
         $this->assertNotSoftDeleted('campaigns', ['id' => $campaign->id]);
+        $this->assertNotSoftDeleted('campaign_products', ['id' => $entry->id]);
         $this->assertFalse($service->canPermanentlyDelete($history));
         $campaign->refresh()->delete();
         $service->permanentlyDelete($history->id);
         $this->assertDatabaseMissing('campaigns', ['id' => $campaign->id]);
+        $this->assertDatabaseMissing('campaign_products', ['id' => $entry->id]);
         $this->assertDatabaseHas('audit_logs', ['id' => $history->id]);
         $this->assertFalse($service->canPermanentlyDelete($history));
     }

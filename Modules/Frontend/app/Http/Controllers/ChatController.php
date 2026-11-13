@@ -12,6 +12,7 @@ use Modules\Catalog\Models\Product;
 use Modules\Frontend\Http\Resources\ProductSearchResource;
 use Modules\Frontend\Services\GeminiChatIntentService;
 use Modules\Frontend\Services\CentralProductSearchService;
+use Modules\Frontend\Services\GeminiQuotaExceededException;
 use Modules\Order\Models\Order;
 
 class ChatController extends Controller
@@ -83,14 +84,35 @@ class ChatController extends Controller
 
         $message = trim($input['message']);
         $knowledgeBaseConfigured = trim((string) config('chatbot.knowledge_base', '')) !== '';
+        $geminiQuotaExceeded = false;
 
         try {
             $intent = $gemini->understand($message, $input['history'] ?? []);
+        } catch (GeminiQuotaExceededException) {
+            $geminiQuotaExceeded = true;
+            $intent = [
+                'intent' => 'product_search',
+                'query' => $message,
+                'category' => '',
+                'reply' => '',
+            ];
         } catch (\Throwable) {
             // Product search remains useful if Gemini is out of quota or unavailable.
             $intent = [
                 'intent' => 'product_search',
                 'query' => $message,
+                'category' => '',
+                'reply' => '',
+            ];
+        }
+
+        // Catch common spoken/typed search commands locally so an imperfect
+        // intent response cannot turn a clear product search into a FAQ.
+        if ($intent['intent'] !== 'product_search' && $this->isProductSearchRequest($message)) {
+            $localQueries = $this->buildSearchQueries('', $message);
+            $intent = [
+                'intent' => 'product_search',
+                'query' => $localQueries[0] ?? $message,
                 'category' => '',
                 'reply' => '',
             ];
@@ -112,6 +134,10 @@ class ChatController extends Controller
 
         $category = $this->findCategory($intent['category'], $message);
         $query = trim($intent['query']);
+        $searchQueries = $this->buildSearchQueries($query, $message);
+        if ($query === '' && $searchQueries !== []) {
+            $query = $searchQueries[0];
+        }
         $browseCategory = $category && (
             $query === ''
             || Str::lower($query) === Str::lower($category->name)
@@ -137,7 +163,14 @@ class ChatController extends Controller
                 ->get();
             $suggestion = null;
         } elseif ($query !== '') {
-            $result = $productSearch->search($query, 8, $category?->id);
+            $result = null;
+            foreach ($searchQueries ?: [$query] as $searchQuery) {
+                $result = $productSearch->search($searchQuery, 8, $category?->id);
+                if ($result['products']->isNotEmpty()) {
+                    break;
+                }
+            }
+            $result ??= $productSearch->search($query, 8, $category?->id);
             $products = $result['products'];
             $suggestion = $result['suggestion'];
         } else {
@@ -168,6 +201,11 @@ class ChatController extends Controller
             'reply' => $reply,
             'products' => $items,
             'suggestion' => $suggestion,
+            'support' => $geminiQuotaExceeded ? [
+                'message' => 'আমাদের AI সহকারীর সাময়িক ব্যবহারসীমা পূর্ণ হয়েছে। দ্রুত সহায়তার জন্য WhatsApp-এ আমাদের বার্তা দিন: 01856533432',
+                'whatsapp_url' => 'https://wa.me/8801856533432?text='.rawurlencode('Hello, I need help finding a product on OneHaat.'),
+                'phone' => '01856533432',
+            ] : null,
         ]);
     }
 
@@ -198,5 +236,46 @@ class ChatController extends Controller
             ->get(['id', 'parent_id', 'name', 'slug', 'status'])
             ->first(fn (Category $category) => Str::contains($normalizedMessage, Str::lower($category->name))
                 || Str::contains($normalizedMessage, Str::lower($category->slug)));
+    }
+
+    /**
+     * Use the customer's original wording as a resilient fallback when Gemini
+     * returns an empty or overly broad search phrase.
+     *
+     * @return array<int, string>
+     */
+    private function buildSearchQueries(string $intentQuery, string $message): array
+    {
+        $cleanMessage = preg_replace(
+            '/(?:দেখিয়ে দিন|দেখিয়ে দিন|দেখান|দেখাও|দেখতে চাই|খুঁজে দিন|খুঁজে দাও|খুঁজুন|খোঁজ দিন|খোঁজ দাও|আমাকে|একটু|পণ্যগুলো|পণ্য|প্রোডাক্টগুলো|প্রোডাক্ট|প্লিজ)/u',
+            ' ',
+            $message
+        ) ?? $message;
+        $cleanMessage = preg_replace(
+            '/(?<![\pL\pN])(?:please|can you|could you|show me|find|search(?: for)?|looking for|i want|i need|products?|items?|available|khujte dao|khuje dao|khujte den|khuje den|khuj(e|te) dao|khuj(e|te) den|dekhao|dekhaw|dekhte chai|show koro|sob|shob|ki ki|ase|ache|dao|den|lagbe|chai)(?![\pL\pN])/iu',
+            ' ',
+            $cleanMessage
+        ) ?? $cleanMessage;
+        $cleanMessage = trim(preg_replace('/\s+/u', ' ', $cleanMessage) ?? $cleanMessage, " \t\n\r\0\x0B,.!?।");
+
+        $queries = array_filter([$intentQuery, $cleanMessage], fn (string $value) => trim($value) !== '');
+
+        foreach ($queries as $candidate) {
+            if (preg_match('/(?<![\pL\pN])(?:chori|churi|churri)(?![\pL\pN])/iu', $candidate)) {
+                array_push($queries, 'churi', 'chori', 'চুড়ি', 'চুরি', 'bangles', 'bangle');
+                break;
+            }
+        }
+
+        return array_values(array_unique(array_map(fn (string $value) => trim($value), $queries)));
+    }
+
+    private function isProductSearchRequest(string $message): bool
+    {
+        if (preg_match('/\b(?:order|tracking|ORD-[A-Z0-9]+)\b/i', $message)) {
+            return false;
+        }
+
+        return preg_match('/(?:খুঁজ|খোঁজ|দেখাও|দেখান|দেখতে চাই|show me|find|search|looking for|khuj|khuje|khujte|dekhao|dekhaw|show koro)/iu', $message) === 1;
     }
 }

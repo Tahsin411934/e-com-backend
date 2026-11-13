@@ -88,6 +88,10 @@ PROMPT;
                 'http_status' => $response->status(),
             ]);
 
+            if ($response->status() === 429 || data_get($response->json(), 'error.status') === 'RESOURCE_EXHAUSTED') {
+                throw new GeminiQuotaExceededException('Gemini API usage limit reached.');
+            }
+
             throw new RuntimeException('Gemini chat is temporarily unavailable.');
         }
 

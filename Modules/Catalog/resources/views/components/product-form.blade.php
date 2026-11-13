@@ -278,6 +278,10 @@
                                 />
                                 <p class="text-xs text-gray-400 mt-1">Shipping charge for this product. At checkout the highest product charge in the cart is taken once.</p>
                             </div>
+                            <div>
+                                <x-form-input label="Minimum Order Quantity" name="minimum_order_quantity" id="minimum_order_quantity" type="number" min="1" step="1" value="{{ $product?->minimum_order_quantity ?? 1 }}" required />
+                                <p class="text-xs text-gray-400 mt-1">Minimum total quantity required to place an order for this product, across all its variants.</p>
+                            </div>
                             <x-form-input label="Published At" name="published_at" id="published_at" type="datetime-local" value="{{ $isEdit ? ($product?->published_at?->format('Y-m-d\TH:i') ?? '') : now()->format('Y-m-d\TH:i') }}" />
                             <div class="pt-2">
                                 <label class="block text-sm font-medium text-gray-700 mb-2">Show on Homepage</label>

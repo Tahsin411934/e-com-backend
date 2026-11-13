@@ -183,6 +183,7 @@ class ProductDetailResource extends JsonResource
                 'main_image' => $this->imageUrl($p->images->firstWhere('is_main', true)?->image_url
                     ?? $p->images->first()?->image_url),
                 'product_type' => $p->product_type,
+                'minimum_order_quantity' => (int) ($p->minimum_order_quantity ?? 1),
                 'unit' => $p->unit ? [
                     'id' => $p->unit->id,
                     'name' => $p->unit->name,
@@ -199,6 +200,7 @@ class ProductDetailResource extends JsonResource
             'short_description' => $this->short_description,
             'description' => $this->description,
             'product_type' => $this->product_type,
+            'minimum_order_quantity' => (int) ($this->minimum_order_quantity ?? 1),
             'unit' => $this->unit ? [
                 'id' => $this->unit->id,
                 'name' => $this->unit->name,

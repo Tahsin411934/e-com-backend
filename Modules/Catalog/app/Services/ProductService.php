@@ -377,6 +377,7 @@ class ProductService
                     'keywords' => $source->keywords,
                     'product_type' => $source->product_type,
                     'status' => $source->status,
+                    'minimum_order_quantity' => $source->minimum_order_quantity ?? 1,
                     'visibility' => $source->visibility,
                     'seo_title' => $source->seo_title,
                     'seo_description' => $source->seo_description,

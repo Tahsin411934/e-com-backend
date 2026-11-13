@@ -61,6 +61,7 @@ class HomeProductResource extends JsonResource
             // Whether the product currently has a discount
             'has_discount' => $priceInfo['has_discount'],
             'product_type' => $this->product_type,
+            'minimum_order_quantity' => (int) ($this->minimum_order_quantity ?? 1),
             'unit' => $this->unit ? [
                 'id' => $this->unit->id,
                 'name' => $this->unit->name,

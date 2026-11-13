@@ -20,12 +20,13 @@ class Product extends Model
 
     protected $table = 'products';
 
-    protected $fillable = ['store_id', 'brand_id', 'category_id', 'unit_id', 'size_id', 'tax_rate_id', 'navbar_item_id', 'subnavbar_item_id', 'name', 'slug', 'short_description', 'description', 'keywords', 'product_type', 'delivery_charge', 'status', 'visibility', 'seo_title', 'seo_description', 'published_at', 'is_homepage', 'order_column'];
+    protected $fillable = ['store_id', 'brand_id', 'category_id', 'unit_id', 'size_id', 'tax_rate_id', 'navbar_item_id', 'subnavbar_item_id', 'name', 'slug', 'short_description', 'description', 'keywords', 'product_type', 'delivery_charge', 'minimum_order_quantity', 'status', 'visibility', 'seo_title', 'seo_description', 'published_at', 'is_homepage', 'order_column'];
 
     protected $casts = [
         'published_at' => 'datetime',
         'is_homepage' => 'boolean',
         'delivery_charge' => 'decimal:2',
+        'minimum_order_quantity' => 'integer',
         'keywords' => 'array',
     ];
 

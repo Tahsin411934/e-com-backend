@@ -76,6 +76,7 @@ class SubnavbarApiController extends Controller
             'products.short_description',
             'products.product_type',
             'products.unit_id',
+            'products.minimum_order_quantity',
             'products.status',
         ], page: $page);
 
@@ -98,6 +99,7 @@ class SubnavbarApiController extends Controller
                 'discount_amount' => $priceInfo['discount_amount'],
                 'has_discount' => $priceInfo['has_discount'],
                 'product_type' => $product->product_type,
+                'minimum_order_quantity' => (int) ($product->minimum_order_quantity ?? 1),
                 'unit' => $product->unit ? [
                     'id' => $product->unit->id,
                     'name' => $product->unit->name,

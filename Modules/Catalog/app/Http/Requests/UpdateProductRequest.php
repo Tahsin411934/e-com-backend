@@ -41,6 +41,7 @@ class UpdateProductRequest extends StoreProductRequest
             'keywords.*' => 'required|string|max:80',
             'product_type' => 'required|in:physical,digital,service,bundle',
             'delivery_charge' => 'nullable|numeric|min:0',
+            'minimum_order_quantity' => 'sometimes|required|integer|min:1',
             'images' => 'nullable|array',
             'images.*' => 'nullable|file|image|mimes:jpeg,png,jpg,gif,webp|max:5120',
             'status' => 'required|in:draft,active,archived',

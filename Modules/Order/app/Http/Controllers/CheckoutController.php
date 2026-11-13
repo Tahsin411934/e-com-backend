@@ -3,6 +3,7 @@
 namespace Modules\Order\Http\Controllers;
 
 use App\Http\Controllers\Controller;
+use App\Helpers\ApiResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Collection;
@@ -76,6 +77,46 @@ class CheckoutController extends Controller
         return $result;
     }
 
+    /**
+     * Validate each product's combined quantity across all selected variants.
+     * Product MOQ is intentionally checked at checkout so buyers can build a
+     * cart by adding multiple sizes or colors over several requests.
+     */
+    private function minimumOrderViolations(Collection $items): array
+    {
+        $totals = [];
+
+        foreach ($items as $item) {
+            $product = $item->variant?->product;
+            if (! $product) {
+                continue;
+            }
+
+            $productId = (int) $product->id;
+            $totals[$productId] ??= [
+                'product_id' => $productId,
+                'product_name' => $product->name,
+                'minimum_order_quantity' => (int) ($product->minimum_order_quantity ?? 1),
+                'quantity' => 0,
+            ];
+            $totals[$productId]['quantity'] += (int) $item->quantity;
+        }
+
+        return array_values(array_filter($totals, fn ($item) => $item['quantity'] < $item['minimum_order_quantity']));
+    }
+
+    private function minimumOrderFailure(array $violations): \Illuminate\Http\JsonResponse
+    {
+        $details = collect($violations)
+            ->map(fn ($item) => $item['product_name'].': minimum '.$item['minimum_order_quantity'].', cart has '.$item['quantity'])
+            ->implode('; ');
+
+        return ApiResponse::validationError(
+            ['minimum_order_violations' => $violations],
+            'Minimum order quantity not met. '.$details,
+        );
+    }
+
     public function checkout(Request $request)
     {
         try {
@@ -93,6 +134,11 @@ class CheckoutController extends Controller
                         'status' => 'error',
                         'message' => 'Cart is empty.',
                     ];
+                }
+
+                $minimumOrderViolations = $this->minimumOrderViolations($cart->items);
+                if ($minimumOrderViolations !== []) {
+                    return $this->minimumOrderFailure($minimumOrderViolations);
                 }
 
                 // Recalculate prices on the server using the shared pricing rule
@@ -236,6 +282,7 @@ class CheckoutController extends Controller
                 $orderItems = [];
                 $subtotal = 0.0;
                 $shippingTotal = 0.0;
+                $productQuantities = [];
 
                 foreach ($request->input('items', []) as $itemData) {
                     $variant = ProductVariant::with('product')
@@ -267,6 +314,15 @@ class CheckoutController extends Controller
                     $unitPrice = $this->campaignPricing->finalPriceFor($variant, $variantOption)['unit_price'];
                     $quantity = (int) $itemData['quantity'];
 
+                    $productId = (int) $variant->product_id;
+                    $productQuantities[$productId] ??= [
+                        'product_id' => $productId,
+                        'product_name' => $variant->product?->name ?? 'Unknown Product',
+                        'minimum_order_quantity' => (int) ($variant->product?->minimum_order_quantity ?? 1),
+                        'quantity' => 0,
+                    ];
+                    $productQuantities[$productId]['quantity'] += $quantity;
+
                     $productName = $variant->product?->name ?? 'Unknown Product';
                     $variantName = $variant->name ?? 'Default';
 
@@ -297,6 +353,14 @@ class CheckoutController extends Controller
                         'delivery_charge' => (float) ($variant->product?->delivery_charge ?? Product::DEFAULT_DELIVERY_CHARGE),
                     ];
                     $groups[$key]['subtotal'] += $unitPrice * $quantity;
+                }
+
+                $minimumOrderViolations = array_values(array_filter(
+                    $productQuantities,
+                    fn ($item) => $item['quantity'] < $item['minimum_order_quantity']
+                ));
+                if ($minimumOrderViolations !== []) {
+                    return $this->minimumOrderFailure($minimumOrderViolations);
                 }
 
                 $subtotal = round($subtotal, 2);

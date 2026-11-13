@@ -11,6 +11,10 @@ class StoreProductRequest extends FormRequest
 {
     protected function prepareForValidation(): void
     {
+        if (! $this->isMethod('put') && ! $this->isMethod('patch') && ! $this->exists('minimum_order_quantity')) {
+            $this->merge(['minimum_order_quantity' => 1]);
+        }
+
         $keywords = $this->input('keywords');
 
         if (is_string($keywords)) {
@@ -51,6 +55,7 @@ class StoreProductRequest extends FormRequest
             'keywords.*' => 'required|string|max:80',
             'product_type' => 'required|in:physical,digital,service,bundle',
             'delivery_charge' => 'nullable|numeric|min:0',
+            'minimum_order_quantity' => 'required|integer|min:1',
             'images' => 'nullable|array',
             'images.*' => 'nullable|file|image|mimes:jpeg,png,jpg,gif,webp|max:5120',
             'status' => 'required|in:draft,active,archived',

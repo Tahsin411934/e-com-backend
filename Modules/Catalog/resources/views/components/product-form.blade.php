@@ -300,7 +300,7 @@
                 </div>
 
                 <!-- Variants Card: full width below SEO settings -->
-                <div class="lg:col-span-2 bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+                <div class="lg:col-span-3 bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
                     <div class="px-6 py-4 border-b border-gray-100 bg-gray-50/50 flex items-center justify-between">
                         <h2 class="text-lg font-semibold text-gray-800 flex items-center gap-2">
                             <i class="fas fa-code-branch text-cyan-600"></i> Variants

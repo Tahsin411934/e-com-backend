@@ -54,7 +54,24 @@ PROMPT;
             ]);
 
         if (! $response->successful()) {
-            throw new RuntimeException('Gemini could not generate product content. Please try again.');
+            $error = data_get($response->json(), 'error.message');
+            $status = $response->status();
+
+            // Keep provider diagnostics out of logs because the request URL contains the API key.
+            logger()->warning('Gemini product content request failed.', [
+                'status' => $status,
+                'provider_message' => is_string($error) ? Str::limit($error, 500) : null,
+            ]);
+
+            $message = match ($status) {
+                400 => 'Gemini rejected the request. Check the model name and request format.',
+                401, 403 => 'Gemini rejected the API key. Verify GEMINI_API_KEY on the server.',
+                404 => 'The configured Gemini model was not found. Check GEMINI_MODEL.',
+                429 => 'Gemini quota or rate limit reached. Check the API key project quota and try again later.',
+                default => 'Gemini request failed (HTTP '.$status.'). Check the Laravel log for provider details.',
+            };
+
+            throw new RuntimeException($message);
         }
 
         $text = data_get($response->json(), 'candidates.0.content.parts.0.text');

@@ -120,7 +120,7 @@
                                 <label for="images" class="inline-flex items-center gap-2 px-5 py-2.5 text-sm font-medium text-white bg-primary hover:bg-primary rounded-lg cursor-pointer transition active:scale-95 shadow-sm">
                                     <i class="fas fa-upload"></i> Upload Images
                                 </label>
-                                <span class="text-xs text-gray-400">JPG, PNG, WebP up to 5MB each</span>
+                                <span class="text-xs text-gray-400">JPG, PNG, WebP · Recommended: 1000 × 1000 px · Up to 5MB each</span>
                                 <input type="file" name="images[]" id="images" accept="image/jpeg,image/png,image/webp,image/gif" multiple class="hidden">
                             </div>
                             <div id="imagePreviewContainer" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mt-4">
@@ -297,17 +297,19 @@
                         </div>
                     </div>
 
-                    <!-- Variants Card -->
-                    <div class="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
-                        <div class="px-6 py-4 border-b border-gray-100 bg-gray-50/50 flex items-center justify-between">
-                            <h2 class="text-lg font-semibold text-gray-800 flex items-center gap-2">
-                                <i class="fas fa-code-branch text-cyan-600"></i> Variants
-                            </h2>
-                            <button type="button" id="btnAddVariant" class="text-sm text-primary hover:text-primary-hover font-medium flex items-center gap-1">
-                                <i class="fas fa-plus-circle"></i> Add Variant
-                            </button>
-                        </div>
-                        <div class="p-6">
+                </div>
+
+                <!-- Variants Card: full width below SEO settings -->
+                <div class="lg:col-span-2 bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+                    <div class="px-6 py-4 border-b border-gray-100 bg-gray-50/50 flex items-center justify-between">
+                        <h2 class="text-lg font-semibold text-gray-800 flex items-center gap-2">
+                            <i class="fas fa-code-branch text-cyan-600"></i> Variants
+                        </h2>
+                        <button type="button" id="btnAddVariant" class="text-sm text-primary hover:text-primary-hover font-medium flex items-center gap-1">
+                            <i class="fas fa-plus-circle"></i> Add Variant
+                        </button>
+                    </div>
+                    <div class="p-6">
                             <div id="variantsContainer">
                                 <p id="noVariantsMsg" class="text-sm text-gray-400 text-center py-4 {{ $isEdit && $product?->variants->count() > 0 ? 'hidden' : '' }}">No variants added yet.</p>
                                 @if($isEdit && $product?->variants->count() > 0)
@@ -322,17 +324,16 @@
                                             </button>
                                         </div>
                                         <input type="hidden" name="variants[{{ $vIdx }}][id]" class="variant-id" value="{{ $v->id }}">
-                                        <div class="grid grid-cols-2 gap-3 mb-3">
-                                            <div>
+                                        <div class="overflow-x-auto pb-2">
+                                        <div class="grid min-w-[1400px] grid-cols-[repeat(15,minmax(0,1fr))] items-end gap-3 mb-3">
+                                            <div class="col-span-2">
                                                 <label class="block text-xs font-medium text-gray-600 mb-1">SKU *</label>
                                                 <input type="text" name="variants[{{ $vIdx }}][sku]" value="{{ $v->sku }}" class="variant-sku w-full rounded-lg border-gray-300 shadow-sm focus:border-primary focus:ring-primary text-sm" required>
                                             </div>
-                                            <div>
+                                            <div class="col-span-2">
                                                 <label class="block text-xs font-medium text-gray-600 mb-1">Name *</label>
                                                 <input type="text" name="variants[{{ $vIdx }}][name]" value="{{ $v->name }}" class="variant-name w-full rounded-lg border-gray-300 shadow-sm focus:border-primary focus:ring-primary text-sm" required>
                                             </div>
-                                        </div>
-                                        <div class="grid grid-cols-2 gap-3 mb-3">
                                             <div>
                                                 <label class="block text-xs font-medium text-gray-600 mb-1">Cost Price</label>
                                                 <input type="number" step="0.0001" min="0" name="variants[{{ $vIdx }}][cost_price]" value="{{ $v->cost_price }}" class="variant-cost w-full rounded-lg border-gray-300 shadow-sm text-sm">
@@ -353,10 +354,21 @@
                                                 <label class="block text-xs font-medium text-gray-600 mb-1">Price After Discount <span class="text-gray-400 font-normal text-[10px]">(auto)</span></label>
                                                 <input type="text" readonly class="variant-after-price w-full rounded-lg bg-gray-100 border-gray-300 shadow-sm text-sm" placeholder="auto">
                                             </div>
-                                        </div>
-                                        <div class="mb-3">
+                                            <div class="col-span-2">
                                             <label class="block text-xs font-medium text-gray-600 mb-1">Size / Variant Attribute</label>
                                             <input type="text" name="variants[{{ $vIdx }}][attributes][size]" value="{{ $v->attributes['size'] ?? $v->name }}" class="w-full rounded-lg border-gray-300 shadow-sm text-sm">
+                                            </div>
+                                            <div>
+                                                <label class="block text-xs font-medium text-gray-600 mb-1">Barcode</label>
+                                                <input type="text" name="variants[{{ $vIdx }}][barcode]" value="{{ $v->barcode }}" class="variant-barcode w-full rounded-lg border-gray-300 shadow-sm text-sm">
+                                            </div>
+                                            <div>
+                                                <label class="block text-xs font-medium text-gray-600 mb-1">Weight (g)</label>
+                                                <input type="number" min="0" name="variants[{{ $vIdx }}][weight_grams]" value="{{ $v->weight_grams }}" class="variant-weight w-full rounded-lg border-gray-300 shadow-sm text-sm">
+                                            </div>
+                                            <label class="flex items-center gap-2 text-xs text-gray-600"><input type="checkbox" name="variants[{{ $vIdx }}][track_inventory]" value="1" {{ $v->track_inventory ? 'checked' : '' }} class="rounded border-gray-300 text-primary"> Track stock</label>
+                                            <label class="flex items-center gap-2 text-xs text-gray-600"><input type="checkbox" name="variants[{{ $vIdx }}][allow_backorder]" value="1" {{ $v->allow_backorder ? 'checked' : '' }} class="rounded border-gray-300 text-primary"> Backorder</label>
+                                        </div>
                                         </div>
 
                                         <!-- Variant Options (Color options per size) -->
@@ -415,29 +427,10 @@
                                             </div>
                                         </div>
 
-                                        <div class="grid grid-cols-3 gap-3 mb-3">
-                                            <div>
-                                                <label class="block text-xs font-medium text-gray-600 mb-1">Barcode</label>
-                                                <input type="text" name="variants[{{ $vIdx }}][barcode]" value="{{ $v->barcode }}" class="variant-barcode w-full rounded-lg border-gray-300 shadow-sm text-sm">
-                                            </div>
-                                            <div>
-                                                <label class="block text-xs font-medium text-gray-600 mb-1">Weight (g)</label>
-                                                <input type="number" min="0" name="variants[{{ $vIdx }}][weight_grams]" value="{{ $v->weight_grams }}" class="variant-weight w-full rounded-lg border-gray-300 shadow-sm text-sm">
-                                            </div>
-                                        </div>
-                                        <div class="flex items-center gap-4 mt-3">
-                                            <label class="flex items-center gap-2 text-sm text-gray-600">
-                                                <input type="checkbox" name="variants[{{ $vIdx }}][track_inventory]" value="1" {{ $v->track_inventory ? 'checked' : '' }} class="rounded border-gray-300 text-primary"> Track Inventory
-                                            </label>
-                                            <label class="flex items-center gap-2 text-sm text-gray-600">
-                                                <input type="checkbox" name="variants[{{ $vIdx }}][allow_backorder]" value="1" {{ $v->allow_backorder ? 'checked' : '' }} class="rounded border-gray-300 text-primary"> Allow Backorder
-                                            </label>
-                                        </div>
                                     </div>
                                     @endforeach
                                 @endif
                             </div>
-                        </div>
                     </div>
                 </div>
             </div>
@@ -620,17 +613,10 @@
                     </button>
                 </div>
                 <input type="hidden" name="variants[${index}][id]" class="variant-id" value="">
-                <div class="grid grid-cols-2 gap-3 mb-3">
-                    <div>
-                        <label class="block text-xs font-medium text-gray-600 mb-1">SKU *</label>
-                        <input type="text" name="variants[${index}][sku]" class="variant-sku w-full rounded-lg border-gray-300 shadow-sm text-sm" required>
-                    </div>
-                    <div>
-                        <label class="block text-xs font-medium text-gray-600 mb-1">Name *</label>
-                        <input type="text" name="variants[${index}][name]" value="${safeSize}" class="variant-name w-full rounded-lg border-gray-300 shadow-sm text-sm" required>
-                    </div>
-                </div>
-                <div class="grid grid-cols-2 gap-3 mb-3">
+                <div class="overflow-x-auto pb-2">
+                <div class="grid min-w-[1400px] grid-cols-[repeat(15,minmax(0,1fr))] items-end gap-3 mb-3">
+                    <div class="col-span-2"><label class="block text-xs font-medium text-gray-600 mb-1">SKU *</label><input type="text" name="variants[${index}][sku]" class="variant-sku w-full rounded-lg border-gray-300 shadow-sm text-sm" required></div>
+                    <div class="col-span-2"><label class="block text-xs font-medium text-gray-600 mb-1">Name *</label><input type="text" name="variants[${index}][name]" value="${safeSize}" class="variant-name w-full rounded-lg border-gray-300 shadow-sm text-sm" required></div>
                     <div>
                         <label class="block text-xs font-medium text-gray-600 mb-1">Cost Price</label>
                         <input type="number" step="0.0001" min="0" name="variants[${index}][cost_price]" class="variant-cost w-full rounded-lg border-gray-300 shadow-sm text-sm">
@@ -651,10 +637,12 @@
                         <label class="block text-xs font-medium text-gray-600 mb-1">Price After Discount <span class="text-gray-400 font-normal text-[10px]">(auto)</span></label>
                         <input type="text" readonly class="variant-after-price w-full rounded-lg bg-gray-100 border-gray-300 shadow-sm text-sm" placeholder="auto">
                     </div>
+                    <div class="col-span-2"><label class="block text-xs font-medium text-gray-600 mb-1">Size / Variant Attribute</label><input type="text" name="variants[${index}][attributes][size]" value="${safeSize}" class="w-full rounded-lg border-gray-300 shadow-sm text-sm"></div>
+                    <div><label class="block text-xs font-medium text-gray-600 mb-1">Barcode</label><input type="text" name="variants[${index}][barcode]" class="variant-barcode w-full rounded-lg border-gray-300 shadow-sm text-sm" value="${Date.now()}${Math.floor(Math.random()*900)+100}"></div>
+                    <div><label class="block text-xs font-medium text-gray-600 mb-1">Weight (g)</label><input type="number" min="0" name="variants[${index}][weight_grams]" class="variant-weight w-full rounded-lg border-gray-300 shadow-sm text-sm"></div>
+                    <label class="flex items-center gap-2 text-xs text-gray-600"><input type="checkbox" name="variants[${index}][track_inventory]" value="1" checked class="rounded border-gray-300 text-primary"> Track stock</label>
+                    <label class="flex items-center gap-2 text-xs text-gray-600"><input type="checkbox" name="variants[${index}][allow_backorder]" value="1" class="rounded border-gray-300 text-primary"> Backorder</label>
                 </div>
-                <div class="mb-3">
-                    <label class="block text-xs font-medium text-gray-600 mb-1">Size / Variant Attribute</label>
-                    <input type="text" name="variants[${index}][attributes][size]" value="${safeSize}" class="w-full rounded-lg border-gray-300 shadow-sm text-sm">
                 </div>
                 <div class="mb-3 border-t border-gray-200 pt-3">
                     <div class="flex items-center justify-between mb-2">
@@ -664,24 +652,6 @@
                         </button>
                     </div>
                     <div class="variant-options-container space-y-2" data-new-index="${index}"></div>
-                </div>
-                <div class="grid grid-cols-3 gap-3 mb-3">
-                    <div>
-                        <label class="block text-xs font-medium text-gray-600 mb-1">Barcode</label>
-                        <input type="text" name="variants[${index}][barcode]" class="variant-barcode w-full rounded-lg border-gray-300 shadow-sm text-sm" value="${Date.now()}${Math.floor(Math.random()*900)+100}">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-medium text-gray-600 mb-1">Weight (g)</label>
-                        <input type="number" min="0" name="variants[${index}][weight_grams]" class="variant-weight w-full rounded-lg border-gray-300 shadow-sm text-sm">
-                    </div>
-                </div>
-                <div class="flex items-center gap-4 mt-3">
-                    <label class="flex items-center gap-2 text-sm text-gray-600">
-                        <input type="checkbox" name="variants[${index}][track_inventory]" value="1" checked class="rounded border-gray-300 text-primary"> Track Inventory
-                    </label>
-                    <label class="flex items-center gap-2 text-sm text-gray-600">
-                        <input type="checkbox" name="variants[${index}][allow_backorder]" value="1" class="rounded border-gray-300 text-primary"> Allow Backorder
-                    </label>
                 </div>
             </div>`;
         }

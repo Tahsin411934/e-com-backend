@@ -9,6 +9,23 @@ use Modules\Store\Support\CurrentStore;
 
 class StoreProductRequest extends FormRequest
 {
+    protected function prepareForValidation(): void
+    {
+        $keywords = $this->input('keywords');
+
+        if (is_string($keywords)) {
+            $this->merge([
+                'keywords' => collect(explode(',', $keywords))
+                    ->map(fn ($keyword) => trim($keyword))
+                    ->filter()
+                    ->unique()
+                    ->take(12)
+                    ->values()
+                    ->all(),
+            ]);
+        }
+    }
+
     public function authorize(): bool
     {
         return true;
@@ -30,6 +47,8 @@ class StoreProductRequest extends FormRequest
             'slug' => ['required', 'string', 'max:240', Rule::unique('products', 'slug')->where('store_id', $this->slugStoreId())],
             'short_description' => 'nullable|string|max:500',
             'description' => 'nullable|string',
+            'keywords' => 'nullable|array|max:12',
+            'keywords.*' => 'required|string|max:80',
             'product_type' => 'required|in:physical,digital,service,bundle',
             'delivery_charge' => 'nullable|numeric|min:0',
             'images' => 'nullable|array',

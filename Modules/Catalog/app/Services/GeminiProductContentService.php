@@ -5,6 +5,7 @@ namespace Modules\Catalog\Services;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Str;
 use RuntimeException;
+use stdClass;
 
 class GeminiProductContentService
 {
@@ -17,18 +18,21 @@ class GeminiProductContentService
         }
 
         $prompt = <<<PROMPT
-Create draft ecommerce catalog content for this product. Return only valid JSON with keys: short_description, description, seo_title, seo_description, product_type.
+Create polished ecommerce catalog content for this product. Return only valid JSON with keys: short_description, description, seo_title, seo_description, keywords, product_type.
 
 Product name: {$name}
 Additional context: {$context}
 
 Rules:
-- Write customer-friendly content in English.
-- Do not invent precise specifications, materials, dimensions, certifications, warranty, or included accessories not supported by the name/context.
+- Write naturally in English unless the additional context requests another language.
+- Use Google Search to identify the exact product and verify its official features, available colors, and size options. Prefer the manufacturer's official product page or other reliable seller pages.
+- Never claim a color/size is available unless a reliable source confirms it. If the exact product cannot be identified or a detail is unavailable, omit it instead of guessing.
+- The description must start with 1-2 clear sentences explaining what the product is and who it is for. Then provide useful detail in readable HTML paragraphs and bullet lists. Include verified colors and size options when found, and summarize key features and use cases.
+- Do not invent specifications, materials, dimensions, certifications, warranty, or included accessories.
 - Keep short_description under 300 characters and seo_description under 160 characters.
-- Description should be 2-3 concise paragraphs and avoid unsupported factual claims.
+- The keywords field must contain 6-12 relevant search terms/phrases for this product, including product type, brand/model when verified, common synonyms, and likely buyer search terms. Do not keyword-stuff.
 - product_type must be one of: physical, digital, service, bundle. Use physical when uncertain.
-- These are editable drafts for a human reviewer.
+- Return keywords as a JSON array of strings. These are editable drafts for a human reviewer.
 PROMPT;
 
         $response = Http::timeout(30)
@@ -36,6 +40,9 @@ PROMPT;
             ->post('https://generativelanguage.googleapis.com/v1beta/models/'.config('services.gemini.model').':generateContent?key='.urlencode($apiKey), [
                 'contents' => [[
                     'parts' => [['text' => $prompt]],
+                ]],
+                'tools' => [[
+                    'google_search' => new stdClass(),
                 ]],
                 'generationConfig' => [
                     'responseMimeType' => 'application/json',
@@ -46,9 +53,10 @@ PROMPT;
                             'description' => ['type' => 'STRING'],
                             'seo_title' => ['type' => 'STRING'],
                             'seo_description' => ['type' => 'STRING'],
+                            'keywords' => ['type' => 'ARRAY', 'items' => ['type' => 'STRING']],
                             'product_type' => ['type' => 'STRING', 'enum' => ['physical', 'digital', 'service', 'bundle']],
                         ],
-                        'required' => ['short_description', 'description', 'seo_title', 'seo_description', 'product_type'],
+                        'required' => ['short_description', 'description', 'seo_title', 'seo_description', 'keywords', 'product_type'],
                     ],
                 ],
             ]);
@@ -82,14 +90,26 @@ PROMPT;
         }
 
         $type = $content['product_type'] ?? 'physical';
+        $sources = collect(data_get($response->json(), 'candidates.0.groundingMetadata.groundingChunks', []))
+            ->map(fn ($chunk) => [
+                'title' => data_get($chunk, 'web.title'),
+                'uri' => data_get($chunk, 'web.uri'),
+            ])
+            ->filter(fn ($source) => is_string($source['uri']) && str_starts_with($source['uri'], 'https://'))
+            ->unique('uri')
+            ->take(5)
+            ->values()
+            ->all();
 
         return [
             'short_description' => Str::limit(strip_tags((string) ($content['short_description'] ?? '')), 500, ''),
             'description' => strip_tags((string) ($content['description'] ?? ''), '<p><ul><ol><li><strong><em><br>'),
             'seo_title' => Str::limit(strip_tags((string) ($content['seo_title'] ?? '')), 255, ''),
             'seo_description' => Str::limit(strip_tags((string) ($content['seo_description'] ?? '')), 500, ''),
+            'keywords' => collect($content['keywords'] ?? [])->filter(fn ($keyword) => is_string($keyword))->map(fn ($keyword) => Str::limit(strip_tags($keyword), 80, ''))->take(12)->values()->all(),
             'slug' => Str::slug($name),
             'product_type' => in_array($type, ['physical', 'digital', 'service', 'bundle'], true) ? $type : 'physical',
+            'sources' => $sources,
         ];
     }
 }

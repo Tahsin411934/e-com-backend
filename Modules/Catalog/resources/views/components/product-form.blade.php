@@ -49,18 +49,7 @@
                                 <div>
                                     <div class="flex items-end gap-2">
                                         <div class="flex-1"><x-form-input label="Product Name" name="name" id="name" placeholder="Enter product name" value="{{ $product?->name ?? '' }}" required /></div>
-                                        @unless($isEdit)
-                                            <button type="button" id="generateProductWithAi" class="mb-0.5 shrink-0 inline-flex items-center gap-2 rounded-lg bg-violet-600 px-3 py-2.5 text-sm font-medium text-white hover:bg-violet-700 disabled:cursor-not-allowed disabled:opacity-60">
-                                                <i class="fas fa-wand-magic-sparkles"></i><span>Generate with AI</span>
-                                            </button>
-                                        @endunless
                                     </div>
-                                    @unless($isEdit)
-                                        <div class="mt-2">
-                                            <input id="aiProductContext" type="text" maxlength="1000" class="w-full rounded-lg border-gray-300 text-xs shadow-sm" placeholder="Optional details: language, audience, features, material...">
-                                            <p class="mt-1 text-xs text-gray-400">AI creates editable text drafts. Review all product facts before saving.</p>
-                                        </div>
-                                    @endunless
                                 </div>
                                 <div>
                                     <x-form-input label="Slug" name="slug" id="slug" placeholder="auto-generated-slug" value="{{ $product?->slug ?? '' }}" required />
@@ -82,8 +71,40 @@
                                 </div>
                             </div>
                             <div>
-                                <x-form-textarea label="Short Description" name="short_description" id="short_description" placeholder="Brief description (max 500 chars)" rows="3" value="{{ $product?->short_description ?? '' }}" />
+                                <div class="flex items-center justify-between gap-3">
+                                    <label for="short_description" class="block text-sm font-medium text-gray-700 mb-2">Short Description</label>
+                                    @unless($isEdit)<span class="text-xs text-gray-400">Add relevant search keywords naturally</span>@endunless
+                                </div>
+                                <textarea name="short_description" id="short_description" rows="3" maxlength="500" class="w-full rounded-lg border-gray-300 shadow-sm focus:border-primary focus:ring-primary text-sm" placeholder="Brief overview with product type and useful search terms">{{ $product?->short_description ?? '' }}</textarea>
                             </div>
+                            @unless($isEdit)
+                                <div class="rounded-xl border border-violet-200 bg-gradient-to-r from-violet-50 via-white to-indigo-50 p-4 sm:p-5">
+                                    <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                                        <div class="flex items-start gap-3">
+                                            <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-violet-100 text-violet-700"><i class="fas fa-wand-magic-sparkles"></i></span>
+                                            <div>
+                                                <h3 class="text-sm font-semibold text-gray-900">Create a product draft with AI</h3>
+                                                <p class="mt-1 max-w-xl text-xs leading-5 text-gray-500">Searches for verified product details, colors and sizes, then drafts the overview, full description and SEO keywords for you to review.</p>
+                                            </div>
+                                        </div>
+                                        <button type="button" id="generateProductWithAi" class="inline-flex shrink-0 items-center justify-center gap-2 rounded-lg bg-violet-700 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-violet-800 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60">
+                                            <i class="fas fa-wand-magic-sparkles"></i><span>Generate draft</span>
+                                        </button>
+                                    </div>
+                                    <div class="mt-4 grid grid-cols-1 gap-3 border-t border-violet-100 pt-4 sm:grid-cols-[minmax(0,1fr)_180px]">
+                                        <input id="aiProductContext" type="text" maxlength="1000" class="w-full rounded-lg border-gray-300 bg-white text-sm shadow-sm focus:border-violet-500 focus:ring-violet-500" placeholder="Optional: target audience, known features, preferred tone...">
+                                        <select id="aiProductLanguage" class="w-full rounded-lg border-gray-300 bg-white text-sm shadow-sm focus:border-violet-500 focus:ring-violet-500" aria-label="Generated content language">
+                                            <option value="English">Write in English</option>
+                                            <option value="Bengali">Bengali</option>
+                                        </select>
+                                    </div>
+                                    <p class="mt-2 text-[11px] text-gray-400"><i class="fas fa-circle-info mr-1"></i>Search results may not identify the exact product. Verify colors, sizes and claims before saving.</p>
+                                    <div id="aiProductSources" class="mt-3 hidden border-t border-violet-100 pt-3">
+                                        <p class="mb-2 text-xs font-semibold text-gray-600">Sources checked</p>
+                                        <div id="aiProductSourcesList" class="flex flex-wrap gap-2"></div>
+                                    </div>
+                                </div>
+                            @endunless
                             <div>
                                 <label for="description" class="block text-sm font-medium text-gray-700 mb-2">Full Description</label>
                                 <textarea name="description" id="description" rows="8" class="w-full rounded-lg border-gray-300 shadow-sm focus:border-primary focus:ring-primary text-sm" placeholder="Detailed product description...">{{ $product?->description ?? '' }}</textarea>
@@ -138,6 +159,10 @@
                         <div class="p-6 space-y-4">
                             <x-form-input label="SEO Title" name="seo_title" id="seo_title" placeholder="Custom SEO title" value="{{ $product?->seo_title ?? '' }}" />
                             <x-form-textarea label="SEO Description" name="seo_description" id="seo_description" placeholder="Custom meta description" rows="2" value="{{ $product?->seo_description ?? '' }}" />
+                            <div>
+                                <x-form-textarea label="Search Keywords" name="keywords" id="keywords" placeholder="e.g. product type, brand, model, use case" rows="3" value="{{ is_array($product?->keywords ?? null) ? implode(', ', $product->keywords) : ($product?->keywords ?? '') }}" />
+                                <p class="mt-1 text-xs text-gray-400">Comma-separated phrases customers may search for.</p>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -463,7 +488,7 @@
                 return;
             }
 
-            const fields = ['short_description', 'description', 'seo_title', 'seo_description'];
+            const fields = ['short_description', 'description', 'seo_title', 'seo_description', 'keywords'];
             const hasExistingContent = fields.some(id => (($('#' + id).val() || '').trim().length > 0));
             if (hasExistingContent) {
                 const result = await Swal.fire({
@@ -483,7 +508,11 @@
                         'Content-Type': 'application/json', 'Accept': 'application/json',
                         'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
                     },
-                    body: JSON.stringify({ name, context: ($('#aiProductContext').val() || '').trim() })
+                    body: JSON.stringify({
+                        name,
+                        context: ($('#aiProductContext').val() || '').trim(),
+                        language: $('#aiProductLanguage').val() || 'English'
+                    })
                 });
                 const payload = await response.json();
                 if (!response.ok) throw new Error(payload.message || 'Unable to generate content.');
@@ -492,10 +521,28 @@
                 $('#short_description').val(data.short_description).trigger('input');
                 $('#seo_title').val(data.seo_title).trigger('input');
                 $('#seo_description').val(data.seo_description).trigger('input');
+                $('#keywords').val(Array.isArray(data.keywords) ? data.keywords.join(', ') : '').trigger('input');
                 $('#slug').val(data.slug || '');
                 if (productDescriptionEditor) productDescriptionEditor.setData(data.description || '');
                 else $('#description').val(data.description || '');
                 $('#product_type').val(data.product_type).trigger('change');
+                const sourcesList = document.getElementById('aiProductSourcesList');
+                sourcesList.replaceChildren();
+                (Array.isArray(data.sources) ? data.sources : []).forEach(source => {
+                    try {
+                        const url = new URL(source.uri);
+                        if (url.protocol !== 'https:') return;
+                        const link = document.createElement('a');
+                        link.href = url.href;
+                        link.target = '_blank';
+                        link.rel = 'noopener noreferrer';
+                        link.textContent = source.title || url.hostname;
+                        link.className = 'inline-flex max-w-full items-center gap-1 rounded-full border border-violet-200 bg-white px-2.5 py-1 text-xs text-violet-700 hover:bg-violet-50';
+                        link.title = url.hostname;
+                        sourcesList.appendChild(link);
+                    } catch (_) {}
+                });
+                document.getElementById('aiProductSources').classList.toggle('hidden', sourcesList.childElementCount === 0);
                 Swal.fire({ icon: 'success', title: 'Draft generated', text: 'Review and edit the generated fields before saving.', timer: 2200, showConfirmButton: false });
             } catch (error) {
                 Swal.fire('AI generation failed', error.message, 'error');

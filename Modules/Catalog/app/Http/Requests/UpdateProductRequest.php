@@ -37,6 +37,8 @@ class UpdateProductRequest extends StoreProductRequest
             ],
             'short_description' => 'nullable|string|max:500',
             'description' => 'nullable|string',
+            'keywords' => 'nullable|array|max:12',
+            'keywords.*' => 'required|string|max:80',
             'product_type' => 'required|in:physical,digital,service,bundle',
             'delivery_charge' => 'nullable|numeric|min:0',
             'images' => 'nullable|array',

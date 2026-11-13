@@ -210,6 +210,7 @@ class ProductDetailResource extends JsonResource
             'visibility' => $this->visibility,
             'seo_title' => $this->seo_title,
             'seo_description' => $this->seo_description,
+            'keywords' => $this->keywords ?? [],
             'published_at' => $this->published_at?->toIso8601String(),
 
             // Pricing summary

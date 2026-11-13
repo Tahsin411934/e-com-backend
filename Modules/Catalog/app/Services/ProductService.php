@@ -380,6 +380,7 @@ class ProductService
                     'slug' => $this->generateUniqueProductSlug($name, $source->store_id),
                     'short_description' => $source->short_description,
                     'description' => $source->description,
+                    'keywords' => $source->keywords,
                     'product_type' => $source->product_type,
                     'status' => $source->status,
                     'visibility' => $source->visibility,

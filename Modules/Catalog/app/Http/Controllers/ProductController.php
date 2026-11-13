@@ -86,12 +86,16 @@ class ProductController extends Controller
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:220'],
             'context' => ['nullable', 'string', 'max:1000'],
+            'language' => ['nullable', 'string', 'in:English,Bengali,Bangla'],
         ]);
 
         try {
             return response()->json([
                 'status' => 'success',
-                'data' => $gemini->generate($validated['name'], $validated['context'] ?? null),
+                'data' => $gemini->generate($validated['name'], trim(implode("\n", array_filter([
+                    $validated['context'] ?? null,
+                    isset($validated['language']) ? 'Write the generated content in '.$validated['language'].'.' : null,
+                ]))) ?: null),
             ]);
         } catch (\Illuminate\Http\Client\ConnectionException $exception) {
             return response()->json(['message' => 'Could not connect to Gemini. Please try again.'], 503);

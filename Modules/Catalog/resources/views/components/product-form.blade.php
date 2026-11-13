@@ -475,6 +475,8 @@
         let variantIndex = {{ $isEdit ? ($product?->variants->count() ?? 0) : 0 }};
         let productDescriptionEditor;
         let deletedImageIds = [];
+        let stagedProductImages = [];
+        let preferredMainImageId = null;
         let optionCounters = {};
         // The form already receives every active size set from ProductController.
         // Keeping this data local avoids a second request (and its permission/
@@ -921,38 +923,54 @@
             $item.fadeOut(200, function() { $(this).remove(); });
         });
 
-        // Image handling - preview on selection
+        function renderStagedProductImagePreviews() {
+            const $container = $('#imagePreviewContainer');
+            stagedProductImages.forEach(item => {
+                if (item.previewUrl) URL.revokeObjectURL(item.previewUrl);
+                item.previewUrl = null;
+            });
+            $container.find('.preview-card[data-upload-preview="true"]').remove();
+
+            if (preferredMainImageId && preferredMainImageId.startsWith('new_')) {
+                const selectedIndex = Number(preferredMainImageId.slice(4));
+                if (!Number.isInteger(selectedIndex) || !stagedProductImages[selectedIndex]) preferredMainImageId = null;
+            }
+            if (!preferredMainImageId) {
+                preferredMainImageId = $container.find('input[name="main_image_id"]:checked').val() || null;
+                if (!preferredMainImageId && stagedProductImages.length) preferredMainImageId = 'new_0';
+            }
+
+            stagedProductImages.forEach((item, index) => {
+                item.previewUrl = URL.createObjectURL(item.file);
+                const selected = preferredMainImageId === `new_${index}`;
+                const card = `
+                    <div class="relative group preview-card bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden ${selected ? 'ring-2 ring-indigo-500' : ''}" data-upload-preview="true" data-upload-index="${index}">
+                        <img src="${item.previewUrl}" class="h-40 w-full object-cover" />
+                        ${selected ? '<div class="main-badge absolute top-1 left-1 bg-indigo-600 text-white text-[10px] font-bold px-2 py-0.5 rounded-full shadow">Main</div>' : ''}
+                        <button type="button" class="remove-preview absolute top-1 right-1 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs opacity-0 group-hover:opacity-100 transition-opacity shadow-lg" aria-label="Remove image"><i class="fas fa-times"></i></button>
+                        <div class="p-2 bg-gray-50 border-t border-gray-100 flex items-center justify-center gap-2">
+                            <input type="radio" name="main_image_id" value="new_${index}" ${selected ? 'checked' : ''} class="w-3.5 h-3.5 text-indigo-600 focus:ring-indigo-500 cursor-pointer">
+                            <span class="text-[10px] font-medium text-gray-500">Main Photo</span>
+                        </div>
+                    </div>`;
+                $container.append(card);
+            });
+            if (preferredMainImageId?.startsWith('new_')) {
+                syncMainImageSelection($container.find(`input[name="main_image_id"][value="${preferredMainImageId}"]`));
+            }
+        }
+
+        // Retain files across repeated picker selections and submit the entire staged set.
         $('#images').on('change', function() {
             const files = this.files;
-            if (!files || files.length === 0) return;
-            
-            const $container = $('#imagePreviewContainer');
-            
-            // Remove "no images" placeholder if exists
-            $container.find('.no-images-msg').remove();
-            
-            Array.from(files).forEach((file, index) => {
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    const isFirst = $container.find('.preview-card').length === 0;
-                    const card = `
-                        <div class="relative group preview-card bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden ${isFirst ? 'ring-2 ring-indigo-500' : ''}">
-                            <img src="${e.target.result}" class="h-40 w-full object-cover" />
-                            ${isFirst ? '<div class="absolute top-1 left-1 bg-indigo-600 text-white text-[10px] font-bold px-2 py-0.5 rounded-full shadow">Main</div>' : ''}
-                            <button type="button" class="remove-preview absolute top-1 right-1 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs opacity-0 group-hover:opacity-100 transition-opacity shadow-lg">
-                                <i class="fas fa-times"></i>
-                            </button>
-                            <div class="p-2 bg-gray-50 border-t border-gray-100 flex items-center justify-center gap-2">
-                                <input type="radio" name="main_image_id" value="new_${index}" ${isFirst ? 'checked' : ''} class="w-3.5 h-3.5 text-indigo-600 focus:ring-indigo-500 cursor-pointer">
-                                <span class="text-[10px] font-medium text-gray-500">Main</span>
-                            </div>
-                        </div>`;
-                    $container.append(card);
-                };
-                reader.readAsDataURL(file);
-            });
-            
-            // Don't reset input - files must remain in FormData for submission
+            if (!files || !files.length) return;
+            if (!preferredMainImageId && !$('#imagePreviewContainer input[name="main_image_id"]:checked').length) {
+                preferredMainImageId = `new_${stagedProductImages.length}`;
+            }
+            Array.from(files).forEach(file => stagedProductImages.push({ file }));
+            $('#imagePreviewContainer .no-images-msg').remove();
+            renderStagedProductImagePreviews();
+            this.value = '';
         });
 
         function syncMainImageSelection($selectedRadio) {
@@ -979,6 +997,7 @@
         }
 
         $(document).on('change', 'input[name="main_image_id"]', function() {
+            preferredMainImageId = this.value;
             $('input[name="main_image_id"]').not(this).prop('checked', false);
             syncMainImageSelection($(this));
         });
@@ -986,6 +1005,19 @@
         $(document).on('click', '.remove-preview', function(e) {
             e.preventDefault();
             const $card = $(this).closest('.preview-card');
+            const uploadIndex = $card.data('upload-index');
+            if (uploadIndex !== undefined) {
+                const removedSelectedMain = preferredMainImageId === `new_${uploadIndex}`;
+                if (stagedProductImages[uploadIndex]?.previewUrl) URL.revokeObjectURL(stagedProductImages[uploadIndex].previewUrl);
+                stagedProductImages.splice(uploadIndex, 1);
+                if (removedSelectedMain) preferredMainImageId = null;
+                else if (preferredMainImageId && preferredMainImageId.startsWith('new_')) {
+                    const selectedIndex = Number(preferredMainImageId.slice(4));
+                    if (selectedIndex > uploadIndex) preferredMainImageId = `new_${selectedIndex - 1}`;
+                }
+                renderStagedProductImagePreviews();
+                return;
+            }
             const imageId = $(this).data('image-id');
             if (imageId) { deletedImageIds.push(imageId); }
             $card.fadeOut(300, function() {
@@ -1046,7 +1078,7 @@
             const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
             const allowedExt = /\.(jpe?g|png|gif|webp)$/i;
             const maxBytes = 5120 * 1024; // 5 MB
-            const files = document.getElementById('images').files;
+            const files = stagedProductImages.map(item => item.file);
             const problems = [];
             for (let i = 0; i < files.length; i++) {
                 const f = files[i];
@@ -1083,6 +1115,10 @@
             }
 
             let formData = new FormData(this);
+            formData.delete('images[]');
+            stagedProductImages.forEach(function(item, index) {
+                formData.append(`images[${index}]`, item.file);
+            });
             if (id) formData.append('_method', 'PUT');
             if (deletedImageIds.length > 0) formData.append('deleted_image_ids', JSON.stringify(deletedImageIds));
             if (productDescriptionEditor) formData.set('description', productDescriptionEditor.getData());

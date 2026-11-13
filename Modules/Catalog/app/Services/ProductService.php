@@ -176,8 +176,9 @@ class ProductService
                     $this->removeProductImages($product, $data['deleted_image_ids']);
                 }
 
+                $uploadedImageIds = [];
                 if (isset($data['images']) && is_array($data['images'])) {
-                    $this->saveProductImages($product, $data['images']);
+                    $uploadedImageIds = $this->saveProductImages($product, $data['images']);
                 }
 
                 // Set main/featured image
@@ -186,17 +187,10 @@ class ProductService
 
                     if (is_string($mainImageId) && str_starts_with($mainImageId, 'new_')) {
                         $imageIndex = (int) substr($mainImageId, 4);
-                        $uploadedImages = $data['images'] ?? [];
-                        if (isset($uploadedImages[$imageIndex]) && $uploadedImages[$imageIndex] instanceof UploadedFile) {
-                            $allImages = ProductImage::where('product_id', $product->id)
-                                ->orderBy('id')
-                                ->get();
-                            $existingCount = $allImages->count() - count($uploadedImages);
-                            $targetImage = $allImages->skip($existingCount + $imageIndex)->first();
-                            if ($targetImage) {
-                                ProductImage::where('product_id', $product->id)->update(['is_main' => false]);
-                                $targetImage->update(['is_main' => true]);
-                            }
+                        $targetImageId = $uploadedImageIds[$imageIndex] ?? null;
+                        if ($targetImageId) {
+                            ProductImage::where('product_id', $product->id)->update(['is_main' => false]);
+                            ProductImage::where('id', $targetImageId)->where('product_id', $product->id)->update(['is_main' => true]);
                         }
                     } elseif (is_numeric($mainImageId) && $mainImageId > 0) {
                         $mainImageId = (int) $mainImageId;
@@ -643,8 +637,10 @@ class ProductService
         }
     }
 
-    private function saveProductImages(Product $product, array $images): void
+    private function saveProductImages(Product $product, array $images): array
     {
+        $uploadedImageIds = [];
+
         foreach ($images as $index => $image) {
             if ($image instanceof UploadedFile) {
                 $path = (new ImageUploadService)->store($image, 'products', 'product', $product->name);
@@ -652,15 +648,18 @@ class ProductService
                 // First image is automatically set as main
                 $isMain = ! ProductImage::where('product_id', $product->id)->where('is_main', true)->exists() && $index === 0;
 
-                ProductImage::create([
+                $productImage = ProductImage::create([
                     'product_id' => $product->id,
                     'image_url' => $path,
                     'alt_text' => $product->name,
                     'sort_order' => ProductImage::where('product_id', $product->id)->max('sort_order') + 1,
                     'is_main' => $isMain,
                 ]);
+                $uploadedImageIds[$index] = $productImage->id;
             }
         }
+
+        return $uploadedImageIds;
     }
 
     private function removeProductImages(Product $product, array $imageIds): void

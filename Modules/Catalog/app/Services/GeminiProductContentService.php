@@ -90,17 +90,6 @@ PROMPT;
         }
 
         $type = $content['product_type'] ?? 'physical';
-        $sources = collect(data_get($response->json(), 'candidates.0.groundingMetadata.groundingChunks', []))
-            ->map(fn ($chunk) => [
-                'title' => data_get($chunk, 'web.title'),
-                'uri' => data_get($chunk, 'web.uri'),
-            ])
-            ->filter(fn ($source) => is_string($source['uri']) && str_starts_with($source['uri'], 'https://'))
-            ->unique('uri')
-            ->take(5)
-            ->values()
-            ->all();
-
         return [
             'short_description' => Str::limit(strip_tags((string) ($content['short_description'] ?? '')), 500, ''),
             'description' => strip_tags((string) ($content['description'] ?? ''), '<p><ul><ol><li><strong><em><br>'),
@@ -109,7 +98,6 @@ PROMPT;
             'keywords' => collect($content['keywords'] ?? [])->filter(fn ($keyword) => is_string($keyword))->map(fn ($keyword) => Str::limit(strip_tags($keyword), 80, ''))->take(12)->values()->all(),
             'slug' => Str::slug($name),
             'product_type' => in_array($type, ['physical', 'digital', 'service', 'bundle'], true) ? $type : 'physical',
-            'sources' => $sources,
         ];
     }
 }

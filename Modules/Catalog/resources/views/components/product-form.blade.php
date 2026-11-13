@@ -99,10 +99,6 @@
                                         </select>
                                     </div>
                                     <p class="mt-2 text-[11px] text-gray-400"><i class="fas fa-circle-info mr-1"></i>Search results may not identify the exact product. Verify colors, sizes and claims before saving.</p>
-                                    <div id="aiProductSources" class="mt-3 hidden border-t border-violet-100 pt-3">
-                                        <p class="mb-2 text-xs font-semibold text-gray-600">Sources checked</p>
-                                        <div id="aiProductSourcesList" class="flex flex-wrap gap-2"></div>
-                                    </div>
                                 </div>
                             @endunless
                             <div>
@@ -526,23 +522,6 @@
                 if (productDescriptionEditor) productDescriptionEditor.setData(data.description || '');
                 else $('#description').val(data.description || '');
                 $('#product_type').val(data.product_type).trigger('change');
-                const sourcesList = document.getElementById('aiProductSourcesList');
-                sourcesList.replaceChildren();
-                (Array.isArray(data.sources) ? data.sources : []).forEach(source => {
-                    try {
-                        const url = new URL(source.uri);
-                        if (url.protocol !== 'https:') return;
-                        const link = document.createElement('a');
-                        link.href = url.href;
-                        link.target = '_blank';
-                        link.rel = 'noopener noreferrer';
-                        link.textContent = source.title || url.hostname;
-                        link.className = 'inline-flex max-w-full items-center gap-1 rounded-full border border-violet-200 bg-white px-2.5 py-1 text-xs text-violet-700 hover:bg-violet-50';
-                        link.title = url.hostname;
-                        sourcesList.appendChild(link);
-                    } catch (_) {}
-                });
-                document.getElementById('aiProductSources').classList.toggle('hidden', sourcesList.childElementCount === 0);
                 Swal.fire({ icon: 'success', title: 'Draft generated', text: 'Review and edit the generated fields before saving.', timer: 2200, showConfirmButton: false });
             } catch (error) {
                 Swal.fire('AI generation failed', error.message, 'error');

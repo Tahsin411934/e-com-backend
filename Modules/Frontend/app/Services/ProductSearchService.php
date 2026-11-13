@@ -3,6 +3,7 @@
 namespace Modules\Frontend\Services;
 
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Support\Facades\DB;
 use Modules\Catalog\Models\Product;
 
 class ProductSearchService
@@ -144,7 +145,7 @@ class ProductSearchService
 
         return $queryBuilder
             ->limit($this->maxCandidates)
-            ->get(['id', 'name']);
+            ->get(['id', 'name', 'short_description', 'description', 'keywords']);
     }
 
     /**
@@ -163,12 +164,16 @@ class ProductSearchService
             2
         );
         $prefixPattern = implode('', $prefixCharacters).'%';
+        $keywordCastType = DB::connection()->getDriverName() === 'pgsql' ? 'TEXT' : 'CHAR';
 
         $queryBuilder = $this->productQuery()->where('status', 'active')
             ->where('visibility', 'public')
-            ->where(function ($builder) use ($pattern, $prefixPattern) {
+            ->where(function ($builder) use ($pattern, $prefixPattern, $keywordCastType) {
                 $builder->where('name', 'LIKE', $pattern)
-                    ->orWhere('name', 'LIKE', $prefixPattern);
+                    ->orWhere('name', 'LIKE', $prefixPattern)
+                    ->orWhere('short_description', 'LIKE', $pattern)
+                    ->orWhere('description', 'LIKE', $pattern)
+                    ->orWhereRaw("CAST(keywords AS {$keywordCastType}) LIKE ?", [$pattern]);
             });
 
         if ($categoryId) {
@@ -177,7 +182,7 @@ class ProductSearchService
 
         return $queryBuilder
             ->limit($this->maxCandidates)
-            ->get(['id', 'name']);
+            ->get(['id', 'name', 'short_description', 'description', 'keywords']);
     }
 
     /**
@@ -194,32 +199,38 @@ class ProductSearchService
      */
     protected function scoreByWordLevelLevenshtein(Collection $candidates, string $query): array
     {
-        $lowerQuery = mb_strtolower($query);
+        $queryWords = preg_split('/[\s,]+/u', mb_strtolower(trim($query)), -1, PREG_SPLIT_NO_EMPTY) ?: [mb_strtolower($query)];
         $scored = [];
 
         foreach ($candidates as $product) {
-            $lowerName = mb_strtolower($product->name);
-            $nameWords = explode(' ', $lowerName);
+            $keywords = is_array($product->keywords) ? implode(' ', $product->keywords) : (string) $product->keywords;
+            $searchableText = implode(' ', array_filter([
+                $product->name,
+                $product->short_description,
+                $product->description,
+                $keywords,
+            ]));
+            $searchableWords = preg_split('/[\s,.;:!?()\[\]{}]+/u', mb_strtolower($searchableText), -1, PREG_SPLIT_NO_EMPTY) ?: [];
+            $wordDistances = [];
 
-            // Find the best (minimum) distance against ANY word in the product name
-            $bestDistance = PHP_INT_MAX;
-            $prefixBonus = false;
+            // Score every requested term against title, descriptions, and SEO keywords.
+            foreach ($queryWords as $queryWord) {
+                $bestDistance = PHP_INT_MAX;
+                $prefixBonus = false;
 
-            foreach ($nameWords as $word) {
-                $dist = levenshtein($lowerQuery, $word);
-
-                // Prefix/substring match: query is a prefix of this word
-                // e.g. "ipa" → "ipad" or "ipad" → "ipad"
-                if ($dist <= 2 || str_starts_with($word, $lowerQuery) || str_starts_with($lowerQuery, $word)) {
-                    $prefixBonus = true;
-                    $bestDistance = min($bestDistance, $dist);
-                } else {
-                    $bestDistance = min($bestDistance, $dist);
+                foreach ($searchableWords as $word) {
+                    $distance = levenshtein($queryWord, $word);
+                    $bestDistance = min($bestDistance, $distance);
+                    if ($distance <= 2 || str_starts_with($word, $queryWord) || str_starts_with($queryWord, $word)) {
+                        $prefixBonus = true;
+                    }
                 }
+
+                $wordDistances[] = $prefixBonus ? min($bestDistance, 1) : $bestDistance;
             }
 
-            // If prefix bonus applies but distance is still high, clamp it down
-            $finalDistance = $prefixBonus ? min($bestDistance, 1) : $bestDistance;
+            $finalDistance = $wordDistances === [] ? PHP_INT_MAX : max($wordDistances);
+            $prefixBonus = $finalDistance <= 1;
 
             // Score: 1/(1+distance), with prefix bonus getting a boost
             $score = 1 / (1 + $finalDistance);

@@ -86,6 +86,15 @@ class ChatController extends Controller
         $knowledgeBaseConfigured = trim((string) config('chatbot.knowledge_base', '')) !== '';
         $geminiQuotaExceeded = false;
 
+        if ($this->isWhatsappContactRequest($message)) {
+            return ApiResponse::success([
+                'reply' => 'অবশ্যই—নিচের WhatsApp বাটনে চাপ দিয়ে আমাদের সঙ্গে সরাসরি যোগাযোগ করুন। নম্বর: 01856533432',
+                'products' => [],
+                'suggestion' => null,
+                'support' => $this->whatsappSupport('পণ্য বা অন্য সহায়তার জন্য WhatsApp-এ আমাদের নক করুন।'),
+            ]);
+        }
+
         try {
             $intent = $gemini->understand($message, $input['history'] ?? []);
         } catch (GeminiQuotaExceededException) {
@@ -121,8 +130,9 @@ class ChatController extends Controller
         if ($intent['intent'] === 'faq' || $intent['intent'] === 'other') {
             if ($intent['intent'] === 'faq' && ! $knowledgeBaseConfigured) {
                 return ApiResponse::success([
-                    'reply' => 'এই তথ্যটি এখনো আমাদের chatbot-এ যোগ করা হয়নি। পণ্য খুঁজতে চাইলে পণ্যের নাম বা category লিখুন।',
+                    'reply' => 'এই তথ্যটি এখনো আমাদের chatbot-এ যোগ করা হয়নি। নিচের WhatsApp বাটনে চাপ দিয়ে আমাদের সঙ্গে যোগাযোগ করুন।',
                     'products' => [],
+                    'support' => $this->whatsappSupport('আমাদের টিম আপনার প্রশ্নের উত্তর দিতে সাহায্য করবে।'),
                 ]);
             }
 
@@ -194,18 +204,16 @@ class ChatController extends Controller
             count($items) > 0 && $category !== null => "{$category->name} category থেকে এই পণ্যগুলো পেয়েছি:",
             count($items) > 0 => 'আপনার কথামতো এই পণ্যগুলো পেয়েছি:',
             $suggestion !== null => "এই নামের কাছাকাছি পণ্য পেয়েছি: {$suggestion}",
-            default => 'দুঃখিত, মিল আছে এমন পণ্য পাইনি। অন্য নাম বা category দিয়ে খুঁজে দেখবেন?',
+            default => 'দুঃখিত, ক্যাটালগে আপনার চাওয়া পণ্যটি খুঁজে পাইনি। নিচের WhatsApp বাটনে চাপ দিয়ে আমাদের সঙ্গে যোগাযোগ করুন—আমরা খুঁজে পেতে সাহায্য করব।',
         };
 
         return ApiResponse::success([
             'reply' => $reply,
             'products' => $items,
             'suggestion' => $suggestion,
-            'support' => $geminiQuotaExceeded ? [
-                'message' => 'আমাদের AI সহকারীর সাময়িক ব্যবহারসীমা পূর্ণ হয়েছে। দ্রুত সহায়তার জন্য WhatsApp-এ আমাদের বার্তা দিন: 01856533432',
-                'whatsapp_url' => 'https://wa.me/8801856533432?text='.rawurlencode('Hello, I need help finding a product on OneHaat.'),
-                'phone' => '01856533432',
-            ] : null,
+            'support' => $geminiQuotaExceeded
+                ? $this->whatsappSupport('আমাদের AI সহকারীর সাময়িক ব্যবহারসীমা পূর্ণ হয়েছে। দ্রুত সহায়তার জন্য WhatsApp-এ আমাদের নক করুন।')
+                : (count($items) === 0 ? $this->whatsappSupport('পণ্যটি খুঁজে পেতে বা বিকল্প জানতে WhatsApp-এ আমাদের নক করুন।') : null),
         ]);
     }
 
@@ -247,7 +255,7 @@ class ChatController extends Controller
     private function buildSearchQueries(string $intentQuery, string $message): array
     {
         $cleanMessage = preg_replace(
-            '/(?:দেখিয়ে দিন|দেখিয়ে দিন|দেখান|দেখাও|দেখতে চাই|খুঁজে দিন|খুঁজে দাও|খুঁজুন|খোঁজ দিন|খোঁজ দাও|আমাকে|একটু|পণ্যগুলো|পণ্য|প্রোডাক্টগুলো|প্রোডাক্ট|প্লিজ)/u',
+            '/(?:দেখিয়ে দিন|দেখিয়ে দিন|দেখান|দেখাও|দেখতে চাই|খুঁজে দিন|খুঁজে দাও|খুঁজুন|খোঁজ দিন|খোঁজ দাও|আমাকে|একটু|দাও|দিন|দে|চাই|লাগবে|পণ্যগুলো|পণ্য|প্রোডাক্টগুলো|প্রোডাক্ট|প্লিজ)/u',
             ' ',
             $message
         ) ?? $message;
@@ -265,6 +273,11 @@ class ChatController extends Controller
                 array_push($queries, 'churi', 'chori', 'চুড়ি', 'চুরি', 'bangles', 'bangle');
                 break;
             }
+
+            if (preg_match('/(?:jersey|জার্সি|জার্সী)/iu', $candidate)) {
+                array_push($queries, 'jersey', 'জার্সি', 'football jersey', 'football shirt');
+                break;
+            }
         }
 
         return array_values(array_unique(array_map(fn (string $value) => trim($value), $queries)));
@@ -276,6 +289,24 @@ class ChatController extends Controller
             return false;
         }
 
-        return preg_match('/(?:খুঁজ|খোঁজ|দেখাও|দেখান|দেখতে চাই|show me|find|search|looking for|khuj|khuje|khujte|dekhao|dekhaw|show koro)/iu', $message) === 1;
+        return preg_match('/(?:খুঁজ|খোঁজ|দেখাও|দেখান|দেখতে চাই|দাও|দিন|দে|লাগবে|চাই|show me|find|search|looking for|\b(?:dao|den|lagbe|chai)\b|khuj|khuje|khujte|dekhao|dekhaw|show koro)/iu', $message) === 1;
+    }
+
+    private function isWhatsappContactRequest(string $message): bool
+    {
+        $mentionsWhatsApp = preg_match('/whats\s*app|হোয়াটসঅ্যাপ|হোয়াটসঅ্যাপ/iu', $message) === 1;
+        $asksForContact = preg_match('/number|\bno\b|contact|message|chat|knock|যোগাযোগ|নম্বর|নক|বার্তা|দাও|দিন|দিতে|কোথায়|কোথায়|কীভাবে/iu', $message) === 1;
+
+        return $mentionsWhatsApp && $asksForContact;
+    }
+
+    /** @return array{message: string, whatsapp_url: string, phone: string} */
+    private function whatsappSupport(string $message): array
+    {
+        return [
+            'message' => $message.' নম্বর: 01856533432',
+            'whatsapp_url' => 'https://wa.me/8801856533432?text='.rawurlencode('Hello, I need help from OneHaat.'),
+            'phone' => '01856533432',
+        ];
     }
 }

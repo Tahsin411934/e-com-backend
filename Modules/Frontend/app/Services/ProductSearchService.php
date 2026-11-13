@@ -87,7 +87,7 @@ class ProductSearchService
                 // Preserve the scored order
                 $idOrder = array_flip($topIds);
                 $results = $this->productQuery()->with(['images', 'unit', 'variants' => function ($q) {
-                    $q->where('status', 'active');
+                    $q->where('status', 'active')->with(['inventoryStocks', 'options.inventoryStocks']);
                 }])
                     ->whereIn('id', $topIds)
                     ->where('status', 'active')
@@ -154,7 +154,7 @@ class ProductSearchService
     {
         $pattern = '%'.implode('%', str_split($query)).'%';
 
-        $queryBuilder = Product::where('status', 'active')
+        $queryBuilder = $this->productQuery()->where('status', 'active')
             ->where('visibility', 'public')
             ->where('name', 'LIKE', $pattern);
 

@@ -5,6 +5,7 @@ use Modules\Frontend\Http\Controllers\AnnouncementBarApiController;
 use Modules\Frontend\Http\Controllers\BannerApiController;
 use Modules\Frontend\Http\Controllers\BrandApiController;
 use Modules\Frontend\Http\Controllers\CategoryApiController;
+use Modules\Frontend\Http\Controllers\ChatController;
 use Modules\Frontend\Http\Controllers\CentralSettingsApiController;
 use Modules\Frontend\Http\Controllers\CustomerOrderApiController;
 use Modules\Frontend\Http\Controllers\FrontendController;
@@ -57,6 +58,9 @@ Route::prefix('v1')->group(function () {
     // MUST be defined before /products/{slug} to avoid route conflict
     Route::get('/products/search', [ProductSearchApiController::class, 'search'])->name('api.products.search');
 
+    // Guest product discovery chat. The controller only returns public catalog data.
+    Route::post('/chat', [ChatController::class, 'message'])->middleware('throttle:10,1')->name('api.chat.message');
+
     // Product Detail API - single product with full details, reviews, variants, related products
     Route::get('/products/{slug}', [ProductApiController::class, 'show'])->name('api.products.show');
 
@@ -94,4 +98,5 @@ Route::middleware(['convert.auth.cookie', 'auth:sanctum'])->prefix('v1')->group(
     Route::apiResource('frontends', FrontendController::class)->names('frontend');
     Route::get('/orders', [CustomerOrderApiController::class, 'index'])->name('api.orders.index');
     Route::get('/orders/{order}', [CustomerOrderApiController::class, 'show'])->name('api.orders.show');
+    Route::post('/chat/order-status', [ChatController::class, 'orderStatus'])->middleware('throttle:10,1')->name('api.chat.order-status');
 });

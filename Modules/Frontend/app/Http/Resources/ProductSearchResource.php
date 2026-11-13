@@ -60,6 +60,20 @@ class ProductSearchResource extends JsonResource
             // Product-level delivery charge (৳) — falls back to the default
             // when the column is absent (pre-migration).
             'delivery_charge' => (float) ($this->delivery_charge ?? Product::DEFAULT_DELIVERY_CHARGE),
+            'available_colors' => $this->variants
+                ->flatMap(fn ($variant) => $variant->options
+                    ->filter(fn ($option) => $option->status === 'active'
+                        && (! $variant->track_inventory || $option->stock > 0 || $variant->allow_backorder))
+                    ->pluck('color_name'))
+                ->filter()
+                ->unique()
+                ->values(),
+            'available_sizes' => $this->variants
+                ->filter(fn ($variant) => ! $variant->track_inventory || $variant->stock > 0 || $variant->allow_backorder)
+                ->map(fn ($variant) => data_get($variant->attributes, 'size'))
+                ->filter()
+                ->unique()
+                ->values(),
             'relevance_score' => $this->relevance_score ?? null,
         ];
     }

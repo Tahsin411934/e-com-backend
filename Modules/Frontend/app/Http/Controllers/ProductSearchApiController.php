@@ -7,7 +7,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Modules\Frontend\Http\Resources\ProductSearchResource;
-use Modules\Frontend\Services\ProductSearchService;
+use Modules\Frontend\Services\CentralProductSearchService;
 
 class ProductSearchApiController extends Controller
 {
@@ -30,7 +30,7 @@ class ProductSearchApiController extends Controller
         $categoryId = $request->query('category_id');
         $perPage = $request->has('per_page') ? min((int) $request->query('per_page', 10), 40) : 10;
 
-        $service = app(ProductSearchService::class);
+        $service = app(CentralProductSearchService::class);
         $searchResult = $service->search($query, $perPage, $categoryId ? (int) $categoryId : null);
 
         $products = $searchResult['products'];

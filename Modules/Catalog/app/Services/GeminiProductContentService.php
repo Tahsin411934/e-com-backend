@@ -5,7 +5,6 @@ namespace Modules\Catalog\Services;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Str;
 use RuntimeException;
-use stdClass;
 
 class GeminiProductContentService
 {
@@ -25,12 +24,12 @@ Additional context: {$context}
 
 Rules:
 - Write naturally in English unless the additional context requests another language.
-- Use Google Search to identify the exact product and verify its official features, available colors, and size options. Prefer the manufacturer's official product page or other reliable seller pages.
-- Never claim a color/size is available unless a reliable source confirms it. If the exact product cannot be identified or a detail is unavailable, omit it instead of guessing.
-- The description must start with 1-2 clear sentences explaining what the product is and who it is for. Then provide useful detail in readable HTML paragraphs and bullet lists. Include verified colors and size options when found, and summarize key features and use cases.
-- Do not invent specifications, materials, dimensions, certifications, warranty, or included accessories.
+- Start the full description with 1-2 clear sentences explaining what the product is and its general purpose.
+- Write exactly 3 or 4 informative paragraphs in the full description, using readable HTML <p> tags. Explain the product's purpose, likely use cases, general benefits, and relevant buying considerations in useful detail.
+- Keep claims appropriate to what can reasonably be inferred from the product name and additional context. Do not invent exact specifications, colors, sizes, materials, dimensions, certifications, warranty, or included accessories.
 - Keep short_description under 300 characters and seo_description under 160 characters.
-- The keywords field must contain 6-12 relevant search terms/phrases for this product, including product type, brand/model when verified, common synonyms, and likely buyer search terms. Do not keyword-stuff.
+- Make the short description clear, natural, and SEO-friendly, with the main product phrase and likely relevant search terms where they fit naturally.
+- The keywords field must contain 6-12 relevant search terms/phrases based on the product name/context, such as product type, brand/model if included in the name, common synonyms, and likely buyer search terms. Do not keyword-stuff.
 - product_type must be one of: physical, digital, service, bundle. Use physical when uncertain.
 - Return keywords as a JSON array of strings. These are editable drafts for a human reviewer.
 PROMPT;
@@ -40,9 +39,6 @@ PROMPT;
             ->post('https://generativelanguage.googleapis.com/v1beta/models/'.config('services.gemini.model').':generateContent?key='.urlencode($apiKey), [
                 'contents' => [[
                     'parts' => [['text' => $prompt]],
-                ]],
-                'tools' => [[
-                    'google_search' => new stdClass(),
                 ]],
                 'generationConfig' => [
                     'responseMimeType' => 'application/json',

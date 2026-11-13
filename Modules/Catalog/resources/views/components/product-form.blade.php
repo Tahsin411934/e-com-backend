@@ -84,7 +84,7 @@
                                             <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-violet-100 text-violet-700"><i class="fas fa-wand-magic-sparkles"></i></span>
                                             <div>
                                                 <h3 class="text-sm font-semibold text-gray-900">Create a product draft with AI</h3>
-                                                <p class="mt-1 max-w-xl text-xs leading-5 text-gray-500">Searches for verified product details, colors and sizes, then drafts the overview, full description and SEO keywords for you to review.</p>
+                                                <p class="mt-1 max-w-xl text-xs leading-5 text-gray-500">Creates an SEO-friendly overview, detailed 3–4 paragraph description and search keywords for you to review.</p>
                                             </div>
                                         </div>
                                         <button type="button" id="generateProductWithAi" class="inline-flex shrink-0 items-center justify-center gap-2 rounded-lg bg-violet-700 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-violet-800 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60">
@@ -98,7 +98,7 @@
                                             <option value="Bengali">Bengali</option>
                                         </select>
                                     </div>
-                                    <p class="mt-2 text-[11px] text-gray-400"><i class="fas fa-circle-info mr-1"></i>Search results may not identify the exact product. Verify colors, sizes and claims before saving.</p>
+                                    <p class="mt-2 text-[11px] text-gray-400"><i class="fas fa-circle-info mr-1"></i>AI uses the product name and your optional details. Review generated claims before saving.</p>
                                 </div>
                             @endunless
                             <div>

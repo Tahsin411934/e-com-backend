@@ -77,18 +77,17 @@
                                 </div>
                                 <textarea name="short_description" id="short_description" rows="3" maxlength="500" class="w-full rounded-lg border-gray-300 shadow-sm focus:border-primary focus:ring-primary text-sm" placeholder="Brief overview with product type and useful search terms">{{ $product?->short_description ?? '' }}</textarea>
                             </div>
-                            @unless($isEdit)
                                 <div class="rounded-xl border border-violet-200 bg-gradient-to-r from-violet-50 via-white to-indigo-50 p-4 sm:p-5">
                                     <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                                         <div class="flex items-start gap-3">
                                             <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-violet-100 text-violet-700"><i class="fas fa-wand-magic-sparkles"></i></span>
                                             <div>
-                                                <h3 class="text-sm font-semibold text-gray-900">Create a product draft with AI</h3>
-                                                <p class="mt-1 max-w-xl text-xs leading-5 text-gray-500">Creates an SEO-friendly overview, detailed description, search keywords and SKUs for all named variants in one AI request.</p>
+                                                <h3 class="text-sm font-semibold text-gray-900">{{ $isEdit ? 'Regenerate product content with AI' : 'Create a product draft with AI' }}</h3>
+                                                <p class="mt-1 max-w-xl text-xs leading-5 text-gray-500">Generates SEO-friendly descriptions, search keywords and SKUs for named variants in one AI request. Existing content is replaced after confirmation.</p>
                                             </div>
                                         </div>
                                         <button type="button" id="generateProductWithAi" class="inline-flex shrink-0 items-center justify-center gap-2 rounded-lg bg-violet-700 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-violet-800 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60">
-                                            <i class="fas fa-wand-magic-sparkles"></i><span>Generate draft</span>
+                                            <i class="fas fa-wand-magic-sparkles"></i><span>{{ $isEdit ? 'Regenerate with AI' : 'Generate draft' }}</span>
                                         </button>
                                     </div>
                                     <div class="mt-4 grid grid-cols-1 gap-3 border-t border-violet-100 pt-4 sm:grid-cols-[minmax(0,1fr)_180px]">
@@ -100,7 +99,6 @@
                                     </div>
                                     <p class="mt-2 text-[11px] text-gray-400"><i class="fas fa-circle-info mr-1"></i>AI uses the product name and your optional details. Review generated claims before saving.</p>
                                 </div>
-                            @endunless
                             <div>
                                 <label for="description" class="block text-sm font-medium text-gray-700 mb-2">Full Description</label>
                                 <textarea name="description" id="description" rows="8" class="w-full rounded-lg border-gray-300 shadow-sm focus:border-primary focus:ring-primary text-sm" placeholder="Detailed product description...">{{ $product?->description ?? '' }}</textarea>
@@ -475,7 +473,6 @@
         // Keeping this data local avoids a second request (and its permission/
         // route failure modes) when the user chooses a set.
         const sizeSetValues = @json($sizeSetValues);
-        @unless($isEdit)
         $('#generateProductWithAi').on('click', async function () {
             const name = ($('#name').val() || '').trim();
             if (!name) {
@@ -485,11 +482,16 @@
             }
 
             const fields = ['short_description', 'description', 'seo_title', 'seo_description', 'keywords'];
-            const hasExistingContent = fields.some(id => (($('#' + id).val() || '').trim().length > 0));
+            const hasExistingContent = fields.some(id => (($('#' + id).val() || '').trim().length > 0))
+                || (@json($isEdit) && (
+                    (($('#slug').val() || '').trim().length > 0)
+                    || (($('#product_type').val() || '').trim().length > 0)
+                    || $('.variant-sku').toArray().some(input => (input.value || '').trim().length > 0)
+                ));
             if (hasExistingContent) {
                 const result = await Swal.fire({
                     icon: 'question', title: 'Replace existing product text?',
-                    text: 'AI-generated text will replace the current description and SEO fields.',
+                    text: 'Generated descriptions, SEO fields, slug, product type and SKUs for named variants will replace their current values.',
                     showCancelButton: true, confirmButtonText: 'Generate and replace', cancelButtonText: 'Keep editing'
                 });
                 if (!result.isConfirmed) return;
@@ -537,10 +539,9 @@
             } catch (error) {
                 Swal.fire('AI generation failed', error.message, 'error');
             } finally {
-                button.prop('disabled', false).find('span').text('Generate with AI');
+                button.prop('disabled', false).find('span').text(@json($isEdit ? 'Regenerate with AI' : 'Generate draft'));
             }
         });
-        @endunless
         @if($isEdit && $product?->variants)
             @foreach($product->variants as $vIdx => $v)
                 optionCounters[{{ $vIdx }}] = {{ $v->options->count() }};

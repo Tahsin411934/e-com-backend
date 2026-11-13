@@ -30,7 +30,7 @@ Route::middleware(['auth', 'verified', 'admin'])->group(function () {
     Route::post('/products/{id}/duplicate', [ProductController::class, 'duplicate'])->name('products.duplicate')->middleware('permission:products.create');
     Route::get('products', [ProductController::class, 'index'])->name('products.index')->middleware('permission:products.view');
     Route::get('products/create', [ProductController::class, 'create'])->name('products.create')->middleware('permission:products.create');
-    Route::post('products/generate-with-ai', [ProductController::class, 'generateWithAi'])->name('products.generate-with-ai')->middleware('permission:products.create');
+    Route::post('products/generate-with-ai', [ProductController::class, 'generateWithAi'])->name('products.generate-with-ai')->middleware('permission:products.create|products.edit');
     Route::post('products', [ProductController::class, 'store'])->name('products.store')->middleware('permission:products.create');
     Route::get('products/{id}', [ProductController::class, 'show'])->name('products.show')->middleware('permission:products.view');
     Route::get('products/{id}/edit', [ProductController::class, 'edit'])->name('products.edit')->middleware('permission:products.edit');

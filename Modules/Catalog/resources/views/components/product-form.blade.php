@@ -313,9 +313,14 @@
                                 @if($isEdit && $product?->variants->count() > 0)
                                     @foreach($product->variants as $vIdx => $v)
                                     <div class="variant-item bg-gray-50 rounded-lg p-4 mb-3 border border-gray-200 relative" data-variant-edit="{{ $vIdx }}">
-                                        <button type="button" class="remove-variant absolute top-2 right-2 text-gray-400 hover:text-red-500" data-index="{{ $vIdx }}">
-                                            <i class="fas fa-times"></i>
-                                        </button>
+                                        <div class="mb-3 flex items-center justify-end gap-2">
+                                            <button type="button" class="inherit-variant-btn inline-flex items-center gap-1 rounded-md border border-indigo-200 bg-white px-2.5 py-1.5 text-xs font-medium text-indigo-700 hover:bg-indigo-50">
+                                                <i class="fas fa-copy"></i> Inherit to other variants
+                                            </button>
+                                            <button type="button" class="remove-variant rounded-md px-2 py-1.5 text-gray-400 hover:bg-red-50 hover:text-red-500" data-index="{{ $vIdx }}" aria-label="Remove variant">
+                                                <i class="fas fa-times"></i>
+                                            </button>
+                                        </div>
                                         <input type="hidden" name="variants[{{ $vIdx }}][id]" class="variant-id" value="{{ $v->id }}">
                                         <div class="grid grid-cols-2 gap-3 mb-3">
                                             <div>
@@ -604,9 +609,14 @@
             const safeSize = escapeHtml(size);
             return `
             <div class="variant-item bg-gray-50 rounded-lg p-4 mb-3 border border-gray-200 relative">
-                <button type="button" class="remove-variant absolute top-2 right-2 text-gray-400 hover:text-red-500" data-index="${index}">
-                    <i class="fas fa-times"></i>
-                </button>
+                <div class="mb-3 flex items-center justify-end gap-2">
+                    <button type="button" class="inherit-variant-btn inline-flex items-center gap-1 rounded-md border border-indigo-200 bg-white px-2.5 py-1.5 text-xs font-medium text-indigo-700 hover:bg-indigo-50">
+                        <i class="fas fa-copy"></i> Inherit to other variants
+                    </button>
+                    <button type="button" class="remove-variant rounded-md px-2 py-1.5 text-gray-400 hover:bg-red-50 hover:text-red-500" data-index="${index}" aria-label="Remove variant">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
                 <input type="hidden" name="variants[${index}][id]" class="variant-id" value="">
                 <div class="grid grid-cols-2 gap-3 mb-3">
                     <div>
@@ -809,6 +819,85 @@
             if (!suffix) return parent;
             return `${parent}-${suffix}`;
         }
+
+        $(document).on('click', '.inherit-variant-btn', async function() {
+            const sourceElement = this.closest('.variant-item');
+            const allVariants = Array.from(document.querySelectorAll('#variantsContainer .variant-item'));
+            const sourceIndex = allVariants.indexOf(sourceElement);
+            const sourceName = (sourceElement.querySelector('.variant-name')?.value || '').trim() || `Variant ${sourceIndex + 1}`;
+            const targets = allVariants
+                .map((element, index) => ({ element, index, name: (element.querySelector('.variant-name')?.value || '').trim() || `Variant ${index + 1}` }))
+                .filter(variant => variant.index !== sourceIndex);
+
+            if (!targets.length) {
+                Swal.fire('No other variants', 'Add another variant before inheriting its details.', 'info');
+                return;
+            }
+
+            const checkboxHtml = targets.map(target => `
+                <label class="flex cursor-pointer items-center gap-3 rounded-lg border border-gray-200 px-3 py-2 text-left hover:border-indigo-300 hover:bg-indigo-50">
+                    <input type="checkbox" class="inherit-target-checkbox h-4 w-4 rounded border-gray-300 text-indigo-600" value="${target.index}">
+                    <span class="min-w-0"><span class="block truncate text-sm font-medium text-gray-800">${escapeHtml(target.name)}</span><span class="block truncate text-xs text-gray-400">${escapeHtml(target.element.querySelector('.variant-sku')?.value || 'No SKU')}</span></span>
+                </label>`).join('');
+
+            const result = await Swal.fire({
+                title: 'Inherit variant details',
+                html: `<div class="mb-3 text-left text-sm text-gray-600">Copy details from <strong>${escapeHtml(sourceName)}</strong> to:</div><div class="max-h-64 space-y-2 overflow-y-auto">${checkboxHtml}</div><p class="mt-3 text-left text-xs text-gray-500">Target name, SKU, size and barcode stay unchanged. Pricing, inventory settings and colors will be copied.</p>`,
+                showCancelButton: true,
+                confirmButtonText: 'Inherit selected',
+                cancelButtonText: 'Cancel',
+                confirmButtonColor: '#4f46e5',
+                preConfirm: () => Array.from(document.querySelectorAll('.inherit-target-checkbox:checked')).map(input => Number(input.value)),
+            });
+
+            if (!result.isConfirmed) return;
+            const selectedIndexes = result.value || [];
+            if (!selectedIndexes.length) {
+                Swal.fire('Select variants', 'Choose at least one target variant.', 'info');
+                return;
+            }
+
+            const $source = $(sourceElement);
+            selectedIndexes.forEach(index => {
+                const targetElement = allVariants[index];
+                if (!targetElement || targetElement === sourceElement) return;
+                const $target = $(targetElement);
+
+                $target.find('.variant-cost').val($source.find('.variant-cost').val());
+                $target.find('.variant-price').val($source.find('.variant-price').val());
+                $target.find('.variant-discount').val($source.find('.variant-discount').val());
+                $target.find('.variant-weight').val($source.find('.variant-weight').val());
+                $target.find('input[name$="[track_inventory]"]').prop('checked', $source.find('input[name$="[track_inventory]"]').is(':checked'));
+                $target.find('input[name$="[allow_backorder]"]').prop('checked', $source.find('input[name$="[allow_backorder]"]').is(':checked'));
+                recalcVariant($target);
+
+                const $sourceOptions = $source.find('.variant-options-container .option-item');
+                const $targetOptions = $target.find('.variant-options-container');
+                $targetOptions.empty();
+                const editIndex = $targetOptions.data('edit-index');
+                const newIndex = $targetOptions.data('new-index');
+                const targetVariantIndex = editIndex !== undefined ? editIndex : (newIndex !== undefined ? newIndex : '0');
+                optionCounters[targetVariantIndex] = 0;
+
+                $sourceOptions.each(function() {
+                    const $sourceOption = $(this);
+                    const optionIndex = optionCounters[targetVariantIndex]++;
+                    const $option = $(getOptionTemplate(targetVariantIndex, optionIndex));
+                    $option.find('.option-color-name').val($sourceOption.find('.option-color-name').val());
+                    $option.find('.option-color-code').val($sourceOption.find('.option-color-code').val());
+                    $option.find('.option-cost').val($sourceOption.find('.option-cost').val());
+                    $option.find('.option-sale-price').val($sourceOption.find('.option-sale-price').val());
+                    $option.find('.option-discount').val($sourceOption.find('.option-discount').val());
+                    $targetOptions.append($option);
+                    $option.find('input[name$="[barcode]"]').val('');
+                    $option.find('.option-sku').val(optionSkuFromParent($target.find('.variant-sku').val(), $option.find('.option-color-name').val()));
+                    recalcOption($option);
+                });
+            });
+
+            Toastify({ text: `Details inherited to ${selectedIndexes.length} variant(s).`, duration: 3000, gravity: 'bottom', position: 'right', style: { background: 'linear-gradient(135deg, #4f46e5, #818cf8)' } }).showToast();
+        });
+
         $(document).on('input', '.option-color-name', function() {
             const $opt = $(this).closest('.option-item');
             const $sku = $opt.find('.option-sku');

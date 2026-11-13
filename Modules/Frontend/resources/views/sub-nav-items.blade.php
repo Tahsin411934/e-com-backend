@@ -74,6 +74,7 @@
             <x-form-select label="Parent Navbar Item" name="navbar_item_id" id="subnavbar_item_navbar_item_id" required>
                 <option value="">Select Parent Item</option>
             </x-form-select>
+            <input type="hidden" name="navbar_item_id" id="subnavbar_item_locked_navbar_item_id" value="">
         </div>
         <div class="mb-4">
             <x-form-input label="Name" name="name" id="subnavbar_item_name" placeholder="Sub Item Name" required />
@@ -138,6 +139,19 @@ Crud.register('subnavbaritem', 'fill', function (data) {
             });
         }
 
+        // The entity CRUD resets the form whenever Add New is clicked. Restore
+        // the parent from the page filter so users don't have to select it again.
+        function restoreFilteredParentNavbar() {
+            const navbarItemId = new URLSearchParams(window.location.search).get('navbar_item_id');
+            const $select = $('#subnavbar_item_navbar_item_id');
+            const $lockedValue = $('#subnavbar_item_locked_navbar_item_id');
+            const isFiltered = Boolean(navbarItemId);
+
+            if (isFiltered) $select.val(navbarItemId);
+            $select.prop('disabled', isFiltered).trigger('change');
+            $lockedValue.val(isFiltered ? navbarItemId : '');
+        }
+
         $(document).ready(function() {
             // Auto-generate slug from name
             $('#subnavbar_item_name').on('input', function() {
@@ -149,6 +163,24 @@ Crud.register('subnavbaritem', 'fill', function (data) {
 
             // Load navbar items dropdown
             loadNavbarItemsSelect();
+
+            // Reapply after the generic CRUD component clears the form.
+            $('#btnAddSubnavbaritem').on('click', function() {
+                setTimeout(restoreFilteredParentNavbar, 0);
+            });
+
+            // Keep the filtered parent locked after the list finishes loading.
+            const filteredParentId = new URLSearchParams(window.location.search).get('navbar_item_id');
+            if (filteredParentId) {
+                const applyParentLock = function() {
+                    if ($('#subnavbar_item_navbar_item_id option[value="' + filteredParentId + '"]').length) {
+                        restoreFilteredParentNavbar();
+                    } else {
+                        setTimeout(applyParentLock, 50);
+                    }
+                };
+                applyParentLock();
+            }
         });
     </script>
     @endpush

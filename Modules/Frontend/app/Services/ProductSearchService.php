@@ -86,7 +86,7 @@ class ProductSearchService
             if (! empty($topIds)) {
                 // Preserve the scored order
                 $idOrder = array_flip($topIds);
-                $results = $this->productQuery()->with(['images', 'variants' => function ($q) {
+                $results = $this->productQuery()->with(['images', 'unit', 'variants' => function ($q) {
                     $q->where('status', 'active');
                 }])
                     ->whereIn('id', $topIds)

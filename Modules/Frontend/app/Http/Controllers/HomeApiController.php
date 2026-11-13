@@ -68,6 +68,7 @@ class HomeApiController extends Controller
                 ->where('products.visibility', 'public')
                 ->with([
                     'images',
+                    'unit',
                     'variants' => function ($q) {
                         $q->where('status', 'active');
                     },

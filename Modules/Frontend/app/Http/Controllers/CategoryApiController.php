@@ -120,6 +120,7 @@ class CategoryApiController extends Controller
             ->where('visibility', 'public')
             ->with([
                 'images',
+                'unit',
                 'variants' => function ($q) {
                     $q->where('status', 'active');
                 },

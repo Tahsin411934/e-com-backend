@@ -183,6 +183,11 @@ class ProductDetailResource extends JsonResource
                 'main_image' => $this->imageUrl($p->images->firstWhere('is_main', true)?->image_url
                     ?? $p->images->first()?->image_url),
                 'product_type' => $p->product_type,
+                'unit' => $p->unit ? [
+                    'id' => $p->unit->id,
+                    'name' => $p->unit->name,
+                    'short_name' => $p->unit->short_name,
+                ] : null,
             ], $pricing->priceInfo($p)));
         }
 
@@ -194,6 +199,11 @@ class ProductDetailResource extends JsonResource
             'short_description' => $this->short_description,
             'description' => $this->description,
             'product_type' => $this->product_type,
+            'unit' => $this->unit ? [
+                'id' => $this->unit->id,
+                'name' => $this->unit->name,
+                'short_name' => $this->unit->short_name,
+            ] : null,
             // Product-level delivery charge (৳) — the highest one in the cart
             // is taken once as the shipping charge at checkout. Falls back to
             // the default when the column is absent (pre-migration).

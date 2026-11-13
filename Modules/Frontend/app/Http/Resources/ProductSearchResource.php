@@ -51,6 +51,11 @@ class ProductSearchResource extends JsonResource
             'discount_amount' => $priceInfo['discount_amount'],
             'has_discount' => $priceInfo['has_discount'],
             'product_type' => $this->product_type,
+            'unit' => $this->unit ? [
+                'id' => $this->unit->id,
+                'name' => $this->unit->name,
+                'short_name' => $this->unit->short_name,
+            ] : null,
             // Product-level delivery charge (৳) — falls back to the default
             // when the column is absent (pre-migration).
             'delivery_charge' => (float) ($this->delivery_charge ?? Product::DEFAULT_DELIVERY_CHARGE),

@@ -62,6 +62,7 @@ class SubnavbarApiController extends Controller
         }
 
         $products = $query->with([
+            'unit',
             'images' => function ($q) {
                 $q->where('is_main', true);
             },
@@ -74,6 +75,7 @@ class SubnavbarApiController extends Controller
             'products.slug',
             'products.short_description',
             'products.product_type',
+            'products.unit_id',
             'products.status',
         ], page: $page);
 
@@ -96,6 +98,11 @@ class SubnavbarApiController extends Controller
                 'discount_amount' => $priceInfo['discount_amount'],
                 'has_discount' => $priceInfo['has_discount'],
                 'product_type' => $product->product_type,
+                'unit' => $product->unit ? [
+                    'id' => $product->unit->id,
+                    'name' => $product->unit->name,
+                    'short_name' => $product->unit->short_name,
+                ] : null,
                 // Product-level delivery charge (৳) — falls back to the default
                 // when the column is absent (pre-migration).
                 'delivery_charge' => (float) ($product->delivery_charge ?? Product::DEFAULT_DELIVERY_CHARGE),

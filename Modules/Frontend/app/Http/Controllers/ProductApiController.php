@@ -37,6 +37,7 @@ class ProductApiController extends Controller
             ->where('visibility', 'public')
             ->with([
                 'brand',
+                'unit',
                 'categories',
                 'images' => function ($q) {
                     $q->orderBy('sort_order');
@@ -79,7 +80,7 @@ class ProductApiController extends Controller
                 ->where('store_id', $product->store_id)
                 ->where('status', 'active')
                 ->where('visibility', 'public')
-                ->with(['images', 'variants' => fn ($q) => $q->whereNull('deleted_at')->where('status', 'active')])
+                ->with(['images', 'unit', 'variants' => fn ($q) => $q->whereNull('deleted_at')->where('status', 'active')])
                 ->orderBy('order_column')
                 ->get();
         }

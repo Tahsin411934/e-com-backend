@@ -152,11 +152,24 @@ class ProductSearchService
      */
     protected function fallbackLikeSearch(string $query, ?int $categoryId = null): Collection
     {
-        $pattern = '%'.implode('%', str_split($query)).'%';
+        // Keep each UTF-8 character intact. str_split() breaks Bangla and other
+        // multibyte scripts into invalid byte fragments, so LIKE never matches.
+        $characters = preg_split('//u', $query, -1, PREG_SPLIT_NO_EMPTY) ?: str_split($query);
+        $pattern = '%'.implode('%', $characters).'%';
+        $firstWord = preg_split('/\s+/u', trim($query))[0] ?? $query;
+        $prefixCharacters = array_slice(
+            preg_split('//u', $firstWord, -1, PREG_SPLIT_NO_EMPTY) ?: str_split($firstWord),
+            0,
+            2
+        );
+        $prefixPattern = implode('', $prefixCharacters).'%';
 
         $queryBuilder = $this->productQuery()->where('status', 'active')
             ->where('visibility', 'public')
-            ->where('name', 'LIKE', $pattern);
+            ->where(function ($builder) use ($pattern, $prefixPattern) {
+                $builder->where('name', 'LIKE', $pattern)
+                    ->orWhere('name', 'LIKE', $prefixPattern);
+            });
 
         if ($categoryId) {
             $queryBuilder->whereHas('categories', fn ($q) => $q->where('categories.id', $categoryId));

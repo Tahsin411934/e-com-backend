@@ -12,6 +12,7 @@ use Modules\Catalog\Models\Product;
 use Modules\Frontend\Http\Resources\ProductSearchResource;
 use Modules\Frontend\Services\GeminiChatIntentService;
 use Modules\Frontend\Services\CentralProductSearchService;
+use Modules\Frontend\Services\CentralSettingService;
 use Modules\Frontend\Services\GeminiQuotaExceededException;
 use Modules\Order\Models\Order;
 
@@ -104,6 +105,7 @@ class ChatController extends Controller
                 'query' => $message,
                 'category' => '',
                 'reply' => '',
+                'tool_calls' => [],
             ];
         } catch (\Throwable) {
             // Product search remains useful if Gemini is out of quota or unavailable.
@@ -112,7 +114,60 @@ class ChatController extends Controller
                 'query' => $message,
                 'category' => '',
                 'reply' => '',
+                'tool_calls' => [],
             ];
+        }
+
+        $toolCall = $intent['tool_calls'][0] ?? null;
+        $toolName = is_array($toolCall) ? ($toolCall['name'] ?? '') : '';
+        $toolArguments = is_array($toolCall) ? (array) ($toolCall['arguments'] ?? []) : [];
+        $detailRequested = $toolName === 'getProductDetails';
+
+        if ($toolName === 'searchProducts') {
+            $intent['intent'] = 'product_search';
+            $intent['query'] = trim((string) ($toolArguments['query'] ?? $message));
+            $intent['category'] = trim((string) ($toolArguments['category'] ?? ''));
+        } elseif ($detailRequested) {
+            $intent['intent'] = 'product_search';
+            $intent['query'] = trim((string) ($toolArguments['product'] ?? $message));
+            $intent['category'] = '';
+        } elseif ($toolName === 'getCategories') {
+            $categoryQuery = trim((string) ($toolArguments['query'] ?? ''));
+            $categories = Category::query()
+                ->whereNull('store_id')
+                ->where('status', 'active')
+                ->when($categoryQuery !== '', fn ($builder) => $builder->where('name', 'like', '%'.mb_substr($categoryQuery, 0, 80).'%'))
+                ->orderBy('sort_order')
+                ->orderBy('name')
+                ->limit(30)
+                ->get(['id', 'name', 'slug'])
+                ->map(fn (Category $category) => [
+                    'id' => $category->id,
+                    'name' => $category->name,
+                    'slug' => $category->slug,
+                    'url' => '/category/'.$category->slug,
+                ])->values();
+
+            return ApiResponse::success([
+                'reply' => $categories->isEmpty() ? 'I could not find matching categories.' : 'Here are the available product categories:',
+                'products' => [],
+                'categories' => $categories,
+            ]);
+        } elseif ($toolName === 'getStoreContact') {
+            $contact = app(CentralSettingService::class)->flat();
+            $support = $this->whatsappSupport('Contact our team using the WhatsApp button below.');
+            $contactLines = array_filter([
+                filled($contact['phone'] ?? null) ? 'Phone: '.$contact['phone'] : null,
+                filled($contact['whatsapp_number'] ?? null) ? 'WhatsApp: '.$contact['whatsapp_number'] : null,
+                filled($contact['email'] ?? null) ? 'Email: '.$contact['email'] : null,
+                filled($contact['address'] ?? null) ? 'Address: '.$contact['address'] : null,
+            ]);
+
+            return ApiResponse::success([
+                'reply' => $contactLines ? implode("\n", $contactLines) : $support['message'],
+                'products' => [],
+                'support' => $support,
+            ]);
         }
 
         // Catch common spoken/typed search commands locally so an imperfect
@@ -200,7 +255,29 @@ class ChatController extends Controller
         }
 
         $items = ProductSearchResource::collection($products)->resolve($request);
+        $items = array_map(fn (array $item) => $item + ['url' => '/product/'.rawurlencode((string) $item['slug'])], $items);
+        $details = null;
+        if ($detailRequested && isset($items[0])) {
+            $detailProduct = Product::query()
+                ->whereNull('store_id')
+                ->whereKey($items[0]['id'])
+                ->with(['categories', 'variants' => fn ($builder) => $builder->where('status', 'active')->with('options')])
+                ->first();
+
+            if ($detailProduct) {
+                $variantNames = $items[0]['available_sizes'] ?? [];
+                $colors = $items[0]['available_colors'] ?? [];
+                $details = implode("\n", array_filter([
+                    $detailProduct->short_description ?: $detailProduct->description,
+                    $items[0]['price'] !== null ? 'Price: ৳'.number_format((float) $items[0]['price'], 0) : 'Price: contact us',
+                    $variantNames ? 'Available sizes/options: '.implode(', ', $variantNames) : null,
+                    $colors ? 'Available colors: '.implode(', ', $colors) : null,
+                    'Product link: /product/'.$detailProduct->slug,
+                ]));
+            }
+        }
         $reply = match (true) {
+            $detailRequested && count($items) > 0 => 'Here are the details I found for this product:',
             count($items) > 0 && $category !== null => "{$category->name} category থেকে এই পণ্যগুলো পেয়েছি:",
             count($items) > 0 => 'আপনার কথামতো এই পণ্যগুলো পেয়েছি:',
             $suggestion !== null => "এই নামের কাছাকাছি পণ্য পেয়েছি: {$suggestion}",
@@ -210,6 +287,7 @@ class ChatController extends Controller
         return ApiResponse::success([
             'reply' => $reply,
             'products' => $items,
+            'details' => $details,
             'suggestion' => $suggestion,
             'support' => $geminiQuotaExceeded
                 ? $this->whatsappSupport('আমাদের AI সহকারীর সাময়িক ব্যবহারসীমা পূর্ণ হয়েছে। দ্রুত সহায়তার জন্য WhatsApp-এ আমাদের নক করুন।')
@@ -303,10 +381,22 @@ class ChatController extends Controller
     /** @return array{message: string, whatsapp_url: string, phone: string} */
     private function whatsappSupport(string $message): array
     {
-        return [
+        $settings = app(CentralSettingService::class)->flat();
+        $phone = trim((string) ($settings['phone'] ?? '')) ?: '01856533432';
+        $whatsapp = trim((string) ($settings['whatsapp_number'] ?? '')) ?: $phone;
+        $digits = preg_replace('/\D+/', '', $whatsapp) ?: '01856533432';
+        if (str_starts_with($digits, '0')) {
+            $digits = '88'.$digits;
+        }
+
+        $support = [
             'message' => $message.' নম্বর: 01856533432',
-            'whatsapp_url' => 'https://wa.me/8801856533432?text='.rawurlencode('Hello, I need help from OneHaat.'),
-            'phone' => '01856533432',
+            'whatsapp_url' => 'https://wa.me/'.$digits.'?text='.rawurlencode('Hello, I need help from OneHaat.'),
+            'phone' => $whatsapp,
+            'call_phone' => $phone,
         ];
+        $support['message'] = $message.' Number: '.$whatsapp;
+
+        return $support;
     }
 }

@@ -131,19 +131,40 @@ class ProductSearchService
 
         // Build BOOLEAN MODE query: "+word* +word2*"
         $booleanQuery = '+'.implode('* +', $words).'*';
+        $keywordCastType = DB::connection()->getDriverName() === 'pgsql' ? 'TEXT' : 'CHAR';
+        $termPatterns = array_map(function (string $term): string {
+            $characters = preg_split('//u', $term, -1, PREG_SPLIT_NO_EMPTY) ?: str_split($term);
+
+            return '%'.implode('%', $characters).'%';
+        }, preg_split('/\s+/u', trim($query), -1, PREG_SPLIT_NO_EMPTY) ?: []);
 
         $queryBuilder = $this->productQuery()->where('status', 'active')
             ->where('visibility', 'public')
-            ->whereRaw(
-                'MATCH(name, short_description, description) AGAINST(? IN BOOLEAN MODE)',
-                [$booleanQuery]
-            );
+            ->where(function ($search) use ($booleanQuery, $keywordCastType, $termPatterns) {
+                $search->whereRaw(
+                    'MATCH(name, short_description, description) AGAINST(? IN BOOLEAN MODE)',
+                    [$booleanQuery]
+                )
+                    ->orWhereRaw("CAST(keywords AS {$keywordCastType}) LIKE ?", ['%'.implode('%', $termPatterns).'%'])
+                    ->orWhereHas('variants', function ($variant) use ($termPatterns, $keywordCastType) {
+                        $variant->where('status', 'active')
+                            ->where(function ($terms) use ($termPatterns, $keywordCastType) {
+                                foreach ($termPatterns as $termPattern) {
+                                    $terms->orWhere('name', 'LIKE', $termPattern)
+                                        ->orWhere('sku', 'LIKE', $termPattern)
+                                        ->orWhereRaw("CAST(attributes AS {$keywordCastType}) LIKE ?", [$termPattern])
+                                        ->orWhereHas('options', fn ($option) => $option->where('status', 'active')->where('color_name', 'LIKE', $termPattern));
+                                }
+                            });
+                    });
+            });
 
         if ($categoryId) {
             $queryBuilder->whereHas('categories', fn ($q) => $q->where('categories.id', $categoryId));
         }
 
         return $queryBuilder
+            ->with(['variants.options'])
             ->limit($this->maxCandidates)
             ->get(['id', 'name', 'short_description', 'description', 'keywords']);
     }
@@ -165,6 +186,11 @@ class ProductSearchService
         );
         $prefixPattern = implode('', $prefixCharacters).'%';
         $keywordCastType = DB::connection()->getDriverName() === 'pgsql' ? 'TEXT' : 'CHAR';
+        $variantPatterns = array_map(function (string $term): string {
+            $termCharacters = preg_split('//u', $term, -1, PREG_SPLIT_NO_EMPTY) ?: str_split($term);
+
+            return '%'.implode('%', $termCharacters).'%';
+        }, preg_split('/\s+/u', trim($query), -1, PREG_SPLIT_NO_EMPTY) ?: []);
 
         $queryBuilder = $this->productQuery()->where('status', 'active')
             ->where('visibility', 'public')
@@ -173,7 +199,27 @@ class ProductSearchService
                     ->orWhere('name', 'LIKE', $prefixPattern)
                     ->orWhere('short_description', 'LIKE', $pattern)
                     ->orWhere('description', 'LIKE', $pattern)
-                    ->orWhereRaw("CAST(keywords AS {$keywordCastType}) LIKE ?", [$pattern]);
+                    ->orWhereRaw("CAST(keywords AS {$keywordCastType}) LIKE ?", [$pattern])
+                    ->orWhereHas('variants', function ($variant) use ($pattern, $keywordCastType) {
+                        $variant->where('status', 'active')
+                            ->where(function ($terms) use ($pattern, $keywordCastType) {
+                                $terms->where('name', 'LIKE', $pattern)
+                                    ->orWhere('sku', 'LIKE', $pattern)
+                                    ->orWhereRaw("CAST(attributes AS {$keywordCastType}) LIKE ?", [$pattern])
+                                    ->orWhereHas('options', fn ($option) => $option->where('status', 'active')->where('color_name', 'LIKE', $pattern));
+                            });
+                    })
+                    ->orWhereHas('variants', function ($variant) use ($variantPatterns, $keywordCastType) {
+                        $variant->where('status', 'active')
+                            ->where(function ($terms) use ($variantPatterns, $keywordCastType) {
+                                foreach ($variantPatterns as $termPattern) {
+                                    $terms->orWhere('name', 'LIKE', $termPattern)
+                                        ->orWhere('sku', 'LIKE', $termPattern)
+                                        ->orWhereRaw("CAST(attributes AS {$keywordCastType}) LIKE ?", [$termPattern])
+                                        ->orWhereHas('options', fn ($option) => $option->where('status', 'active')->where('color_name', 'LIKE', $termPattern));
+                                }
+                            });
+                    });
             });
 
         if ($categoryId) {
@@ -181,6 +227,7 @@ class ProductSearchService
         }
 
         return $queryBuilder
+            ->with(['variants.options'])
             ->limit($this->maxCandidates)
             ->get(['id', 'name', 'short_description', 'description', 'keywords']);
     }
@@ -209,6 +256,11 @@ class ProductSearchService
                 $product->short_description,
                 $product->description,
                 $keywords,
+                $product->variants?->flatMap(fn ($variant) => array_filter([
+                    $variant->name,
+                    is_array($variant->attributes) ? implode(' ', array_map('strval', $variant->attributes)) : (string) $variant->attributes,
+                    $variant->options->pluck('color_name')->implode(' '),
+                ]))->implode(' '),
             ]));
             $searchableWords = preg_split('/[\s,.;:!?()\[\]{}]+/u', mb_strtolower($searchableText), -1, PREG_SPLIT_NO_EMPTY) ?: [];
             $wordDistances = [];

@@ -8,7 +8,7 @@ use RuntimeException;
 
 class GeminiProductContentService
 {
-    public function generate(string $name, ?string $context = null): array
+    public function generate(string $name, ?string $context = null, array $variants = [], array $reservedSkus = []): array
     {
         $apiKey = config('services.gemini.api_key');
 
@@ -34,6 +34,13 @@ Rules:
 - Return keywords as a JSON array of strings. These are editable drafts for a human reviewer.
 PROMPT;
 
+        if ($variants !== []) {
+            $variantNames = collect($variants)->pluck('name')->values()->all();
+            $prompt .= "\n\nGenerate one unique SKU for each variant name below. Return variant_skus as an array with each input index and its SKU. Use uppercase ASCII letters, numbers, and hyphens, keep each SKU under 60 characters, and make them distinct from one another. Variant names by index: ".json_encode($variantNames, JSON_UNESCAPED_UNICODE).". Do not omit any index.";
+        } else {
+            $prompt .= "\n\nReturn variant_skus as an empty array.";
+        }
+
         $response = Http::timeout(30)
             ->acceptJson()
             ->post('https://generativelanguage.googleapis.com/v1beta/models/'.config('services.gemini.model').':generateContent?key='.urlencode($apiKey), [
@@ -51,8 +58,19 @@ PROMPT;
                             'seo_description' => ['type' => 'STRING'],
                             'keywords' => ['type' => 'ARRAY', 'items' => ['type' => 'STRING']],
                             'product_type' => ['type' => 'STRING', 'enum' => ['physical', 'digital', 'service', 'bundle']],
+                            'variant_skus' => [
+                                'type' => 'ARRAY',
+                                'items' => [
+                                    'type' => 'OBJECT',
+                                    'properties' => [
+                                        'index' => ['type' => 'INTEGER'],
+                                        'sku' => ['type' => 'STRING'],
+                                    ],
+                                    'required' => ['index', 'sku'],
+                                ],
+                            ],
                         ],
-                        'required' => ['short_description', 'description', 'seo_title', 'seo_description', 'keywords', 'product_type'],
+                        'required' => ['short_description', 'description', 'seo_title', 'seo_description', 'keywords', 'product_type', 'variant_skus'],
                     ],
                 ],
             ]);
@@ -86,6 +104,54 @@ PROMPT;
         }
 
         $type = $content['product_type'] ?? 'physical';
+        $usedSkus = array_fill_keys(array_map('strtoupper', $reservedSkus), true);
+        $assignedVariantIndexes = [];
+        $variantSkus = collect($content['variant_skus'] ?? [])
+            ->filter(fn ($item) => is_array($item) && isset($item['index'], $item['sku']) && is_numeric($item['index']))
+            ->map(function ($item) use (&$usedSkus, &$assignedVariantIndexes, $variants) {
+                $index = (int) $item['index'];
+                if (! isset($variants[$index]) || isset($assignedVariantIndexes[$index])) {
+                    return null;
+                }
+                $assignedVariantIndexes[$index] = true;
+
+                $base = Str::upper(Str::slug((string) $item['sku']));
+                $base = Str::limit(trim($base, '-'), 60, '');
+                if ($base === '') {
+                    $base = 'ITEM-'.Str::upper(Str::random(8));
+                }
+
+                $sku = $base;
+                $suffix = 2;
+                while (isset($usedSkus[strtoupper($sku)])) {
+                    $tail = '-'.$suffix++;
+                    $sku = Str::limit($base, 60 - strlen($tail), '').$tail;
+                }
+                $usedSkus[strtoupper($sku)] = true;
+
+                return ['index' => $index, 'sku' => $sku];
+            })
+            ->filter()
+            ->values()
+            ->all();
+
+        // Ensure every submitted variant receives a SKU even if the model omits an item.
+        foreach (array_keys($variants) as $index) {
+            if (isset($assignedVariantIndexes[$index])) {
+                continue;
+            }
+            $base = Str::upper(Str::slug($name.'-'.$variants[$index]['name']));
+            $base = Str::limit(trim($base, '-'), 52, '');
+            $sku = $base ?: 'ITEM';
+            $suffix = 2;
+            while (isset($usedSkus[strtoupper($sku)])) {
+                $tail = '-'.$suffix++;
+                $sku = Str::limit($base ?: 'ITEM', 60 - strlen($tail), '').$tail;
+            }
+            $usedSkus[strtoupper($sku)] = true;
+            $variantSkus[] = ['index' => $index, 'sku' => $sku];
+        }
+
         return [
             'short_description' => Str::limit(strip_tags((string) ($content['short_description'] ?? '')), 500, ''),
             'description' => strip_tags((string) ($content['description'] ?? ''), '<p><ul><ol><li><strong><em><br>'),
@@ -94,6 +160,7 @@ PROMPT;
             'keywords' => collect($content['keywords'] ?? [])->filter(fn ($keyword) => is_string($keyword))->map(fn ($keyword) => Str::limit(strip_tags($keyword), 80, ''))->take(12)->values()->all(),
             'slug' => Str::slug($name),
             'product_type' => in_array($type, ['physical', 'digital', 'service', 'bundle'], true) ? $type : 'physical',
+            'variant_skus' => $variantSkus,
         ];
     }
 }

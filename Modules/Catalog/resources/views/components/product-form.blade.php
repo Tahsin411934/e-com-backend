@@ -84,7 +84,7 @@
                                             <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-violet-100 text-violet-700"><i class="fas fa-wand-magic-sparkles"></i></span>
                                             <div>
                                                 <h3 class="text-sm font-semibold text-gray-900">Create a product draft with AI</h3>
-                                                <p class="mt-1 max-w-xl text-xs leading-5 text-gray-500">Creates an SEO-friendly overview, detailed 3–4 paragraph description and search keywords for you to review.</p>
+                                                <p class="mt-1 max-w-xl text-xs leading-5 text-gray-500">Creates an SEO-friendly overview, detailed description, search keywords and SKUs for all named variants in one AI request.</p>
                                             </div>
                                         </div>
                                         <button type="button" id="generateProductWithAi" class="inline-flex shrink-0 items-center justify-center gap-2 rounded-lg bg-violet-700 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-violet-800 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60">
@@ -496,6 +496,10 @@
             }
 
             const button = $(this);
+            const variantElements = Array.from(document.querySelectorAll('#variantsContainer .variant-item'));
+            const namedVariants = variantElements
+                .map(element => ({ element, name: (element.querySelector('.variant-name')?.value || '').trim() }))
+                .filter(variant => variant.name !== '');
             button.prop('disabled', true).find('span').text('Generating...');
             try {
                 const response = await fetch("{{ route('products.generate-with-ai') }}", {
@@ -507,7 +511,8 @@
                     body: JSON.stringify({
                         name,
                         context: ($('#aiProductContext').val() || '').trim(),
-                        language: $('#aiProductLanguage').val() || 'English'
+                        language: $('#aiProductLanguage').val() || 'English',
+                        variants: namedVariants.map(variant => ({ name: variant.name }))
                     })
                 });
                 const payload = await response.json();
@@ -522,6 +527,12 @@
                 if (productDescriptionEditor) productDescriptionEditor.setData(data.description || '');
                 else $('#description').val(data.description || '');
                 $('#product_type').val(data.product_type).trigger('change');
+                (Array.isArray(data.variant_skus) ? data.variant_skus : []).forEach(item => {
+                    const variant = namedVariants[item.index];
+                    if (variant && item.sku) {
+                        $(variant.element).find('.variant-sku').val(item.sku).trigger('input');
+                    }
+                });
                 Swal.fire({ icon: 'success', title: 'Draft generated', text: 'Review and edit the generated fields before saving.', timer: 2200, showConfirmButton: false });
             } catch (error) {
                 Swal.fire('AI generation failed', error.message, 'error');

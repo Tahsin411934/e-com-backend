@@ -9,6 +9,8 @@ use Modules\Catalog\Http\Requests\UpdateProductRequest;
 use Modules\Catalog\Models\Size;
 use Modules\Catalog\Models\TaxRate;
 use Modules\Catalog\Models\Unit;
+use Modules\Catalog\Models\ProductVariant;
+use Modules\Catalog\Models\VariantOption;
 use Modules\Catalog\Services\ProductService;
 use Modules\Catalog\Services\GeminiProductContentService;
 use Modules\Frontend\Models\NavbarItem;
@@ -87,6 +89,8 @@ class ProductController extends Controller
             'name' => ['required', 'string', 'max:220'],
             'context' => ['nullable', 'string', 'max:1000'],
             'language' => ['nullable', 'string', 'in:English,Bengali,Bangla'],
+            'variants' => ['nullable', 'array', 'max:100'],
+            'variants.*.name' => ['required', 'string', 'max:220'],
         ]);
 
         try {
@@ -95,7 +99,7 @@ class ProductController extends Controller
                 'data' => $gemini->generate($validated['name'], trim(implode("\n", array_filter([
                     $validated['context'] ?? null,
                     isset($validated['language']) ? 'Write the generated content in '.$validated['language'].'.' : null,
-                ]))) ?: null),
+                ]))) ?: null, $validated['variants'] ?? [], ProductVariant::withTrashed()->pluck('sku')->all(), VariantOption::withTrashed()->pluck('sku')->all()),
             ]);
         } catch (\Illuminate\Http\Client\ConnectionException $exception) {
             return response()->json(['message' => 'Could not connect to Gemini. Please try again.'], 503);

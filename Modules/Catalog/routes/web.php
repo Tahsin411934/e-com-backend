@@ -50,6 +50,7 @@ Route::middleware(['auth', 'verified', 'admin'])->group(function () {
 
     Route::get('categories', [CategoryController::class, 'index'])->name('categories.index')->middleware('permission:categories.view');
     Route::get('/dataTable/categories', [CategoryController::class, 'dataTable'])->name('categories.dataTable')->middleware('permission:categories.view');
+    Route::post('/categories/reorder', [CategoryController::class, 'reorder'])->name('categories.reorder')->middleware('permission:categories.edit');
     Route::get('categories/{id}', [CategoryController::class, 'show'])->name('categories.show')->middleware('permission:categories.view');
     Route::post('categories', [CategoryController::class, 'store'])->name('categories.store')->middleware('permission:categories.create');
     // Categories are global reference data — only platform admins may edit or delete them.

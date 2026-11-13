@@ -24,13 +24,32 @@ class CategoryController extends Controller
             ? Store::where('status', 'active')->orderBy('name')->get()
             : collect();
         $currentStore = CurrentStore::store();
+        $canReorderCategories = (bool) ($actor
+            && ($actor->hasRole('Super Admin') || $actor->hasRole('Admin'))
+            && $actor->hasPermission('categories.edit'));
 
-        return view('catalog::categories', compact('parents', 'stores', 'canAssignStore', 'currentStore'));
+        return view('catalog::categories', compact('parents', 'stores', 'canAssignStore', 'currentStore', 'canReorderCategories'));
     }
 
     public function dataTable(Request $request)
     {
         return $this->categoryService->getCategoryDataTable($request);
+    }
+
+    public function reorder(Request $request)
+    {
+        $validated = $request->validate([
+            'category_ids' => ['required', 'array', 'min:1', 'max:1000'],
+            'category_ids.*' => ['required', 'integer', 'distinct'],
+            'start' => ['nullable', 'integer', 'min:0', 'max:1000000'],
+            'store_id' => ['nullable', 'integer', 'exists:stores,id'],
+        ]);
+
+        return $this->categoryService->reorderCategories(
+            $validated['category_ids'],
+            (int) ($validated['start'] ?? 0),
+            isset($validated['store_id']) && $validated['store_id'] !== '' ? (int) $validated['store_id'] : null,
+        );
     }
 
     public function store(StoreCategoryRequest $request)

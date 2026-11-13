@@ -27,7 +27,7 @@ class CategoryService
 
     public function getCategoryDataTable(Request $request)
     {
-        $query = Category::query()->with(['parent', 'store'])->orderByDesc('created_at');
+        $query = Category::query()->with(['parent', 'store'])->orderBy('sort_order')->orderBy('id');
 
         if ($request->store_id) {
             $query->where('store_id', $request->store_id);
@@ -83,6 +83,37 @@ class CategoryService
         }
 
         return null;
+    }
+
+    public function reorderCategories(array $categoryIds, int $start = 0, ?int $storeId = null): JsonResponse
+    {
+        if (! $this->isPlatformAdmin()) {
+            return ApiResponse::error('Only administrators can reorder categories.', 403);
+        }
+
+        try {
+            return DB::transaction(function () use ($categoryIds, $start, $storeId) {
+                $query = Category::query()->whereIn('id', $categoryIds)->lockForUpdate();
+                if ($storeId !== null) {
+                    $query->where('store_id', $storeId);
+                }
+
+                $categories = $query->get()->keyBy('id');
+                if ($categories->count() !== count($categoryIds)) {
+                    return ApiResponse::error('Some categories are no longer available in this list. Refresh and try again.', 422);
+                }
+
+                foreach ($categoryIds as $index => $categoryId) {
+                    $categories->get($categoryId)->update(['sort_order' => $start + $index + 1]);
+                }
+
+                return ApiResponse::success(null, 'Category order saved.');
+            });
+        } catch (\Throwable $e) {
+            report($e);
+
+            return ApiResponse::error('Unable to save category order. Please try again.', 500);
+        }
     }
 
     public function saveCategory(array $data): JsonResponse

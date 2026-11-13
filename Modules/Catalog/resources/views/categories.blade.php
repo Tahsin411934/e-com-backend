@@ -13,7 +13,7 @@
         createPermission="categories"
         title="Category Catalog"
         icon="fa-solid fa-tags"
-        :columns="['Store','Image','Name','Parent','Status','Created At','Action']"
+        :columns="['Store','Image','Name','Parent','Status','Created At','Action','']"
         :dtColumns="[
             ['data' => 'store_name', 'name' => 'store_name'],
             ['data' => 'image_preview', 'orderable' => false, 'searchable' => false],
@@ -22,7 +22,9 @@
             ['data' => 'status'],
             ['data' => 'created_at'],
             ['data' => 'action', 'orderable' => false, 'searchable' => false],
+            ['data' => 'sort_order', 'visible' => false, 'searchable' => false, 'exportable' => false],
         ]"
+        :order="[[7, 'asc']]"
         :filters="$categoryStoreFilter"
         ajaxUrl="{{ route('categories.dataTable') }}"
         storeUrl="{{ route('categories.store') }}"
@@ -89,7 +91,98 @@
     </x-entity-crud>
 
     @push('scripts')
+    @if($canReorderCategories)
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.6/Sortable.min.js"></script>
+    @endif
     <script>
+        (function() {
+            if (!@json($canReorderCategories)) return;
+            const tableElement = document.getElementById('categoryTable');
+            if (!tableElement || typeof Sortable === 'undefined') return;
+
+            let savePending = false;
+            let searchWarningShown = false;
+            function canDrag(table) {
+                const searchInput = tableElement.closest('.reusable-data-table')?.querySelector('.dataTables_filter input');
+                const searching = !!(searchInput?.value || '').trim();
+                if (!searching) searchWarningShown = false;
+                return !savePending && !searching;
+            }
+
+            function initializeCategorySorting() {
+                const table = $('#categoryTable').DataTable();
+                const tbody = tableElement.querySelector('tbody');
+                if (!tbody) return;
+                if (tbody.__categorySortable) tbody.__categorySortable.destroy();
+
+                tbody.querySelectorAll('tr').forEach(row => {
+                    const firstCell = row.querySelector('td');
+                    if (!firstCell || firstCell.querySelector('.category-drag-handle')) return;
+                    const handle = document.createElement('button');
+                    handle.type = 'button';
+                    handle.className = 'category-drag-handle mr-2 inline-flex cursor-grab items-center text-gray-400 hover:text-primary active:cursor-grabbing';
+                    handle.title = 'Drag to reorder categories';
+                    handle.setAttribute('aria-label', 'Drag to reorder category');
+                    handle.innerHTML = '<i class="fa-solid fa-grip-vertical" aria-hidden="true"></i>';
+                    firstCell.prepend(handle);
+                });
+
+                tbody.__categorySortable = Sortable.create(tbody, {
+                    handle: '.category-drag-handle',
+                    animation: 150,
+                    ghostClass: 'sortable-ghost',
+                    onMove: function() {
+                        if (!canDrag(table)) {
+                            if (!searchWarningShown) {
+                                searchWarningShown = true;
+                                Toastify({ text: 'Clear the search before reordering categories.', duration: 2500, gravity: 'bottom', position: 'right', style: { background: '#b45309' } }).showToast();
+                            }
+                            return false;
+                        }
+                        return true;
+                    },
+                    onEnd: function(event) {
+                        if (!canDrag(table)) {
+                            table.draw(false);
+                            return;
+                        }
+
+                        const page = table.page.info();
+                        const categoryIds = Array.from(tbody.querySelectorAll('tr'))
+                            .map(row => table.row(row).data()?.id)
+                            .filter(Boolean);
+                        if (!categoryIds.length) return;
+
+                        savePending = true;
+                        const storeFilter = document.getElementById('filter_category_store_id');
+                        $.ajax({
+                            url: @json(route('categories.reorder')),
+                            type: 'POST',
+                            dataType: 'json',
+                            data: {
+                                category_ids: categoryIds,
+                                start: page.start,
+                                store_id: storeFilter?.value || '',
+                                _token: $('meta[name="csrf-token"]').attr('content')
+                            },
+                            success: function(response) {
+                                Toastify({ text: response.message || 'Category order saved.', duration: 2500, gravity: 'bottom', position: 'right', style: { background: '#059669' } }).showToast();
+                                table.ajax.reload(null, false);
+                            },
+                            error: function(xhr) {
+                                Toastify({ text: xhr.responseJSON?.message || 'Unable to save category order.', duration: 3500, gravity: 'bottom', position: 'right', style: { background: '#dc2626' } }).showToast();
+                                table.ajax.reload(null, false);
+                            },
+                            complete: function() { savePending = false; }
+                        });
+                    }
+                });
+            }
+
+            $(document).on('draw.dt', '#categoryTable', initializeCategorySorting);
+            $(document).ready(initializeCategorySorting);
+        })();
+
         Crud.register('category', 'fill', function(data) {
             $('#category_store_id').val(data.store_id);
             $('#category_parent_id').val(data.parent_id || '');

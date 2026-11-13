@@ -47,7 +47,20 @@
                         <div class="p-6 space-y-5">
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div>
-                                    <x-form-input label="Product Name" name="name" id="name" placeholder="Enter product name" value="{{ $product?->name ?? '' }}" required />
+                                    <div class="flex items-end gap-2">
+                                        <div class="flex-1"><x-form-input label="Product Name" name="name" id="name" placeholder="Enter product name" value="{{ $product?->name ?? '' }}" required /></div>
+                                        @unless($isEdit)
+                                            <button type="button" id="generateProductWithAi" class="mb-0.5 shrink-0 inline-flex items-center gap-2 rounded-lg bg-violet-600 px-3 py-2.5 text-sm font-medium text-white hover:bg-violet-700 disabled:cursor-not-allowed disabled:opacity-60">
+                                                <i class="fas fa-wand-magic-sparkles"></i><span>Generate with AI</span>
+                                            </button>
+                                        @endunless
+                                    </div>
+                                    @unless($isEdit)
+                                        <div class="mt-2">
+                                            <input id="aiProductContext" type="text" maxlength="1000" class="w-full rounded-lg border-gray-300 text-xs shadow-sm" placeholder="Optional details: language, audience, features, material...">
+                                            <p class="mt-1 text-xs text-gray-400">AI creates editable text drafts. Review all product facts before saving.</p>
+                                        </div>
+                                    @endunless
                                 </div>
                                 <div>
                                     <x-form-input label="Slug" name="slug" id="slug" placeholder="auto-generated-slug" value="{{ $product?->slug ?? '' }}" required />
@@ -441,6 +454,56 @@
         // Keeping this data local avoids a second request (and its permission/
         // route failure modes) when the user chooses a set.
         const sizeSetValues = @json($sizeSetValues);
+        @unless($isEdit)
+        $('#generateProductWithAi').on('click', async function () {
+            const name = ($('#name').val() || '').trim();
+            if (!name) {
+                Swal.fire('Product name required', 'Enter the product name first.', 'info');
+                $('#name').trigger('focus');
+                return;
+            }
+
+            const fields = ['short_description', 'description', 'seo_title', 'seo_description'];
+            const hasExistingContent = fields.some(id => (($('#' + id).val() || '').trim().length > 0));
+            if (hasExistingContent) {
+                const result = await Swal.fire({
+                    icon: 'question', title: 'Replace existing product text?',
+                    text: 'AI-generated text will replace the current description and SEO fields.',
+                    showCancelButton: true, confirmButtonText: 'Generate and replace', cancelButtonText: 'Keep editing'
+                });
+                if (!result.isConfirmed) return;
+            }
+
+            const button = $(this);
+            button.prop('disabled', true).find('span').text('Generating...');
+            try {
+                const response = await fetch("{{ route('products.generate-with-ai') }}", {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json', 'Accept': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                    },
+                    body: JSON.stringify({ name, context: ($('#aiProductContext').val() || '').trim() })
+                });
+                const payload = await response.json();
+                if (!response.ok) throw new Error(payload.message || 'Unable to generate content.');
+
+                const data = payload.data;
+                $('#short_description').val(data.short_description).trigger('input');
+                $('#seo_title').val(data.seo_title).trigger('input');
+                $('#seo_description').val(data.seo_description).trigger('input');
+                $('#slug').val(data.slug || '');
+                if (productDescriptionEditor) productDescriptionEditor.setData(data.description || '');
+                else $('#description').val(data.description || '');
+                $('#product_type').val(data.product_type).trigger('change');
+                Swal.fire({ icon: 'success', title: 'Draft generated', text: 'Review and edit the generated fields before saving.', timer: 2200, showConfirmButton: false });
+            } catch (error) {
+                Swal.fire('AI generation failed', error.message, 'error');
+            } finally {
+                button.prop('disabled', false).find('span').text('Generate with AI');
+            }
+        });
+        @endunless
         @if($isEdit && $product?->variants)
             @foreach($product->variants as $vIdx => $v)
                 optionCounters[{{ $vIdx }}] = {{ $v->options->count() }};

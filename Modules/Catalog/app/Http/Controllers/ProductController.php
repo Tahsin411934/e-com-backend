@@ -10,6 +10,7 @@ use Modules\Catalog\Models\Size;
 use Modules\Catalog\Models\TaxRate;
 use Modules\Catalog\Models\Unit;
 use Modules\Catalog\Services\ProductService;
+use Modules\Catalog\Services\GeminiProductContentService;
 use Modules\Frontend\Models\NavbarItem;
 use Modules\Frontend\Models\SubnavbarItem;
 use Modules\Store\Models\Store;
@@ -78,6 +79,25 @@ class ProductController extends Controller
         $subnavbarItems = collect();
 
         return view('catalog::products.create', compact('brands', 'categories', 'units', 'sizes', 'taxRates', 'navbarItems', 'subnavbarItems') + $this->storeContext());
+    }
+
+    public function generateWithAi(Request $request, GeminiProductContentService $gemini)
+    {
+        $validated = $request->validate([
+            'name' => ['required', 'string', 'max:220'],
+            'context' => ['nullable', 'string', 'max:1000'],
+        ]);
+
+        try {
+            return response()->json([
+                'status' => 'success',
+                'data' => $gemini->generate($validated['name'], $validated['context'] ?? null),
+            ]);
+        } catch (\Illuminate\Http\Client\ConnectionException $exception) {
+            return response()->json(['message' => 'Could not connect to Gemini. Please try again.'], 503);
+        } catch (\RuntimeException $exception) {
+            return response()->json(['message' => $exception->getMessage()], 502);
+        }
     }
 
     public function store(StoreProductRequest $request)

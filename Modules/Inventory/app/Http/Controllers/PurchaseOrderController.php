@@ -99,7 +99,7 @@ class PurchaseOrderController extends Controller
     public function updateStatus(Request $request, $id)
     {
         $request->validate([
-            'status' => 'nullable|in:ordered,partially_received,received,cancelled',
+            'status' => 'nullable|in:ordered,received,cancelled',
             'payment_status' => 'nullable|in:unpaid,partial,paid',
         ]);
 
@@ -116,6 +116,24 @@ class PurchaseOrderController extends Controller
         $payload = $response->getData(true);
 
         return redirect()->back()->with($payload['status'] ?? 'error', $payload['message'] ?? 'Done.');
+    }
+
+    public function receiveItems(Request $request, $id)
+    {
+        $data = $request->validate([
+            'received_quantities' => ['required', 'array', 'min:1'],
+            'received_quantities.*' => ['required', 'integer', 'min:0'],
+        ]);
+
+        $response = $this->poService->receiveItems((int) $id, $data['received_quantities']);
+        if ($request->ajax() || $request->wantsJson()) {
+            return $response;
+        }
+
+        $payload = $response->getData(true);
+        $flashKey = ($payload['status'] ?? 'error') === 'success' ? 'success' : 'error';
+
+        return redirect()->back()->with($flashKey, $payload['message'] ?? 'Could not receive purchase order items.');
     }
 
     public function searchProducts(Request $request)

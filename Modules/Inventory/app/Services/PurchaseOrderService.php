@@ -13,6 +13,7 @@ use Modules\Inventory\Models\InventoryLocation;
 use Modules\Inventory\Models\InventoryMovement;
 use Modules\Inventory\Models\InventoryStock;
 use Modules\Store\Support\CurrentStore;
+use Modules\Store\Models\Store;
 use Modules\Inventory\Models\PurchaseOrder;
 use Yajra\DataTables\DataTables;
 
@@ -203,7 +204,7 @@ class PurchaseOrderService
     {
         try {
             return DB::transaction(function () use ($id) {
-                $po = PurchaseOrder::forCurrentStore()->findOrFail($id);
+                $po = PurchaseOrder::forCurrentStore()->lockForUpdate()->findOrFail($id);
                 // Received orders are locked — deleting them would orphan stock.
                 // Create a purchase return instead.
                 if (in_array($po->status, ['received', 'partially_received', 'returned'], true)) {
@@ -222,16 +223,16 @@ class PurchaseOrderService
     {
         try {
             return DB::transaction(function () use ($id, $status, $paymentStatus) {
-                $po = PurchaseOrder::forCurrentStore()->findOrFail($id);
+                $po = PurchaseOrder::forCurrentStore()->lockForUpdate()->findOrFail($id);
 
                 if (! $status && ! $paymentStatus) {
-                    return ApiResponse::error('Nothing to update.', 500);
+                    return ApiResponse::error('Nothing to update.', 422);
                 }
 
                 if ($status) {
                     $validTransitions = [
                         'draft' => ['ordered', 'cancelled'],
-                        'ordered' => ['partially_received', 'received', 'cancelled'],
+                        'ordered' => ['received', 'cancelled'],
                         'partially_received' => ['received', 'returned'],
                         'received' => ['returned'],
                         'returned' => [],
@@ -239,14 +240,13 @@ class PurchaseOrderService
                     ];
 
                     if (! in_array($status, $validTransitions[$po->status] ?? [])) {
-                        return ApiResponse::error('Cannot change status from "'.$po->status.'" to "'.$status.'".', 500);
+                        return ApiResponse::error('Cannot change status from "'.$po->status.'" to "'.$status.'".', 422);
                     }
-
-                    $po->update(['status' => $status]);
 
                     if ($status === 'received') {
                         $this->processStockUpdate($po);
-                        $po->update(['received_date' => now()->toDateString()]);
+                    } else {
+                        $po->update(['status' => $status]);
                     }
                 }
 
@@ -256,10 +256,9 @@ class PurchaseOrderService
                     $po->refresh();
 
                     if ($paymentStatus === 'paid' && $po->payment_status !== 'paid') {
-                        return ApiResponse::error(
-                            'This order is not fully paid yet. Record the remaining amount as a Supplier Payment from the order page to mark it Paid.',
-                            500
-                        );
+                        throw \Illuminate\Validation\ValidationException::withMessages([
+                            'payment_status' => 'This order is not fully paid yet. Record the remaining amount as a Supplier Payment from the order page to mark it Paid.',
+                        ]);
                     }
 
                     $po->update(['payment_status' => $po->payment_status]);
@@ -278,6 +277,8 @@ class PurchaseOrderService
                     implode(' ', $message)
                 );
             });
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return ApiResponse::validationError($e->errors(), 'Purchase order status could not be updated.');
         } catch (\Exception $e) {
             return ApiResponse::error('Error updating status: '.$e->getMessage(), 500);
         }
@@ -314,32 +315,122 @@ class PurchaseOrderService
         return $payload;
     }
 
-    protected function processStockUpdate(PurchaseOrder $po): void
+    public function receiveItems(int $id, array $receivedQuantities): JsonResponse
     {
-        $location = InventoryLocation::where('store_id', $po->store_id)->first();
+        try {
+            return DB::transaction(function () use ($id, $receivedQuantities) {
+                $po = PurchaseOrder::forCurrentStore()->lockForUpdate()->findOrFail($id);
+                if (! in_array($po->status, ['ordered', 'partially_received'], true)) {
+                    return ApiResponse::error('Only ordered or partially received purchase orders can receive stock.', 422);
+                }
+
+                $result = $this->processStockUpdate($po, $receivedQuantities);
+                if ($result['received_units'] < 1) {
+                    return ApiResponse::error('Enter a received quantity for at least one item.', 422);
+                }
+
+                return ApiResponse::success(
+                    $po->fresh()->load(['supplier', 'store', 'items.variant']),
+                    $result['received_units'].' unit(s) received. Purchase order is now '.str_replace('_', ' ', $result['status']).'.'
+                );
+            });
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return ApiResponse::validationError($e->errors(), 'Received quantities are invalid.');
+        } catch (\Exception $e) {
+            return ApiResponse::error('Error receiving purchase order items: '.$e->getMessage(), 500);
+        }
+    }
+
+    protected function processStockUpdate(PurchaseOrder $po, ?array $requestedQuantities = null): array
+    {
+        $items = $po->items()->lockForUpdate()->get();
+        if ($items->isEmpty()) {
+            throw \Illuminate\Validation\ValidationException::withMessages([
+                'items' => 'This purchase order has no items to receive.',
+            ]);
+        }
+
+        if ($requestedQuantities !== null) {
+            $validItemIds = $items->pluck('id')->map(fn ($itemId) => (string) $itemId)->all();
+            $unknownItemIds = array_diff(array_map('strval', array_keys($requestedQuantities)), $validItemIds);
+            if ($unknownItemIds) {
+                throw \Illuminate\Validation\ValidationException::withMessages([
+                    'received_quantities' => 'One or more received quantities do not belong to this purchase order.',
+                ]);
+            }
+        }
+
+        $received = [];
+        foreach ($items as $item) {
+            $remaining = max(0, (int) $item->quantity - (int) $item->received_quantity);
+            $quantity = $requestedQuantities === null
+                ? $remaining
+                : (int) ($requestedQuantities[$item->id] ?? 0);
+            if ($quantity > $remaining) {
+                throw \Illuminate\Validation\ValidationException::withMessages([
+                    'received_quantities.'.$item->id => 'Cannot receive more than the '.$remaining.' unit(s) still expected for this item.',
+                ]);
+            }
+            $received[$item->id] = $quantity;
+        }
+
+        $receivedUnits = array_sum($received);
+        if ($receivedUnits < 1) {
+            if ($requestedQuantities === null) {
+                throw \Illuminate\Validation\ValidationException::withMessages(['items' => 'There are no remaining units to receive.']);
+            }
+
+            return ['received_units' => 0, 'status' => $po->status];
+        }
+
+        $store = Store::query()->lockForUpdate()->find($po->store_id);
+        if (! $store) {
+            throw new \RuntimeException('The purchase order store could not be found.');
+        }
+
+        $location = InventoryLocation::query()
+            ->where('store_id', $po->store_id)
+            ->where('status', 'active')
+            ->orderBy('id')
+            ->first();
 
         if (! $location) {
             $location = InventoryLocation::create([
                 'store_id' => $po->store_id,
-                'name' => $po->store->name.' - Main',
+                'name' => $store->name.' - Main',
                 'location_type' => 'warehouse',
                 'status' => 'active',
             ]);
         }
+        $location = InventoryLocation::query()->lockForUpdate()->findOrFail($location->id);
 
-        foreach ($po->items as $item) {
-            $receivedQty = $item->quantity - $item->received_quantity;
+        foreach ($items as $item) {
+            $receivedQty = $received[$item->id] ?? 0;
             if ($receivedQty <= 0) {
                 continue;
             }
 
-            $item->update(['received_quantity' => $item->quantity]);
+            $stock = InventoryStock::query()
+                ->where('location_id', $location->id)
+                ->where('variant_id', $item->variant_id)
+                ->whereNull('variant_option_id')
+                ->lockForUpdate()
+                ->first();
+            if (! $stock) {
+                $stock = new InventoryStock([
+                    'location_id' => $location->id,
+                    'variant_id' => $item->variant_id,
+                    'variant_option_id' => null,
+                    'quantity_on_hand' => 0,
+                    'quantity_reserved' => 0,
+                    'reorder_point' => 5,
+                ]);
+            }
+            $stock->quantity_on_hand += $receivedQty;
+            $stock->save();
 
-            $stock = InventoryStock::firstOrCreate(
-                ['location_id' => $location->id, 'variant_id' => $item->variant_id],
-                ['quantity_on_hand' => 0, 'quantity_reserved' => 0, 'reorder_point' => 0]
-            );
-            $stock->increment('quantity_on_hand', $receivedQty);
+            $item->received_quantity = (int) $item->received_quantity + $receivedQty;
+            $item->save();
 
             InventoryMovement::create([
                 'location_id' => $location->id,
@@ -356,6 +447,15 @@ class PurchaseOrderService
                 ProductVariant::where('id', $item->variant_id)->update(['cost_price' => $item->unit_cost]);
             }
         }
+
+        $fullyReceived = $items->every(fn ($item) => (int) $item->received_quantity >= (int) $item->quantity);
+        $status = $fullyReceived ? 'received' : 'partially_received';
+        $po->update([
+            'status' => $status,
+            'received_date' => $fullyReceived ? now()->toDateString() : null,
+        ]);
+
+        return ['received_units' => $receivedUnits, 'status' => $status];
     }
 
     /**

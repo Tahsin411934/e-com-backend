@@ -1,5 +1,14 @@
 <x-app-layout>
     <div class="max-w-5xl mx-auto py-6 px-4">
+        @if(session('success'))
+            <div class="mb-4 rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-800">{{ session('success') }}</div>
+        @endif
+        @if(session('error'))
+            <div class="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">{{ session('error') }}</div>
+        @endif
+        @if($errors->any())
+            <div class="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">{{ $errors->first() }}</div>
+        @endif
         <div class="flex items-center justify-between mb-6">
             <h1 class="text-2xl font-bold text-gray-800">
                 <i class="fas fa-file-invoice mr-2 text-primary"></i>
@@ -54,8 +63,21 @@
             </div>
         @endif
 
+        @php($canReceiveItems = in_array($purchase_order->status, ['ordered', 'partially_received'], true) && auth()->user()->hasPermission('purchase-orders.edit'))
         <div class="bg-white rounded-lg shadow p-4 mb-6">
-            <h3 class="text-sm font-semibold text-gray-500 mb-3">Items</h3>
+            <div class="mb-3 flex flex-wrap items-start justify-between gap-2">
+                <div>
+                    <h3 class="text-sm font-semibold text-gray-700">Purchase items</h3>
+                    <p class="mt-1 text-xs text-gray-500">Receive the quantity that arrived. Received units are added to inventory immediately.</p>
+                </div>
+                @if($purchase_order->status === 'partially_received')
+                    <span class="rounded-full bg-amber-100 px-2.5 py-1 text-xs font-medium text-amber-800">{{ $purchase_order->items->sum(fn($item) => max(0, $item->quantity - $item->received_quantity)) }} unit(s) still expected</span>
+                @endif
+            </div>
+            @if($canReceiveItems)
+                <form action="{{ route('purchase-orders.receive-items', $purchase_order->id) }}" method="POST" id="receiveItemsForm">
+                    @csrf
+            @endif
             <div class="overflow-x-auto">
                 <table class="min-w-full text-sm">
                     <thead>
@@ -64,6 +86,10 @@
                             <th class="text-left py-2 px-3 text-gray-500 font-medium">Variant</th>
                             <th class="text-right py-2 px-3 text-gray-500 font-medium">Qty</th>
                             <th class="text-right py-2 px-3 text-gray-500 font-medium">Received</th>
+                            @if($canReceiveItems)
+                                <th class="text-right py-2 px-3 text-gray-500 font-medium">Remaining</th>
+                                <th class="text-right py-2 px-3 text-gray-500 font-medium">Receive now</th>
+                            @endif
                             <th class="text-right py-2 px-3 text-gray-500 font-medium">Unit Cost</th>
                             <th class="text-right py-2 px-3 text-gray-500 font-medium">Subtotal</th>
                         </tr>
@@ -75,6 +101,13 @@
                                 <td class="py-2 px-3">{{ $item->variant->name ?? 'N/A' }}</td>
                                 <td class="py-2 px-3 text-right">{{ $item->quantity }}</td>
                                 <td class="py-2 px-3 text-right">{{ $item->received_quantity }}</td>
+                                @if($canReceiveItems)
+                                    @php($remainingQuantity = max(0, $item->quantity - $item->received_quantity))
+                                    <td class="py-2 px-3 text-right">{{ $remainingQuantity }}</td>
+                                    <td class="py-2 px-3 text-right">
+                                        <input type="number" name="received_quantities[{{ $item->id }}]" min="0" max="{{ $remainingQuantity }}" value="0" inputmode="numeric" class="w-24 rounded-md border border-gray-300 px-2 py-1.5 text-right focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20" aria-label="Receive quantity for {{ $item->variant->name ?? 'item' }}" {{ $remainingQuantity < 1 ? 'disabled' : '' }}>
+                                    </td>
+                                @endif
                                 <td class="py-2 px-3 text-right">${{ number_format($item->unit_cost, 2) }}</td>
                                 <td class="py-2 px-3 text-right">${{ number_format($item->subtotal, 2) }}</td>
                             </tr>
@@ -82,22 +115,24 @@
                     </tbody>
                 </table>
             </div>
+            @if($canReceiveItems)
+                <div class="mt-4 flex flex-wrap items-center justify-between gap-3 border-t border-gray-100 pt-4">
+                    <p class="text-xs text-gray-500">Set quantities to 0 for items that have not arrived yet. You can receive the remaining units later.</p>
+                    <button type="submit" class="inline-flex items-center gap-2 rounded-lg bg-green-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-green-700">
+                        <i class="fas fa-box-open"></i> Receive selected quantities
+                    </button>
+                </div>
+                </form>
+            @endif
         </div>
 
-        @if(in_array($purchase_order->status, ['draft', 'ordered', 'partially_received']) && auth()->user()->hasPermission('purchase-orders.edit'))
+        @if(in_array($purchase_order->status, ['draft', 'ordered'], true) && auth()->user()->hasPermission('purchase-orders.edit'))
             <div class="flex gap-2">
                 @if($purchase_order->status === 'draft')
                     <form action="{{ route('purchase-orders.update-status', $purchase_order->id) }}" method="POST" class="inline">
                         @csrf
                         <input type="hidden" name="status" value="ordered">
                         <button type="submit" class="px-4 py-2 bg-primary text-white rounded-lg text-sm hover:bg-primary">Mark as Ordered</button>
-                    </form>
-                @endif
-                @if(in_array($purchase_order->status, ['ordered', 'partially_received']))
-                    <form action="{{ route('purchase-orders.update-status', $purchase_order->id) }}" method="POST" class="inline">
-                        @csrf
-                        <input type="hidden" name="status" value="received">
-                        <button type="submit" class="px-4 py-2 bg-green-600 text-white rounded-lg text-sm hover:bg-green-700">Mark as Received</button>
                     </form>
                 @endif
                 @if(in_array($purchase_order->status, ['draft', 'ordered']))

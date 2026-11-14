@@ -99,6 +99,8 @@ Route::middleware(['auth', 'verified', 'admin'])->group(function () {
         ->name('purchase-orders.edit')->middleware('permission:purchase-orders.edit');
     Route::post('purchase-orders/{id}/update-status', [PurchaseOrderController::class, 'updateStatus'])
         ->name('purchase-orders.update-status')->middleware('permission:purchase-orders.edit');
+    Route::post('purchase-orders/{id}/receive-items', [PurchaseOrderController::class, 'receiveItems'])
+        ->name('purchase-orders.receive-items')->middleware('permission:purchase-orders.edit');
     Route::put('purchase-orders/{id}', [PurchaseOrderController::class, 'update'])
         ->name('purchase-orders.update')->middleware('permission:purchase-orders.edit');
     Route::patch('purchase-orders/{id}', [PurchaseOrderController::class, 'update'])

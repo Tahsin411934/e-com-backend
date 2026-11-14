@@ -130,6 +130,7 @@ class InventoryStockController extends Controller
         $product = Product::forCurrentStore()->where('status', 'active')->findOrFail($data['product_id']);
 
         DB::transaction(function () use ($items, $location, $product) {
+            $lockedLocation = InventoryLocation::forCurrentStore()->lockForUpdate()->findOrFail($location->id);
             // Serialize bulk additions for this product so two staff members do not
             // create duplicate stock rows when the location has no row yet.
             $lockedProduct = Product::forCurrentStore()->lockForUpdate()->findOrFail($product->id);
@@ -154,7 +155,7 @@ class InventoryStockController extends Controller
                 }
 
                 $stockQuery = \Modules\Inventory\Models\InventoryStock::query()
-                    ->where('location_id', $location->id)
+                    ->where('location_id', $lockedLocation->id)
                     ->where('variant_id', $variant->id);
                 $optionId ? $stockQuery->where('variant_option_id', $optionId) : $stockQuery->whereNull('variant_option_id');
 
@@ -173,7 +174,7 @@ class InventoryStockController extends Controller
                 $stock->save();
 
                 $this->stockService->recordBulkAddition(
-                    $location->id,
+                    $lockedLocation->id,
                     $variant->id,
                     (int) $item['quantity_to_add'],
                     $variant->name.($optionName ? ' / '.$optionName : ''),

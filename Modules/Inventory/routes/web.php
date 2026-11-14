@@ -29,6 +29,14 @@ Route::middleware(['auth', 'verified', 'admin'])->group(function () {
     // Inventory Stock
     Route::get('inventory-stock', [InventoryStockController::class, 'index'])
         ->name('inventory-stock.index')->middleware('permission:inventory-stock.view');
+    Route::get('inventory-stock/bulk-add', [InventoryStockController::class, 'bulkAddPage'])
+        ->name('inventory-stock.bulk-add')->middleware('permission:inventory-stock.create');
+    Route::get('inventory-stock/bulk-add/products', [InventoryStockController::class, 'searchBulkProducts'])
+        ->name('inventory-stock.bulk-add.products')->middleware('permission:inventory-stock.create');
+    Route::get('inventory-stock/bulk-add/products/{product}', [InventoryStockController::class, 'bulkProductDetails'])
+        ->name('inventory-stock.bulk-add.products.show')->middleware('permission:inventory-stock.create');
+    Route::post('inventory-stock/bulk-add', [InventoryStockController::class, 'bulkAdd'])
+        ->name('inventory-stock.bulk-add.store')->middleware('permission:inventory-stock.create');
     Route::get('dataTable/inventory-stock', [InventoryStockController::class, 'dataTable'])
         ->name('inventory-stock.dataTable')->middleware('permission:inventory-stock.view');
     Route::get('inventory-stock/{id}', [InventoryStockController::class, 'show'])

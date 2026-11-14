@@ -165,6 +165,18 @@ class InventoryStockService
         ]);
     }
 
+    public function recordBulkAddition(int $locationId, int $variantId, int $quantity, string $itemName, ?int $userId): void
+    {
+        $this->logMovement(
+            $locationId,
+            $variantId,
+            'adjustment',
+            $quantity,
+            'Bulk stock add: '.$itemName,
+            $userId
+        );
+    }
+
     public function getLowStockItems(): JsonResponse
     {
         return InventoryStock::query()

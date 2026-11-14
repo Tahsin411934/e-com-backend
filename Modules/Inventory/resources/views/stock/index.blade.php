@@ -8,6 +8,13 @@
         ],
     ] : [];
 @endphp
+    @if(auth()->user()?->can('inventory-stock.create'))
+        <div class="mb-4 flex justify-end">
+            <a href="{{ route('inventory-stock.bulk-add') }}" class="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:opacity-90">
+                <i class="fa-solid fa-layer-group"></i> Bulk Add Stock
+            </a>
+        </div>
+    @endif
     <x-entity-crud
         id="inventory-stock"
         createPermission="inventory-stock"

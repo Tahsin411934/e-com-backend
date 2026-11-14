@@ -144,9 +144,13 @@ class ProductSearchService
                 $search->whereRaw(
                     'MATCH(name, short_description, description) AGAINST(? IN BOOLEAN MODE)',
                     [$booleanQuery]
-                )
-                    ->orWhereRaw("CAST(keywords AS {$keywordCastType}) LIKE ?", ['%'.implode('%', $termPatterns).'%'])
-                    ->orWhereHas('variants', function ($variant) use ($termPatterns, $keywordCastType) {
+                );
+
+                foreach ($termPatterns as $termPattern) {
+                    $search->orWhereRaw("CAST(keywords AS {$keywordCastType}) LIKE ?", [$termPattern]);
+                }
+
+                $search->orWhereHas('variants', function ($variant) use ($termPatterns, $keywordCastType) {
                         $variant->where('status', 'active')
                             ->where(function ($terms) use ($termPatterns, $keywordCastType) {
                                 foreach ($termPatterns as $termPattern) {
@@ -194,12 +198,20 @@ class ProductSearchService
 
         $queryBuilder = $this->productQuery()->where('status', 'active')
             ->where('visibility', 'public')
-            ->where(function ($builder) use ($pattern, $prefixPattern, $keywordCastType) {
+            ->where(function ($builder) use ($pattern, $prefixPattern, $keywordCastType, $variantPatterns) {
                 $builder->where('name', 'LIKE', $pattern)
                     ->orWhere('name', 'LIKE', $prefixPattern)
                     ->orWhere('short_description', 'LIKE', $pattern)
                     ->orWhere('description', 'LIKE', $pattern)
                     ->orWhereRaw("CAST(keywords AS {$keywordCastType}) LIKE ?", [$pattern])
+                    ->orWhere(function ($terms) use ($variantPatterns, $keywordCastType) {
+                        foreach ($variantPatterns as $termPattern) {
+                            $terms->orWhere('name', 'LIKE', $termPattern)
+                                ->orWhere('short_description', 'LIKE', $termPattern)
+                                ->orWhere('description', 'LIKE', $termPattern)
+                                ->orWhereRaw("CAST(keywords AS {$keywordCastType}) LIKE ?", [$termPattern]);
+                        }
+                    })
                     ->orWhereHas('variants', function ($variant) use ($pattern, $keywordCastType) {
                         $variant->where('status', 'active')
                             ->where(function ($terms) use ($pattern, $keywordCastType) {
@@ -271,7 +283,7 @@ class ProductSearchService
                 $prefixBonus = false;
 
                 foreach ($searchableWords as $word) {
-                    $distance = levenshtein($queryWord, $word);
+                    $distance = $this->unicodeLevenshtein($queryWord, $word);
                     $bestDistance = min($bestDistance, $distance);
                     if ($distance <= 2 || str_starts_with($word, $queryWord) || str_starts_with($queryWord, $word)) {
                         $prefixBonus = true;
@@ -300,5 +312,30 @@ class ProductSearchService
         }
 
         return $scored;
+    }
+
+    /** Compare UTF-8 words by characters rather than encoded bytes. */
+    private function unicodeLevenshtein(string $left, string $right): int
+    {
+        $leftCharacters = preg_split('//u', $left, -1, PREG_SPLIT_NO_EMPTY) ?: str_split($left);
+        $rightCharacters = preg_split('//u', $right, -1, PREG_SPLIT_NO_EMPTY) ?: str_split($right);
+
+        if (count($leftCharacters) > count($rightCharacters)) {
+            [$leftCharacters, $rightCharacters] = [$rightCharacters, $leftCharacters];
+        }
+
+        $previousRow = range(0, count($leftCharacters));
+        foreach ($rightCharacters as $rowIndex => $rightCharacter) {
+            $currentRow = [$rowIndex + 1];
+            foreach ($leftCharacters as $columnIndex => $leftCharacter) {
+                $insertions = $previousRow[$columnIndex + 1] + 1;
+                $deletions = $currentRow[$columnIndex] + 1;
+                $substitutions = $previousRow[$columnIndex] + ($leftCharacter === $rightCharacter ? 0 : 1);
+                $currentRow[] = min($insertions, $deletions, $substitutions);
+            }
+            $previousRow = $currentRow;
+        }
+
+        return $previousRow[count($leftCharacters)];
     }
 }

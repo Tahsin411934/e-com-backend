@@ -198,12 +198,15 @@ class ChatController extends Controller
         }
 
         $category = $this->findCategory($intent['category'], $message);
+        $explicitCategoryBrowse = $category && $this->isSareeCategoryRequest($message);
         $query = trim($intent['query']);
         $searchQueries = $this->buildSearchQueries($query, $message);
         if ($query === '' && $searchQueries !== []) {
             $query = $searchQueries[0];
         }
         $browseCategory = $category && (
+            $explicitCategoryBrowse
+            ||
             $query === ''
             || Str::lower($query) === Str::lower($category->name)
             || Str::lower($query) === Str::lower($category->slug)
@@ -299,6 +302,22 @@ class ChatController extends Controller
     {
         $requestedCategory = trim($requestedCategory);
 
+        // An explicit category in the customer's latest message takes
+        // priority over a conflicting category guessed from chat history.
+        if ($this->isSareeCategoryRequest($message)) {
+            $category = Category::query()
+                ->whereNull('store_id')
+                ->where('status', 'active')
+                ->where(fn ($builder) => $builder
+                    ->where('name', 'like', '%saree%')
+                    ->orWhere('slug', 'like', '%saree%'))
+                ->first();
+
+            if ($category) {
+                return $category;
+            }
+        }
+
         if ($requestedCategory !== '') {
             $category = Category::query()
                 ->whereNull('store_id')
@@ -324,6 +343,11 @@ class ChatController extends Controller
                 || Str::contains($normalizedMessage, Str::lower($category->slug)));
     }
 
+    private function isSareeCategoryRequest(string $message): bool
+    {
+        return preg_match('/(?:শাড়ি|শাড়ি|সাড়ি|সারি|saree|sari|shari|sharee)/iu', $message) === 1;
+    }
+
     /**
      * Use the customer's original wording as a resilient fallback when Gemini
      * returns an empty or overly broad search phrase.
@@ -344,7 +368,9 @@ class ChatController extends Controller
         ) ?? $cleanMessage;
         $cleanMessage = trim(preg_replace('/\s+/u', ' ', $cleanMessage) ?? $cleanMessage, " \t\n\r\0\x0B,.!?।");
 
-        $queries = array_filter([$intentQuery, $cleanMessage], fn (string $value) => trim($value) !== '');
+        // Search the customer's latest wording first. An AI interpretation
+        // based on prior turns can otherwise return a stale, unrelated item.
+        $queries = array_filter([$cleanMessage, $intentQuery], fn (string $value) => trim($value) !== '');
 
         foreach ($queries as $candidate) {
             if (preg_match('/(?<![\pL\pN])(?:chori|churi|churri)(?![\pL\pN])/iu', $candidate)) {
@@ -354,6 +380,11 @@ class ChatController extends Controller
 
             if (preg_match('/(?:jersey|জার্সি|জার্সী)/iu', $candidate)) {
                 array_push($queries, 'jersey', 'জার্সি', 'football jersey', 'football shirt');
+                break;
+            }
+
+            if ($this->isSareeCategoryRequest($candidate)) {
+                array_push($queries, 'saree', 'sari', 'শাড়ি', 'শাড়ি');
                 break;
             }
         }

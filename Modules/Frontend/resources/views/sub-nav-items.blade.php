@@ -104,6 +104,9 @@
         // ===== Subnavbar Item form fill =====
 Crud.register('subnavbaritem', 'fill', function (data) {
             $('#subnavbar_item_navbar_item_id').val(data.navbar_item_id);
+            // A disabled parent select is omitted from FormData. Preserve the
+            // item's parent in the hidden field when editing filtered lists.
+            $('#subnavbar_item_locked_navbar_item_id').val(data.navbar_item_id);
             $('#subnavbar_item_name').val(data.name);
             $('#subnavbar_item_slug').val(data.slug);
             $('#subnavbar_item_url').val(data.url || '');

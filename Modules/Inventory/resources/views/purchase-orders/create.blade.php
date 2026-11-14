@@ -100,9 +100,9 @@
                 </div>
                 <div class="p-6 space-y-4">
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Search & Select Products</label>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Search & Select Product</label>
                         <select id="productSelect" class="w-full" style="width:100%;" aria-label="Search products"></select>
-                        <p class="text-xs text-gray-400 mt-1">Click the field above, type to search (min. 3 characters), click a product to add to the list below.</p>
+                        <p class="text-xs text-gray-400 mt-1">Choose a store first. Selecting a product adds all its active variants below; remove or edit the quantity and unit cost for any variant.</p>
                     </div>
 
                     <div id="poItemsHidden"></div>
@@ -351,7 +351,7 @@
                 dataType: 'json', 
                 delay: 300,
                 data: function(params) { 
-                    return { q: params.term }; 
+                    return { q: params.term, store_id: $('#store_id').val() };
                 },
                 processResults: function(data) { 
                     return { results: data.results }; 
@@ -374,75 +374,91 @@
             templateResult: formatProductResult,
             templateSelection: formatProductSelection
         }).on('select2:select', function(e) {
-            var d = e.params.data;
-            
-            // Check for duplicate
-            var existingIndex = poItems.findIndex(function(p) { return p.id === d.id; });
-            
-            if (existingIndex !== -1) {
-                // Offer to increase quantity
-                Swal.fire({
-                    title: 'Product already added',
-                    text: 'Do you want to increase the quantity?',
-                    icon: 'question',
-                    showCancelButton: true,
-                    confirmButtonText: 'Yes, add 1 more',
-                    cancelButtonText: 'No, cancel',
-                    confirmButtonColor: '#3085d6'
-                }).then((result) => {
-                    if (result.isConfirmed) {
-                        poItems[existingIndex].qt += 1;
-                        renderTable();
-                        markFormChanged();
-                        Toastify({
-                            text: 'Quantity increased to ' + poItems[existingIndex].qt,
-                            duration: 2000,
-                            gravity: 'bottom',
-                            position: 'right',
-                            style: { background: '#10b981' }
-                        }).showToast();
-                    }
+            var data = e.params.data;
+            var variants = data.variants || [];
+            if (!$('#store_id').val()) {
+                Swal.fire('Select a store', 'Choose the destination store before adding products.', 'info');
+                $(this).val(null).trigger('change');
+                return;
+            }
+            if (!variants.length) {
+                Swal.fire('No active variants', 'This product has no active variants to purchase.', 'warning');
+                $(this).val(null).trigger('change');
+                return;
+            }
+
+            var addedCount = 0;
+            variants.forEach(function(variant) {
+                if (poItems.some(function(item) { return Number(item.id) === Number(variant.id); })) return;
+                poItems.push({
+                    id: variant.id,
+                    nm: data.product_name + ' - ' + variant.name,
+                    sk: variant.sku || '',
+                    cp: parseFloat(variant.cost_price) || 0,
+                    qt: 1
                 });
-            } else {
-                // Add new product
-                poItems.push({ 
-                    id: d.id, 
-                    nm: d.product_name + ' - ' + d.variant_name, 
-                    sk: d.sku, 
-                    cp: parseFloat(d.cost_price) || 0, 
-                    qt: 1 
-                });
+                addedCount++;
+            });
+
+            if (addedCount) {
                 renderTable();
                 markFormChanged();
                 Toastify({
-                    text: 'Product added successfully',
-                    duration: 2000,
+                    text: addedCount + ' variant(s) added to the purchase order.',
+                    duration: 2500,
                     gravity: 'bottom',
                     position: 'right',
                     style: { background: '#10b981' }
                 }).showToast();
+            } else {
+                Swal.fire('Variants already added', 'All active variants for this product are already in the purchase order.', 'info');
             }
-            
             $(this).val(null).trigger('change');
         });
 
-        function formatProductResult(d) {
-            if (d.loading) return d.text;
+        function formatProductResult(data) {
+            if (data.loading) return data.text;
             return $('<div class="flex items-center gap-2 py-1.5">' +
                 '<div class="flex-1">' +
-                    '<div class="font-medium text-sm">' + escapeHtml(d.product_name) + ' - ' + escapeHtml(d.variant_name) + '</div>' +
-                    '<div class="text-xs text-gray-400">SKU: ' + escapeHtml(d.sku) + ' | Cost: $' + parseFloat(d.cost_price || 0).toFixed(2) + '</div>' +
+                    '<div class="font-medium text-sm">' + escapeHtml(data.product_name || data.text) + '</div>' +
+                    '<div class="text-xs text-gray-400">' + Number(data.variant_count || 0) + ' active variant(s) will be added</div>' +
                 '</div>' +
-                '<div class="text-right">' +
-                    '<div class="text-sm font-semibold text-green-600">$' + parseFloat(d.sale_price || 0).toFixed(2) + '</div>' +
-                '</div>' +
+                '<i class="fas fa-layer-group text-primary"></i>' +
             '</div>');
         }
 
-        function formatProductSelection(d) {
-            return d.product_name ? d.product_name + ' - ' + d.variant_name : d.text;
+        function formatProductSelection(data) {
+            return data.product_name || data.text;
         }
 
+        var previousStoreId = $('#store_id').val();
+        $('#store_id').on('change', function() {
+            var nextStoreId = $(this).val();
+            var storeSelect = $(this);
+            if (poItems.length && previousStoreId && nextStoreId !== previousStoreId) {
+                Swal.fire({
+                    title: 'Change purchase store?',
+                    text: 'Changing the store will remove all currently selected variants. Continue?',
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonText: 'Change store',
+                    cancelButtonText: 'Keep current store'
+                }).then(function(result) {
+                    if (!result.isConfirmed) {
+                        storeSelect.val(previousStoreId);
+                        return;
+                    }
+                    poItems = [];
+                    previousStoreId = nextStoreId;
+                    $('#productSelect').val(null).trigger('change');
+                    renderTable();
+                    markFormChanged();
+                });
+                return;
+            }
+            previousStoreId = nextStoreId;
+            $('#productSelect').val(null).trigger('change');
+        });
         // Quantity change handler
         $(document).on('input', '.iqty', function() {
             var i = $(this).data('index');

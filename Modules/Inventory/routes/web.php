@@ -88,7 +88,7 @@ Route::middleware(['auth', 'verified', 'admin'])->group(function () {
     Route::get('purchase-orders/create', [PurchaseOrderController::class, 'create'])
         ->name('purchase-orders.create')->middleware('permission:purchase-orders.create');
     Route::get('purchase-orders-search-products', [PurchaseOrderController::class, 'searchProducts'])
-        ->name('purchase-orders.search-products')->middleware('permission:purchase-orders.view');
+        ->name('purchase-orders.search-products')->middleware('permission:purchase-orders.view|purchase-orders.create|purchase-orders.edit');
     Route::get('dataTable/purchase-orders', [PurchaseOrderController::class, 'dataTable'])
         ->name('purchase-orders.dataTable')->middleware('permission:purchase-orders.view');
     Route::post('purchase-orders', [PurchaseOrderController::class, 'store'])

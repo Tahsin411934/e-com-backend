@@ -95,9 +95,9 @@
                 </div>
                 <div class="p-6 space-y-4">
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Search & Select Products</label>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Search & Select Product</label>
                         <select id="productSelect" class="w-full" style="width:100%;"></select>
-                        <p class="text-xs text-gray-400 mt-1">Type to search and select a product to add it.</p>
+                        <p class="text-xs text-gray-400 mt-1">Choose a store first. Selecting a product adds all its active variants. Edit or remove variants below as needed.</p>
                     </div>
 
                     <!-- Hidden inputs container -->
@@ -358,38 +358,82 @@
                 url: '{{ route("purchase-orders.search-products") }}',
                 dataType: 'json',
                 delay: 300,
-                data: params => ({ q: params.term }),
+                data: params => ({ q: params.term, store_id: document.getElementById("store_id").value }),
                 processResults: data => ({ results: data.results })
             },
             placeholder: 'Search and select product...',
             minimumInputLength: 2
         });
 
-        // Handle product selection
+        // Add all active variants for the selected product.
         $('#productSelect').on('select2:select', function (e) {
             const data = e.params.data;
-
-            // Check if product already exists
-            const exists = state.items.find(p => p.id === data.id);
-            if (exists) {
-                Swal.fire('Warning', 'This product is already added!', 'warning');
+            const variants = data.variants || [];
+            if (!document.getElementById('store_id').value) {
+                Swal.fire('Select a store', 'Choose the destination store before adding products.', 'info');
+                $(this).val(null).trigger('change');
+                return;
+            }
+            if (!variants.length) {
+                Swal.fire('No active variants', 'This product has no active variants to purchase.', 'warning');
                 $(this).val(null).trigger('change');
                 return;
             }
 
-            // Add new item
-            state.items.push({
-                id: data.id,
-                product_name: data.product_name + ' - ' + data.variant_name,
-                sku: data.sku,
-                cost_price: parseFloat(data.cost_price || 0),
-                qty: 1
+            let addedCount = 0;
+            variants.forEach(variant => {
+                if (state.items.some(item => Number(item.id) === Number(variant.id))) return;
+                state.items.push({
+                    id: variant.id,
+                    product_name: data.product_name + ' - ' + variant.name,
+                    sku: variant.sku || '',
+                    cost_price: parseFloat(variant.cost_price || 0),
+                    qty: 1
+                });
+                addedCount++;
             });
-
-            renderTable();
+            if (addedCount) {
+                renderTable();
+                Toastify({
+                    text: addedCount + ' variant(s) added to the purchase order.',
+                    duration: 2500,
+                    gravity: 'bottom',
+                    position: 'right',
+                    style: { background: '#16a34a' }
+                }).showToast();
+            } else {
+                Swal.fire('Variants already added', 'All active variants for this product are already in the purchase order.', 'info');
+            }
             $(this).val(null).trigger('change');
         });
 
+        let previousStoreId = document.getElementById('store_id').value;
+        $('#store_id').on('change', function() {
+            const nextStoreId = this.value;
+            const storeSelect = $(this);
+            if (state.items.length && previousStoreId && nextStoreId !== previousStoreId) {
+                Swal.fire({
+                    title: 'Change purchase store?',
+                    text: 'Changing the store will remove all currently selected variants. Continue?',
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonText: 'Change store',
+                    cancelButtonText: 'Keep current store'
+                }).then(result => {
+                    if (!result.isConfirmed) {
+                        storeSelect.val(previousStoreId);
+                        return;
+                    }
+                    state.items = [];
+                    previousStoreId = nextStoreId;
+                    $('#productSelect').val(null).trigger('change');
+                    renderTable();
+                });
+                return;
+            }
+            previousStoreId = nextStoreId;
+            $('#productSelect').val(null).trigger('change');
+        });
         // Financial charges listeners
         ['shipping_cost', 'tax_amount', 'discount_amount'].forEach(id => {
             document.getElementById(id).addEventListener('input', updateTotals);

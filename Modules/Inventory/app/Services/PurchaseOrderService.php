@@ -140,6 +140,19 @@ class PurchaseOrderService
                     $data['store_id'] = $storeId;
                 }
 
+                $variantIds = collect($items)->pluck('variant_id')->map(fn ($id) => (int) $id)->unique()->values();
+                $validVariantIds = ProductVariant::query()
+                    ->whereIn('id', $variantIds)
+                    ->where('status', 'active')
+                    ->whereHas('product', fn ($query) => $query->where('store_id', $data['store_id']))
+                    ->pluck('id')
+                    ->map(fn ($id) => (int) $id);
+                if ($validVariantIds->count() !== $variantIds->count()) {
+                    throw \Illuminate\Validation\ValidationException::withMessages([
+                        'items' => 'All purchase variants must be active and belong to the selected store.',
+                    ]);
+                }
+
                 if ($poId) {
                     $po = PurchaseOrder::forCurrentStore()->findOrFail($poId);
                     $po->update($data);
@@ -184,6 +197,8 @@ class PurchaseOrderService
 
                 return ApiResponse::created($po->fresh()->load(['supplier', 'store', 'items.variant']), $message);
             });
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return ApiResponse::validationError($e->errors(), 'Purchase order items are invalid.');
         } catch (\Exception $e) {
             return ApiResponse::error('Error saving purchase order: '.$e->getMessage(), 500);
         }
@@ -463,35 +478,40 @@ class PurchaseOrderService
      */
     public function searchProducts(Request $request): array
     {
-        $search = $request->get('q', '');
-        $results = Product::where(function ($q) use ($search) {
-            $q->where('name', 'like', "%{$search}%")
-                ->orWhereHas('variants', function ($qv) use ($search) {
-                    $qv->where('sku', 'like', "%{$search}%");
-                });
-        })
-            ->with(['variants' => function ($q) {
-                $q->select('id', 'product_id', 'name', 'sku', 'sale_price', 'cost_price');
-            }])
+        $search = trim((string) $request->get('q', ''));
+        $storeId = (int) $request->get('store_id', 0);
+        $currentStoreId = CurrentStore::id();
+        if (! $storeId || ($currentStoreId !== null && $storeId !== $currentStoreId)) {
+            return ['results' => []];
+        }
+
+        $products = Product::query()
+            ->where('store_id', $storeId)
             ->where('status', 'active')
+            ->whereHas('variants', fn ($query) => $query->where('status', 'active'))
+            ->when($search !== '', fn ($query) => $query->where(function ($filter) use ($search) {
+                $filter->where('name', 'like', '%'.$search.'%')
+                    ->orWhereHas('variants', fn ($variants) => $variants->where('status', 'active')->where('sku', 'like', '%'.$search.'%'));
+            }))
+            ->with(['variants' => fn ($query) => $query->select('id', 'product_id', 'name', 'sku', 'sale_price', 'cost_price')->where('status', 'active')->orderBy('name')])
+            ->orderBy('name')
             ->limit(20)
             ->get(['id', 'name']);
 
-        $items = [];
-        foreach ($results as $product) {
-            foreach ($product->variants as $variant) {
-                $items[] = [
+        return [
+            'results' => $products->map(fn ($product) => [
+                'id' => $product->id,
+                'text' => $product->name,
+                'product_name' => $product->name,
+                'variant_count' => $product->variants->count(),
+                'variants' => $product->variants->map(fn ($variant) => [
                     'id' => $variant->id,
-                    'text' => $product->name.' - '.$variant->name.' ('.$variant->sku.')',
-                    'product_name' => $product->name,
-                    'variant_name' => $variant->name,
+                    'name' => $variant->name,
                     'sku' => $variant->sku,
-                    'sale_price' => $variant->sale_price,
-                    'cost_price' => $variant->cost_price,
-                ];
-            }
-        }
-
-        return ['results' => $items];
+                    'cost_price' => (float) $variant->cost_price,
+                    'sale_price' => (float) $variant->sale_price,
+                ])->values(),
+            ])->values(),
+        ];
     }
 }

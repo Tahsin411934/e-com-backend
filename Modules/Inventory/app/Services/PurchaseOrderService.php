@@ -144,7 +144,9 @@ class PurchaseOrderService
                 $validVariantIds = ProductVariant::query()
                     ->whereIn('id', $variantIds)
                     ->where('status', 'active')
-                    ->whereHas('product', fn ($query) => $query->where('store_id', $data['store_id']))
+                    ->whereHas('product', fn ($query) => $query->where(function ($scope) use ($data) {
+                        $scope->whereNull('store_id')->orWhere('store_id', $data['store_id']);
+                    }))
                     ->pluck('id')
                     ->map(fn ($id) => (int) $id);
                 if ($validVariantIds->count() !== $variantIds->count()) {
@@ -486,7 +488,7 @@ class PurchaseOrderService
         }
 
         $products = Product::query()
-            ->where('store_id', $storeId)
+            ->where(fn ($query) => $query->whereNull('store_id')->orWhere('store_id', $storeId))
             ->where('status', 'active')
             ->whereHas('variants', fn ($query) => $query->where('status', 'active'))
             ->when($search !== '', fn ($query) => $query->where(function ($filter) use ($search) {

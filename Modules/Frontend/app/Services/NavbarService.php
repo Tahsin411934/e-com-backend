@@ -15,7 +15,7 @@ class NavbarService
 {
     public function getNavbarDataTable(Request $request)
     {
-        $query = NavbarItem::query()->with('store')->withCount('subnavbarItems')->orderByDesc('created_at');
+        $query = NavbarItem::query()->with('store')->withCount('subnavbarItems')->orderBy('sort_order')->orderBy('id');
 
         // Store Owner → only their own store's navbar items. Platform staff →
         // all items, optionally filtered by a specific store (or "global").
@@ -107,6 +107,52 @@ class NavbarService
             })
             ->rawColumns(['action'])
             ->make(true);
+    }
+
+    /** Persist a drag-and-drop order within one store's navbar scope. */
+    public function reorderNavbarItems(array $navbarItemIds, int $start = 0, mixed $storeFilter = null): JsonResponse
+    {
+        $ownedStoreId = $this->resolveStoreScope(auth()->user());
+
+        if ($ownedStoreId === 0) {
+            return ApiResponse::error('No store is associated with your account, so navbar items cannot be reordered.', 403);
+        }
+
+        if ($ownedStoreId !== null) {
+            $query = NavbarItem::query()->where('store_id', $ownedStoreId);
+        } else {
+            if ($storeFilter === null || $storeFilter === '') {
+                return ApiResponse::error('Choose a store scope before reordering navbar items.', 422);
+            }
+
+            $query = NavbarItem::query();
+            if ($storeFilter === 'global') {
+                $query->whereNull('store_id');
+            } elseif (is_numeric($storeFilter)) {
+                $query->where('store_id', (int) $storeFilter);
+            } else {
+                return ApiResponse::error('The selected store scope is invalid.', 422);
+            }
+        }
+
+        try {
+            return DB::transaction(function () use ($query, $navbarItemIds, $start) {
+                $items = $query->whereIn('id', $navbarItemIds)->lockForUpdate()->get()->keyBy('id');
+                if ($items->count() !== count($navbarItemIds)) {
+                    return ApiResponse::error('Some navbar items are no longer available in this list. Refresh and try again.', 422);
+                }
+
+                foreach ($navbarItemIds as $index => $navbarItemId) {
+                    $items->get($navbarItemId)->update(['sort_order' => $start + $index + 1]);
+                }
+
+                return ApiResponse::success(null, 'Navbar item order saved.');
+            });
+        } catch (\Throwable $e) {
+            report($e);
+
+            return ApiResponse::error('Unable to save navbar item order. Please try again.', 500);
+        }
     }
 
     /**

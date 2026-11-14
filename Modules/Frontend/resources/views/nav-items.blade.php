@@ -20,7 +20,7 @@
                 ['data' => 'created_at'],
                 ['data' => 'action', 'orderable' => false, 'searchable' => false],
             ];
-            $navOrder = [[6, 'desc']];
+            $navOrder = [[4, 'asc']];
             $navFilters = [];
         } else {
             $navColumns = ['Store','Name','Slug','URL','Icon','Sort Order','Status','Created At','Action'];
@@ -35,7 +35,7 @@
                 ['data' => 'created_at'],
                 ['data' => 'action', 'orderable' => false, 'searchable' => false],
             ];
-            $navOrder = [[7, 'desc']];
+            $navOrder = [[5, 'asc']];
             $navFilters = ['store_id' => [
                 'label' => 'Store',
                 'options' => '<option value="">All Stores</option><option value="global">Global (Platform)</option>'
@@ -108,7 +108,114 @@
     </x-entity-crud>
 
     @push('scripts')
+    @if($canReorderNavbarItems)
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.6/Sortable.min.js"></script>
+    @endif
     <script>
+        (function() {
+            if (!@json($canReorderNavbarItems)) return;
+
+            const tableElement = document.getElementById('navbar_itemTable');
+            if (!tableElement || typeof Sortable === 'undefined') return;
+
+            const isStoreOwner = @json($isStoreOwner);
+            let savePending = false;
+            let searchWarningShown = false;
+            let storeWarningShown = false;
+
+            function selectedStoreScope() {
+                if (isStoreOwner) return '__owned__';
+                return document.getElementById('filter_navbar_item_store_id')?.value || '';
+            }
+
+            function canDrag() {
+                const searchInput = tableElement.closest('.reusable-data-table')?.querySelector('.dataTables_filter input');
+                const searching = !!(searchInput?.value || '').trim();
+                const storeScope = selectedStoreScope();
+                const missingStoreScope = !isStoreOwner && !storeScope;
+
+                if (!searching) searchWarningShown = false;
+                if (!missingStoreScope) storeWarningShown = false;
+                return !savePending && !searching && !missingStoreScope;
+            }
+
+            function initializeNavbarSorting() {
+                const table = $('#navbar_itemTable').DataTable();
+                const tbody = tableElement.querySelector('tbody');
+                if (!tbody) return;
+                if (tbody.__navbarSortable) tbody.__navbarSortable.destroy();
+
+                tbody.querySelectorAll('tr').forEach(row => {
+                    const firstCell = row.querySelector('td');
+                    if (!firstCell || firstCell.querySelector('.navbar-drag-handle')) return;
+                    const handle = document.createElement('button');
+                    handle.type = 'button';
+                    handle.className = 'navbar-drag-handle mr-2 inline-flex cursor-grab items-center text-gray-400 hover:text-primary active:cursor-grabbing';
+                    handle.title = 'Drag to reorder navbar items';
+                    handle.setAttribute('aria-label', 'Drag to reorder navbar item');
+                    handle.innerHTML = '<i class="fa-solid fa-grip-vertical" aria-hidden="true"></i>';
+                    firstCell.prepend(handle);
+                });
+
+                tbody.__navbarSortable = Sortable.create(tbody, {
+                    handle: '.navbar-drag-handle',
+                    animation: 150,
+                    ghostClass: 'sortable-ghost',
+                    onMove: function() {
+                        if (!canDrag()) {
+                            const searchInput = tableElement.closest('.reusable-data-table')?.querySelector('.dataTables_filter input');
+                            if ((searchInput?.value || '').trim() && !searchWarningShown) {
+                                searchWarningShown = true;
+                                Toastify({ text: 'Clear the search before reordering navbar items.', duration: 2500, gravity: 'bottom', position: 'right', style: { background: '#b45309' } }).showToast();
+                            } else if (!isStoreOwner && !selectedStoreScope() && !storeWarningShown) {
+                                storeWarningShown = true;
+                                Toastify({ text: 'Choose a store before reordering navbar items.', duration: 3000, gravity: 'bottom', position: 'right', style: { background: '#b45309' } }).showToast();
+                            }
+                            return false;
+                        }
+                        return true;
+                    },
+                    onEnd: function() {
+                        if (!canDrag()) {
+                            table.draw(false);
+                            return;
+                        }
+
+                        const page = table.page.info();
+                        const navbarItemIds = Array.from(tbody.querySelectorAll('tr'))
+                            .map(row => table.row(row).data()?.id)
+                            .filter(Boolean);
+                        if (!navbarItemIds.length) return;
+
+                        savePending = true;
+                        $.ajax({
+                            url: @json(route('frontend.nav-items.navbar.reorder')),
+                            type: 'POST',
+                            dataType: 'json',
+                            data: {
+                                navbar_item_ids: navbarItemIds,
+                                start: page.start,
+                                store_id: isStoreOwner ? '' : selectedStoreScope(),
+                                _token: $('meta[name="csrf-token"]').attr('content')
+                            },
+                            success: function(response) {
+                                Toastify({ text: response.message || 'Navbar order saved.', duration: 2500, gravity: 'bottom', position: 'right', style: { background: '#059669' } }).showToast();
+                                table.ajax.reload(null, false);
+                            },
+                            error: function(xhr) {
+                                Toastify({ text: xhr.responseJSON?.message || 'Unable to save navbar order.', duration: 3500, gravity: 'bottom', position: 'right', style: { background: '#dc2626' } }).showToast();
+                                table.ajax.reload(null, false);
+                            },
+                            complete: function() { savePending = false; }
+                        });
+                    }
+                });
+            }
+
+            $(document).on('draw.dt', '#navbar_itemTable', initializeNavbarSorting);
+            $(document).ready(initializeNavbarSorting);
+        })();
+
         // ===== Navbar Item form fill =====
 Crud.register('navbaritem', 'fill', function (data) {
             $('#navbar_item_name').val(data.name);

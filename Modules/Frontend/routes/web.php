@@ -20,6 +20,7 @@ Route::middleware(['auth', 'verified', 'admin'])->group(function () {
 
     // Navbar Item routes
     Route::get('/dataTable/navbar-items', [NavbarController::class, 'navbarDataTable'])->name('frontend.nav-items.navbar.dataTable')->middleware('permission:frontend.navbar.view');
+    Route::post('/navbar-items/reorder', [NavbarController::class, 'reorderNavbarItems'])->name('frontend.nav-items.navbar.reorder')->middleware('permission:frontend.navbar.edit');
     Route::post('/navbar-items', [NavbarController::class, 'storeNavbarItem'])->name('frontend.nav-items.navbar.store')->middleware('permission:frontend.navbar.create');
     Route::get('/navbar-items/{id}', [NavbarController::class, 'showNavbarItem'])->name('frontend.nav-items.navbar.show')->middleware('permission:frontend.navbar.view');
     Route::put('/navbar-items/{id}', [NavbarController::class, 'updateNavbarItem'])->name('frontend.nav-items.navbar.update')->middleware('permission:frontend.navbar.edit');

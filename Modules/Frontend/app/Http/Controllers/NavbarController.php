@@ -32,6 +32,7 @@ class NavbarController extends Controller
         return view('frontend::nav-items', [
             'isStoreOwner' => $isStoreOwner,
             'stores' => $stores,
+            'canReorderNavbarItems' => (bool) $user->hasPermission('frontend.navbar.edit'),
         ]);
     }
 
@@ -59,6 +60,22 @@ class NavbarController extends Controller
     public function navbarDataTable(Request $request)
     {
         return $this->navbarService->getNavbarDataTable($request);
+    }
+
+    public function reorderNavbarItems(Request $request)
+    {
+        $validated = $request->validate([
+            'navbar_item_ids' => ['required', 'array', 'min:1', 'max:1000'],
+            'navbar_item_ids.*' => ['required', 'integer', 'distinct'],
+            'start' => ['nullable', 'integer', 'min:0', 'max:1000000'],
+            'store_id' => ['nullable'],
+        ]);
+
+        return $this->navbarService->reorderNavbarItems(
+            $validated['navbar_item_ids'],
+            (int) ($validated['start'] ?? 0),
+            $request->input('store_id'),
+        );
     }
 
     public function storeNavbarItem(StoreNavbarItemRequest $request)

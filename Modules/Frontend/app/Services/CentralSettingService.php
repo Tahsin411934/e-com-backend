@@ -8,7 +8,7 @@ class CentralSettingService
 {
     // Explicitly public fields; newly added admin settings are private by default.
     private const PUBLIC_KEYS = [
-        'site_name', 'site_logo', 'site_favicon', 'site_description', 'primary_color',
+        'site_name', 'site_logo', 'site_favicon', 'site_description', 'primary_color', 'primary_text_color',
         'facebook_url', 'twitter_url', 'instagram_url', 'youtube_url', 'whatsapp_number',
         'phone', 'email', 'address', 'meta_title', 'meta_description',
         'gtm_enabled', 'gtm_id', 'gtm_container_url', 'gtm_header_code', 'gtm_body_code',

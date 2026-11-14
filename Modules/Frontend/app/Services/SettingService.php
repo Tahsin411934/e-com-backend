@@ -33,6 +33,7 @@ class SettingService
             ['group' => 'general', 'key' => 'site_favicon',    'label' => 'Site Favicon / Icon', 'type' => 'image',    'value' => null,                  'sort_order' => 3],
             ['group' => 'general', 'key' => 'site_description', 'label' => 'Site Description',  'type' => 'textarea', 'value' => 'Your premium online shopping destination.', 'sort_order' => 4],
             ['group' => 'general', 'key' => 'primary_color', 'label' => 'Primary Color',     'type' => 'color',   'value' => '#22C55E', 'sort_order' => 5],
+            ['group' => 'general', 'key' => 'primary_text_color', 'label' => 'Primary Text Color', 'type' => 'color', 'value' => '#FFFFFF', 'sort_order' => 6],
             ['group' => 'social',  'key' => 'facebook_url',    'label' => 'Facebook URL',       'type' => 'url',  'value' => '', 'sort_order' => 1],
             ['group' => 'social',  'key' => 'twitter_url',     'label' => 'Twitter URL',        'type' => 'url',  'value' => '', 'sort_order' => 2],
             ['group' => 'social',  'key' => 'instagram_url',   'label' => 'Instagram URL',      'type' => 'url',  'value' => '', 'sort_order' => 3],
